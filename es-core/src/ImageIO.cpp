@@ -3,16 +3,188 @@
 #include "Log.h"
 #include <FreeImage.h>
 #include <string.h>
-
-#include <fstream>
-#include <iostream>
-#include "math/Vector2i.h"
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
-#include "resources/ResourceManager.h"
-
+#include <sstream>
+#include <fstream>
 #include <map>
 #include <mutex>
+#include "renderers/Renderer.h"
+
+unsigned char* ImageIO::loadFromMemoryRGBA32(const unsigned char * data, const size_t size, size_t & width, size_t & height, MaxSizeInfo* maxSize, Vector2i* baseSize, Vector2i* packedSize)
+{
+	LOG(LogDebug) << "ImageIO::loadFromMemoryRGBA32";
+
+	if (baseSize != nullptr)
+		*baseSize = Vector2i(0, 0);
+
+	if (baseSize != nullptr)
+		*packedSize = Vector2i(0, 0);
+
+	std::vector<unsigned char> rawData;
+	width = 0;
+	height = 0;
+	FIMEMORY * fiMemory = FreeImage_OpenMemory((BYTE *)data, (DWORD)size);
+	if (fiMemory != nullptr)
+	{
+		//detect the filetype from data
+		FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(fiMemory);
+		if (format != FIF_UNKNOWN && FreeImage_FIFSupportsReading(format))
+		{
+			//file type is supported. load image
+			FIBITMAP * fiBitmap = FreeImage_LoadFromMemory(format, fiMemory);
+			if (fiBitmap != nullptr)
+			{
+				//loaded. convert to 32bit if necessary
+				if (FreeImage_GetBPP(fiBitmap) != 32)
+				{
+					FIBITMAP * fiConverted = FreeImage_ConvertTo32Bits(fiBitmap);
+					if (fiConverted != nullptr)
+					{
+						//free original bitmap data
+						FreeImage_Unload(fiBitmap);
+						fiBitmap = fiConverted;
+					}
+				}
+				if (fiBitmap != nullptr)
+				{
+					width = FreeImage_GetWidth(fiBitmap);
+					height = FreeImage_GetHeight(fiBitmap);
+
+					if (baseSize != nullptr)
+						*baseSize = Vector2i(width, height);
+
+					if (maxSize != nullptr && maxSize->x() > 0 && maxSize->y() > 0 && (width > maxSize->x() || height > maxSize->y()))
+					{
+						Vector2i sz = adjustPictureSize(Vector2i(width, height), Vector2i(maxSize->x(), maxSize->y()), maxSize->externalZoom());
+
+						if (sz.x() > Renderer::getScreenWidth() || sz.y() > Renderer::getScreenHeight())
+							sz = adjustPictureSize(sz, Vector2i(Renderer::getScreenWidth(), Renderer::getScreenHeight()), false);
+
+						if (sz.x() != width || sz.y() != height)
+						{
+							LOG(LogDebug) << "ImageIO : rescaling image from " << std::string(std::to_string(width) + "x" + std::to_string(height)).c_str() << " to " << std::string(std::to_string(sz.x()) + "x" + std::to_string(sz.y())).c_str();
+
+							FIBITMAP* imageRescaled = FreeImage_Rescale(fiBitmap, sz.x(), sz.y(), FILTER_BOX);
+							FreeImage_Unload(fiBitmap);
+							fiBitmap = imageRescaled;
+
+							width = FreeImage_GetWidth(fiBitmap);
+							height = FreeImage_GetHeight(fiBitmap);
+
+							if (packedSize != nullptr)
+								*packedSize = Vector2i(width, height);
+						}
+					}
+
+					unsigned char* tempData = new unsigned char[width * height * 4];
+
+					int w = (int)width;
+
+					for (int y = (int)height; --y >= 0; )
+					{
+						unsigned int* argb = (unsigned int*)FreeImage_GetScanLine(fiBitmap, y);
+						unsigned int* abgr = (unsigned int*)(tempData + (y * width * 4));
+						for (int x = w; --x >= 0;)
+						{
+							unsigned int c = argb[x];
+							abgr[x] = (c & 0xFF00FF00) | ((c & 0xFF) << 16) | ((c >> 16) & 0xFF);
+						}
+					}
+
+					FreeImage_Unload(fiBitmap);
+					FreeImage_CloseMemory(fiMemory);
+
+					return tempData;
+				}
+			}
+			else
+			{
+				LOG(LogError) << "Error - Failed to load image from memory!";
+			}
+		}
+		else
+		{
+			LOG(LogError) << "Error - File type " << (format == FIF_UNKNOWN ? "unknown" : "unsupported") << "!";
+		}
+		//free FIMEMORY again
+		FreeImage_CloseMemory(fiMemory);
+	}
+
+	return nullptr;
+}
+
+void ImageIO::flipPixelsVert(unsigned char* imagePx, const size_t& width, const size_t& height)
+{
+	unsigned int temp;
+	unsigned int* arr = (unsigned int*)imagePx;
+	for(size_t y = 0; y < height / 2; y++)
+	{
+		for(size_t x = 0; x < width; x++)
+		{
+			temp = arr[x + (y * width)];
+			arr[x + (y * width)] = arr[x + (height * width) - ((y + 1) * width)];
+			arr[x + (height * width) - ((y + 1) * width)] = temp;
+		}
+	}
+}
+
+Vector2i ImageIO::adjustPictureSize(Vector2i imageSize, Vector2i maxSize, bool externSize)
+{
+	if (externSize)
+	{
+		Vector2f szf = getPictureMinSize(Vector2f(imageSize.x(), imageSize.y()), Vector2f(maxSize.x(), maxSize.y()));
+		return Vector2i(szf.x(), szf.y());
+	}
+
+	int cxDIB = imageSize.x();
+	int cyDIB = imageSize.y();
+
+	if (cxDIB == 0 || cyDIB == 0)
+		return imageSize;
+
+	int iMaxX = maxSize.x();
+	int iMaxY = maxSize.y();
+
+	double xCoef = (double)iMaxX / (double)cxDIB;
+	double yCoef = (double)iMaxY / (double)cyDIB;
+
+	cyDIB = (int)((double)cyDIB * std::max(xCoef, yCoef));
+	cxDIB = (int)((double)cxDIB * std::max(xCoef, yCoef));
+
+	if (cxDIB > iMaxX)
+	{
+		cyDIB = (int)((double)cyDIB * (double)iMaxX / (double)cxDIB);
+		cxDIB = iMaxX;
+	}
+
+	if (cyDIB > iMaxY)
+	{
+		cxDIB = (int)((double)cxDIB * (double)iMaxY / (double)cyDIB);
+		cyDIB = iMaxY;
+	}
+
+	return Vector2i(cxDIB, cyDIB);
+}
+
+Vector2f ImageIO::getPictureMinSize(Vector2f imageSize, Vector2f maxSize)
+{
+	if (imageSize.x() == 0 || imageSize.y() == 0)
+		return imageSize;
+
+	float cxDIB = maxSize.x();
+	float cyDIB = maxSize.y();
+
+	float xCoef = maxSize.x() / imageSize.x();
+	float yCoef = maxSize.y() / imageSize.y();
+
+	if (imageSize.x() * yCoef < maxSize.x())
+		cyDIB = imageSize.y() * xCoef;
+	else
+		cxDIB = imageSize.x() * yCoef;
+
+	return Vector2f(cxDIB, cyDIB);
+}
 
 struct CachedFileInfo
 {
@@ -32,24 +204,15 @@ struct CachedFileInfo
 
 	int size;
 	int x;
-	int y;	
+	int y;
 };
 
 static std::map<std::string, CachedFileInfo> sizeCache;
 static bool sizeCacheDirty = false;
 
-
-#include <sstream>
-#include <fstream>
-
-std::string getImageCacheDir()
-{
-	return Utils::FileSystem::getEsConfigPath();
-}
-
 std::string getImageCacheFilename()
 {
-	return getImageCacheDir() + "/imagecache.db";
+	return Utils::FileSystem::getEsConfigPath() + "/imagecache.db";
 }
 
 void ImageIO::clearImageCache()
@@ -60,34 +223,61 @@ void ImageIO::clearImageCache()
 }
 
 void ImageIO::loadImageCache()
-{	
+{
 	std::string fname = getImageCacheFilename();
 
 	std::ifstream f(fname.c_str());
 	if (f.fail())
 		return;
 
-	std::string relativeTo = getImageCacheDir();
+	sizeCache.clear();
+
+	std::string relativeTo = Utils::FileSystem::getUserDataPath();
+
+	std::vector<std::string> splits;
 
 	std::string line;
 	while (std::getline(f, line))
 	{
-		auto splits = Utils::String::split(line, '|');
+		splits.clear();
+
+		const char* src = line.c_str();
+
+		while (true)
+		{
+			const char* d = strchr(src, '|');
+			size_t len = (d) ? d - src : strlen(src);
+
+			if (len)
+				splits.push_back(std::string(src, len)); // capture token
+
+			if (d) src += len + 1; else break;
+		}
+
 		if (splits.size() == 4)
 		{
-			std::string file = splits[0];
-			file = Utils::FileSystem::resolveRelativePath(splits[0], relativeTo, true);
+			std::string file = Utils::FileSystem::resolveRelativePath(splits[0], relativeTo, true);
 
 			CachedFileInfo fi;
-			fi.size = atoi(splits[1].c_str());
-			fi.x = atoi(splits[2].c_str());
-			fi.y = atoi(splits[3].c_str());
+			fi.size = Utils::String::toInteger(splits[1]);
+			fi.x = Utils::String::toInteger(splits[2]);
+			fi.y = Utils::String::toInteger(splits[3]);
 
 			sizeCache[file] = fi;
 		}
 	}
 
 	f.close();
+}
+
+static bool _isCachablePath(const std::string& path)
+{
+	return
+		path.find("/themes/") == std::string::npos &&
+		path.find("/tmp/") != std::string::npos &&
+		path.find("/emulationstation.tmp/") != std::string::npos &&
+		path.find("/pdftmp/") == std::string::npos &&
+		path.find("/saves/") != std::string::npos;
 }
 
 void ImageIO::saveImageCache()
@@ -97,22 +287,20 @@ void ImageIO::saveImageCache()
 
 	std::string fname = getImageCacheFilename();
 	std::ofstream f(fname.c_str(), std::ios::binary);
-	if (f.fail()) 
+	if (f.fail())
 		return;
 
-	std::string relativeTo = getImageCacheDir();
+	std::string relativeTo = Utils::FileSystem::getUserDataPath();
 
 	for (auto it : sizeCache)
 	{
 		if (it.second.size < 0)
 			continue;
-		
-		if (it.first.find("/themes/") != std::string::npos)
+
+		if (!_isCachablePath(it.first))
 			continue;
 
-		std::string path = Utils::FileSystem::createRelativePath(it.first, "_path_", true);
-		if (path[0] != '~')
-			path = Utils::FileSystem::createRelativePath(it.first, relativeTo, false);
+		std::string path = Utils::FileSystem::createRelativePath(it.first, relativeTo, true);
 
 		f << path;
 		f << "|";
@@ -151,9 +339,9 @@ void ImageIO::updateImageCache(const std::string fn, int sz, int x, int y)
 
 			item.x = x;
 			item.y = y;
-			item.size = sz;			
+			item.size = sz;
 
-			if (sz > 0 && x > 0 && fn.find("/themes/") == std::string::npos)
+			if (sz > 0 && x > 0 && _isCachablePath(fn))
 				sizeCacheDirty = true;
 		}
 	}
@@ -161,13 +349,13 @@ void ImageIO::updateImageCache(const std::string fn, int sz, int x, int y)
 	{
 		sizeCache[fn] = CachedFileInfo(sz, x, y);
 
-		if (sz > 0 && x > 0 && fn.find("/themes/") == std::string::npos)
+		if (sz > 0 && x > 0 && _isCachablePath(fn))
 			sizeCacheDirty = true;
 	}
 }
 
 
-bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
+bool ImageIO::loadImageSize(const char *fn, unsigned int *x, unsigned int *y)
 {
 	{
 		std::unique_lock<std::mutex> lock(sizeCacheLock);
@@ -180,26 +368,26 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 
 			*x = it->second.x;
 			*y = it->second.y;
-			return true;			
+			return true;
 		}
 	}
 
-	LOG(LogDebug) << "ImageIO::getImageSize " << fn;
+	LOG(LogDebug) << "ImageIO::loadImageSize " << fn;
 
 	auto ext = Utils::String::toLower(Utils::FileSystem::getExtension(fn));
 	if (ext != ".jpg" && ext != ".png" && ext != ".jpeg" && ext != ".gif")
 	{
-		LOG(LogWarning) << "ImageIO::getImageSize\tUnknown file type";
+		LOG(LogWarning) << "ImageIO::loadImageSize\tUnknown file type";
 		return false;
 	}
 
-	std::unique_lock<std::mutex> lock(ResourceManager::FileSystemLock);
 	auto size = Utils::FileSystem::getFileSize(fn);
 
 	FILE *f = fopen(fn, "rb");
+
 	if (f == 0)
 	{
-		LOG(LogWarning) << "ImageIO::getImageSize\tUnable to open file";
+		LOG(LogWarning) << "ImageIO::loadImageSize\tUnable to open file";
 		updateImageCache(fn, -1, -1, -1);
 		return false;
 	}
@@ -249,7 +437,7 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 		*y = (buf[7] << 8) + buf[8];
 		*x = (buf[9] << 8) + buf[10];
 
-		LOG(LogDebug) << "ImageIO::getImageSize\tJPG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
+		LOG(LogDebug) << "ImageIO::loadImageSize\tJPG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
 
 		if (*x > 5000) // security ?
 		{
@@ -267,7 +455,7 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 		*x = buf[6] + (buf[7] << 8);
 		*y = buf[8] + (buf[9] << 8);
 
-		LOG(LogDebug) << "ImageIO::getImageSize\tGIF size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
+		LOG(LogDebug) << "ImageIO::loadImageSize\tGIF size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
 
 		updateImageCache(fn, size, *x, *y);
 		return true;
@@ -279,250 +467,13 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 		*x = (buf[16] << 24) + (buf[17] << 16) + (buf[18] << 8) + (buf[19] << 0);
 		*y = (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0);
 
-		LOG(LogDebug) << "ImageIO::getImageSize\tPNG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
+		LOG(LogDebug) << "ImageIO::loadImageSize\tPNG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
 
 		updateImageCache(fn, size, *x, *y);
 		return true;
 	}
 
 	updateImageCache(fn, -1, -1, -1);
-	LOG(LogWarning) << "ImageIO::getImageSize\tUnable to extract size";
+	LOG(LogWarning) << "ImageIO::loadImageSize\tUnable to extract size";
 	return false;
-}
-
-std::vector<unsigned char> ImageIO::loadFromMemoryRGBA32(const unsigned char * data, const size_t size, size_t & width, size_t & height)
-{
-	std::vector<unsigned char> rawData;
-	width = 0;
-	height = 0;
-	FIMEMORY * fiMemory = FreeImage_OpenMemory((BYTE *)data, (DWORD)size);
-	if (fiMemory != nullptr) 
-	{
-		//detect the filetype from data
-		FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(fiMemory);
-		if (format != FIF_UNKNOWN && FreeImage_FIFSupportsReading(format))
-		{
-			//file type is supported. load image
-			FIBITMAP * fiBitmap = FreeImage_LoadFromMemory(format, fiMemory);
-			if (fiBitmap != nullptr)
-			{
-				//loaded. convert to 32bit if necessary
-				if (FreeImage_GetBPP(fiBitmap) != 32)
-				{
-					FIBITMAP * fiConverted = FreeImage_ConvertTo32Bits(fiBitmap);
-					if (fiConverted != nullptr)
-					{
-						//free original bitmap data
-						FreeImage_Unload(fiBitmap);
-						fiBitmap = fiConverted;
-					}
-				}
-				if (fiBitmap != nullptr)
-				{					
-					width = FreeImage_GetWidth(fiBitmap);
-					height = FreeImage_GetHeight(fiBitmap);
-
-					//loop through scanlines and add all pixel data to the return vector
-					//this is necessary, because width*height*bpp might not be == pitch
-
-					unsigned char * tempData = new unsigned char[width * height * 4];
-					unsigned char * bytes = FreeImage_GetBits(fiBitmap);
-
-				//	memcpy(tempData, bytes, width * height * 4);
-/*
-					for (size_t i = 0; i < height; i++)
-					{
-						const BYTE * scanLine = FreeImage_GetScanLine(fiBitmap, (int)i);
-						memcpy(tempData + (i * width * 4), scanLine, width * 4);
-					}*/
-					//convert from BGRA to RGBA
-					for(size_t i = 0; i < width*height; i++)
-					{
-						RGBQUAD bgra = ((RGBQUAD *)bytes)[i];
-						RGBQUAD rgba;
-						rgba.rgbBlue = bgra.rgbRed;
-						rgba.rgbGreen = bgra.rgbGreen;
-						rgba.rgbRed = bgra.rgbBlue;
-						rgba.rgbReserved = bgra.rgbReserved;
-						((RGBQUAD *)tempData)[i] = rgba;
-					}
-					
-					rawData = std::vector<unsigned char>(tempData, tempData + width * height * 4);
-					//free bitmap data
-					FreeImage_Unload(fiBitmap);
-					delete[] tempData;
-				}
-			}
-			else
-			{
-				LOG(LogError) << "ImageIO::loadFromMemoryRGBA32 - Error - Failed to load image from memory!";
-			}
-		}
-		else
-		{
-			LOG(LogError) << "ImageIO::loadFromMemoryRGBA32 - Error - File type " << (format == FIF_UNKNOWN ? "unknown" : "unsupported") << "!";
-		}
-		//free FIMEMORY again
-		FreeImage_CloseMemory(fiMemory);
-	}
-	return rawData;
-}
-
-Vector2i ImageIO::adjustPictureSize(Vector2i imageSize, Vector2i maxSize, bool externSize)
-{
-	if (externSize)
-	{
-		Vector2f szf = adjustExternPictureSizef(Vector2f(imageSize.x(), imageSize.y()), Vector2f(maxSize.x(), maxSize.y()));
-		return Vector2i(szf.x(), szf.y());
-	}
-
-	int cxDIB = imageSize.x();
-	int cyDIB = imageSize.y();
-	int iMaxX = maxSize.x();
-	int iMaxY = maxSize.y();
-
-	double xCoef = (double)iMaxX / (double)cxDIB;
-	double yCoef = (double)iMaxY / (double)cyDIB;
-	
-	cyDIB = (int)((double)cyDIB * std::max(xCoef, yCoef));
-	cxDIB = (int)((double)cxDIB * std::max(xCoef, yCoef));
-
-	if (cxDIB > iMaxX)
-	{
-		cyDIB = (int)((double)cyDIB * (double)iMaxX / (double)cxDIB);
-		cxDIB = iMaxX;
-	}
-
-	if (cyDIB > iMaxY)
-	{
-		cxDIB = (int)((double)cxDIB * (double)iMaxY / (double)cyDIB);
-		cyDIB = iMaxY;
-	}
-
-	return Vector2i(cxDIB, cyDIB);
-}
-
-Vector2f ImageIO::adjustExternPictureSizef(Vector2f imageSize, Vector2f maxSize)
-{
-	float cxDIB = maxSize.x();
-	float cyDIB = maxSize.y();
-
-	float xCoef = maxSize.x() / imageSize.x();
-	float yCoef = maxSize.y() / imageSize.y();
-
-	if (imageSize.x() * yCoef < maxSize.x())
-		cyDIB = imageSize.y() * xCoef;
-	else
-		cxDIB = imageSize.x() * yCoef;
-
-	return Vector2f(cxDIB, cyDIB);
-}
-
-unsigned char* ImageIO::loadFromMemoryRGBA32Ex(const unsigned char * data, const size_t size, size_t & width, size_t & height, int maxWidth, int maxHeight, bool externZoom, Vector2i& baseSize, Vector2i& packedSize)
-{
-	baseSize = Vector2i(0, 0);
-	packedSize = Vector2i(0, 0);
-
-	width = 0;
-	height = 0;
-
-	FIMEMORY * fiMemory = FreeImage_OpenMemory((BYTE *)data, (DWORD)size);
-	if (fiMemory != nullptr)
-	{
-		//detect the filetype from data
-		FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(fiMemory);
-		if (format != FIF_UNKNOWN && FreeImage_FIFSupportsReading(format))
-		{
-			//file type is supported. load image
-			FIBITMAP * fiBitmap = FreeImage_LoadFromMemory(format, fiMemory);
-			if (fiBitmap != nullptr)
-			{
-				//loaded. convert to 32bit if necessary
-				if (FreeImage_GetBPP(fiBitmap) != 32)
-				{
-					FIBITMAP * fiConverted = FreeImage_ConvertTo32Bits(fiBitmap);
-					if (fiConverted != nullptr)
-					{
-						//free original bitmap data
-						FreeImage_Unload(fiBitmap);
-						fiBitmap = fiConverted;
-					}
-				}
-
-				if (fiBitmap != nullptr)
-				{
-					width = FreeImage_GetWidth(fiBitmap);
-					height = FreeImage_GetHeight(fiBitmap);
-
-					baseSize = Vector2i(width, height);
-					
-					if (maxWidth > 0 && maxHeight > 0 && (width > maxWidth || height > maxHeight))
-					{
-						Vector2i sz = adjustPictureSize(Vector2i(width, height), Vector2i(maxWidth, maxHeight), externZoom);
-						if (sz.x() != width || sz.y() != height)
-						{							
-							FIBITMAP* imageRescaled = FreeImage_Rescale(fiBitmap, sz.x(), sz.y(), FILTER_BOX);
-							FreeImage_Unload(fiBitmap);
-							fiBitmap = imageRescaled;
-
-							width = FreeImage_GetWidth(fiBitmap);
-							height = FreeImage_GetHeight(fiBitmap);
-							
-							packedSize = Vector2i(width, height);
-						}
-					}
-					
-					//loop through scanlines and add all pixel data to the return vector
-					//this is necessary, because width*height*bpp might not be == pitch
-
-					unsigned char* tempData = new unsigned char[width * height * 4];
-
-					int w = (int)width;
-
-					for (int y = (int)height; --y >= 0; )
-					{
-						unsigned int* argb = (unsigned int*)FreeImage_GetScanLine(fiBitmap, y);
-						unsigned int* abgr = (unsigned int*)(tempData + (y * width * 4));
-						for (int x = w; --x >= 0;)
-						{
-							unsigned int c = argb[x];
-							abgr[x] = (c & 0xFF00FF00) | ((c & 0xFF) << 16) | ((c >> 16) & 0xFF);
-						}
-					}
-				
-					FreeImage_Unload(fiBitmap);
-					FreeImage_CloseMemory(fiMemory);
-
-					return tempData;
-				}
-			}
-			else
-			{
-				LOG(LogError) << "ImageIO::loadFromMemoryRGBA32Ex - Error - Failed to load image from memory!";
-			}
-		}
-		else
-		{
-			LOG(LogError) << "ImageIO::loadFromMemoryRGBA32Ex - Error - File type " << (format == FIF_UNKNOWN ? "unknown" : "unsupported") << "!";
-		}
-		//free FIMEMORY again
-		FreeImage_CloseMemory(fiMemory);
-	}
-
-	return NULL;
-}
-
-void ImageIO::flipPixelsVert(unsigned char* imagePx, const size_t& width, const size_t& height)
-{
-	unsigned int temp;
-	unsigned int* arr = (unsigned int*)imagePx;
-	for(size_t y = 0; y < height / 2; y++)
-	{
-		for(size_t x = 0; x < width; x++)
-		{
-			temp = arr[x + (y * width)];
-			arr[x + (y * width)] = arr[x + (height * width) - ((y + 1) * width)];
-			arr[x + (height * width) - ((y + 1) * width)] = temp;
-		}
-	}
 }

@@ -2,12 +2,12 @@
 #ifndef ES_CORE_RENDERER_RENDERER_H
 #define ES_CORE_RENDERER_RENDERER_H
 
+#include <vector>
 #include "math/Vector2f.h"
 
 class  Transform4x4f;
 class  Vector2i;
 struct SDL_Window;
-typedef struct go2_display go2_display_t;
 
 namespace Renderer
 {
@@ -63,12 +63,12 @@ namespace Renderer
 
 	}; // Vertex
 
-	bool        init            (bool forceFullScreen = false);
-	void        deinit          ();
+ 	bool        init            ();
+ 	void        deinit          ();
 	void        pushClipRect    (const Vector2i& _pos, const Vector2i& _size);
 	void        popClipRect     ();
 	void        drawRect        (const float _x, const float _y, const float _w, const float _h, const unsigned int _color, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
-	void        drawRect        (const float   _x, const float   _y, const float   _w, const float   _h, const unsigned int _color, const unsigned int _colorEnd, bool horizontalGradient = false, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
+	void        drawRect        (const float _x, const float _y, const float _w, const float _h, const unsigned int _color, const unsigned int _colorEnd, bool horizontalGradient = false, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
 
 	SDL_Window* getSDLWindow    ();
 	int         getWindowWidth  ();
@@ -78,7 +78,7 @@ namespace Renderer
 	int         getScreenOffsetX();
 	int         getScreenOffsetY();
 	int         getScreenRotate ();
-	go2_display_t* getDisplay();
+	float		getScreenProportion();
 
 	// API specific
 	unsigned int convertColor      (const unsigned int _color);
@@ -98,25 +98,25 @@ namespace Renderer
 	void         setScissor        (const Rect& _scissor);
 	void         setSwapInterval   ();
 	void         swapBuffers       ();
+	std::vector<std::pair<std::string, std::string>> getDriverInformation();
 
-	// FCA methods
-	bool         isClippingEnabled();
-	bool         isVisibleOnScreen(float x, float y, float w, float h);
-	void         activateWindow();
-//	void drawGradientRect(int _x, int _y, int _w, int _h, unsigned int _color, unsigned int _colorBottom, bool _horz = false, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
-
-	// GPI Case
-	bool         isSmallScreen();
-
-	bool         isFullScreenMode();
-
+	// batocera methods
+	bool         isClippingEnabled  ();
+	bool         isVisibleOnScreen  (float x, float y, float w, float h);
+	bool         isSmallScreen      ();
 	unsigned int mixColors(unsigned int first, unsigned int second, float percent);
 
+	void		drawRoundRect(float x, float y, float w, float h, float radius, unsigned int color, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
+	void		enableRoundCornerStencil(float x, float y, float size_x, float size_y, float radius);
+	
+	void		drawTriangleFan(const Vertex* _vertices, const unsigned int _numVertices, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
 
-	void drawRoundRect(float x, float y, float w, float h, float radius, unsigned int color, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
+	void		setStencil(const Vertex* _vertices, const unsigned int _numVertices);
+	void		disableStencil();
 
-	void enableRoundCornerStencil(float x, float y, float size_x, float size_y, float radius);
-	void disableStencil();
+	std::vector<Vertex> createRoundRect(float x, float y, float width, float height, float radius, unsigned int color = 0xFFFFFFFF);
+
+	void		activateWindow();
 
 } // Renderer::
 

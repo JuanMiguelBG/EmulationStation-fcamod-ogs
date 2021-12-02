@@ -416,7 +416,6 @@ Log::flush();
 	MameNames::init();
 	window.pushGui(ViewController::get());
 
-	TextureData::OPTIMIZEVRAM = Settings::getInstance()->getBool("OptimizeVRAM");
 	GuiComponent::ALLOWANIMATIONS = Settings::getInstance()->getString("TransitionStyle") != "instant";
 
 	bool splashScreen = Settings::getInstance()->getBool("SplashScreen");

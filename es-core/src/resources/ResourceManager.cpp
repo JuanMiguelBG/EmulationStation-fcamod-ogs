@@ -1,13 +1,16 @@
 #include "ResourceManager.h"
 
 #include "utils/FileSystemUtil.h"
+#include "utils/StringUtil.h"
 #include <fstream>
+#include <algorithm>
+#include "Log.h"
+#include "Settings.h"
 
 auto array_deleter = [](unsigned char* p) { delete[] p; };
 auto nop_deleter = [](unsigned char* /*p*/) { };
 
 std::shared_ptr<ResourceManager> ResourceManager::sInstance = nullptr;
-std::mutex ResourceManager::FileSystemLock;
 
 ResourceManager::ResourceManager()
 {
@@ -21,28 +24,43 @@ std::shared_ptr<ResourceManager>& ResourceManager::getInstance()
 	return sInstance;
 }
 
+std::vector<std::string> ResourceManager::getResourcePaths() const
+{
+	std::vector<std::string> paths;
+
+	// check if theme overrides default resources
+	std::string themePath = Utils::FileSystem::getEsConfigPath() + "/themes/" + Settings::getInstance()->getString("ThemeSet") + "/resources";
+	if (Utils::FileSystem::isDirectory(themePath))
+		paths.push_back(themePath);
+
+	// check in homepath
+	paths.push_back(Utils::FileSystem::getEsConfigPath() + "/resources");
+
+	// check in exepath
+	paths.push_back(Utils::FileSystem::getExePath() + "/resources");
+
+	// check in cwd
+	auto cwd = Utils::FileSystem::getCWDPath() + "/resources";
+	if (std::find(paths.cbegin(), paths.cend(), cwd) == paths.cend())
+		paths.push_back(cwd);
+
+	return paths;
+}
+
 std::string ResourceManager::getResourcePath(const std::string& path) const
 {
 	// check if this is a resource file
-	if((path[0] == ':') && (path[1] == '/'))
+	if (path.size() < 2 || path[0] != ':' || path[1] != '/')
+		return path;
+
+	for (auto testPath : getResourcePaths())
 	{
-		std::string test;
-
-		// check in homepath
-		test = Utils::FileSystem::getEsConfigPath() + "/resources/" + &path[2];
-		if(Utils::FileSystem::exists(test))
-			return test;
-
-		// check in exepath
-		test = Utils::FileSystem::getExePath() + "/resources/" + &path[2];
-		if(Utils::FileSystem::exists(test))
-			return test;
-
-		// check in cwd
-		test = Utils::FileSystem::getCWDPath() + "/resources/" + &path[2];
-		if(Utils::FileSystem::exists(test))
+		std::string test = testPath + "/" + &path[2];
+		if (Utils::FileSystem::exists(test))
 			return test;
 	}
+
+	LOG(LogError) << "Resource path not found: " << path;
 
 	// not a resource, return unmodified path
 	return path;
@@ -65,15 +83,11 @@ const ResourceData ResourceManager::getFileData(const std::string& path) const
 	return data;
 }
 
-
-
 ResourceData ResourceManager::loadFile(const std::string& path, size_t size) const
 {
-	std::unique_lock<std::mutex> lock(FileSystemLock);
-
 	std::ifstream stream(path, std::ios::binary);
 
-	if (size == 0)
+	if (size == 0 || size == SIZE_MAX)
 	{
 		stream.seekg(0, stream.end);
 		size = (size_t)stream.tellg();
@@ -91,24 +105,25 @@ ResourceData ResourceManager::loadFile(const std::string& path, size_t size) con
 
 bool ResourceManager::fileExists(const std::string& path) const
 {
+	if (path[0] != ':' && path[0] != '~' && path[0] != '/')
+		return Utils::FileSystem::exists(path);
+
 	//if it exists as a resource file, return true
 	if(getResourcePath(path) != path)
 		return true;
 
-	return Utils::FileSystem::exists(path);
+	return Utils::FileSystem::exists(Utils::FileSystem::getCanonicalPath(path));
 }
-
-#include "resources/TextureResource.h"
 
 void ResourceManager::unloadAll()
 {
 	auto iter = mReloadables.cbegin();
 	while(iter != mReloadables.cend())
-	{					
+	{
 		std::shared_ptr<ReloadableInfo> info = *iter;
 
 		if (!info->data.expired())
-		{		
+		{
 			if (!info->locked)
 				info->reload = info->data.lock()->unload();
 			else
@@ -117,7 +132,7 @@ void ResourceManager::unloadAll()
 			iter++;
 		}
 		else
-			iter = mReloadables.erase(iter);		
+			iter = mReloadables.erase(iter);
 	}
 }
 
@@ -128,7 +143,7 @@ void ResourceManager::reloadAll()
 	{
 		std::shared_ptr<ReloadableInfo> info = *iter;
 
-		if (!info->data.expired())
+		if(!info->data.expired())
 		{
 			if (info->reload)
 			{
@@ -139,7 +154,7 @@ void ResourceManager::reloadAll()
 			iter++;
 		}
 		else
-			iter = mReloadables.erase(iter);		
+			iter = mReloadables.erase(iter);
 	}
 }
 

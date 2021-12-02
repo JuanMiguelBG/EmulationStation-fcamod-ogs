@@ -322,7 +322,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 			ImageIO::removeImageCache(source.get(mdd.key));
 
 			unsigned int x, y;
-			ImageIO::getImageSize(source.get(mdd.key).c_str(), &x, &y);
+			ImageIO::loadImageSize(source.get(mdd.key).c_str(), &x, &y);
 		}
 	}
 }

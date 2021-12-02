@@ -1601,11 +1601,7 @@ void GuiMenu::openAdvancedSettings()
 	auto optimizeVram = std::make_shared<SwitchComponent>(mWindow);
 	optimizeVram->setState(Settings::getInstance()->getBool("OptimizeVRAM"));
 	s->addWithLabel(_("OPTIMIZE IMAGES VRAM USE"), optimizeVram);
-	s->addSaveFunc([optimizeVram]
-	{
-		TextureData::OPTIMIZEVRAM = optimizeVram->getState();
-		Settings::getInstance()->setBool("OptimizeVRAM", optimizeVram->getState());
-	});
+	s->addSaveFunc([optimizeVram] { Settings::getInstance()->setBool("OptimizeVRAM", optimizeVram->getState()); });
 
 	// framerate
 	auto framerate = std::make_shared<SwitchComponent>(mWindow);

@@ -12,6 +12,8 @@ set(CORE_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/InputManager.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Log.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/MameNames.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/EsLocale.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/SystemConf.h # batocera
 	${CMAKE_CURRENT_SOURCE_DIR}/src/platform.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/PowerSaver.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Settings.h
@@ -19,7 +21,6 @@ set(CORE_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ThemeData.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/VolumeControl.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Window.h
-	${CMAKE_CURRENT_SOURCE_DIR}/src/EsLocale.h
 
 	# Animations
 	${CMAKE_CURRENT_SOURCE_DIR}/src/animations/Animation.h
@@ -30,12 +31,12 @@ set(CORE_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/AnimatedImageComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/AsyncNotificationComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BrightnessInfoComponent.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BatteryIndicatorComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BusyComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ButtonComponent.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ControllerActivityComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ComponentGrid.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ComponentList.h
-	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ControllerActivityComponent.h
-	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BatteryIndicatorComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/DateTimeComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/DateTimeEditComponent.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/HelpComponent.h
@@ -59,10 +60,10 @@ set(CORE_HEADERS
 	# Guis
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiDetectDevice.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiInputConfig.h
-	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiInfoPopup.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiMsgBox.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiInfoPopup.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiTextEditPopup.h
-	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiTextEditPopupKeyboard.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiTextEditPopupKeyboard.h # batocera
 
 	# Math
 	${CMAKE_CURRENT_SOURCE_DIR}/src/math/Misc.h
@@ -74,6 +75,7 @@ set(CORE_HEADERS
 
 	# Renderers
 	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/Renderer.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/GlExtensions.h
 
 	# Resources
 	${CMAKE_CURRENT_SOURCE_DIR}/src/resources/Font.h
@@ -85,8 +87,8 @@ set(CORE_HEADERS
 	# Utils
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/FileSystemUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/StringUtil.h
-	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ThreadPool.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/TimeUtil.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ThreadPool.h
 )
 
 set(CORE_SOURCES
@@ -100,6 +102,7 @@ set(CORE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/InputManager.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Log.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/MameNames.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/EsLocale.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/platform.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/PowerSaver.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Scripting.cpp
@@ -108,7 +111,6 @@ set(CORE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ThemeData.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/VolumeControl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Window.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/EsLocale.cpp
 
 	# Animations
 	${CMAKE_CURRENT_SOURCE_DIR}/src/animations/AnimationController.cpp
@@ -116,13 +118,13 @@ set(CORE_SOURCES
 	# GuiComponents
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/AnimatedImageComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/AsyncNotificationComponent.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BatteryIndicatorComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BrightnessInfoComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BusyComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ButtonComponent.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ControllerActivityComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ComponentGrid.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ComponentList.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/components/ControllerActivityComponent.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/components/BatteryIndicatorComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/DateTimeComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/DateTimeEditComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/HelpComponent.cpp
@@ -137,16 +139,17 @@ set(CORE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/TextEditComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/VideoComponent.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/VideoVlcComponent.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/components/MultiLineMenuEntry.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/components/VolumeInfoComponent.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/components/MultiLineMenuEntry.cpp
 
 	# Guis
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiDetectDevice.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiInputConfig.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiInfoPopup.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiMsgBox.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiInfoPopup.cpp # batocera
 	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiTextEditPopup.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiTextEditPopupKeyboard.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiTextEditPopupKeyboard.cpp # batocera
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/SystemConf.cpp # batocera
 
 	# Math
 	${CMAKE_CURRENT_SOURCE_DIR}/src/math/Misc.cpp
@@ -160,6 +163,9 @@ set(CORE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/Renderer.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/Renderer_GL21.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/Renderer_GLES10.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/Renderer_GLES20.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/GlExtensions.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/renderers/Shader.cpp
 
 	# Resources
 	${CMAKE_CURRENT_SOURCE_DIR}/src/resources/Font.cpp
@@ -171,10 +177,10 @@ set(CORE_SOURCES
 	# Utils
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/FileSystemUtil.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/StringUtil.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ThreadPool.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/TimeUtil.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ThreadPool.cpp
 )
 
 include_directories(${COMMON_INCLUDE_DIRS})
-add_library(es-core STATIC ${CORE_SOURCES} ${CORE_HEADERS} src/SystemConf.cpp src/SystemConf.h)
+add_library(es-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
 target_link_libraries(es-core ${COMMON_LIBRARIES})

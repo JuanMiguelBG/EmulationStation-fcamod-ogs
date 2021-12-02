@@ -11,6 +11,7 @@
 #include "Settings.h"
 #include <algorithm>
 #include "EsLocale.h"
+#include "ImageIO.h"
 
 std::vector<std::string> ThemeData::sSupportedViews { { "system" }, { "basic" }, { "detailed" }, { "grid" }, { "video" }, { "menu" }, { "screen" } };
 std::vector<std::string> ThemeData::sSupportedFeatures { { "video" }, { "carousel" }, { "z-index" }, { "visible" } };

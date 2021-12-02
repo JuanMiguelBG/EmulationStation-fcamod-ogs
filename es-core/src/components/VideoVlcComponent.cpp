@@ -161,7 +161,7 @@ void VideoVlcComponent::resize()
 	}
 	else if (mTargetIsMin)
 	{
-		mSize = ImageIO::adjustExternPictureSizef(textureSize, mTargetSize);
+		mSize = ImageIO::getPictureMinSize(textureSize, mTargetSize);
 	}
 	else {
 		// if both components are set, we just stretch
@@ -249,7 +249,7 @@ void VideoVlcComponent::render(const Transform4x4f& parentTrans)
 			}
 
 			mContext.mutexes[frame].lock();
-			mTexture->initFromExternalPixels(mContext.surfaces[frame], mVideoWidth, mVideoHeight);
+			mTexture->updateFromExternalPixels(mContext.surfaces[frame], mVideoWidth, mVideoHeight);
 			mContext.hasFrame[frame] = false;
 			mContext.mutexes[frame].unlock();
 

@@ -4,8 +4,8 @@
 
 #include <list>
 #include <memory>
-#include <mutex>
-
+#include <string>
+#include <vector>
 
 //The ResourceManager exists to...
 //Allow loading resources embedded into the executable like an actual file.
@@ -38,10 +38,10 @@ public:
 	void reloadAll();
 
 	std::string getResourcePath(const std::string& path) const;
+	std::vector<std::string> getResourcePaths() const;
+
 	const ResourceData getFileData(const std::string& path) const;
 	bool fileExists(const std::string& path) const;
-
-	static std::mutex FileSystemLock;
 
 private:
 	ResourceManager();
@@ -58,7 +58,7 @@ private:
 		bool locked;
 	};
 
-	std::list<std::shared_ptr<ReloadableInfo>> mReloadables; //  std::weak_ptr<IReloadable> 
+	std::list<std::shared_ptr<ReloadableInfo>> mReloadables;
 };
 
 #endif // ES_CORE_RESOURCES_RESOURCE_MANAGER_H

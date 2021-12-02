@@ -7,13 +7,12 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <vector>
 #include <thread>
-#include <algorithm>
+#include <vector>
 
+class TextureDataManager;
 class TextureData;
 class TextureResource;
-class TextureDataManager;
 
 class TextureLoader
 {
@@ -27,21 +26,22 @@ public:
 
 	size_t getQueueSize();
 
-private:	
+	static bool paused;
+
+private:
 	void threadProc();
 
 	std::list<std::shared_ptr<TextureData>> 										mProcessingTextureDataQ;
-
 	std::list<std::shared_ptr<TextureData>> 										mTextureDataQ;
-	std::map<TextureData*, std::list<std::shared_ptr<TextureData> >::const_iterator > 	mTextureDataLookup;
 
-	std::vector<std::thread>	mThreads;	
+	std::vector<std::thread>	mThreads;
 	std::mutex					mLoaderLock;
 	std::condition_variable		mEvent;
 	bool 						mExit;
 
 	TextureDataManager*			mManager;
 };
+
 
 //
 // This class manages the loading and unloading of textures
@@ -63,15 +63,22 @@ public:
 	TextureDataManager();
 	~TextureDataManager();
 
+	enum TextureLoadMode : int
+	{
+		ENABLED = 0,
+		DISABLED = 1,
+		MOVETOTOPONLY = 2
+	};
+
 	std::shared_ptr<TextureData> add(const TextureResource* key, bool tiled, bool linear);
 
 	// The texturedata being removed may be loading in a different thread. However it will
 	// be referenced by a smart point so we only need to remove it from our array and it
 	// will be deleted when the other thread has finished with it
 	void remove(const TextureResource* key);
-	void cancelAsync(const TextureResource* key);
 
-	std::shared_ptr<TextureData> get(const TextureResource* key, bool enableLoading = true);
+	void cancelAsync(const TextureResource* key);
+	std::shared_ptr<TextureData> get(const TextureResource* key, TextureLoadMode enableLoading = TextureLoadMode::ENABLED);
 	bool bind(const TextureResource* key);
 
 	// Get the total size of all textures managed by this object, loaded and unloaded in bytes

@@ -90,7 +90,8 @@ bool Window::init(bool initRenderer, bool forceFullScreen)
 	
 	if (initRenderer)
 	{
-		if (!Renderer::init(forceFullScreen))
+		//if (!Renderer::init(forceFullScreen))
+		if (!Renderer::init())
 		{
 			LOG(LogError) << "Window::init() --> Renderer failed to initialize!";
 			return false;
@@ -180,8 +181,7 @@ void Window::deinit(bool deinitRenderer)
 	if (deinitRenderer)
 		InputManager::getInstance()->deinit();
 
-	TextureResource::resetCache();
-
+	TextureResource::clearQueue();
 	ResourceManager::getInstance()->unloadAll();
 
 	if (deinitRenderer)
@@ -525,7 +525,8 @@ void Window::loadCustomImageLoadingScreen(std::string imagePath, std::string cus
 	if (mSplash != NULL)
 		endRenderLoadingScreen();
 
-	mSplash = TextureResource::get(imagePath, false, false, true, false, false, MaxSizeInfo(Renderer::getScreenWidth() * 0.60f, Renderer::getScreenHeight() * 0.60f));
+	MaxSizeInfo *msi = new MaxSizeInfo(Renderer::getScreenWidth() * 0.60f, Renderer::getScreenHeight() * 0.60f);
+	mSplash = TextureResource::get(imagePath, false, false, true, false, false, msi);
 	mCustomSplash = customText;
 	
 	std::shared_ptr<ResourceManager>& rm = ResourceManager::getInstance();

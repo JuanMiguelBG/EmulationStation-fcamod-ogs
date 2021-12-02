@@ -9,6 +9,7 @@
 #include "animations/LambdaAnimation.h"
 #include "Settings.h"
 #include "Sound.h"
+#include <algorithm>
 #include "EsLocale.h"
 
 #define EXTRAITEMS 2

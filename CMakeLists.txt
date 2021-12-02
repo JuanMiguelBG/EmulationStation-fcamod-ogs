@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 option(GLES "Set to ON if targeting Embedded OpenGL" ${GLES})
+option(GLES2 "Set to ON if targeting OpenGL ES 2.0" ${GLES2})
 option(GL "Set to ON if targeting Desktop OpenGL" ${GL})
 option(RPI "Set to ON to enable the Raspberry PI video player (omxplayer)" ${RPI})
 option(CEC "Set to ON to enable CEC" ${CEC})
@@ -18,6 +19,8 @@ LIST(APPEND CMAKE_MODULE_PATH
 #set up OpenGL system variable
 if(GLES)
     set(GLSystem "Embedded OpenGL" CACHE STRING "The OpenGL system to be used")
+elseif(GLES2)
+    set(GLSystem "OpenGL ES 2.0" CACHE STRING "The OpenGL system to be used")
 elseif(GL)
     set(GLSystem "Desktop OpenGL" CACHE STRING "The OpenGL system to be used")
 #-------------------------------------------------------------------------------
@@ -37,9 +40,11 @@ elseif(EXISTS "${CMAKE_FIND_ROOT_PATH}/opt/vero3/lib/libMali.so")
 elseif(EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/libMali.so" OR
     EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/arm-linux-gnueabihf/libMali.so" OR
     EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/aarch64-linux-gnu/libMali.so" OR
+    EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/aarch64-linux-gnu/libmali.so" OR
     EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/local/lib/aarch64-linux-gnu/libmali.so" OR
     EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/arm-linux-gnueabihf/mali-egl/libmali.so" OR
-    EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/arm-linux-gnueabihf/libmali.so")
+    EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/arm-linux-gnueabihf/libmali.so" OR
+    EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/local/lib/arm-linux-gnueabihf/libmali.so")
     MESSAGE("libMali.so found")
     set(GLSystem "Embedded OpenGL" CACHE STRING "The OpenGL system to be used")
 else()
@@ -52,6 +57,8 @@ set_property(CACHE GLSystem PROPERTY STRINGS "Desktop OpenGL" "Embedded OpenGL")
 #-------------------------------------------------------------------------------
 if(${GLSystem} MATCHES "Desktop OpenGL")
     find_package(OpenGL REQUIRED)
+elseif(${GLSystem} MATCHES "OpenGL ES 2.0")
+    find_package(OpenGLES2 REQUIRED)
 else()
     find_package(OpenGLES REQUIRED)
 endif()
@@ -92,6 +99,18 @@ if(DEFINED libCEC_FOUND)
     add_definitions(-DHAVE_LIBCEC)
 endif()
 
+if(DEFINED SCREENSCRAPER_SOFTNAME)
+    add_definitions(-DSCREENSCRAPER_SOFTNAME="${SCREENSCRAPER_SOFTNAME}")
+endif()
+
+if(DEFINED SCREENSCRAPER_DEV_LOGIN)
+    add_definitions(-DSCREENSCRAPER_DEV_LOGIN="${SCREENSCRAPER_DEV_LOGIN}")
+endif()
+
+if(DEFINED GAMESDB_APIKEY)
+    add_definitions(-DGAMESDB_APIKEY="${GAMESDB_APIKEY}")
+endif()
+
 #-------------------------------------------------------------------------------
 
 if(MSVC)
@@ -122,6 +141,8 @@ endif()
 
 if(${GLSystem} MATCHES "Desktop OpenGL")
     add_definitions(-DUSE_OPENGL_21)
+elseif(${GLSystem} MATCHES "OpenGL ES 2.0")
+    add_definitions(-DUSE_OPENGLES_20)
 else()
     add_definitions(-DUSE_OPENGLES_10)
 endif()
@@ -140,17 +161,6 @@ set(COMMON_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/es-core/src
 )
 
-if(DEFINED SCREENSCRAPER_SOFTNAME)
-    add_definitions(-DSCREENSCRAPER_SOFTNAME="${SCREENSCRAPER_SOFTNAME}")
-endif()
-
-if(DEFINED SCREENSCRAPER_DEV_LOGIN)
-    add_definitions(-DSCREENSCRAPER_DEV_LOGIN="${SCREENSCRAPER_DEV_LOGIN}")
-endif()
-
-if(DEFINED GAMESDB_APIKEY)
-    add_definitions(-DGAMESDB_APIKEY="${GAMESDB_APIKEY}")
-endif()
 
 # if(MSVC)
 #         LIST(APPEND COMMON_INCLUDE_DIRS
@@ -189,6 +199,10 @@ else()
         LIST(APPEND COMMON_INCLUDE_DIRS
             ${OPENGL_INCLUDE_DIR}
         )
+    elseif(${GLSystem} MATCHES "OpenGL ES 2.0")
+        LIST(APPEND COMMON_INCLUDE_DIRS
+            ${OPENGLES2_INCLUDE_DIR}
+        )
     else()
         LIST(APPEND COMMON_INCLUDE_DIRS
             ${OPENGLES_INCLUDE_DIR}
@@ -210,7 +224,7 @@ endif()
 
 set(COMMON_LIBRARIES
     ${FREETYPE_LIBRARIES}
-    ${FreeImage_LIBRARIES}	
+    ${FreeImage_LIBRARIES}
     ${SDL2_LIBRARY}
 	${SDLMIXER_LIBRARY}
     ${CURL_LIBRARIES}
@@ -250,13 +264,12 @@ if(DEFINED BCMHOST)
     LIST(APPEND COMMON_LIBRARIES
         bcm_host
         brcmEGL
-        ${OPENGLES_LIBRARIES}
-    )
-elseif(DEFINED VERO4K)
-    LIST(APPEND COMMON_LIBRARIES
-        EGL
-        ${OPENGLES_LIBRARIES}
-    )
+	)
+    if(GLES)
+      LIST(APPEND COMMON_LIBRARIES ${OPENGLES_LIBRARIES})
+    else()
+      LIST(APPEND COMMON_LIBRARIES ${OPENGLES2_LIBRARIES})
+    endif()
 else()
     if(MSVC)
         LIST(APPEND COMMON_LIBRARIES
@@ -266,6 +279,11 @@ else()
     if(${GLSystem} MATCHES "Desktop OpenGL")
         LIST(APPEND COMMON_LIBRARIES
             ${OPENGL_LIBRARIES}
+        )
+    elseif(${GLSystem} MATCHES "OpenGL ES 2.0")
+        LIST(APPEND COMMON_LIBRARIES
+            EGL
+            ${OPENGLES2_LIBRARIES}
         )
     else()
         LIST(APPEND COMMON_LIBRARIES
