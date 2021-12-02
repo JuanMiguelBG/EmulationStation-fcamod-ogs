@@ -213,8 +213,8 @@ void Settings::setDefaults()
 	// Preload VLC player
 	mBoolMap["PreloadVlcPlayer"] = false;
 	mIntMap["PreloadVlcVideoTimeout"] = 10000; // milliseconds
-	mStringMap["PreloadVlcImage"] = ResourceManager::getInstance()->getResourcePath(":/resources/es_preload_vlc.png");
-	mStringMap["PreloadVlcVideo"] = ResourceManager::getInstance()->getResourcePath(":/resources/es_preload_vlc.mp4");
+	mStringMap["PreloadVlcImage"] = "/usr/bin/emulationstation/resources/es_preload_vlc.png";
+	mStringMap["PreloadVlcVideo"] = "/usr/bin/emulationstation/resources/es_preload_vlc.mp4";
 
 	mBoolMap["MenusOnDisplayTop"] = false;
 

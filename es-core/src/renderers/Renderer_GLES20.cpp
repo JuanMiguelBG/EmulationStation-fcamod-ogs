@@ -247,7 +247,7 @@ namespace Renderer
 //////////////////////////////////////////////////////////////////////////
 
 	unsigned int getWindowFlags()
-	{
+	{./co
 		return SDL_WINDOW_OPENGL;
 
 	} // getWindowFlags
@@ -256,6 +256,9 @@ namespace Renderer
 
 	void setupWindow()
 	{
+
+LOG(LogDebug) << "Renderer_GLES20::setupWindow()";
+
 #if OPENGL_EXTENSIONS
 		SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 

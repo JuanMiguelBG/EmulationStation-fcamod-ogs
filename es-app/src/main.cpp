@@ -401,9 +401,9 @@ int main(int argc, char* argv[])
 	//if ~/.emulationstation doesn't exist and cannot be created, bail
 	if(!verifyHomeFolderExists())
 	{
-Log::flush();
+		Log::flush();
 		return 1;
-}
+	}
 
 	//always close the log on exit
 	atexit(&onExit);
@@ -532,7 +532,7 @@ Log::flush();
 
 				if (event.type == SDL_QUIT)
 					running = false;
-			} 
+			}
 			while(SDL_PollEvent(&event));
 
 			// triggered if exiting from SDL_WaitEvent due to event
@@ -547,7 +547,7 @@ Log::flush();
 		{
 			// If exitting SDL_WaitEventTimeout due to timeout. Trail considering
 			// timeout as an event
-			ps_time = SDL_GetTicks();			
+			ps_time = SDL_GetTicks();
 		}
 
 		if (window.isSleeping())
@@ -569,11 +569,11 @@ Log::flush();
 
 		window.update(deltaTime);
 		window.render();
-		
+
 		Log::flush();
 
 		int processDuration = SDL_GetTicks() - processStart;
-		
+
 		Renderer::swapBuffers();
 	}
 
@@ -600,6 +600,7 @@ Log::flush();
 	processQuitMode();
 
 	LOG(LogInfo) << "MAIN::main() - EmulationStation cleanly shutting down.";
+	Log::flush();
 
 	return 0;
 }

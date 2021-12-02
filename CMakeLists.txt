@@ -6,6 +6,9 @@ option(GL "Set to ON if targeting Desktop OpenGL" ${GL})
 option(RPI "Set to ON to enable the Raspberry PI video player (omxplayer)" ${RPI})
 option(CEC "Set to ON to enable CEC" ${CEC})
 
+# batocera
+option(ENABLE_FILEMANAGER "Set to ON to enable f1 shortcut for filesystem" OFF)
+
 project(emulationstation-all)
 
 #-------------------------------------------------------------------------------
@@ -14,6 +17,13 @@ LIST(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/CMake/Utils
     ${CMAKE_CURRENT_SOURCE_DIR}/CMake/Packages
 )
+
+# batocera / file manager f1 button
+# disable file manager
+if(ENABLE_FILEMANAGER)
+  MESSAGE("file manager enabled")
+  add_definitions(-D_ENABLE_FILEMANAGER_)
+endif()
 
 #-------------------------------------------------------------------------------
 #set up OpenGL system variable
@@ -95,8 +105,10 @@ if(DEFINED VERO4K)
     add_definitions(-D_VERO4K_)
 endif()
 
-if(DEFINED libCEC_FOUND)
+if(CEC)
+  if(DEFINED libCEC_FOUND)
     add_definitions(-DHAVE_LIBCEC)
+  endif()
 endif()
 
 if(DEFINED SCREENSCRAPER_SOFTNAME)
@@ -109,6 +121,10 @@ endif()
 
 if(DEFINED GAMESDB_APIKEY)
     add_definitions(-DGAMESDB_APIKEY="${GAMESDB_APIKEY}")
+endif()
+
+if(DEFINED HFS_DEV_LOGIN)
+    add_definitions(-DHFS_DEV_LOGIN="${HFS_DEV_LOGIN}")
 endif()
 
 #-------------------------------------------------------------------------------
@@ -169,10 +185,12 @@ set(COMMON_INCLUDE_DIRS
 # endif()
 
 #add libCEC_INCLUDE_DIR
-if(DEFINED libCEC_FOUND)
+if(CEC)
+  if(DEFINED libCEC_FOUND)
     LIST(APPEND COMMON_INCLUDE_DIRS
-        ${libCEC_INCLUDE_DIR}
-    )
+      ${libCEC_INCLUDE_DIR}
+      )
+  endif()
 endif()
 
 #add ALSA for Linux
@@ -241,16 +259,19 @@ set(COMMON_LIBRARIES
 # endif()
 
 #add libCEC_LIBRARIES
-if(DEFINED libCEC_FOUND)
-if(DEFINED BCMHOST)
-    LIST(APPEND COMMON_LIBRARIES
+if(CEC)
+  if(DEFINED libCEC_FOUND)
+    if(DEFINED BCMHOST)
+      LIST(APPEND COMMON_LIBRARIES
         vchiq_arm
-    )
-endif()
+	vchostif
+	)
+    endif()
     LIST(APPEND COMMON_LIBRARIES
-        dl
-        ${libCEC_LIBRARIES}
-    )
+      dl
+      ${libCEC_LIBRARIES}
+      )
+  endif()
 endif()
 
 #add ALSA for Linux

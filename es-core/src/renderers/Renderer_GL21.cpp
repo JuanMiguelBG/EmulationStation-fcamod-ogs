@@ -63,6 +63,8 @@ namespace Renderer
 
 	void setupWindow()
 	{
+LOG(LogDebug) << "Renderer_GL21::setupWindow()";
+
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
 
 		SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     8);
