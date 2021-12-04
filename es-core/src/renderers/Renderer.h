@@ -3,6 +3,7 @@
 #define ES_CORE_RENDERER_RENDERER_H
 
 #include "math/Vector2f.h"
+#include <vector>
 
 class  Transform4x4f;
 class  Vector2i;
@@ -98,6 +99,7 @@ namespace Renderer
 	void         setScissor        (const Rect& _scissor);
 	void         setSwapInterval   ();
 	void         swapBuffers       ();
+	std::vector<std::pair<std::string, std::string>> getDriverInformation();
 
 	// FCA methods
 	bool         isClippingEnabled();

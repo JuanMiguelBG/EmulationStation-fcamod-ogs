@@ -79,6 +79,27 @@ namespace Renderer
 
 	} // setupWindow
 
+	std::vector<std::pair<std::string, std::string>> getDriverInformation()
+	{
+		std::vector<std::pair<std::string, std::string>> info;
+
+		info.push_back(std::pair<std::string, std::string>("GRAPHICS API", "DESKTOP OPENGL 2.1"));
+
+		const std::string vendor = glGetString(GL_VENDOR) ? (const char*)glGetString(GL_VENDOR) : "";
+		if (!vendor.empty())
+			info.push_back(std::pair<std::string, std::string>("VENDOR", vendor));
+
+		const std::string renderer = glGetString(GL_RENDERER) ? (const char*)glGetString(GL_RENDERER) : "";
+		if (!renderer.empty())
+			info.push_back(std::pair<std::string, std::string>("RENDERER", renderer));
+
+		const std::string version = glGetString(GL_VERSION) ? (const char*)glGetString(GL_VERSION) : "";
+		if (!version.empty())
+			info.push_back(std::pair<std::string, std::string>("VERSION", version));
+
+		return info;
+	}
+
 	void createContext()
 	{
 		sdlContext = SDL_GL_CreateContext(getSDLWindow());
@@ -86,9 +107,20 @@ namespace Renderer
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::string glExts = (const char*)glGetString(GL_EXTENSIONS);
+		const std::string vendor     = glGetString(GL_VENDOR)     ? (const char*)glGetString(GL_VENDOR)     : "";
+		const std::string renderer   = glGetString(GL_RENDERER)   ? (const char*)glGetString(GL_RENDERER)   : "";
+		const std::string version    = glGetString(GL_VERSION)    ? (const char*)glGetString(GL_VERSION)    : "";
+		const std::string extensions = glGetString(GL_EXTENSIONS) ? (const char*)glGetString(GL_EXTENSIONS) : "";
+		const std::string shaders    = glGetString(GL_SHADING_LANGUAGE_VERSION) ? (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION) : "";
+
+		LOG(LogInfo) << "GL vendor:   " << vendor;
+		LOG(LogInfo) << "GL renderer: " << renderer;
+		LOG(LogInfo) << "GL version:  " << version;
+		LOG(LogInfo) << "GL shading:  " << shaders;
+		LOG(LogInfo) << "GL exts:     " << extensions;
+
 		LOG(LogInfo) << "Checking available OpenGL extensions...";
-		LOG(LogInfo) << " ARB_texture_non_power_of_two: " << (glExts.find("ARB_texture_non_power_of_two") != std::string::npos ? "ok" : "MISSING");
+		LOG(LogInfo) << " ARB_texture_non_power_of_two: " << (extensions.find("ARB_texture_non_power_of_two") != std::string::npos ? "ok" : "MISSING");
 
 	} // createContext
 
