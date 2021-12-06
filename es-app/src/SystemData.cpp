@@ -123,7 +123,6 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 	if(!Utils::FileSystem::isDirectory(folderPath))
 	{
 		LOG(LogWarning) << "Error - folder with path \"" << folderPath << "\" is not a directory!";
-		Log::flush();
 		return;
 	}
 
@@ -134,7 +133,6 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 		if(folderPath.find(Utils::FileSystem::getCanonicalPath(folderPath)) == 0)
 		{
 			LOG(LogWarning) << "Skipping infinitely recursive symlink \"" << folderPath << "\"";
-			Log::flush();
 			return;
 		}
 	}
@@ -356,7 +354,6 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 	if (name.empty() || path.empty() || extensions.empty() || cmd.empty())
 	{
 		LOG(LogError) << "SystemData::loadSystem() - System \"" << name << "\" is missing name, path, extension, or command!";
-		Log::flush();
 		return nullptr;
 	}
 
@@ -481,7 +478,6 @@ bool SystemData::loadConfig(Window* window)
 	{
 		LOG(LogError) << "SystemData::loadConfig() - Could not parse '" << path << "' file!";
 		LOG(LogError) << "SystemData::loadConfig() - " << res.description();
-		Log::flush();
 		return false;
 	}
 
@@ -491,7 +487,6 @@ bool SystemData::loadConfig(Window* window)
 	if(!systemList)
 	{
 		LOG(LogError) << "SystemData::loadConfig() - '" << path << "' is missing the <systemList> tag!";
-		Log::flush();
 		return false;
 	}
 

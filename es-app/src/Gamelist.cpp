@@ -100,29 +100,23 @@ FileData* findOrCreateFile(SystemData* system, const std::string& path, FileType
 }
 
 void loadGamelistFile (const std::string xmlpath, SystemData* system, std::unordered_map<std::string, FileData*>& fileMap, size_t checkSize = SIZE_MAX)
-{	
-	bool trustGamelist = Settings::getInstance()->getBool("ParseGamelistOnly");
-
+{
 	LOG(LogInfo) << "Gamelist::loadGamelistFile() - Parsing XML file \"" << xmlpath << "\"...";
-	Log::flush();
+
+	bool trustGamelist = Settings::getInstance()->getBool("ParseGamelistOnly");
 
 	if ( !Utils::String::endsWith(xmlpath, ".xml") )
 	{
 		LOG(LogWarning) << "Gamelist::loadGamelistFile() - file \"" << xmlpath << "\" isn't a XML file, skipped!";
-	Log::flush();
 		return;
 	}
 
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(xmlpath.c_str());
 
-	LOG(LogInfo) << "Gamelist::loadGamelistFile() - Loaded XML file \"" << xmlpath << "\"...";
-	Log::flush();
-
 	if (!result)
 	{
 		LOG(LogError) << "Gamelist::loadGamelistFile() - Error parsing XML file \"" << xmlpath << "\"!\n	" << result.description();
-		Log::flush();
 		return;
 	}
 
@@ -130,7 +124,6 @@ void loadGamelistFile (const std::string xmlpath, SystemData* system, std::unord
 	if (!root)
 	{
 		LOG(LogError) << "Gamelist::loadGamelistFile() - Could not find <gameList> node in gamelist \"" << xmlpath << "\"!";
-		Log::flush();
 		return;
 	}
 
@@ -140,13 +133,9 @@ void loadGamelistFile (const std::string xmlpath, SystemData* system, std::unord
 		if (parentSize != checkSize)
 		{
 			LOG(LogWarning) << "Gamelist::loadGamelistFile() - gamelist size don't match !";
-			Log::flush();
 			return;
 		}
 	}
-
-	LOG(LogInfo) << "Gamelist::loadGamelistFile() - checkSize XML file \"" << xmlpath << "\"...";
-	Log::flush();
 
 	std::string relativeTo = system->getStartPath();
 
@@ -155,106 +144,43 @@ void loadGamelistFile (const std::string xmlpath, SystemData* system, std::unord
 		FileType type = GAME;
 
 		std::string tag = fileNode.name();
-
-		LOG(LogInfo) << "Gamelist::loadGamelistFile() - process XML file , tag:." << tag;
-		Log::flush();
-
 		if (tag == "folder")
 			type = FOLDER;
 		else if (tag != "game")
 			continue;
 
 		const std::string path = Utils::FileSystem::resolveRelativePath(fileNode.child("path").text().get(), relativeTo, false);
-		LOG(LogInfo) << "Gamelist::loadGamelistFile() - process XML file, tag:." << tag << ", path: " << path;
-		Log::flush();
 		if (!trustGamelist && !Utils::FileSystem::exists(path))
 		{
 			LOG(LogWarning) << "Gamelist::loadGamelistFile() - File \"" << path << "\" does not exist! Ignoring.";
-			Log::flush();
 			continue;
 		}
 
-		LOG(LogInfo) << "Gamelist::loadGamelistFile() - path exist XML file  tag:." << tag << ", path: " << path;
-		Log::flush();
-
 		FileData* file = findOrCreateFile(system, path, type, fileMap);
-
-		LOG(LogInfo) << "Gamelist::loadGamelistFile() - findOrCreateFile(), system: " << system->getName() << ", tag:." << tag << ", path: " << path;
-		Log::flush();
 		if (!file)
 		{
 			LOG(LogError) << "Gamelist::loadGamelistFile() - Error finding/creating FileData for \"" << path << "\", skipping.";
-			Log::flush();
 			continue;
 		}
 		else if (!file->isArcadeAsset())
 		{
-
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - (!file->isArcadeAsset()), system: " << system->getName() << ", tag:." << tag << ", path: " << path;
-			Log::flush();
-
 			std::string defaultName = file->getMetadata(MetaDataId::Name);
-
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - (file->getMetadata(MetaDataId::Name): " << defaultName;
-			Log::flush();
 
 			file->setMetadata(MetaDataList::createFromXML(type == FOLDER ? FOLDER_METADATA : GAME_METADATA, fileNode, system));
 			file->getMetadata().migrate(file, fileNode);
 
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - set MetaDataList " << defaultName;
-			Log::flush();
-
 			//make sure name gets set if one didn't exist
 			if (file->getMetadata(MetaDataId::Name).empty())
-			{
-				LOG(LogInfo) << "Gamelist::loadGamelistFile() - file->getMetadata(MetaDataId::Name).empty() " << defaultName;
-				Log::flush();
 				file->setMetadata(MetaDataId::Name, defaultName);
-			}
 
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - set MetaData name " << defaultName;
-			Log::flush();
-
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - Utils::FileSystem::isHidden(path) - path:  " << path << ", hidden: " << Utils::String::boolToString( Utils::FileSystem::isHidden(path) );
-			Log::flush();
-
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - file == null --> " << Utils::String::boolToString( (file == nullptr) );
-			Log::flush();
-/*
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - file->getMetadata() == null --> " << Utils::String::boolToString( (file->getMetadata() == nullptr) );
-			Log::flush();
-
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - file->getMetadata().empty() --> " << Utils::String::boolToString( file->getMetadata().empty() );
-			Log::flush();
-*/
 			if (!trustGamelist && !file->getHidden() && Utils::FileSystem::isHidden(path))
-			{
-				LOG(LogInfo) << "Gamelist::loadGamelistFile() - (!file->getHidden() && Utils::FileSystem::isHidden(path)) " << path;
-				Log::flush();
-
 				file->setMetadata(MetaDataId::Hidden, "true");
-			}
-
-			LOG(LogInfo) << "Gamelist::loadGamelistFile() - set Hidden name " << path;
-			Log::flush();
 
 			if (checkSize != SIZE_MAX)
-			{
-				LOG(LogInfo) << "Gamelist::loadGamelistFile() - checkSize " << path;
-				Log::flush();
-
 				file->getMetadata().setDirty();
-			}
 			else
-			{
-				LOG(LogInfo) << "Gamelist::loadGamelistFile() - resetChangedFlag " << path;
-				Log::flush();
-
 				file->getMetadata().resetChangedFlag();
-			}
 		}
-		LOG(LogInfo) << "Gamelist::loadGamelistFile() - end loop " << path;
-		Log::flush();
 	}
 }
 
@@ -286,10 +212,9 @@ void clearTemporaryGamelistRecovery(SystemData* system)
 
 void parseGamelist(SystemData* system, std::unordered_map<std::string, FileData*>& fileMap)
 {
-LOG(LogDebug) << "GameList::parseGamelist() - system: " << system->getName();
-Log::flush();
-
 	std::string xmlpath = system->getGamelistPath(false);
+
+	LOG(LogInfo) << "GameList::parseGamelist() - system: " << system->getName() << ", path: " << xmlpath;
 
 	auto size = Utils::FileSystem::getFileSize(xmlpath);
 	if (size != 0)
@@ -331,7 +256,7 @@ bool saveToGamelistRecovery(FileData* file)
 {
 	if (!Settings::getInstance()->getBool("SaveGamelistsOnExit"))
 		return false;
-	
+
 	pugi::xml_document doc;
 	pugi::xml_node root = doc.append_child("gameList");
 
