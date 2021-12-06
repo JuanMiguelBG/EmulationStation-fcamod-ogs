@@ -167,7 +167,7 @@ void ImageIO::updateImageCache(const std::string fn, int sz, int x, int y)
 }
 
 
-bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
+bool ImageIO::loadImageSize(const char *fn, unsigned int *x, unsigned int *y)
 {
 	{
 		std::unique_lock<std::mutex> lock(sizeCacheLock);
@@ -184,12 +184,12 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 		}
 	}
 
-	LOG(LogDebug) << "ImageIO::getImageSize " << fn;
+	LOG(LogDebug) << "ImageIO::loadImageSize " << fn;
 
 	auto ext = Utils::String::toLower(Utils::FileSystem::getExtension(fn));
 	if (ext != ".jpg" && ext != ".png" && ext != ".jpeg" && ext != ".gif")
 	{
-		LOG(LogWarning) << "ImageIO::getImageSize\tUnknown file type";
+		LOG(LogWarning) << "ImageIO::loadImageSize\tUnknown file type";
 		return false;
 	}
 
@@ -199,7 +199,7 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 	FILE *f = fopen(fn, "rb");
 	if (f == 0)
 	{
-		LOG(LogWarning) << "ImageIO::getImageSize\tUnable to open file";
+		LOG(LogWarning) << "ImageIO::loadImageSize\tUnable to open file";
 		updateImageCache(fn, -1, -1, -1);
 		return false;
 	}
@@ -249,7 +249,7 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 		*y = (buf[7] << 8) + buf[8];
 		*x = (buf[9] << 8) + buf[10];
 
-		LOG(LogDebug) << "ImageIO::getImageSize\tJPG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
+		LOG(LogDebug) << "ImageIO::loadImageSize\tJPG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
 
 		if (*x > 5000) // security ?
 		{
@@ -267,7 +267,7 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 		*x = buf[6] + (buf[7] << 8);
 		*y = buf[8] + (buf[9] << 8);
 
-		LOG(LogDebug) << "ImageIO::getImageSize\tGIF size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
+		LOG(LogDebug) << "ImageIO::loadImageSize\tGIF size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
 
 		updateImageCache(fn, size, *x, *y);
 		return true;
@@ -279,14 +279,14 @@ bool ImageIO::getImageSize(const char *fn, unsigned int *x, unsigned int *y)
 		*x = (buf[16] << 24) + (buf[17] << 16) + (buf[18] << 8) + (buf[19] << 0);
 		*y = (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0);
 
-		LOG(LogDebug) << "ImageIO::getImageSize\tPNG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
+		LOG(LogDebug) << "ImageIO::loadImageSize\tPNG size " << std::string(std::to_string(*x) + "x" + std::to_string(*y)).c_str();
 
 		updateImageCache(fn, size, *x, *y);
 		return true;
 	}
 
 	updateImageCache(fn, -1, -1, -1);
-	LOG(LogWarning) << "ImageIO::getImageSize\tUnable to extract size";
+	LOG(LogWarning) << "ImageIO::loadImageSize\tUnable to extract size";
 	return false;
 }
 

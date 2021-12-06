@@ -5,6 +5,7 @@
 #include "utils/FileSystemUtil.h"
 #include "MetaData.h"
 #include <unordered_map>
+#include <set>
 
 class SystemData;
 class Window;
@@ -52,8 +53,8 @@ public:
 	virtual const std::string getMarqueePath();
 	virtual const std::string getImagePath();
 
-	virtual const std::string getCore() const;
-	virtual const std::string getEmulator() const;
+	virtual const std::string getCore();
+	virtual const std::string getEmulator();
 
 	virtual const bool getHidden();
 	virtual const bool getFavorite();
@@ -86,13 +87,16 @@ public:
 
 	void setMetadata(MetaDataList value) { getMetadata() = value; }
 	
-	std::string getMetadata(const std::string& key) { return getMetadata().get(key); }
-	void setMetadata(const std::string& key, const std::string& value) { getMetadata().set(key, value); }
+	std::string getMetadata(MetaDataId key) { return getMetadata().get(key); }
+	void setMetadata(MetaDataId key, const std::string& value) { return getMetadata().set(key, value); }
+
+	bool hasContentFiles();
+	std::set<std::string> getContentFiles();
 
 private:
 	MetaDataList mMetadata;
 
-protected:	
+protected:
 	FolderData* mParent;
 	std::string mPath;
 	FileType mType;
@@ -126,6 +130,9 @@ private:
 
 class FolderData : public FileData
 {
+	friend class FileData;
+	friend class SystemData;
+
 public:
 	FolderData(const std::string& startpath, SystemData* system, bool ownsChildrens=true) : FileData(FOLDER, startpath, system)
 	{

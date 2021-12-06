@@ -17,6 +17,9 @@
 #include "Window.h"
 #include "views/ViewController.h"
 
+
+#include "MetaData.h"
+
 using namespace Utils;
 
 std::vector<SystemData*> SystemData::sSystemVector;
@@ -40,7 +43,7 @@ SystemData::SystemData(const std::string& name, const std::string& fullName, Sys
 	if(!CollectionSystem && !mIsGroupSystem)
 	{
 		mRootFolder = new FolderData(mEnvData->mStartPath, this);
-		mRootFolder->getMetadata().set("name", mFullName);
+		mRootFolder->setMetadata(MetaDataId::Name, mFullName);
 
 		std::unordered_map<std::string, FileData*> fileMap;
 		
@@ -56,6 +59,7 @@ SystemData::SystemData(const std::string& name, const std::string& fullName, Sys
 
 		if (!Settings::getInstance()->getBool("IgnoreGamelist") && mName != "imageviewer")
 			parseGamelist(this, fileMap);
+
 	}
 	else
 	{
@@ -119,6 +123,7 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 	if(!Utils::FileSystem::isDirectory(folderPath))
 	{
 		LOG(LogWarning) << "Error - folder with path \"" << folderPath << "\" is not a directory!";
+		Log::flush();
 		return;
 	}
 
@@ -129,6 +134,7 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 		if(folderPath.find(Utils::FileSystem::getCanonicalPath(folderPath)) == 0)
 		{
 			LOG(LogWarning) << "Skipping infinitely recursive symlink \"" << folderPath << "\"";
+			Log::flush();
 			return;
 		}
 	}
@@ -350,6 +356,7 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 	if (name.empty() || path.empty() || extensions.empty() || cmd.empty())
 	{
 		LOG(LogError) << "SystemData::loadSystem() - System \"" << name << "\" is missing name, path, extension, or command!";
+		Log::flush();
 		return nullptr;
 	}
 
@@ -429,8 +436,8 @@ void SystemData::createGroupedSystems()
 					if (logoElem && logoElem->has("path"))
 					{
 						std::string path = logoElem->get<std::string>("path");
-						folder->setMetadata("image", path);
-						folder->setMetadata("thumbnail", path);
+						folder->setMetadata(MetaDataId::Image, path);
+						folder->setMetadata(MetaDataId::Thumbnail, path);
 
 						folder->enableVirtualFolderDisplay(true);
 					}
@@ -462,6 +469,7 @@ bool SystemData::loadConfig(Window* window)
 	if(!Utils::FileSystem::exists(path))
 	{
 		LOG(LogError) << "SystemData::loadConfig() - '" << path << "' file does not exist!";
+		Log::flush();
 		writeExampleConfig(getConfigPath(true));
 		return false;
 	}
@@ -473,6 +481,7 @@ bool SystemData::loadConfig(Window* window)
 	{
 		LOG(LogError) << "SystemData::loadConfig() - Could not parse '" << path << "' file!";
 		LOG(LogError) << "SystemData::loadConfig() - " << res.description();
+		Log::flush();
 		return false;
 	}
 
@@ -482,6 +491,7 @@ bool SystemData::loadConfig(Window* window)
 	if(!systemList)
 	{
 		LOG(LogError) << "SystemData::loadConfig() - '" << path << "' is missing the <systemList> tag!";
+		Log::flush();
 		return false;
 	}
 
@@ -636,6 +646,7 @@ void SystemData::writeExampleConfig(const std::string& path)
 	file.close();
 
 	LOG(LogError) << "SystemData::writeExampleConfig() - Example config written!  Go read it at \"" << path << "\"!";
+	Log::flush();
 }
 
 bool SystemData::hasDirtySystems()
@@ -948,4 +959,16 @@ SystemData* SystemData::getFirstVisibleSystem()
 			return sys;
 
 	return nullptr;
+}
+
+bool SystemData::shouldExtractHashesFromArchives()
+{
+	return
+		!hasPlatformId(PlatformIds::ARCADE) &&
+		!hasPlatformId(PlatformIds::NEOGEO) &&
+		!hasPlatformId(PlatformIds::DAPHNE) &&
+		!hasPlatformId(PlatformIds::LUTRO) &&
+		!hasPlatformId(PlatformIds::SEGA_DREAMCAST) &&
+		!hasPlatformId(PlatformIds::ATOMISWAVE) &&
+		!hasPlatformId(PlatformIds::NAOMI);
 }

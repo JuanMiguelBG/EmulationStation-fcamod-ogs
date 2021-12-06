@@ -416,17 +416,27 @@ void GuiMetaDataEd::fetch()
 
 void GuiMetaDataEd::fetchDone(const ScraperSearchResult& result)
 {
-	for(unsigned int i = 0; i < mEditors.size(); i++)
+	for (unsigned int i = 0; i < mEditors.size(); i++)
 	{
-		auto val = mEditors.at(i)->getValue();
 		auto key = mEditors.at(i)->getTag();
+		if (isStatistic(key))
+			continue;
 
 		// Don't override favorite & hidden values, as they are not statistics
 		if (key == "favorite" || key == "hidden")
 			continue;
 
+		if (key == "rating" && result.mdl.getFloat(MetaDataId::Rating) < 0)
+			continue;
+
+		// Don't override medias when scrap result has nothing
+		if ((key == "image" || key == "thumbnail" || key == "marquee" || key == "fanart" || key == "titleshot" || key == "manual" || key == "map" || key == "video" || key == "magazine") && result.mdl.get(key).empty())
+			continue;
+
 		mEditors.at(i)->setValue(result.mdl.get(key));
 	}
+
+	//mScrappedPk2 = result.p2k;
 }
 
 void GuiMetaDataEd::close(bool closeAllWindows)
@@ -490,4 +500,13 @@ std::vector<HelpPrompt> GuiMetaDataEd::getHelpPrompts()
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	prompts.push_back(HelpPrompt("start", _("CLOSE")));
 	return prompts;
+}
+
+bool GuiMetaDataEd::isStatistic(const std::string name)
+{
+	for (auto in : mMetaDataDecl)
+		if (in.key == name && in.isStatistic)
+			return true;
+
+	return false;
 }

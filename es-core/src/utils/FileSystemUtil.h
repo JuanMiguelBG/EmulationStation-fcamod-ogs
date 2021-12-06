@@ -40,6 +40,7 @@ namespace Utils
 		std::string combine(const std::string& _path, const std::string& filename);
 		bool        removeFile         (const std::string& _path);
 		bool        createDirectory    (const std::string& _path);
+		bool        removeDirectory    (const std::string& _path);
 		bool        exists             (const std::string& _path);
 		size_t      getFileSize        (const std::string& _path);
 		Utils::Time::DateTime getFileCreationDate(const std::string& _path);
@@ -50,7 +51,15 @@ namespace Utils
 		bool        isSymlink          (const std::string& _path);
 		bool        isHidden           (const std::string& _path);
 		std::string megaBytesToString  (unsigned long size);
-	
+
+		void		deleteDirectoryFiles(const std::string path, bool deleteDirectory = false);
+		bool		renameFile(const std::string src, const std::string dst, bool overWrite = true);
+
+		std::string getTempPath();
+
+		std::string getFileCrc32(const std::string& filename);
+		std::string getFileMd5(const std::string& filename);
+
 		// FCA
 		struct FileInfo
 		{

@@ -17,6 +17,8 @@
 #include "views/UIModeController.h"
 #include <assert.h>
 #include "Gamelist.h"
+#include "MetaData.h"
+#include <fstream>
 
 FileData::FileData(FileType type, const std::string& path, SystemData* system)
 	: mType(type), mSystem(system), mParent(NULL), mMetadata(type == GAME ? GAME_METADATA : FOLDER_METADATA) // metadata is REALLY set in the constructor!
@@ -26,8 +28,8 @@ FileData::FileData(FileType type, const std::string& path, SystemData* system)
 //	TRACE("FileData : " << mPath);
 
 	// metadata needs at least a name field (since that's what getName() will return)
-	if (mMetadata.get("name").empty())
-		mMetadata.set("name", getDisplayName());
+	if (mMetadata.get(MetaDataId::Name).empty())
+		mMetadata.set(MetaDataId::Name, getDisplayName());
 	
 	mMetadata.resetChangedFlag();
 }
@@ -75,12 +77,12 @@ std::string FileData::getCleanName() const
 
 const std::string FileData::getThumbnailPath()
 {
-	std::string thumbnail = getMetadata().get("thumbnail");
+	std::string thumbnail = getMetadata(MetaDataId::Thumbnail);
 
 	// no thumbnail, try image
 	if(thumbnail.empty())
 	{
-		thumbnail = getMetadata().get("image");
+		thumbnail = getMetadata(MetaDataId::Image);
 		
 		// no image, try to use local image
 		if(thumbnail.empty() && Settings::getInstance()->getBool("LocalArt"))
@@ -93,7 +95,7 @@ const std::string FileData::getThumbnailPath()
 					std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-thumb" + extList[i];
 					if (Utils::FileSystem::exists(path))
 					{
-						setMetadata("thumbnail", path);
+						setMetadata(MetaDataId::Thumbnail, path);
 						thumbnail = path;
 					}
 				}
@@ -101,7 +103,7 @@ const std::string FileData::getThumbnailPath()
 		}
 
 		if (thumbnail.empty())
-			thumbnail = getMetadata().get("image");
+			thumbnail = getMetadata(MetaDataId::Image);
 
 		// no image, try to use local image
 		if (thumbnail.empty() && Settings::getInstance()->getBool("LocalArt"))
@@ -127,17 +129,20 @@ const std::string FileData::getThumbnailPath()
 
 const bool FileData::getFavorite()
 {
-	return getMetadata().get("favorite") == "true";
+	auto data = getMetadata(MetaDataId::Favorite);
+	return !data.empty() && data == "true";
 }
 
 const bool FileData::getHidden()
 {
-	return getMetadata().get("hidden") == "true";
+	auto data = getMetadata(MetaDataId::Hidden);
+	return !data.empty() && data == "true";
 }
 
 const bool FileData::getKidGame()
 {
-	return getMetadata().get("kidgame") != "false";
+	auto data = getMetadata(MetaDataId::KidGame);
+	return !data.empty() && data == "true";
 }
 
 static std::shared_ptr<bool> showFilenames;
@@ -164,19 +169,19 @@ const std::string FileData::getName()
 	return getMetadata().getName();
 }
 
-const std::string FileData::getCore() const
+const std::string FileData::getCore()
 {
-	return getMetadata().get("core");
+	return getMetadata(MetaDataId::Core);
 }
 
-const std::string FileData::getEmulator() const
+const std::string FileData::getEmulator()
 {
-	return getMetadata().get("emulator");
+	return getMetadata(MetaDataId::Emulator);
 }
 
 const std::string FileData::getVideoPath()
 {
-	std::string video = getMetadata().get("video");
+	std::string video = getMetadata(MetaDataId::Video);
 	
 	// no video, try to use local video
 	if(video.empty() && Settings::getInstance()->getBool("LocalArt"))
@@ -184,7 +189,7 @@ const std::string FileData::getVideoPath()
 		std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-video.mp4";
 		if (Utils::FileSystem::exists(path))
 		{
-			setMetadata("video", path);
+			setMetadata(MetaDataId::Video, path);
 			video = path;
 		}
 	}
@@ -194,7 +199,7 @@ const std::string FileData::getVideoPath()
 
 const std::string FileData::getMarqueePath()
 {
-	std::string marquee = getMetadata().get("marquee");
+	std::string marquee = getMetadata(MetaDataId::Marquee);
 
 	// no marquee, try to use local marquee
 	if (marquee.empty() && Settings::getInstance()->getBool("LocalArt"))
@@ -207,7 +212,7 @@ const std::string FileData::getMarqueePath()
 				std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-marquee" + extList[i];
 				if(Utils::FileSystem::exists(path))
 				{
-					setMetadata("marquee", path);
+					setMetadata(MetaDataId::Marquee, path);
 					marquee = path;
 				}
 			}
@@ -219,7 +224,7 @@ const std::string FileData::getMarqueePath()
 
 const std::string FileData::getImagePath()
 {
-	std::string image = getMetadata().get("image");
+	std::string image = getMetadata(MetaDataId::Image);
 
 	// no image, try to use local image
 	if(image.empty())
@@ -232,7 +237,7 @@ const std::string FileData::getImagePath()
 				std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-image" + extList[i];
 				if(Utils::FileSystem::exists(path))
 				{
-						setMetadata("image", path);
+						setMetadata(MetaDataId::Image, path);
 						image = path;
 				}
 			}
@@ -337,18 +342,18 @@ void FileData::launchGame(Window* window)
 	{
 		FileData* gameToUpdate = getSourceFileData();
 
-		int timesPlayed = gameToUpdate->getMetadata().getInt("playcount") + 1;
-		gameToUpdate->getMetadata().set("playcount", std::to_string(static_cast<long long>(timesPlayed)));
+		int timesPlayed = gameToUpdate->getMetadata().getInt(MetaDataId::PlayCount) + 1;
+		gameToUpdate->setMetadata(MetaDataId::PlayCount, std::to_string(static_cast<long long>(timesPlayed)));
 
 		//update game time played
 		time_t tend = time(NULL);
 		long elapsedSeconds = difftime(tend, tstart);
-		long gameTime = gameToUpdate->getMetadata().getInt("gametime") + elapsedSeconds;
+		long gameTime = gameToUpdate->getMetadata().getInt(MetaDataId::GameTime) + elapsedSeconds;
 		if (elapsedSeconds >= 10)
-			gameToUpdate->setMetadata("gametime", std::to_string(static_cast<long>(gameTime)));
+			gameToUpdate->setMetadata(MetaDataId::GameTime, std::to_string(static_cast<long>(gameTime)));
 
 		//update last played time
-		gameToUpdate->getMetadata().set("lastplayed", Utils::Time::DateTime(Utils::Time::now()));
+		gameToUpdate->setMetadata(MetaDataId::LastPlayed, Utils::Time::DateTime(Utils::Time::now()));
 		CollectionSystemManager::get()->refreshCollectionSystems(gameToUpdate);
 		saveToGamelistRecovery(gameToUpdate);
 	}
@@ -408,7 +413,7 @@ void CollectionFileData::refreshMetadata()
 const std::string CollectionFileData::getName()
 {
 	if (mDirty) {
-		mCollectionFileName = Utils::String::removeParenthesis(mSourceFileData->getMetadata().get("name"));
+		mCollectionFileName = Utils::String::removeParenthesis(mSourceFileData->getMetadata(MetaDataId::Name));
 		mCollectionFileName += " [" + Utils::String::toUpper(mSourceFileData->getSystem()->getName()) + "]";
 		mDirty = false;
 	}
@@ -416,7 +421,7 @@ const std::string CollectionFileData::getName()
 	if (Settings::getInstance()->getBool("CollectionShowSystemInfo"))
 		return mCollectionFileName;
 		
-	return Utils::String::removeParenthesis(mSourceFileData->getMetadata().get("name"));
+	return Utils::String::removeParenthesis(mSourceFileData->getMetadata(MetaDataId::Name));
 }
 
 const std::vector<FileData*> FolderData::getChildrenListToDisplay() 
@@ -622,4 +627,144 @@ void FolderData::createChildrenByFilenameMap(std::unordered_map<std::string, Fil
 		else 
 			map[(*it)->getKey()] = (*it);
 	}	
+}
+
+bool FileData::hasContentFiles()
+{
+	if (mPath.empty())
+		return false;
+
+	std::string ext = Utils::String::toLower(Utils::FileSystem::getExtension(mPath));
+	if (ext == ".m3u" || ext == ".cue" || ext == ".ccd" || ext == ".gdi")
+		return getSourceFileData()->getSystemEnvData()->isValidExtension(ext) && getSourceFileData()->getSystemEnvData()->mSearchExtensions.size() > 1;
+
+	return false;
+}
+
+static std::vector<std::string> getTokens(const std::string& string)
+{
+	std::vector<std::string> tokens;
+
+	bool inString = false;
+	int startPos = 0;
+	int i = 0;
+	for (;;)
+	{
+		char c = string[i];
+
+		switch (c)
+		{
+		case '\"':
+			inString = !inString;
+			if (inString)
+				startPos = i + 1;
+
+		case '\0':
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			if (!inString)
+			{
+				std::string value = string.substr(startPos, i - startPos);
+				if (!value.empty())
+					tokens.push_back(value);
+
+				startPos = i + 1;
+			}
+			break;
+		}
+
+		if (c == '\0')
+			break;
+
+		i++;
+	}
+
+	return tokens;
+}
+
+std::set<std::string> FileData::getContentFiles()
+{
+	std::set<std::string> files;
+
+	if (mPath.empty())
+		return files;
+
+	if (Utils::FileSystem::isDirectory(mPath))
+	{
+		for (auto file : Utils::FileSystem::getDirContent(mPath, true, true))
+			files.insert(file);
+	}
+	else if (hasContentFiles())
+	{
+		auto path = Utils::FileSystem::getParent(mPath);
+		auto ext = Utils::String::toLower(Utils::FileSystem::getExtension(mPath));
+
+		if (ext == ".cue")
+		{
+			std::string start = "FILE";
+
+			std::ifstream cue(WINSTRINGW(mPath));
+			if (cue && cue.is_open())
+			{
+				std::string line;
+				while (std::getline(cue, line))
+				{
+					if (!Utils::String::startsWith(line, start))
+						continue;
+
+					auto tokens = getTokens(line);
+					if (tokens.size() > 1)
+						files.insert(path + "/" + tokens[1]);
+				}
+
+				cue.close();
+			}
+		}
+		else if (ext == ".ccd")
+		{
+			std::string stem = Utils::FileSystem::getStem(mPath);
+			files.insert(path + "/" + stem + ".cue");
+			files.insert(path + "/" + stem + ".img");
+			files.insert(path + "/" + stem + ".bin");
+			files.insert(path + "/" + stem + ".sub");
+		}
+		else if (ext == ".m3u")
+		{
+			std::ifstream m3u(WINSTRINGW(mPath));
+			if (m3u && m3u.is_open())
+			{
+				std::string line;
+				while (std::getline(m3u, line))
+				{
+					auto trim = Utils::String::trim(line);
+					if (trim[0] == '#' || trim[0] == '\\' || trim[0] == '/')
+						continue;
+
+					files.insert(path + "/" + trim);
+				}
+
+				m3u.close();
+			}
+		}
+		else if (ext == ".gdi")
+		{
+			std::ifstream gdi(WINSTRINGW(mPath));
+			if (gdi && gdi.is_open())
+			{
+				std::string line;
+				while (std::getline(gdi, line))
+				{
+					auto tokens = getTokens(line);
+					if (tokens.size() > 5 && tokens[4].find(".") != std::string::npos)
+						files.insert(path + "/" + tokens[4]);
+				}
+
+				gdi.close();
+			}
+		}
+	}
+
+	return files;
 }

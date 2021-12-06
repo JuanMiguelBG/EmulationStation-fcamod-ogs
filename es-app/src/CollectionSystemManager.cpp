@@ -306,7 +306,7 @@ void CollectionSystemManager::updateCollectionSystem(FileData* file, CollectionS
 			curSys->removeFromIndex(collectionEntry);
 			collectionEntry->refreshMetadata();
 			// found and we are removing
-			if (name == "favorites" && file->getMetadata().get("favorite") == "false") {
+			if (name == "favorites" && !file->getFavorite()) {
 				// need to check if still marked as favorite, if not remove
 				ViewController::get()->getGameListView(curSys).get()->remove(collectionEntry, false);
 				
@@ -323,8 +323,8 @@ void CollectionSystemManager::updateCollectionSystem(FileData* file, CollectionS
 		else
 		{
 			// we didn't find it here - we need to check if we should add it
-			if (name == "recent" && file->getMetadata().get("playcount") > "0" && includeFileInAutoCollections(file) ||
-				name == "favorites" && file->getMetadata().get("favorite") == "true") {
+			if (name == "recent" && file->getMetadata(MetaDataId::PlayCount) > "0" && includeFileInAutoCollections(file) ||
+				name == "favorites" && file->getFavorite()) {
 				CollectionFileData* newGame = new CollectionFileData(file, curSys);
 				rootFolder->addChild(newGame);
 				curSys->addToIndex(newGame);
@@ -596,13 +596,13 @@ bool CollectionSystemManager::toggleGameInCollection(FileData* file)
 
 			MetaDataList* md = &file->getSourceFileData()->getMetadata();
 
-			std::string value = md->get("favorite");
+			std::string value = md->get(MetaDataId::Favorite);
 			if (value == "false")
-				md->set("favorite", "true");
+				md->set(MetaDataId::Favorite, "true");
 			else
 			{
 				adding = false;
-				md->set("favorite", "false");
+				md->set(MetaDataId::Favorite, "false");
 			}
 			sysData->addToIndex(file);
 			saveToGamelistRecovery(file);
@@ -695,11 +695,11 @@ void CollectionSystemManager::updateCollectionFolderMetadata(SystemData* sys)
 			games_counter++;
 			FileData* file = *iter;
 
-			std::string new_rating = file->getMetadata().get("rating");
-			std::string new_releasedate = file->getMetadata().get("releasedate");
-			std::string new_developer = file->getMetadata().get("developer");
-			std::string new_genre = file->getMetadata().get("genre");
-			std::string new_players = file->getMetadata().get("players");
+			std::string new_rating = file->getMetadata(MetaDataId::Rating);
+			std::string new_releasedate = file->getMetadata(MetaDataId::ReleaseDate);
+			std::string new_developer = file->getMetadata(MetaDataId::Developer);
+			std::string new_genre = file->getMetadata(MetaDataId::Genre);
+			std::string new_players = file->getMetadata(MetaDataId::Players);
 
 			rating = (new_rating > rating ? (new_rating != "" ? new_rating : rating) : rating);
 			players = (new_players > players ? (new_players != "" ? new_players : players) : players);
@@ -739,15 +739,15 @@ void CollectionSystemManager::updateCollectionFolderMetadata(SystemData* sys)
 	}
 
 
-	rootFolder->getMetadata().set("desc", desc);
-	rootFolder->getMetadata().set("rating", rating);
-	rootFolder->getMetadata().set("players", players);
-	rootFolder->getMetadata().set("genre", genre);
-	rootFolder->getMetadata().set("releasedate", releasedate);
-	rootFolder->getMetadata().set("developer", developer);
-	rootFolder->getMetadata().set("video", video);
-	rootFolder->getMetadata().set("thumbnail", thumbnail);
-	rootFolder->getMetadata().set("image", image);
+	rootFolder->setMetadata(MetaDataId::Desc, desc);
+	rootFolder->setMetadata(MetaDataId::Rating, rating);
+	rootFolder->setMetadata(MetaDataId::Players, players);
+	rootFolder->setMetadata(MetaDataId::Genre, genre);
+	rootFolder->setMetadata(MetaDataId::ReleaseDate, releasedate);
+	rootFolder->setMetadata(MetaDataId::Developer, developer);
+	rootFolder->setMetadata(MetaDataId::Video, video);
+	rootFolder->setMetadata(MetaDataId::Thumbnail, thumbnail);
+	rootFolder->setMetadata(MetaDataId::Image, image);
 }
 
 void CollectionSystemManager::initCustomCollectionSystems()
@@ -829,14 +829,14 @@ void CollectionSystemManager::populateAutoCollection(CollectionSystemData* sysDa
 				switch(sysDecl.type) 
 				{
 					case AUTO_LAST_PLAYED:
-						include = include && (*gameIt)->getMetadata().get("playcount") > "0";
+						include = include && (*gameIt)->getMetadata(MetaDataId::PlayCount) > "0";
 						break;
 					case AUTO_NEVER_PLAYED:
-						include = include && !((*gameIt)->getMetadata("playcount") > "0");
+						include = include && !((*gameIt)->getMetadata(MetaDataId::PlayCount) > "0");
 						break;
 					case AUTO_FAVORITES:
 						// we may still want to add files we don't want in auto collections in "favorites"
-						include = (*gameIt)->getMetadata().get("favorite") == "true";
+						include = (*gameIt)->getFavorite();
 						break;
 					case AUTO_VERTICALARCADE: // batocera
 						include = (*gameIt)->isVerticalArcadeGame();
@@ -920,7 +920,7 @@ void CollectionSystemManager::populateAutoCollection(CollectionSystemData* sysDa
 					case AUTO_AT2PLAYERS:
 					case AUTO_AT4PLAYERS:
 					{
-						std::string players = (*gameIt)->getMetadata("players");
+						std::string players = (*gameIt)->getMetadata(MetaDataId::Players);
 						if (players.empty())
 							include = false;
 						else
@@ -947,7 +947,7 @@ void CollectionSystemManager::populateAutoCollection(CollectionSystemData* sysDa
 				}
 
 				if (!systemarcadename.empty())
-					include = isArcade && (*gameIt)->getMetadata("arcadesystemname") == systemarcadename;
+					include = isArcade && (*gameIt)->getMetadata(MetaDataId::ArcadeSystemName) == systemarcadename;
 
 				if (include) 
 				{

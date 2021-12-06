@@ -10,8 +10,8 @@
 #include <pugixml/src/pugixml.hpp>
 #include <cstring>
 #include "EsLocale.h"
-#include "md5.h"
 #include <thread>
+#include "ApiSystem.h"
 
 using namespace PlatformIds;
 
@@ -237,50 +237,56 @@ void screenscraper_generate_scraper_requests(const ScraperSearchParams& params,
 	// FCA Fix for names override not working on Retropie
 	if (params.nameOverride.length() == 0)
 	{
-		path = ssConfig.getGameSearchUrl(params.game->getFileName());
-		path = Utils::String::replace(path, "%20-%20", "%20");
+		if (Utils::FileSystem::isDirectory(params.game->getPath()))
+			path = ssConfig.getGameSearchUrl(params.game->getDisplayName());
+		else
+			path = ssConfig.getGameSearchUrl(params.game->getFileName());
+
 		path += "&romtype=rom";
 
 		// Use md5 to search scrapped game
-		int length = Utils::FileSystem::getFileSize(params.game->getFullPath());
-		if (length <= 131072 * 1024) // 128 Mb max
+		std::string fileNameToHash = params.game->getFullPath();
+		auto length = Utils::FileSystem::getFileSize(fileNameToHash);
+
+		if (length > 1024 * 1024 && !params.game->getMetadata(MetaDataId::Md5).empty()) // 1Mb
+			path += "&md5=" + params.game->getMetadata(MetaDataId::Md5);
+		else
 		{
-			try
+
+			if (params.game->hasContentFiles() && Utils::String::toLower(Utils::FileSystem::getExtension(fileNameToHash)) == ".m3u")
 			{
-				// 64 Kb blocks
-				#define MD5BUFFERSIZE 64 * 1024
-
-				char* buffer = new char[MD5BUFFERSIZE];
-				if (buffer)
+				auto content = params.game->getContentFiles();
+				if (content.size())
 				{
-					size_t size;
-
-					FILE* file = fopen(params.game->getFullPath().c_str(), "rb");
-					if (file)
-					{
-						MD5 md5 = MD5();
-
-						while (size = fread(buffer, 1, MD5BUFFERSIZE, file))
-							md5.update(buffer, size);
-
-						md5.finalize();
-
-						std::string val = md5.hexdigest();
-						if (!val.empty())
-							path += "&md5=" + val;
-
-						fclose(file);
-					}
-
-					delete buffer;
+					fileNameToHash = (*content.begin());
+					length = Utils::FileSystem::getFileSize(fileNameToHash);
 				}
 			}
-			catch (std::bad_alloc& ex) {}
+
+			// Use md5 to search scrapped game
+			if (length > 0 && length <= 131072 * 1024) // 128 Mb max
+			{
+				std::string val = ApiSystem::getInstance()->getMD5(fileNameToHash, params.system->shouldExtractHashesFromArchives());
+				if (!val.empty())
+				{
+					params.game->setMetadata(MetaDataId::Md5, val);
+					path += "&md5=" + val;
+				}
+				else
+					path += "&romtaille=" + std::to_string(length);
+			}
+			else
+				path += "&romtaille=" + std::to_string(length);
 		}
 	}
 	else
-		path = ssConfig.getGameSearchUrl(params.nameOverride, true);
-	   
+	{
+		std::string name = Utils::String::replace(params.nameOverride, "_", " ");
+		name = Utils::String::replace(name, "-", " ");
+
+		path = ssConfig.getGameSearchUrl(name, true);
+	}
+
 	auto& platforms = params.system->getPlatformIds();
 	std::vector<unsigned short> p_ids;
 
@@ -367,7 +373,7 @@ pugi::xml_node ScreenScraperRequest::findMedia(pugi::xml_node media_list, std::s
 		return art;
 
 	// Region fallback: WOR(LD), US, CUS(TOM?), JP, EU
-	for (auto _region : std::vector<std::string>{ region, "wor", "us", "cus", "jp", "eu", "" })
+	for (auto _region : std::vector<std::string>{ region, "wor", "us", "eu", "jp", "ss", "cus", "" })
 	{
 		if (art)
 			break;
@@ -437,19 +443,24 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
 			}
 		}
 
-		// Name fallback: US, WOR(LD). ( Xpath: Data/jeu[0]/noms/nom[*] ). 
-		result.mdl.set("name", find_child_by_attribute_list(game.child("noms"), "nom", "region", { region, "wor", "us" , "ss", "eu", "jp" }).text().get());
+		if (game.attribute("id"))
+			result.mdl.set(MetaDataId::ScraperId, game.attribute("id").value());
+		else
+			result.mdl.set(MetaDataId::ScraperId, "");
+
+		// Name fallback: US, WOR(LD). ( Xpath: Data/jeu[0]/noms/nom[*] ).
+		result.mdl.set(MetaDataId::Name, find_child_by_attribute_list(game.child("noms"), "nom", "region", { region, "wor", "us" , "ss", "eu", "jp" }).text().get());
 
 		// Description fallback language: EN, WOR(LD)
 		std::string description = find_child_by_attribute_list(game.child("synopsis"), "synopsis", "langue", { language, "en", "wor" }).text().get();
 
 		if (!description.empty()) {
-			result.mdl.set("desc", Utils::String::replace(description, "&nbsp;", " "));
+			result.mdl.set(MetaDataId::Desc, Utils::String::replace(description, "&nbsp;", " "));
 		}
 
 		// Genre fallback language: EN. ( Xpath: Data/jeu[0]/genres/genre[*] )
-		result.mdl.set("genre", find_child_by_attribute_list(game.child("genres"), "genre", "langue", { language, "en" }).text().get());
-		//LOG(LogDebug) << "Genre: " << result.mdl.get("genre");
+		result.mdl.set(MetaDataId::Genre, find_child_by_attribute_list(game.child("genres"), "genre", "langue", { language, "en" }).text().get());
+		//LOG(LogDebug) << "Genre: " << result.mdl.get(MetaDataId::Genre);
 
 		// Get the date proper. The API returns multiple 'date' children nodes to the 'dates' main child of 'jeu'.
 		// Date fallback: WOR(LD), US, SS, JP, EU
@@ -459,26 +470,26 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
 		// Date can be YYYY-MM-DD or just YYYY.
 		if (_date.length() > 4)
 		{
-			result.mdl.set("releasedate", Utils::Time::DateTime(Utils::Time::stringToTime(_date, "%Y-%m-%d")));
+			result.mdl.set(MetaDataId::ReleaseDate, Utils::Time::DateTime(Utils::Time::stringToTime(_date, "%Y-%m-%d")));
 		} else if (_date.length() > 0)
 		{
-			result.mdl.set("releasedate", Utils::Time::DateTime(Utils::Time::stringToTime(_date, "%Y")));
+			result.mdl.set(MetaDataId::ReleaseDate, Utils::Time::DateTime(Utils::Time::stringToTime(_date, "%Y")));
 		}
 
-		//LOG(LogDebug) << "Release Date (parsed): " << result.mdl.get("releasedate");
+		//LOG(LogDebug) << "Release Date (parsed): " << result.mdl.get(MetaDataId::ReleaseDate);
 
 		/// Developer for the game( Xpath: Data/jeu[0]/developpeur )
 		std::string developer = game.child("developpeur").text().get();
 		if (!developer.empty())
-			result.mdl.set("developer", Utils::String::replace(developer, "&nbsp;", " "));
+			result.mdl.set(MetaDataId::Developer, Utils::String::replace(developer, "&nbsp;", " "));
 
 		// Publisher for the game ( Xpath: Data/jeu[0]/editeur )
 		std::string publisher = game.child("editeur").text().get();
 		if (!publisher.empty())
-			result.mdl.set("publisher", Utils::String::replace(publisher, "&nbsp;", " "));
+			result.mdl.set(MetaDataId::Publisher, Utils::String::replace(publisher, "&nbsp;", " "));
 
 		// Players
-		result.mdl.set("players", game.child("joueurs").text().get());
+		result.mdl.set(MetaDataId::Players, game.child("joueurs").text().get());
 
         if(game.child("systeme").attribute("id"))
         {
@@ -487,7 +498,7 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
             if(screenscraper_arcadesystemid_map.find(systemId) != screenscraper_arcadesystemid_map.cend())
             {
                 std::string systemName = screenscraper_arcadesystemid_map.at(game.child("systeme").attribute("id").as_int(0));
-                result.mdl.set("arcadesystemname", systemName);
+                result.mdl.set(MetaDataId::ArcadeSystemName, systemName);
             }
             //else
             //    LOG(LogDebug) << "System " << systemId << " not found";
@@ -499,8 +510,10 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
 			float ratingVal = (game.child("note").text().as_int() / 20.0f);
 			std::stringstream ss;
 			ss << ratingVal;
-			result.mdl.set("rating", ss.str());
+			result.mdl.set(MetaDataId::Rating, ss.str());
 		}
+		else
+			result.mdl.set(MetaDataId::Rating, "-1");
 
 		// Media super-node
 		pugi::xml_node media_list = game.child("medias");
@@ -564,7 +577,7 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
 				ripList = getRipList("video");
 				if (!ripList.empty())
 				{
-					pugi::xml_node art = findMedia(media_list, ripList, region);					
+					pugi::xml_node art = findMedia(media_list, ripList, region);
 					if (art)
 						result.videoUrl = ensureUrl(art.text().get());
 					else

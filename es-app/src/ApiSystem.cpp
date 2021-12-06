@@ -4,6 +4,8 @@
 #include "HttpReq.h"
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
+#include "utils/md5.h"
+#include "utils/ZipFile.h"
 #include <thread>
 #include <codecvt> 
 #include <locale> 
@@ -1156,4 +1158,176 @@ bool ApiSystem::setOptimizeSystem(bool state)
 	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
 
 	return executeScript("es-optimize_system " + Utils::String::boolToString(state));
+}
+
+
+std::string ApiSystem::getMD5(const std::string fileName, bool fromZipContents)
+{
+	LOG(LogDebug) << "getMD5 >> " << fileName;
+
+	// 7za x -so test.7z | md5sum
+	std::string ext = Utils::String::toLower(Utils::FileSystem::getExtension(fileName));
+	if (ext == ".zip" && fromZipContents)
+	{
+		Utils::Zip::ZipFile file;
+		if (file.load(fileName))
+		{
+			std::string romName;
+
+			for (auto name : file.namelist())
+			{
+				if (Utils::FileSystem::getExtension(name) != ".txt" && !Utils::String::endsWith(name, "/"))
+				{
+					if (!romName.empty())
+					{
+						romName = "";
+						break;
+					}
+
+					romName = name;
+				}
+			}
+
+			if (!romName.empty())
+				return file.getFileMd5(romName);
+		}
+	}
+
+	if (fromZipContents && ext == ".7z")
+	{
+		auto cmd = getSevenZipCommand() + " x -so \"" + fileName + "\" | md5sum";
+		auto ret = executeEnumerationScript(cmd);
+		if (ret.size() == 1 && ret.cbegin()->length() >= 32)
+			return ret.cbegin()->substr(0, 32);
+	}
+
+	std::string contentFile = fileName;
+	std::string ret;
+	std::string tmpZipDirectory;
+
+	if (fromZipContents && ext == ".7z")
+	{
+		tmpZipDirectory = Utils::FileSystem::combine(Utils::FileSystem::getTempPath(), Utils::FileSystem::getStem(fileName));
+		Utils::FileSystem::deleteDirectoryFiles(tmpZipDirectory);
+
+		if (unzipFile(fileName, tmpZipDirectory))
+		{
+			auto fileList = Utils::FileSystem::getDirContent(tmpZipDirectory, true);
+
+			std::vector<std::string> res;
+			std::copy_if(fileList.cbegin(), fileList.cend(), std::back_inserter(res), [](const std::string file) { return Utils::FileSystem::getExtension(file) != ".txt";  });
+
+			if (res.size() == 1)
+				contentFile = *res.cbegin();
+		}
+
+		// if there's no file or many files ? get md5 of archive
+	}
+
+	ret = Utils::FileSystem::getFileMd5(contentFile);
+
+	if (!tmpZipDirectory.empty())
+		Utils::FileSystem::deleteDirectoryFiles(tmpZipDirectory, true);
+
+	LOG(LogDebug) << "getMD5 << " << ret;
+
+	return ret;
+}
+
+std::string ApiSystem::getCRC32(std::string fileName, bool fromZipContents)
+{
+	LOG(LogDebug) << "getCRC32 >> " << fileName;
+
+	std::string ext = Utils::String::toLower(Utils::FileSystem::getExtension(fileName));
+
+	if (ext == ".7z" && fromZipContents)
+	{
+		LOG(LogDebug) << "getCRC32 is using 7z";
+
+		std::string fn = Utils::FileSystem::getFileName(fileName);
+		auto cmd = getSevenZipCommand() + " l -slt \"" + fileName + "\"";
+		auto lines = executeEnumerationScript(cmd);
+		for (std::string all : lines)
+		{
+			int idx = all.find("CRC = ");
+			if (idx != std::string::npos)
+				return all.substr(idx + 6);
+			else if (all.find(fn) == (all.size() - fn.size()) && all.length() > 8 && all[9] == ' ')
+				return all.substr(0, 8);
+		}
+	}
+	else if (ext == ".zip" && fromZipContents)
+	{
+		LOG(LogDebug) << "getCRC32 is using ZipFile";
+
+		Utils::Zip::ZipFile file;
+		if (file.load(fileName))
+		{
+			std::string romName;
+
+			for (auto name : file.namelist())
+			{
+				if (Utils::FileSystem::getExtension(name) != ".txt" && !Utils::String::endsWith(name, "/"))
+				{
+					if (!romName.empty())
+					{
+						romName = "";
+						break;
+					}
+
+					romName = name;
+				}
+			}
+
+			if (!romName.empty())
+				return file.getFileCrc(romName);
+		}
+	}
+
+	LOG(LogDebug) << "getCRC32 is using fileBuffer";
+	return Utils::FileSystem::getFileCrc32(fileName);
+}
+
+bool ApiSystem::unzipFile(const std::string fileName, const std::string destFolder, const std::function<bool(const std::string)>& shouldExtract)
+{
+	LOG(LogDebug) << "unzipFile >> " << fileName << " to " << destFolder;
+
+	if (!Utils::FileSystem::exists(destFolder))
+		Utils::FileSystem::createDirectory(destFolder);
+
+	if (Utils::String::toLower(Utils::FileSystem::getExtension(fileName)) == ".zip")
+	{
+		LOG(LogDebug) << "unzipFile is using ZipFile";
+
+		Utils::Zip::ZipFile file;
+		if (file.load(fileName))
+		{
+			for (auto name : file.namelist())
+			{
+				if (Utils::String::endsWith(name, "/"))
+				{
+					Utils::FileSystem::createDirectory(Utils::FileSystem::combine(destFolder, name.substr(0, name.length() - 1)));
+					continue;
+				}
+
+				if (shouldExtract != nullptr && !shouldExtract(Utils::FileSystem::combine(destFolder, name)))
+					continue;
+
+				file.extract(name, destFolder);
+			}
+
+			LOG(LogDebug) << "unzipFile << OK";
+			return true;
+		}
+
+		LOG(LogDebug) << "unzipFile << KO Bad format ?" << fileName;
+		return false;
+	}
+
+	LOG(LogDebug) << "unzipFile is using 7z";
+
+	std::string cmd = getSevenZipCommand() + " x \"" + Utils::FileSystem::getPreferredPath(fileName) + "\" -y -o\"" + Utils::FileSystem::getPreferredPath(destFolder) + "\"";
+	bool ret = executeScript(cmd);
+	LOG(LogDebug) << "unzipFile <<";
+	return ret;
 }

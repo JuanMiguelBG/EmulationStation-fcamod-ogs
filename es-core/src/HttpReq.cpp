@@ -5,8 +5,8 @@
 #include "Log.h"
 #include <assert.h>
 #include <thread>
-#include <SDL.h>
 
+#include <SDL.h>
 #include <unistd.h>
 
 #include <mutex>
@@ -41,16 +41,34 @@ std::string HttpReq::urlEncode(const std::string &s)
 bool HttpReq::isUrl(const std::string& str)
 {
 	//the worst guess
-	return (!str.empty() && !Utils::FileSystem::exists(str) && 
+	return (!str.empty() && !Utils::FileSystem::exists(str) &&
 		(str.find("http://") != std::string::npos || str.find("https://") != std::string::npos || str.find("www.") != std::string::npos));
 }
 
-HttpReq::HttpReq(const std::string& url, const std::string outputFilename)
-	: mStatus(REQ_IN_PROGRESS), mHandle(NULL)
+HttpReq::HttpReq(const std::string& url, const std::string& outputFilename)
+	: mStatus(REQ_IN_PROGRESS), mHandle(NULL), mFile(NULL)
+{
+	HttpReqOptions options;
+	options.outputFilename = outputFilename;
+	performRequest(url, &options);
+}
+
+HttpReq::HttpReq(const std::string& url, HttpReqOptions* options)
+	: mStatus(REQ_IN_PROGRESS), mHandle(NULL), mFile(NULL)
+{
+	performRequest(url, options);
+}
+
+void HttpReq::performRequest(const std::string& url, HttpReqOptions* options)
 {
 	mUrl = url;
-	mFilePath = outputFilename;
 
+	std::string outputFilename;
+
+	if (options != nullptr && !options->outputFilename.empty())
+		outputFilename = options->outputFilename;
+
+	mFilePath = outputFilename;
 	mPosition = -1;
 	mPercent = -1;
 	mHandle = curl_easy_init();
@@ -71,9 +89,47 @@ HttpReq::HttpReq(const std::string& url, const std::string outputFilename)
 		return;
 	}
 
+	if (options != nullptr && !options->dataToPost.empty())
+	{
+		curl_easy_setopt(mHandle, CURLOPT_POST, 1L);
+		curl_easy_setopt(mHandle, CURLOPT_POSTFIELDSIZE, options->dataToPost.length());
+		curl_easy_setopt(mHandle, CURLOPT_COPYPOSTFIELDS, options->dataToPost);
+	}
+
+	if (options != nullptr && options->customHeaders.size() > 0)
+	{
+		struct curl_slist *hs = nullptr;
+
+		for (auto header : options->customHeaders)
+			hs = curl_slist_append(hs, header.c_str());
+
+		curl_easy_setopt(mHandle, CURLOPT_HTTPHEADER, hs);
+	}
+	/*
+	struct curl_slist *hs = NULL;
+	hs = curl_slist_append(hs, "Content-Type: application/json");
+	curl_easy_setopt(mHandle, CURLOPT_HTTPHEADER, hs);
+
+	curl_easy_setopt(mHandle, CURLOPT_POST, 1L);
+	curl_easy_setopt(mHandle, CURLOPT_POSTFIELDS, "postvar1=value1&postvar2=value2&postvar3=value3");
+	curl_setopt($ch,CURLOPT_RETURNTRANSFER, true);
+	*/
+
 	//set curl to handle redirects
 	err = curl_easy_setopt(mHandle, CURLOPT_FOLLOWLOCATION, 1L);
 	if(err != CURLE_OK)
+	{
+		mStatus = REQ_IO_ERROR;
+		onError(curl_easy_strerror(err));
+		return;
+	}
+
+	// Ignore expired SSL certificates
+	curl_easy_setopt(mHandle, CURLOPT_SSL_VERIFYPEER, 0L);
+
+	//set curl to handle redirects
+	err = curl_easy_setopt(mHandle, CURLOPT_CONNECTTIMEOUT, 10L);
+	if (err != CURLE_OK)
 	{
 		mStatus = REQ_IO_ERROR;
 		onError(curl_easy_strerror(err));
@@ -90,7 +146,7 @@ HttpReq::HttpReq(const std::string& url, const std::string outputFilename)
 	}
 
 	//set curl restrict redirect protocols
-	err = curl_easy_setopt(mHandle, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS); 
+	err = curl_easy_setopt(mHandle, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 	if(err != CURLE_OK)
 	{
 		mStatus = REQ_IO_ERROR;
@@ -125,23 +181,23 @@ HttpReq::HttpReq(const std::string& url, const std::string outputFilename)
 		return;
 	}
 
-	
 	std::unique_lock<std::mutex> lock(mMutex);
 
 	if (!mFilePath.empty())
 	{
 		mTempStreamPath = outputFilename + ".tmp";
-		
-		Utils::FileSystem::removeFile(mTempStreamPath);
 
-		mStream.open(mTempStreamPath, std::ios_base::out | std::ios_base::binary);
-		if (!mStream.is_open())
+		Utils::FileSystem::removeFile(mTempStreamPath);
+		mFile = fopen(mTempStreamPath.c_str(), "wb");
+
+		if (mFile == nullptr)
 		{
 			mStatus = REQ_IO_ERROR;
 			onError("IO Error (disk is Readonly ?)");
 			return;
 		}
 
+		mPosition = 0;
 		Utils::FileSystem::removeFile(outputFilename);
 	}
 
@@ -161,13 +217,11 @@ HttpReq::HttpReq(const std::string& url, const std::string outputFilename)
 
 void HttpReq::closeStream()
 {
-	if (mFilePath.empty())
-		return;
-
-	if (mStream.is_open())
+	if (mFile)
 	{
-		mStream.flush();
-		mStream.close();
+		fflush(mFile);
+		fclose(mFile);
+		mFile = nullptr;
 	}
 }
 
@@ -176,7 +230,7 @@ HttpReq::~HttpReq()
 	std::unique_lock<std::mutex> lock(mMutex);
 
 	closeStream();
-	
+
 	if (!mTempStreamPath.empty())
 		Utils::FileSystem::removeFile(mTempStreamPath);
 
@@ -195,10 +249,10 @@ HttpReq::~HttpReq()
 
 HttpReq::Status HttpReq::status()
 {
-	std::unique_lock<std::mutex> lock(mMutex);
-
 	if (mStatus == REQ_IN_PROGRESS)
 	{
+		std::unique_lock<std::mutex> lock(mMutex);
+
 		int handle_count;
 		CURLMcode merr = curl_multi_perform(s_multi_handle, &handle_count);
 		if (merr != CURLM_OK && merr != CURLM_CALL_MULTI_PERFORM)
@@ -235,13 +289,17 @@ HttpReq::Status HttpReq::status()
 					int http_status_code;
 					curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE, &http_status_code);
 
+					char *ct = NULL;
+					if (!curl_easy_getinfo(msg->easy_handle, CURLINFO_CONTENT_TYPE, &ct) && ct)
+						req->mResponseContentType = ct;
+
 					if (http_status_code < 200 || http_status_code > 299)
 					{
 						std::string err;
 
-						if (http_status_code >= 400 && http_status_code < 499)
+						if (http_status_code >= 400 && http_status_code <= 500)
 						{
-							if (mFilePath.empty())
+							if (req->mFilePath.empty())
 								err = req->getContent();
 
 							req->mStatus = (Status)http_status_code;
@@ -256,9 +314,18 @@ HttpReq::Status HttpReq::status()
 					}
 					else
 					{
-						if (!mFilePath.empty())
+						if (!req->mFilePath.empty())
 						{
-							if (std::rename(mTempStreamPath.c_str(), mFilePath.c_str()) == 0)
+							bool renamed = Utils::FileSystem::renameFile(req->mTempStreamPath.c_str(), req->mFilePath.c_str());
+							if (!renamed)
+							{
+								// Strange behaviour on Windows : sometimes std::rename fails if it's done too early after closing stream
+								// Copy file instead & try to delete it
+								if (Utils::FileSystem::copyFile(req->mTempStreamPath, req->mFilePath))
+									renamed = true;
+							}
+
+							if (renamed)
 								req->mStatus = REQ_SUCCESS;
 							else
 							{
@@ -282,7 +349,7 @@ HttpReq::Status HttpReq::status()
 	return mStatus;
 }
 
-std::string HttpReq::getContent() 
+std::string HttpReq::getContent()
 {
 	if (mFilePath.empty())
 		return mContent.str();
@@ -329,34 +396,22 @@ std::string HttpReq::getErrorMsg()
 size_t HttpReq::write_content(void* buff, size_t size, size_t nmemb, void* req_ptr)
 {
 	HttpReq* request = ((HttpReq*)req_ptr);
-		
+
 	if (request->mFilePath.empty())
 	{
 		((HttpReq*)req_ptr)->mContent.write((char*)buff, size * nmemb);
 		return size * nmemb;
 	}
 
-	std::ofstream& ss = request->mStream;
+	FILE* file = request->mFile;
+	if (file == nullptr)
+		return 0;
 
-	try
+	size_t rs = size * nmemb;
+	fwrite(buff, 1, rs, file) != rs;
+	if (ferror(file))
 	{
-		if (!ss.is_open())
-			return 0;
-
-		ss.write((char*)buff, size * nmemb);
-
-		if (ss.rdstate() != std::ofstream::goodbit)
-		{
-			request->closeStream();			
-			request->mStatus = REQ_FILESTREAM_ERROR;
-			request->mErrorMsg = "IO ERROR (DISK FULL?)";		
-
-			return 0;
-		}
-	}
-	catch(...)
-	{
-		request->closeStream();		
+		request->closeStream();
 		request->mStatus = REQ_FILESTREAM_ERROR;
 		request->mErrorMsg = "IO ERROR (DISK FULL?)";
 
@@ -365,14 +420,13 @@ size_t HttpReq::write_content(void* buff, size_t size, size_t nmemb, void* req_p
 
 	double cl;
 	if (!curl_easy_getinfo(request->mHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &cl))
-	{		
-		double position = (double)ss.tellp();
-		request->mPosition = position;
+	{
+		request->mPosition += rs;
 
 		if (cl <= 0)
 			request->mPercent = -1;
 		else
-			request->mPercent = (int) (position * 100.0 / cl);
+			request->mPercent = (int) (request->mPosition * 100.0 / cl);
 	}
 
 	return nmemb;

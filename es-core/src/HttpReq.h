@@ -6,12 +6,15 @@
 #include <map>
 #include <sstream>
 #include <fstream>
+#include <string>
+#include <vector>
+#include <stdio.h>
 
 /* Usage:
  * HttpReq myRequest("www.google.com", "/index.html");
  * //for blocking behavior: while(myRequest.status() == HttpReq::REQ_IN_PROGRESS);
  * //for non-blocking behavior: check if(myRequest.status() != HttpReq::REQ_IN_PROGRESS) in some sort of update method
- * 
+ *
  * //once one of those completes, the request is ready
  * if(myRequest.status() != REQ_SUCCESS)
  * {
@@ -24,30 +27,47 @@
  * //process contents...
 */
 
+class HttpReqOptions
+{
+public:
+	HttpReqOptions() {}
+	HttpReqOptions(const std::string& filename)
+	{
+		outputFilename = filename;
+	}
+
+	std::string outputFilename;
+	std::vector<std::string> customHeaders;
+	std::string dataToPost;
+};
+
 class HttpReq
 {
 public:
-	HttpReq(const std::string& url, const std::string outputFilename = "");
+	HttpReq(const std::string& url, HttpReqOptions* options = nullptr);
+	HttpReq(const std::string& url, const std::string& outputFilename);
+
 	~HttpReq();
 
 	enum Status
 	{
 		REQ_IN_PROGRESS = 0,
-		REQ_IO_ERROR	= 3,				
-		REQ_FILESTREAM_ERROR = 4,		
+		REQ_IO_ERROR	= 3,
+		REQ_FILESTREAM_ERROR = 4,
 
 		REQ_SUCCESS = 200,
 		REQ_400_BADREQUEST = 400,
 		REQ_401_FORBIDDEN = 401,
 		REQ_403_BADLOGIN = 403,
 		REQ_404_NOTFOUND = 404,
-		
+
 		REQ_426_SERVERMAINTENANCE = 423,
 		REQ_426_BLACKLISTED = 426,
 		REQ_429_TOOMANYREQUESTS = 429,
 
 		REQ_430_TOOMANYSCRAPS = 430,
-		REQ_430_TOOMANYFAILURES = 431
+		REQ_430_TOOMANYFAILURES = 431,
+		REQ_500_INTERNALSERVERERROR = 500
 	};
 
 	Status status(); //process any received data and return the status afterwards
@@ -65,9 +85,13 @@ public:
 	int getPosition() { return mPosition; }
 
 	std::string getUrl() { return mUrl; }
+	std::string getFilePath() { return mFilePath; }
+	std::string getResponseContentType() { return mResponseContentType; }
+
 	bool wait();
 
 private:
+	void performRequest(const std::string& url, HttpReqOptions* options);
 	void closeStream();
 
 	static size_t write_content(void* buff, size_t size, size_t nmemb, void* req_ptr);
@@ -91,7 +115,9 @@ private:
 	// file stream mode
 	std::string   mFilePath;
 	std::string   mTempStreamPath;
-	std::ofstream mStream;
+	FILE*		  mFile;
+
+	std::string   mResponseContentType;
 
 	std::string mErrorMsg;
 	std::string mUrl;

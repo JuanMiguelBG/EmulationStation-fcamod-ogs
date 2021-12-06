@@ -3,6 +3,8 @@
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
 #include "utils/TimeUtil.h"
+#include "utils/ZipFile.h"
+#include "utils/md5.h"
 
 #include "Settings.h"
 #include <sys/stat.h>
@@ -15,6 +17,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include "Log.h"
 
 namespace Utils
@@ -284,7 +287,7 @@ namespace Utils
 
 			// only parse the directory, if it's a directory
 			if(isDirectory(path))
-			{		
+			{
 				FileCache::add(path + "/*", FileCache(true, true));
 
 
@@ -303,7 +306,6 @@ namespace Utils
 						if((name != ".") && (name != ".."))
 						{
 							std::string fullName(getGenericPath(path + "/" + name));
-
 							FileCache::add(fullName, FileCache(fullName, entry));
 
 							if (!includeHidden && Utils::FileSystem::isHidden(fullName))
@@ -662,20 +664,13 @@ namespace Utils
 
 		std::string getExtension(const std::string& _path)
 		{
-			std::string fileName = getFileName(_path);
-			size_t      offset   = std::string::npos;
+			const char *str = _path.c_str();
 
-			// empty fileName
-			if(fileName == ".")
-				return fileName;
+			const char *ext;
+			if (str && *str != '\0' && ((ext = strrchr(str, '.'))) && strpbrk(ext, "/\\") == nullptr)
+				return ext;
 
-			// find last '.' and return the extension
-			if((offset = fileName.find_last_of('.')) != std::string::npos)
-				return std::string(fileName, offset);
-
-			// no '.' found, filename has no extension
-			return ".";
-
+			return std::string();
 		} // getExtension
 
 		std::string resolveRelativePath(const std::string& _path, const std::string& _relativeTo, const bool _allowHome)
@@ -846,6 +841,17 @@ namespace Utils
 			return (mkdir(path.c_str(), 0755) == 0);
 
 		} // createDirectory
+
+		bool removeDirectory(const std::string& _path)
+		{
+			std::string path = getGenericPath(_path);
+
+			// don't remove if it doesn't exists
+			if (!exists(path))
+				return true;
+
+			return (rmdir(path.c_str()) == 0);
+		} // removeDirectory
 
 		bool exists(const std::string& _path)
 		{
@@ -1074,6 +1080,113 @@ namespace Utils
 			out << std::fixed << size_d << " " << SIZES[div];
 			return out.str();
 		} // megaBytesToString
+
+		bool renameFile(const std::string src, const std::string dst, bool overWrite)
+		{
+			std::string path = getGenericPath(src);
+			if (!exists(path))
+				return true;
+
+			if (overWrite && Utils::FileSystem::exists(dst))
+				Utils::FileSystem::removeFile(dst);
+
+			return std::rename(src.c_str(), dst.c_str()) == 0;
+		} // renameFile
+
+		std::string getTempPath()
+		{
+			static std::string path;
+
+			if (path.empty())
+			{
+					path = Utils::FileSystem::getGenericPath(Utils::FileSystem::getEsConfigPath() + "/tmp");
+			}
+
+			if (!Utils::FileSystem::isDirectory(path))
+				Utils::FileSystem::createDirectory(path);
+
+			return path;
+		} // getTempPath
+
+		void deleteDirectoryFiles(const std::string path, bool deleteDirectory)
+		{
+			std::vector<std::string> directories;
+
+			auto files = Utils::FileSystem::getDirContent(path, true, true);
+			std::reverse(std::begin(files), std::end(files));
+			for (auto file : files)
+			{
+				if (Utils::FileSystem::isDirectory(file))
+					directories.push_back(file);
+				else
+					Utils::FileSystem::removeFile(file);
+			}
+
+			for (auto file : directories)
+				removeDirectory(file);
+
+			if (deleteDirectory)
+				removeDirectory(path);
+		} // deleteDirectoryFiles
+
+		std::string getFileCrc32(const std::string& filename)
+		{
+			std::string hex;
+
+			FILE* file = fopen(filename.c_str(), "rb");
+			if (file)
+			{
+				#define CRCBUFFERSIZE 64 * 1024
+				char* buffer = new char[CRCBUFFERSIZE];
+				if (buffer)
+				{
+					size_t size;
+
+					unsigned int file_crc32 = 0;
+
+					while (size = fread(buffer, 1, CRCBUFFERSIZE, file))
+						file_crc32 = Utils::Zip::ZipFile::computeCRC(file_crc32, buffer, size);
+
+					hex = Utils::String::toHexString(file_crc32);
+
+					delete buffer;
+				}
+
+				fclose(file);
+			}
+
+			return hex;
+		} // getFileCrc32
+
+		std::string getFileMd5(const std::string& filename)
+		{
+			std::string hex;
+
+			FILE* file = fopen(filename.c_str(), "rb");
+			if (file)
+			{
+				#define CRCBUFFERSIZE 64 * 1024
+				char* buffer = new char[CRCBUFFERSIZE];
+
+				if (buffer)
+				{
+					MD5 md5;
+
+					size_t size;
+					while (size = fread(buffer, 1, CRCBUFFERSIZE, file))
+						md5.update(buffer, size);
+
+					md5.finalize();
+					hex = md5.hexdigest();
+
+					delete buffer;
+				}
+
+				fclose(file);
+			}
+
+			return hex;
+		} // getFileMd5
 
 	} // FileSystem::
 

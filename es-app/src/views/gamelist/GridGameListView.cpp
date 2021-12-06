@@ -284,7 +284,7 @@ void GridGameListView::populateList(const std::vector<FileData*>& files)
 							if (child->getType() == FOLDER)
 								displayAsVirtualFolder = ((FolderData*)child)->isVirtualFolderDisplayEnabled();
 
-							imagePath = child->getMetadata("image");
+							imagePath = child->getMetadata(MetaDataId::Image);
 							break;
 						}
 					}
@@ -605,22 +605,22 @@ void GridGameListView::updateInfoPanel()
 		if (mMarquee != nullptr)
 			mMarquee->setImage(file->getMarqueePath(), false, mMarquee->getMaxSizeInfo());
 
-		mDescription.setText(file->getMetadata().get("desc"));
+		mDescription.setText(file->getMetadata(MetaDataId::Desc));
 		mDescContainer.reset();
 
-		mRating.setValue(getMetadata(file, "rating"));
-		mReleaseDate.setValue(getMetadata(file, "releasedate"));
-		mDeveloper.setValue(getMetadata(file, "developer"));
-		mPublisher.setValue(getMetadata(file, "publisher"));
-		mGenre.setValue(getMetadata(file, "genre"));
-		mPlayers.setValue(getMetadata(file, "players"));
-		mName.setValue(getMetadata(file, "name"));
+		mRating.setValue(getMetadata(file, MetaDataId::Rating));
+		mReleaseDate.setValue(getMetadata(file, MetaDataId::ReleaseDate));
+		mDeveloper.setValue(getMetadata(file, MetaDataId::Developer));
+		mPublisher.setValue(getMetadata(file, MetaDataId::Publisher));
+		mGenre.setValue(getMetadata(file, MetaDataId::Genre));
+		mPlayers.setValue(getMetadata(file, MetaDataId::Players));
+		mName.setValue(getMetadata(file, MetaDataId::Name));
 
 		if(file->getType() == GAME)
 		{
-			mLastPlayed.setValue(getMetadata(file, "lastplayed"));
-			mPlayCount.setValue(getMetadata(file, "playcount"));
-			mGameTime.setValue(getMetadata(file, "gametime"));
+			mLastPlayed.setValue(getMetadata(file, MetaDataId::LastPlayed));
+			mPlayCount.setValue(getMetadata(file, MetaDataId::PlayCount));
+			mGameTime.setValue(Utils::Time::secondsToString(atol( getMetadata(file, MetaDataId::GameTime).c_str() )));
 		}
 
 		fadingOut = false;

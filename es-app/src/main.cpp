@@ -409,6 +409,10 @@ int main(int argc, char* argv[])
 	//always close the log on exit
 	atexit(&onExit);
 
+	// metadata init
+	//Genres::init();
+	MetaDataList::initMetadata();
+
 	Window window;
 	SystemScreenSaver screensaver(&window);
 	PowerSaver::init();

@@ -260,7 +260,7 @@ void ScraperSearchComponent::onSearchDone(const std::vector<ScraperSearchResult>
 		for(size_t i = 0; i < results.size(); i++)
 		{
 			row.elements.clear();
-			row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(results.at(i).mdl.get("name")), font, color), true);
+			row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(results.at(i).mdl.get(MetaDataId::Name)), font, color), true);
 			row.makeAcceptInputHandler([this, i] { returnResult(mScraperResults.at(i)); });
 			mResultList->addRow(row);
 		}
@@ -312,8 +312,8 @@ void ScraperSearchComponent::updateInfoPane()
 	if(i != -1 && (int)mScraperResults.size() > i)
 	{
 		ScraperSearchResult& res = mScraperResults.at(i);
-		mResultName->setText(Utils::String::toUpper(res.mdl.get("name")));
-		mResultDesc->setText(Utils::String::toUpper(res.mdl.get("desc")));
+		mResultName->setText(Utils::String::toUpper(res.mdl.get(MetaDataId::Name)));
+		mResultDesc->setText(Utils::String::toUpper(res.mdl.get(MetaDataId::Desc)));
 		mDescContainer->reset();
 
 		mResultThumbnail->setImage("");
@@ -326,12 +326,14 @@ void ScraperSearchComponent::updateInfoPane()
 		}
 
 		// metadata
-		mMD_Rating->setValue(Utils::String::toUpper(res.mdl.get("rating")));
-		mMD_ReleaseDate->setValue(Utils::String::toUpper(res.mdl.get("releasedate")));
-		mMD_Developer->setText(Utils::String::toUpper(res.mdl.get("developer")));
-		mMD_Publisher->setText(Utils::String::toUpper(res.mdl.get("publisher")));
-		mMD_Genre->setText(Utils::String::toUpper(res.mdl.get("genre")));
-		mMD_Players->setText(Utils::String::toUpper(res.mdl.get("players")));
+		mMD_Rating->setVisible(res.mdl.getFloat(MetaDataId::Rating) >= 0);
+		mMD_Rating->setValue(Utils::String::toUpper(res.mdl.get(MetaDataId::Rating)));
+
+		mMD_ReleaseDate->setValue(Utils::String::toUpper(res.mdl.get(MetaDataId::ReleaseDate)));
+		mMD_Developer->setText(Utils::String::toUpper(res.mdl.get(MetaDataId::Developer)));
+		mMD_Publisher->setText(Utils::String::toUpper(res.mdl.get(MetaDataId::Publisher)));
+		mMD_Genre->setText(Utils::String::toUpper(res.mdl.get(MetaDataId::Genre)));
+		mMD_Players->setText(Utils::String::toUpper(res.mdl.get(MetaDataId::Players)));
 		mGrid.onSizeChanged();
 	}else{
 		mResultName->setText("");
@@ -400,10 +402,10 @@ void ScraperSearchComponent::update(int deltaTime)
 			{
 				ScraperSearchResult result = mMDResolveHandle->getResult();
 
-				if (!result.mdl.get("thumbnail").empty())
-					mResultThumbnail->setImage(result.mdl.get("thumbnail"));
-				else if (!result.mdl.get("image").empty())
-					mResultThumbnail->setImage(result.mdl.get("image"));
+				if (!result.mdl.get(MetaDataId::Thumbnail).empty())
+					mResultThumbnail->setImage(result.mdl.get(MetaDataId::Thumbnail));
+				else if (!result.mdl.get(MetaDataId::Image).empty())
+					mResultThumbnail->setImage(result.mdl.get(MetaDataId::Image));
 			}
 
 			mBusyAnim.setText(_("DOWNLOADING") + " " + Utils::String::toUpper(_(mMDResolveHandle->getCurrentItem())));

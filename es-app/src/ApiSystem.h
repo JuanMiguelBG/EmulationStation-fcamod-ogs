@@ -198,7 +198,12 @@ public:
 
 	bool setOptimizeSystem(bool state);
 
+	virtual std::string getSevenZipCommand() { return "7zr"; }
 
+	virtual std::string getCRC32(const std::string fileName, bool fromZipContents = true);
+	virtual std::string getMD5(const std::string fileName, bool fromZipContents = true);
+
+	virtual bool unzipFile(const std::string fileName, const std::string destFolder = "", const std::function<bool(const std::string)>& shouldExtract = nullptr);
 
 	static UpdateState::State state;
 

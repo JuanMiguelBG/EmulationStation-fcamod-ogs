@@ -27,22 +27,22 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 
 		if (Settings::getInstance()->getString("Scraper") == "ScreenScraper")
 		{
-			if (!Settings::getInstance()->getString("ScrapperImageSrc").empty() && !Utils::FileSystem::exists(g->getMetadata().get("image")))
+			if (!Settings::getInstance()->getString("ScrapperImageSrc").empty() && !Utils::FileSystem::exists(g->getMetadata(MetaDataId::Image)))
 				return true;
 
-			if (!Settings::getInstance()->getString("ScrapperThumbSrc").empty() && !Utils::FileSystem::exists(g->getMetadata().get("thumbnail")))
+			if (!Settings::getInstance()->getString("ScrapperThumbSrc").empty() && !Utils::FileSystem::exists(g->getMetadata(MetaDataId::Thumbnail)))
 				return true;
 
-			if (!Settings::getInstance()->getString("ScrapperLogoSrc").empty() && !Utils::FileSystem::exists(g->getMetadata().get("marquee")))
+			if (!Settings::getInstance()->getString("ScrapperLogoSrc").empty() && !Utils::FileSystem::exists(g->getMetadata(MetaDataId::Marquee)))
 				return true;
 
-			if (Settings::getInstance()->getBool("ScrapeVideos") && !Utils::FileSystem::exists(g->getMetadata().get("video")))
+			if (Settings::getInstance()->getBool("ScrapeVideos") && !Utils::FileSystem::exists(g->getMetadata(MetaDataId::Video)))
 				return true;
 
 			return false;
 		}
 		else
-			return !Utils::FileSystem::exists(g->getMetadata().get("image"));
+			return !Utils::FileSystem::exists(g->getMetadata(MetaDataId::Image));
 
 	}, true);
 

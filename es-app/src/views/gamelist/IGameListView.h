@@ -3,6 +3,7 @@
 #define ES_APP_VIEWS_GAME_LIST_IGAME_LIST_VIEW_H
 
 #include "renderers/Renderer.h"
+#include "MetaData.h"
 #include "FileData.h"
 #include "GuiComponent.h"
 
@@ -47,7 +48,7 @@ public:
 	virtual std::vector<std::string> getEntriesLetters() = 0;
 
 protected:
-	virtual std::string getMetadata(FileData* file, std::string name);
+	virtual std::string getMetadata(FileData* file, MetaDataId metaDataId);
 
 	std::string mCustomThemeName;
 

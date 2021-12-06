@@ -36,7 +36,7 @@ TextureResource::TextureResource(const std::string& path, bool tile, bool linear
 
 			unsigned int width, height;
 			
-			if (allowAsync && Settings::getInstance()->getBool("ThreadedLoading") && ImageIO::getImageSize(fullpath.c_str(), &width, &height))
+			if (allowAsync && Settings::getInstance()->getBool("ThreadedLoading") && ImageIO::loadImageSize(fullpath.c_str(), &width, &height))
 			{
 				data->setTemporarySize(width, height);
 				async = true;

@@ -195,6 +195,8 @@ public:
 	static std::unordered_set<std::string> getAllGroupNames();
 	static std::unordered_set<std::string> getGroupChildSystemNames(const std::string groupName);
 
+	bool shouldExtractHashesFromArchives();
+
 private:
 	static SystemData* loadSystem(pugi::xml_node system);
 	static void createGroupedSystems();
