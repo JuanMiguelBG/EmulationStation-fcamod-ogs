@@ -115,7 +115,7 @@ void TheGamesDBJSONRequestResources::ensureResources()
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(POLL_TIME_MS));
 	}
-	LOG(LogError) << "Timed out while waiting for resources\n";
+	LOG(LogError) << "TheGamesDBJSONRequestResources::ensureResources() - Timed out while waiting for resources\n";
 }
 
 bool TheGamesDBJSONRequestResources::checkLoaded()
@@ -129,7 +129,7 @@ bool TheGamesDBJSONRequestResources::saveResource(HttpReq* req, std::unordered_m
 
 	if (req == nullptr)
 	{
-		LOG(LogError) << "Http request pointer was null\n";
+		LOG(LogError) << "GamesDBJSONRequestResources::saveResource() - ERROR: Http request pointer was null\n";
 		return true;
 	}
 	if (req->status() == HttpReq::REQ_IN_PROGRESS)
@@ -138,8 +138,8 @@ bool TheGamesDBJSONRequestResources::saveResource(HttpReq* req, std::unordered_m
 	}
 	if (req->status() != HttpReq::REQ_SUCCESS)
 	{
-		LOG(LogError) << "GamesDBJSONRequestResources::saveResource():141 - Resource request for " << file_name << " failed:\n\t" << req->getErrorMsg();
-		LOG(LogInfo) << "GamesDBJSONRequestResources::saveResource():142 - Request Error Message for traslations: " << Utils::String::showSpecialCharacters(req->getErrorMsg());
+		LOG(LogError) << "GamesDBJSONRequestResources::saveResource() - Resource request for " << file_name << " failed:\n\t" << req->getErrorMsg();
+		LOG(LogInfo) << "GamesDBJSONRequestResources::saveResource() - Request Error Message for traslations: " << Utils::String::showSpecialCharacters(req->getErrorMsg());
 		return true; // Request failed, resetting request.
 	}
 
@@ -179,7 +179,7 @@ int TheGamesDBJSONRequestResources::loadResource(
 
 	if (doc.HasParseError())
 	{
-		std::string err = std::string("TheGamesDBJSONRequest - Error parsing JSON for resource file ") + file_name +
+		std::string err = std::string("TheGamesDBJSONRequestResources::loadResource() - ERROR: Error parsing JSON for resource file ") + file_name +
 						  ":\n\t" + GetParseError_En(doc.GetParseError());
 		LOG(LogError) << err;
 		return 1;
@@ -188,7 +188,7 @@ int TheGamesDBJSONRequestResources::loadResource(
 	if (!doc.HasMember("data") || !doc["data"].HasMember(resource_name.c_str()) ||
 		!doc["data"][resource_name.c_str()].IsObject())
 	{
-		std::string err = "TheGamesDBJSONRequest - Response had no resource data.\n";
+		std::string err = "TheGamesDBJSONRequestResources::loadResource() - ERROR: Response had no resource data.\n";
 		LOG(LogError) << err;
 		return 1;
 	}

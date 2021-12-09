@@ -254,8 +254,15 @@ bool addFileDataNode(pugi::xml_node& parent, const FileData* file, const char* t
 
 bool saveToGamelistRecovery(FileData* file)
 {
-	if (!Settings::getInstance()->getBool("SaveGamelistsOnExit"))
+	LOG(LogDebug) << "GameList::saveToGamelistRecovery() - name: " << file->getName() << ", path: " << file->getPath();
+
+
+	LOG(LogDebug) << "GameList::saveToGamelistRecovery() - name: " << file->getName() << ", SaveGamelistsOnExit: " << Utils::String::boolToString(Settings::getInstance()->getBool("SaveGamelistsOnExit"));
+	if (Settings::getInstance()->getBool("SaveGamelistsOnExit"))
 		return false;
+
+
+	LOG(LogDebug) << "GameList::saveToGamelistRecovery() - name: " << file->getName() << ", continue!!!";
 
 	pugi::xml_document doc;
 	pugi::xml_node root = doc.append_child("gameList");
@@ -263,6 +270,7 @@ bool saveToGamelistRecovery(FileData* file)
 	const char* tag = file->getType() == GAME ? "game" : "folder";
 
 	SystemData* system = file->getSourceFileData()->getSystem();
+	LOG(LogDebug) << "GameList::saveToGamelistRecovery() - name: " << file->getName() << ", system: " << system->getName() << " start path: " << system->getStartPath() << ", root folder: " << system->getRootFolder()->getMetadata(MetaDataId::Name);
 	root.append_attribute("parentHash").set_value(system->getGamelistHash());
 
 	if (addFileDataNode(root, file, tag, system))

@@ -150,7 +150,7 @@ std::string FileFilterIndex::getIndexableKey(FileData* game, FilterIndexType typ
 				}
 				catch (int e)
 				{
-					LOG(LogError) << "Error parsing Rating (invalid value, exception nr.): " << ratingString << ", " << e;
+					LOG(LogError) << "FileFilterIndex::getIndexableKey(() - Error parsing Rating (invalid value, exception nr.): " << ratingString << ", " << e;
 				}
 			}
 			break;
@@ -283,30 +283,30 @@ void FileFilterIndex::setUIModeFilters()
 
 void FileFilterIndex::debugPrintIndexes()
 {
-	LOG(LogInfo) << "Printing Indexes...";
+	LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - Printing Indexes...";
 	for (auto x: playersIndexAllKeys) {
-		LOG(LogInfo) << "Multiplayer Index: " << x.first << ": " << x.second;
+		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - Multiplayer Index: " << x.first << ": " << x.second;
 	}
 	for (auto x: genreIndexAllKeys) {
-		LOG(LogInfo) << "Genre Index: " << x.first << ": " << x.second;
+		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - Genre Index: " << x.first << ": " << x.second;
 	}
 	for (auto x: ratingsIndexAllKeys) {
-		LOG(LogInfo) << "Ratings Index: " << x.first << ": " << x.second;
+		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - Ratings Index: " << x.first << ": " << x.second;
 	}
 	for (auto x: pubDevIndexAllKeys) {
-		LOG(LogInfo) << "PubDev Index: " << x.first << ": " << x.second;
+		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - PubDev Index: " << x.first << ": " << x.second;
 	}
 	for (auto x: favoritesIndexAllKeys) {
-		LOG(LogInfo) << "Favorites Index: " << x.first << ": " << x.second;
+		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - Favorites Index: " << x.first << ": " << x.second;
 	}
 //	for (auto x : hiddenIndexAllKeys) {
-//		LOG(LogInfo) << "Hidden Index: " << x.first << ": " << x.second;
+//		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - Hidden Index: " << x.first << ": " << x.second;
 //	}
 	for (auto x : kidGameIndexAllKeys) {
-		LOG(LogInfo) << "KidGames Index: " << x.first << ": " << x.second;
+		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - KidGames Index: " << x.first << ": " << x.second;
 	}
 	for (auto x : verticalIndexAllKeys) {
-		LOG(LogInfo) << "Vertical Index: " << x.first << ": " << x.second;
+		LOG(LogInfo) << "FileFilterIndex::debugPrintIndexes() - Vertical Index: " << x.first << ": " << x.second;
 	}
 }
 
@@ -547,7 +547,7 @@ void FileFilterIndex::manageIndexEntry(std::map<std::string, int>* index, std::s
 		if (index->find(key) == index->cend())
 		{
 			// this shouldn't happen
-			LOG(LogInfo) << "Couldn't find entry in index! " << key;
+			LOG(LogInfo) << "FileFilterIndex::manageIndexEntry() - Couldn't find entry in index! " << key;
 		}
 		else
 		{

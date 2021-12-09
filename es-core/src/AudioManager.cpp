@@ -49,16 +49,16 @@ void AudioManager::init()
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
 	{
-		LOG(LogError) << "Error initializing SDL audio!\n" << SDL_GetError();
+		LOG(LogError) << "AudioManager::init() - ERROR: problem to initializing SDL audio!\n" << SDL_GetError();
 		return;
 	}
 
 	// Open the audio device and pause
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) < 0)
-		LOG(LogError) << "MUSIC Error - Unable to open SDLMixer audio: " << SDL_GetError() << std::endl;
+		LOG(LogError) << "AudioManager::init() - MUSIC Error - Unable to open SDLMixer audio: " << SDL_GetError() << std::endl;
 	else
 	{
-		LOG(LogInfo) << "SDL AUDIO Initialized";
+		LOG(LogInfo) << "AudioManager::init() - SDL AUDIO Initialized";
 		mInitialized = true;
 
 		// Reload known sounds
@@ -72,7 +72,7 @@ void AudioManager::deinit()
 	if (!mInitialized)
 		return;
 
-	LOG(LogDebug) << "AudioManager::deinit";
+	LOG(LogInfo) << "AudioManager::deinit()";
 
 	mInitialized = false;
 
@@ -91,7 +91,7 @@ void AudioManager::deinit()
 	Mix_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
-	LOG(LogInfo) << "SDL AUDIO Deinitialized";
+	LOG(LogInfo) << "AudioManager::deinit() - SDL AUDIO Deinitialized";
 }
 
 void AudioManager::registerSound(std::shared_ptr<Sound> & sound)
@@ -112,7 +112,7 @@ void AudioManager::unregisterSound(std::shared_ptr<Sound> & sound)
 			return;
 		}
 	}
-	LOG(LogWarning) << "AudioManager Error - tried to unregister a sound that wasn't registered!";
+	LOG(LogWarning) << "AudioManager::unregisterSound() - ERROR: tried to unregister a sound that wasn't registered!";
 }
 
 void AudioManager::play()

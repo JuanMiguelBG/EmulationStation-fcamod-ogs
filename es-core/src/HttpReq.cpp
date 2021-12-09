@@ -241,7 +241,7 @@ HttpReq::~HttpReq()
 		CURLMcode merr = curl_multi_remove_handle(s_multi_handle, mHandle);
 
 		if(merr != CURLM_OK)
-			LOG(LogError) << "Error removing curl_easy handle from curl_multi: " << curl_multi_strerror(merr);
+			LOG(LogError) << "HttpReq::~HttpReq() - ERROR: problem to removing curl_easy handle from curl_multi: " << curl_multi_strerror(merr);
 
 		curl_easy_cleanup(mHandle);
 	}
@@ -273,7 +273,7 @@ HttpReq::Status HttpReq::status()
 				HttpReq* req = s_requests[msg->easy_handle];
 				if (req == NULL)
 				{
-					LOG(LogError) << "Cannot find easy handle!";
+					LOG(LogError) << "HttpReq::status() - ERROR: cannot find easy handle!";
 					continue;
 				}
 
@@ -373,7 +373,7 @@ std::string HttpReq::getContent()
 	}
 	catch (...)
 	{
-		LOG(LogError) << "Error getting Http request content";
+		LOG(LogError) << "HttpReq::getContent() - ERROR: problem to getting Http request content";
 	}
 
 	return "";

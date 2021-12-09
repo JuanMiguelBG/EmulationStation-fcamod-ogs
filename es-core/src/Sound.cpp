@@ -20,12 +20,12 @@ std::shared_ptr<Sound> Sound::get(const std::string& path)
 
 std::shared_ptr<Sound> Sound::getFromTheme(const std::shared_ptr<ThemeData>& theme, const std::string& view, const std::string& element)
 {
-	LOG(LogInfo) << " req sound [" << view << "." << element << "]";
+	LOG(LogInfo) << "Sound::getFromTheme() - req sound [" << view << "." << element << "]";
 
 	const ThemeData::ThemeElement* elem = theme->getElement(view, element, "sound");
 	if(elem == nullptr || !elem->has("path"))
 	{
-		LOG(LogInfo) << "   (missing)";
+		LOG(LogInfo) << "Sound::getFromTheme() -    (missing)";
 		return get("");
 	}
 
@@ -65,7 +65,7 @@ void Sound::init()
 	mSampleData = Mix_LoadWAV(mPath.c_str());
 	if (mSampleData == nullptr) 
 	{
-		LOG(LogError) << "Error loading sound \"" << mPath << "\"!\n" << "	" << SDL_GetError();
+		LOG(LogError) << "Sound::init() - ERROR: problem to loading sound \"" << mPath << "\"!\n" << "	" << SDL_GetError();
 		return;
 	}
 }

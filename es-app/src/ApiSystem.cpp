@@ -116,7 +116,7 @@ std::pair<std::string, int> ApiSystem::executeScript(const std::string command, 
 	FILE *pipe = popen(command.c_str(), "r");
 	if (pipe == NULL)
 	{
-		LOG(LogError) << "Error executing " << command;
+		LOG(LogError) << "ApiSystem::executeScript() - Error executing " << command;
 		return std::pair<std::string, int>("Error starting command : " + command, -1);
 	}
 

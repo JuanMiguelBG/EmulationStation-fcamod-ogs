@@ -51,7 +51,7 @@ bool TextureData::initSVGFromMemory(const unsigned char* fileData, size_t length
 	free(copy);
 	if (!svgImage)
 	{
-		LOG(LogError) << "Error parsing SVG image.";
+		LOG(LogError) << "TextureData::initSVGFromMemory() - ERROR: problem to parsing SVG image.";
 		return false;
 	}
 
@@ -166,7 +166,7 @@ bool TextureData::initImageFromMemory(const unsigned char* fileData, size_t leng
 	unsigned char* imageRGBA = ImageIO::loadFromMemoryRGBA32Ex((const unsigned char*)(fileData), length, width, height, x, y, mMaxSize.externalZoom(), mBaseSize, mPackedSize);
 	if (imageRGBA == NULL)
 	{
-		LOG(LogError) << "Could not initialize texture from memory, invalid data!  (file path: " << mPath << ", data ptr: " << (size_t)fileData << ", reported size: " << length << ")";
+		LOG(LogError) << "TextureData::initImageFromMemory() - ERROR: Could not initialize texture from memory, invalid data!  (file path: " << mPath << ", data ptr: " << (size_t)fileData << ", reported size: " << length << ")";
 		return false;
 	}
 

@@ -218,7 +218,7 @@ void thegamesdb_generate_json_scraper_requests(const ScraperSearchParams& params
 					first = false;
 				} else
 				{
-					LOG(LogWarning) << "TheGamesDB scraper warning - no support for platform "
+					LOG(LogWarning) << "GamesDBJSONScraper::thegamesdb_generate_json_scraper_requests() - TheGamesDB scraper warning - no support for platform "
 									<< getPlatformName(*platformIt);
 				}
 			}
@@ -414,7 +414,7 @@ bool TheGamesDBJSONRequest::process(HttpReq* request, std::vector<ScraperSearchR
 	if (doc.HasParseError())
 	{
 		std::string err =
-			std::string("TheGamesDBJSONRequest - Error parsing JSON. \n\t") + GetParseError_En(doc.GetParseError());
+			std::string("TheGamesDBJSONRequest::process() - Error parsing JSON. \n\t") + GetParseError_En(doc.GetParseError());
 		setError(err);
 		LOG(LogError) << err;
 		return true;
@@ -422,7 +422,7 @@ bool TheGamesDBJSONRequest::process(HttpReq* request, std::vector<ScraperSearchR
 
 	if (!doc.HasMember("data") || !doc["data"].HasMember("games") || !doc["data"]["games"].IsArray())
 	{
-		std::string warn = "TheGamesDBJSONRequest - Response had no game data.\n";
+		std::string warn = "TheGamesDBJSONRequest::process() - Response had no game data.\n";
 		LOG(LogWarning) << warn;
 		return true;
 	}
@@ -430,7 +430,7 @@ bool TheGamesDBJSONRequest::process(HttpReq* request, std::vector<ScraperSearchR
 
 	if (!doc.HasMember("include") || !doc["include"].HasMember("boxart"))
 	{
-		std::string warn = "TheGamesDBJSONRequest - Response had no include boxart data.\n";
+		std::string warn = "TheGamesDBJSONRequest::process() - Response had no include boxart data.\n";
 		LOG(LogWarning) << warn;
 		return true;
 	}
@@ -439,7 +439,7 @@ bool TheGamesDBJSONRequest::process(HttpReq* request, std::vector<ScraperSearchR
 
 	if (!boxart.HasMember("base_url") || !boxart.HasMember("data") || !boxart.IsObject())
 	{
-		std::string warn = "TheGamesDBJSONRequest - Response include had no usable boxart data.\n";
+		std::string warn = "TheGamesDBJSONRequest::process() - Response include had no usable boxart data.\n";
 		LOG(LogWarning) << warn;
 		return true;
 	}
@@ -455,7 +455,7 @@ bool TheGamesDBJSONRequest::process(HttpReq* request, std::vector<ScraperSearchR
 		}
 		catch (std::runtime_error& e)
 		{
-			LOG(LogError) << "Error while processing game: " << e.what();
+			LOG(LogError) << "TheGamesDBJSONRequest::process() - ERROR: Error while processing game: " << e.what();
 		}
 	}
 

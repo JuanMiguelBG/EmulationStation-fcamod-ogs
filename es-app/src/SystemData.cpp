@@ -122,7 +122,7 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 	const std::string& folderPath = folder->getPath();
 	if(!Utils::FileSystem::isDirectory(folderPath))
 	{
-		LOG(LogWarning) << "Error - folder with path \"" << folderPath << "\" is not a directory!";
+		LOG(LogWarning) << "SystemData::populateFolder() - ERROR: folder with path \"" << folderPath << "\" is not a directory!";
 		return;
 	}
 
@@ -132,7 +132,7 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 		//if this symlink resolves to somewhere that's at the beginning of our path, it's gonna recurse
 		if(folderPath.find(Utils::FileSystem::getCanonicalPath(folderPath)) == 0)
 		{
-			LOG(LogWarning) << "Skipping infinitely recursive symlink \"" << folderPath << "\"";
+			LOG(LogWarning) << "SystemData::populateFolder() - Skipping infinitely recursive symlink \"" << folderPath << "\"";
 			return;
 		}
 	}

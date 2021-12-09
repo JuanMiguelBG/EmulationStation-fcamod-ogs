@@ -33,7 +33,7 @@ std::unique_ptr<ScraperSearchHandle> startScraperSearch(const ScraperSearchParam
 	if (it != scraper_request_funcs.end())
 		it->second(params, handle->mRequestQueue, handle->mResults);
 	else
-		LOG(LogWarning) << "Configured scraper (" << name << ") unavailable, scraping aborted.";	
+		LOG(LogWarning) << "Scraper::startScraperSearch() - Configured scraper (" << name << ") unavailable, scraping aborted.";
 
 	return handle;
 }
@@ -150,7 +150,7 @@ void ScraperHttpRequest::update()
 
 		setStatus(ASYNC_IN_PROGRESS);
 
-		LOG(LogDebug) << "REQ_429_TOOMANYREQUESTS : Wait before Retrying";
+		LOG(LogDebug) << "ScraperHttpRequest::update() - REQ_429_TOOMANYREQUESTS : Wait before Retrying";
 
 		std::string url = mRequest->getUrl();
 		std::this_thread::sleep_for(std::chrono::seconds(mRetryCount < 3 ? 5 : 10));
@@ -158,7 +158,7 @@ void ScraperHttpRequest::update()
 		delete mRequest;
 		mRequest = new HttpReq(url);
 
-		LOG(LogDebug) << "REQ_429_TOOMANYREQUESTS : Retrying";
+		LOG(LogDebug) << "ScraperHttpRequest::update() - REQ_429_TOOMANYREQUESTS : Retrying";
 
 		return;
 	}
@@ -178,7 +178,7 @@ void ScraperHttpRequest::update()
 	}	
 	
 	// everything else is some sort of error
-	LOG(LogError) << "ScraperHttpRequest network error (status: " << status << ") - " << mRequest->getErrorMsg();
+	LOG(LogError) << "ScraperHttpRequest::update() - ScraperHttpRequest network error (status: " << status << ") - " << mRequest->getErrorMsg();
 	setError(Utils::String::removeHtmlTags(mRequest->getErrorMsg()));
 }
 
@@ -421,7 +421,7 @@ void ImageDownloadHandle::update()
 
 		setStatus(ASYNC_IN_PROGRESS);
 
-		LOG(LogDebug) << "REQ_429_TOOMANYREQUESTS : Wait before Retrying";
+		LOG(LogDebug) << "ImageDownloadHandle::update() - REQ_429_TOOMANYREQUESTS : Wait before Retrying";
 
 		std::string url = mRequest->getUrl();
 		std::this_thread::sleep_for(std::chrono::seconds(mRetryCount < 3 ? 5 : 10));
@@ -429,7 +429,7 @@ void ImageDownloadHandle::update()
 		delete mRequest;
 		mRequest = new HttpReq(url, mSavePath);
 
-		LOG(LogDebug) << "REQ_429_TOOMANYREQUESTS : Retrying";
+		LOG(LogDebug) << "ImageDownloadHandle::update() - REQ_429_TOOMANYREQUESTS : Retrying";
 
 		return;
 	}
@@ -478,7 +478,7 @@ bool resizeImage(const std::string& path, int maxWidth, int maxHeight)
 		format = FreeImage_GetFIFFromFilename(path.c_str());
 	if(format == FIF_UNKNOWN)
 	{
-		LOG(LogError) << "Error - could not detect filetype for image \"" << path << "\"!";
+		LOG(LogError) << "Scraper::resizeImage() - ERROR: could not detect filetype for image \"" << path << "\"!";
 		return false;
 	}
 
@@ -487,7 +487,7 @@ bool resizeImage(const std::string& path, int maxWidth, int maxHeight)
 	{
 		image = FreeImage_Load(format, path.c_str());
 	}else{
-		LOG(LogError) << "Error - file format reading not supported for image \"" << path << "\"!";
+		LOG(LogError) << "Scraper::resizeImage() - ERROR: file format reading not supported for image \"" << path << "\"!";
 		return false;
 	}
 
@@ -516,7 +516,7 @@ bool resizeImage(const std::string& path, int maxWidth, int maxHeight)
 
 	if(imageRescaled == NULL)
 	{
-		LOG(LogError) << "Could not resize image! (not enough memory? invalid bitdepth?)";
+		LOG(LogError) << "Scraper::resizeImage() - ERROR: could not resize image! (not enough memory? invalid bitdepth?)";
 		return false;
 	}
 
@@ -531,7 +531,7 @@ bool resizeImage(const std::string& path, int maxWidth, int maxHeight)
 	FreeImage_Unload(imageRescaled);
 
 	if(!saved)
-		LOG(LogError) << "Failed to save resized image!";
+		LOG(LogError) << "FScraper::resizeImage() - ERROR: failed to save resized image!";
 
 	return saved;
 }

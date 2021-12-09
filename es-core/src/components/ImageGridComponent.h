@@ -517,7 +517,7 @@ void ImageGridComponent<T>::applyTheme(const std::shared_ptr<ThemeData>& theme, 
 			std::string path = elem->get<std::string>("gameImage");
 
 			if (!ResourceManager::getInstance()->fileExists(path))
-				LOG(LogWarning) << "Could not replace default game image, check path: " << path;
+				LOG(LogWarning) << "ImageGridComponent<T>::applyTheme() - Could not replace default game image, check path: " << path;
 			else
 			{
 				std::string oldDefaultGameTexture = mDefaultGameTexture;
@@ -538,7 +538,7 @@ void ImageGridComponent<T>::applyTheme(const std::shared_ptr<ThemeData>& theme, 
 			std::string path = elem->get<std::string>("folderImage");
 
 			if (!ResourceManager::getInstance()->fileExists(path))
-				LOG(LogWarning) << "Could not replace default folder image, check path: " << path;
+				LOG(LogWarning) << "ImageGridComponent<T>::applyTheme() - Could not replace default folder image, check path: " << path;
 			else
 			{
 				std::string oldDefaultFolderTexture = mDefaultFolderTexture;
@@ -1024,9 +1024,9 @@ void ImageGridComponent<T>::calcGridDimension()
 
 	// Grid dimension validation
 	if (mGridDimension.x() < 1)
-		LOG(LogError) << "Theme defined grid X dimension below 1";
+		LOG(LogError) << "ImageGridComponent<T>::calcGridDimension() - ERROR: Theme defined grid X dimension below 1";
 	if (mGridDimension.y() < 1)
-		LOG(LogError) << "Theme defined grid Y dimension below 1";
+		LOG(LogError) << "ImageGridComponent<T>::calcGridDimension() - ERROR: Theme defined grid Y dimension below 1";
 
 	// Add extra tiles to both sides : Add EXTRAITEMS before, EXTRAITEMS after
 	if (isVertical())

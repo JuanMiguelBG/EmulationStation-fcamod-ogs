@@ -117,7 +117,7 @@ void DateTimeComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, cons
 		else if(str == "right")
 			setHorizontalAlignment(ALIGN_RIGHT);
 		else
-		LOG(LogError) << "Unknown text alignment string: " << str;
+		LOG(LogError) << "DateTimeComponent::applyTheme() - ERROR: Unknown text alignment string: " << str;
 	}
 
 	if(properties & FORCE_UPPERCASE && elem->has("forceUppercase"))

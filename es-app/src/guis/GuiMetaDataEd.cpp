@@ -386,7 +386,7 @@ void GuiMetaDataEd::save()
 		auto key = ed->getTag();
 
 		if (key == "core" || key == "emulator")
-		{			
+		{
 			std::shared_ptr<OptionListComponent<std::string>> list = std::static_pointer_cast<OptionListComponent<std::string>>(ed);
 			val = list->getSelected();
 		}

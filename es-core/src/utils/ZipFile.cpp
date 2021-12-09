@@ -156,11 +156,11 @@ namespace Utils
 			}
 			catch (std::runtime_error& e)
 			{
-				LOG(LogError) << "ZipFile::load error : " << e.what();
+				LOG(LogError) << "ZipFile::load() - ERROR: " << e.what();
 			}
 			catch (...)
 			{
-				LOG(LogError) << "ZipFile::load unknown error";
+				LOG(LogError) << "ZipFile::load() - ERROR: unknown error";
 			}
 
 			return mZipFile != nullptr;
