@@ -42,6 +42,29 @@ private:
 		MenuComponent mMenu;
 		OptionListComponent<T>* mParent;
 
+		// for select all/none
+		std::vector<ImageComponent*> mCheckboxes;
+
+	void selectAll(OptionListComponent<T>* parent, std::vector<ImageComponent*> checkboxes)
+	{
+		for(unsigned int i = 0; i < parent->mEntries.size(); i++)
+		{
+			parent->mEntries.at(i).selected = true;
+			checkboxes.at(i)->setImage(CHECKED_PATH);
+		}
+		mParent->onSelectedChanged();
+	}
+
+	void selectNone(OptionListComponent<T>* parent, std::vector<ImageComponent*> checkboxes)
+	{
+		for(unsigned int i = 0; i < mParent->mEntries.size(); i++)
+		{
+			mParent->mEntries.at(i).selected = false;
+			checkboxes.at(i)->setImage(UNCHECKED_PATH);
+		}
+		mParent->onSelectedChanged();
+	}
+
 	public:
 		OptionListPopup(Window* window, OptionListComponent<T>* parent, const std::string& title, 
 			const std::function<void(T& data, ComponentListRow& row)> callback = nullptr) : GuiComponent(window),
@@ -53,9 +76,6 @@ private:
 			
 			ComponentListRow row;
 
-			// for select all/none
-			std::vector<ImageComponent*> checkboxes;
-
 			for(auto it = mParent->mEntries.begin(); it != mParent->mEntries.end(); it++)
 			{
 				row.elements.clear();
@@ -66,7 +86,7 @@ private:
 				{
 					callback(e.object, row);
 
-					if (!mParent->mMultiSelect)
+					if (!mParent->isMultiSelect())
 					{
 						row.makeAcceptInputHandler([this, &e]
 						{
@@ -92,7 +112,7 @@ private:
 					else
 						row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(it->name), font, color), true);
 
-					if (mParent->mMultiSelect)
+					if (mParent->isMultiSelect())
 					{
 						// add checkbox
 						auto checkbox = std::make_shared<ImageComponent>(mWindow);
@@ -110,7 +130,7 @@ private:
 						});
 
 						// for select all/none
-						checkboxes.push_back(checkbox.get());
+						mCheckboxes.push_back(checkbox.get());
 					}
 					else {
 						// input handler for non-multiselect
@@ -129,29 +149,19 @@ private:
 					mMenu.addGroup(e.group);
 
 				// also set cursor to this row if we're not multi-select and this row is selected
-				mMenu.addRow(row, (!mParent->mMultiSelect && it->selected));
+				mMenu.addRow(row, (!mParent->isMultiSelect() && it->selected));
 			}
 
 			mMenu.addButton(_("BACK"), _("ACCEPT"), [this] { delete this; });
 
-			if(mParent->mMultiSelect)
+			if(mParent->isMultiSelect())
 			{
-				mMenu.addButton(_("SELECT ALL"), _("SELECT ALL"), [this, checkboxes] {
-					for(unsigned int i = 0; i < mParent->mEntries.size(); i++)
-					{
-						mParent->mEntries.at(i).selected = true;
-						checkboxes.at(i)->setImage(CHECKED_PATH);
-					}
-					mParent->onSelectedChanged();
+				mMenu.addButton(_("SELECT ALL"), _("SELECT ALL"), [this] {
+					selectAll(this->mParent, this->mCheckboxes);
 				});
 
-				mMenu.addButton(_("SELECT NONE"), _("SELECT NONE"), [this, checkboxes] {
-					for(unsigned int i = 0; i < mParent->mEntries.size(); i++)
-					{
-						mParent->mEntries.at(i).selected = false;
-						checkboxes.at(i)->setImage(UNCHECKED_PATH);
-					}
-					mParent->onSelectedChanged();
+				mMenu.addButton(_("SELECT NONE"), _("SELECT NONE"), [this] {
+					selectNone(this->mParent, this->mCheckboxes);
 				});
 			}
 
@@ -169,6 +179,17 @@ private:
 				delete this;
 				return true;
 			}
+			else if (mParent->isMultiSelect())
+			{
+				if(config->isMappedTo("y", input) && input.value != 0)
+				{
+					selectAll(mParent, mCheckboxes);
+				}
+				else if(config->isMappedTo("x", input) && input.value != 0)
+				{
+					selectNone(mParent, mCheckboxes);
+				}
+			}
 
 			return GuiComponent::input(config, input);
 		}
@@ -177,6 +198,13 @@ private:
 		{
 			auto prompts = mMenu.getHelpPrompts();
 			prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
+
+		if(mParent->isMultiSelect())
+		{
+			prompts.push_back(HelpPrompt("y", _("SELECT ALL")));
+			prompts.push_back(HelpPrompt("x", _("SELECT NONE")));
+		}
+
 			return prompts;
 		}
 	};
@@ -247,13 +275,18 @@ public:
 		{
 			if(config->isMappedTo(BUTTON_OK, input))
 			{
-				open();
+				if (mEntries.size() > 0)
+					open();
+
 				return true;
 			}
 			if(!mMultiSelect)
 			{
 				if(config->isMappedLike("left", input))
 				{
+					if (mEntries.size() == 0)
+						return true;
+
 					// move selection to previous
 					unsigned int i = getSelectedId();
 					int next = (int)i - 1;
@@ -304,6 +337,20 @@ public:
 		return selected.at(0);
 	}
 
+	bool isMultiSelect() { return mMultiSelect; }
+
+	// batocera
+	std::string getSelectedName()
+	{
+		assert(mMultiSelect == false);
+		for(unsigned int i = 0; i < mEntries.size(); i++)
+		{
+			if(mEntries.at(i).selected)
+				return mEntries.at(i).name;
+		}
+		return "";
+	}
+
 	void addEx(const std::string name, const std::string description, const T& obj, bool selected)
 	{
 		for (auto sysIt = mEntries.cbegin(); sysIt != mEntries.cend(); sysIt++)
@@ -318,6 +365,9 @@ public:
 
 		e.group = mGroup;
 		mGroup = "";
+
+		if (selected)
+			firstSelected = obj;
 
 		mEntries.push_back(e);
 		onSelectedChanged();
@@ -415,6 +465,11 @@ public:
 				return true;
 
 		return false;
+	}
+
+	int size()
+	{
+		return (int)mEntries.size();
 	}
 
 	void selectFirstItem()
