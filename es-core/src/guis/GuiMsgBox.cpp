@@ -31,9 +31,9 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 	mBackground.setCenterColor(theme->Background.centerColor);
 	mBackground.setCornerSize(theme->Background.cornerSize);
 
-	float width = Renderer::getScreenWidth() * 0.6f; // max width
-	float minWidth = Renderer::getScreenWidth() * 0.3f; // minimum width
-	
+	float width = Renderer::getScreenWidth() * 0.6f, // max width
+				minWidth = Renderer::getScreenWidth() * 0.3f; // minimum width
+
 	mImage = nullptr;
 
 	std::string imageFile;
@@ -93,7 +93,9 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 	if(mButtons.size() == 1)
 	{
 		mAcceleratorFunc = mButtons.front()->getPressedFunc();
-	}else{
+	}
+	else if (mButtons.size() > 0)
+	{
 		for(auto it = mButtons.cbegin(); it != mButtons.cend(); it++)
 		{
 			if(Utils::String::toUpper((*it)->getText()) == _("OK") || Utils::String::toUpper((*it)->getText()) == _("NO"))
@@ -102,6 +104,9 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 				break;
 			}
 		}
+
+		if (mAcceleratorFunc == nullptr)
+			mAcceleratorFunc = mButtons.back()->getPressedFunc();
 	}
 
 	// put the buttons into a ComponentGrid
@@ -112,10 +117,10 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 	if(mMsg->getSize().x() < width && mButtonGrid->getSize().x() < width)
 	{
 		// mMsg and buttons are narrower than width
-		width = Math::max(mButtonGrid->getSize().x(), mMsg->getSize().x() + 3 * HORIZONTAL_PADDING_PX);
+		width = Math::max(mButtonGrid->getSize().x(), mMsg->getSize().x() + (3 * HORIZONTAL_PADDING_PX));
 
 		if (mImage != nullptr)
-			width += mImage->getSize().x() + 2 * HORIZONTAL_PADDING_PX;
+			width += mImage->getSize().x() + (2 * HORIZONTAL_PADDING_PX);
 
 		width = Math::max(width, minWidth);
 	}
@@ -123,16 +128,16 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 	// now that we know width, we can find height
 	mMsg->setSize(width, 0); // mMsg->getSize.y() now returns the proper length
 	
-	float msgHeight = Math::max(Font::get(FONT_SIZE_LARGE)->getHeight(), mMsg->getSize().y()*1.225f);
+	float msgHeight = Math::max(Font::get(FONT_SIZE_LARGE)->getHeight(), mMsg->getSize().y() * 1.225f);
 	
-	if (msgHeight + mButtonGrid->getSize().y() > Renderer::getScreenHeight())
+	if ((msgHeight + mButtonGrid->getSize().y()) > Renderer::getScreenHeight())
 	{
 		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 		if (mImage != nullptr)
-			mMsg->setSize(Renderer::getScreenWidth() - mImage->getSize().x() - 4* HORIZONTAL_PADDING_PX, 0);
+			mMsg->setSize(Renderer::getScreenWidth() - mImage->getSize().x() - (4 * HORIZONTAL_PADDING_PX), 0);
 	}
 	else
-		setSize(width + HORIZONTAL_PADDING_PX*2, msgHeight + mButtonGrid->getSize().y());
+		setSize(width + (HORIZONTAL_PADDING_PX * 2), msgHeight + mButtonGrid->getSize().y());
 
 	// center for good measure
 	setPosition((Renderer::getScreenWidth() - mSize.x()) / 2.0f, (Renderer::getScreenHeight() - mSize.y()) / 2.0f);
@@ -163,17 +168,30 @@ bool GuiMsgBox::input(InputConfig* config, Input input)
 
 void GuiMsgBox::onSizeChanged()
 {
+	float width = Math::min(mSize.x(), (float) Renderer::getScreenWidth()),
+				height = Math::min(mSize.y(), (float) Renderer::getScreenHeight());
+
+	if (height == Renderer::getScreenHeight())
+		width = Renderer::getScreenWidth();
+	else if (height > (Renderer::getScreenHeight() / 2) && (width < Renderer::getScreenWidth()))
+	{
+		float percentage = height / Renderer::getScreenHeight();
+		width = Renderer::getScreenWidth() * percentage;
+	}
+
+	mSize = Vector2f(width, height);
+
 	mGrid.setSize(mSize);
 
 	if (mImage != nullptr)
 	{
-		auto width = mImage->getSize().x() + (Renderer::isSmallScreen() ? 5 : 2) * HORIZONTAL_PADDING_PX;
-		mGrid.setColWidthPerc(0, width / mSize.x(), true);
+		auto gridWidth = mImage->getSize().x() + ((Renderer::isSmallScreen() ? 5 : 2) * HORIZONTAL_PADDING_PX);
+		mGrid.setColWidthPerc(0, gridWidth / mSize.x(), true);
 	}
 
 	mGrid.setRowHeightPerc(1, mButtonGrid->getSize().y() / mSize.y());
-			
-	mMsg->setSize(mSize.x() - HORIZONTAL_PADDING_PX*2, mGrid.getRowHeight(0));
+
+	mMsg->setSize(mSize.x() - (HORIZONTAL_PADDING_PX * 2), mGrid.getRowHeight(0));
 	mGrid.onSizeChanged();
 
 	mBackground.fitTo(mSize, Vector3f::Zero(), Vector2f(-32, -32));
