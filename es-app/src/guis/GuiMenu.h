@@ -45,6 +45,7 @@ private:
 	void openRetroAchievementsSettings();
 	void preloadNetworkSettings();
 	void openNetworkSettings(bool selectWifiEnable = false, bool selectManualWifiDnsEnable = false);
+	void resetNetworkSettings(GuiSettings *gui);
 
 	static void openWifiSettings(Window* win, std::string title, std::string data, const std::function<bool(std::string)>& onsave);
 

@@ -1457,6 +1457,7 @@ void GuiMenu::preloadNetworkSettings()
 
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)
 {
+LOG(LogDebug) << "GuiMenu::openNetworkSettings() - selectWifiEnable: " << Utils::String::boolToString(selectWifiEnable) << ", selectManualWifiDnsEnable: " << Utils::String::boolToString(selectManualWifiDnsEnable);
 	const bool baseWifiEnabled = SystemConf::getInstance()->getBool("wifi.enabled"),
 						 baseManualDns = SystemConf::getInstance()->getBool("wifi.manual_dns");
 	const std::string baseHostname = SystemConf::getInstance()->get("system.hostname"),
@@ -1506,6 +1507,8 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	{
 		s->addInputTextRow(_("WIFI SSID"), "wifi.ssid", false, false, &openWifiSettings);
 		s->addInputTextRow(_("WIFI KEY"), "wifi.key", true, false);
+
+		s->addEntry(_("RESET WIFI CONECTION"), false, [this, s] { resetNetworkSettings(s); });
 
 		s->addWithLabel(_("MANUAL DNS"), manual_dns, selectManualWifiDnsEnable);
 
@@ -1625,6 +1628,23 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	}
 
 	mWindow->pushGui(s);
+}
+
+void GuiMenu::resetNetworkSettings(GuiSettings *gui)
+{
+	ApiSystem::getInstance()->resetWifi(SystemConf::getInstance()->get("wifi.ssid"));
+	SystemConf::getInstance()->setBool("wifi.enabled", false);
+	SystemConf::getInstance()->set("wifi.ssid", "--");
+	SystemConf::getInstance()->set("wifi.key", "");
+	SystemConf::getInstance()->setBool("wifi.manual_dns", false);
+	SystemConf::getInstance()->set("wifi.dns1", "");
+	SystemConf::getInstance()->set("wifi.dns2", "");
+
+	Window* window = mWindow;
+	window->peekGui();
+	window->removeGui(gui);
+	delete gui;
+	openNetworkSettings(true, false);
 }
 
 void GuiMenu::openUpdateSettings()

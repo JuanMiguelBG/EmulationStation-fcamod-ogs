@@ -166,14 +166,15 @@ public:
 	virtual bool ping();
 	bool getInternetStatus();
 	std::vector<std::string> getWifiNetworks(bool scan = false);
-	bool enableWifi(std::string ssid, std::string key);
-	bool disconnectWifi(std::string ssid);
+	bool enableWifi(const std::string ssid, const std::string pwd);
+	bool disconnectWifi(const std::string ssid);
 	bool disableWifi();
+	bool resetWifi(const std::string ssid);
 	bool isWifiEnabled();
-	bool enableManualWifiDns(std::string ssid, std::string dnsOne, std::string dnsTwo);
-	bool disableManualWifiDns(std::string ssid);
+	bool enableManualWifiDns(const std::string ssid, const std::string dnsOne, const std::string dnsTwo);
+	bool disableManualWifiDns(const std::string ssid);
 	std::string getWifiSsid();
-	std::string getWifiPsk(std::string ssid);
+	std::string getWifiPsk(const std::string ssid);
 	std::string getDnsOne();
 	std::string getDnsTwo();
 

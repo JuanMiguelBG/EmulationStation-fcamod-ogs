@@ -27,7 +27,7 @@ Window::Window() : mNormalizeNextUpdate(false), mFrameTimeElapsed(0), mFrameCoun
   mAllowSleep(true), mSleeping(false), mTimeSinceLastInput(0), mScreenSaver(NULL), mRenderScreenSaver(false), mInfoPopup(NULL), mClockElapsed(0) // batocera
 {	
 	mHelp = new HelpComponent(this);
-	mBackgroundOverlay = new ImageComponent(this);	
+	mBackgroundOverlay = new ImageComponent(this);
 
 	mSplash = NULL;	
 }
