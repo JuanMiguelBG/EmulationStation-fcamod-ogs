@@ -32,19 +32,19 @@ void MetaDataList::initMetadata()
 		{ Marquee,          "marquee",           MD_PATH,                "",               false,       "logo",                 "enter path to logo",           true },
 		{ Thumbnail,        "thumbnail",         MD_PATH,                "",               false,       "box",                  "enter path to box",            false },
 
-		{ FanArt,           "fanart",            MD_PATH,                "",               false,       "fan art",              "enter path to fanart",         true },
-		{ TitleShot,        "titleshot",         MD_PATH,                "",               false,       "title shot",           "enter path to title shot",     true },
-		{ Manual,           "manual",            MD_PATH,                "",               false,       "manual",               "enter path to manual",         true },
-		{ Magazine,         "magazine",          MD_PATH,                "",               false,       "magazine",             "enter path to magazine",       true },
-		{ Map,              "map",               MD_PATH,                "",               false,       "map",                  "enter path to map",            true },
-		{ Bezel,            "bezel",             MD_PATH,                "",               false,       "bezel (16:9)",         "enter path to bezel (16:9)",   true },
+		//{ FanArt,           "fanart",            MD_PATH,                "",               false,       "fan art",              "enter path to fanart",         true },
+		//{ TitleShot,        "titleshot",         MD_PATH,                "",               false,       "title shot",           "enter path to title shot",     true },
+		//{ Manual,           "manual",            MD_PATH,                "",               false,       "manual",               "enter path to manual",         true },
+		//{ Magazine,         "magazine",          MD_PATH,                "",               false,       "magazine",             "enter path to magazine",       true },
+		//{ Map,              "map",               MD_PATH,                "",               false,       "map",                  "enter path to map",            true },
+		//{ Bezel,            "bezel",             MD_PATH,                "",               false,       "bezel (16:9)",         "enter path to bezel (16:9)",   true },
 
 		// Non scrappable /editable medias
-		{ Cartridge,        "cartridge",         MD_PATH,                "",               true,        "Cartridge",            "enter path to cartridge",      true },
-		{ BoxArt,           "boxart",            MD_PATH,                "",               true,        "alt boxart",           "enter path to alt boxart",     true },
-		{ BoxBack,          "boxback",           MD_PATH,                "",               false,       "box backside",         "enter path to box background", true },
-		{ Wheel,            "wheel",             MD_PATH,                "",               true,        "wheel",                "enter path to wheel",          true },
-		{ Mix,              "mix",               MD_PATH,                "",               true,        "mix",                  "enter path to mix",            true },
+		//{ Cartridge,        "cartridge",         MD_PATH,                "",               true,        "Cartridge",            "enter path to cartridge",      true },
+		//{ BoxArt,           "boxart",            MD_PATH,                "",               true,        "alt boxart",           "enter path to alt boxart",     true },
+		//{ BoxBack,          "boxback",           MD_PATH,                "",               false,       "box backside",         "enter path to box background", true },
+		//{ Wheel,            "wheel",             MD_PATH,                "",               true,        "wheel",                "enter path to wheel",          true },
+		//{ Mix,              "mix",               MD_PATH,                "",               true,        "mix",                  "enter path to mix",            true },
 
 		{ Rating,           "rating",            MD_RATING,              "0.000000",       false,       "rating",               "enter rating",                 false },
 		{ ReleaseDate,      "releasedate",       MD_DATE,               "not-a-date-time", false,       "release date",         "enter release date",           false },
@@ -52,10 +52,10 @@ void MetaDataList::initMetadata()
 		{ Publisher,        "publisher",         MD_STRING,              "",               false,       "publisher",            "enter game publisher",         false },
 
 		{ Genre,            "genre",             MD_STRING,              "",               false,       "genre",                "enter game genre",             false },
-		{ Family,           "family",            MD_STRING,              "",               false,       "game family",          "enter game family",            false },
+		//{ Family,           "family",            MD_STRING,              "",               false,       "game family",          "enter game family",            false },
 
 		// GenreIds is not serialized
-		{ GenreIds,         "genres",            MD_STRING,              "",               false,       "genres",               "enter game genres",            false },
+		//{ GenreIds,         "genres",            MD_STRING,              "",               false,       "genres",               "enter game genres",            false },
 
 		{ ArcadeSystemName, "arcadesystemname",  MD_STRING,              "",               false,       "arcade system",        "enter arcade system name",     false },
 
@@ -71,13 +71,13 @@ void MetaDataList::initMetadata()
 
 		{ GameTime,         "gametime",          MD_INT,                 "0",              true,       "game time",            "how long the game has been played in total (seconds)", false },
 
-		{ Language,         "lang",              MD_STRING,              "",               false,      "languages",             "enter game languages",         false },
-		{ Region,           "region",            MD_STRING,              "",               false,      "region",                "enter game region",            false },
+		//{ Language,         "lang",              MD_STRING,              "",               false,      "languages",             "enter game languages",         false },
+		//{ Region,           "region",            MD_STRING,              "",               false,      "region",                "enter game region",            false },
 
-		{ CheevosHash,      "cheevosHash",       MD_STRING,              "",               true,       "chevos hash",           "cheevos checksum",             false },
-		{ CheevosId,        "cheevosId",         MD_INT,                 "",               true,       "cheevos game id",       "cheevos game id",              false },
+		//{ CheevosHash,      "cheevosHash",       MD_STRING,              "",               true,       "chevos hash",           "cheevos checksum",             false },
+		//{ CheevosId,        "cheevosId",         MD_INT,                 "",               true,       "cheevos game id",       "cheevos game id",              false },
 
-		{ ScraperId,        "id",                MD_INT,                 "",	             true,       "screenscraper game id", "screenscraper game id",        false, true }
+		{ ScraperId,        "id",                MD_INT,                 "",             true,       "screenscraper game id", "screenscraper game id",        false, true }
 	};
 
 	mMetaDataDecls = std::vector<MetaDataDecl>(gameDecls, gameDecls + sizeof(gameDecls) / sizeof(gameDecls[0]));
@@ -166,10 +166,10 @@ MetaDataList MetaDataList::createFromXML(MetaDataListType type, pugi::xml_node& 
 			mdl.mName = value;
 			continue;
 		}
-
+/*
 		if (mdd.id == MetaDataId::GenreIds)
 			continue;
-
+*/
 		if (value == mdd.defaultValue)
 			continue;
 
@@ -251,9 +251,10 @@ void MetaDataList::appendToXML(pugi::xml_node& parent, bool ignoreDefaults, cons
 		}
 
 		// Don't save GenreIds
+/*
 		if (mddIter->id == MetaDataId::GenreIds)
 			continue;
-
+*/
 		auto mapIter = mMap.find(mddIter->id);
 		if(mapIter != mMap.cend())
 		{
@@ -390,7 +391,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 		if (!Settings::getInstance()->getBool("ScrapeVideos"))
 			type &= ~MetaDataImportType::Types::VIDEO;
-
+/*
 		if (!Settings::getInstance()->getBool("ScrapeFanart"))
 			type &= ~MetaDataImportType::Types::FANART;
 
@@ -408,6 +409,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 		if (!Settings::getInstance()->getBool("ScrapeCartridge"))
 			type &= ~MetaDataImportType::Types::CARTRIDGE;
+*/
 	}
 
 	for (auto mdd : getMDD())
@@ -417,10 +419,10 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 		if (mdd.id == MetaDataId::KidGame) // Not scrapped yet
 			continue;
-
+/*
 		if (mdd.id == MetaDataId::Region || mdd.id == MetaDataId::Language) // Not scrapped
 			continue;
-
+*/
 		if (mdd.id == MetaDataId::Favorite || mdd.id == MetaDataId::Hidden || mdd.id == MetaDataId::Emulator || mdd.id == MetaDataId::Core)
 			continue;
 
@@ -435,7 +437,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 		if (mdd.id == MetaDataId::Video && (source.get(mdd.id).empty() || (type & MetaDataImportType::Types::VIDEO) != MetaDataImportType::Types::VIDEO))
 			continue;
-
+/*
 		if (mdd.id == MetaDataId::TitleShot && (source.get(mdd.id).empty() || (type & MetaDataImportType::Types::TITLESHOT) != MetaDataImportType::Types::TITLESHOT))
 			continue;
 
@@ -453,7 +455,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 		if (mdd.id == MetaDataId::Cartridge && (source.get(mdd.id).empty() || (type & MetaDataImportType::Types::CARTRIDGE) != MetaDataImportType::Types::CARTRIDGE))
 			continue;
-
+*/
 		if (mdd.id == MetaDataId::Rating && source.getFloat(mdd.id) < 0)
 			continue;
 

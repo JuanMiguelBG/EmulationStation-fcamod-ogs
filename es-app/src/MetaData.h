@@ -28,7 +28,7 @@ enum MetaDataType
 	MD_TIME, //used for lastplayed
 	MD_LIST // batocera
 };
-
+/*
 enum MetaDataId
 {
 	Name = 0,
@@ -74,6 +74,36 @@ enum MetaDataId
 	Family = 40,
 	Bezel = 41
 };
+*/
+
+enum MetaDataId
+{
+	Name = 0,
+	SortName = 1,
+	Desc = 2,
+	Emulator = 3,
+	Core = 4,
+	Image = 5,
+	Video = 6,
+	Marquee = 7,
+	Thumbnail = 8,
+	Rating = 9,
+	ReleaseDate = 10,
+	Developer = 11,
+	Publisher = 12,
+	Genre = 13,
+	ArcadeSystemName = 14,
+	Players = 15,
+	Favorite = 16,
+	Hidden = 17,
+	KidGame = 18,
+	PlayCount = 19,
+	LastPlayed = 20,
+	Crc32 = 21,
+	Md5 = 22,
+	GameTime = 23,
+	ScraperId = 24
+};
 
 namespace MetaDataImportType
 {
@@ -83,14 +113,15 @@ namespace MetaDataImportType
 		THUMB = 2,
 		VIDEO = 4,
 		MARQUEE = 8,
-		FANART = 16,
-		MANUAL = 32,
-		MAP = 64,
-		CARTRIDGE = 128,
-		TITLESHOT = 256,
-		BOXBACK = 512,
+		//FANART = 16,
+		//MANUAL = 32,
+		//MAP = 64,
+		//CARTRIDGE = 128,
+		//TITLESHOT = 256,
+		//BOXBACK = 512,
 
-		ALL = IMAGE | THUMB | VIDEO | MARQUEE | FANART | MANUAL | MAP | CARTRIDGE | TITLESHOT | BOXBACK
+		//ALL = IMAGE | THUMB | VIDEO | MARQUEE | FANART | MANUAL | MAP | CARTRIDGE | TITLESHOT | BOXBACK
+		ALL = IMAGE | THUMB | VIDEO | MARQUEE
 	};
 }
 
