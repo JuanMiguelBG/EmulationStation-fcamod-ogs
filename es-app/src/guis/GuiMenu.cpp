@@ -1457,7 +1457,6 @@ void GuiMenu::preloadNetworkSettings()
 
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)
 {
-LOG(LogDebug) << "GuiMenu::openNetworkSettings() - selectWifiEnable: " << Utils::String::boolToString(selectWifiEnable) << ", selectManualWifiDnsEnable: " << Utils::String::boolToString(selectManualWifiDnsEnable);
 	const bool baseWifiEnabled = SystemConf::getInstance()->getBool("wifi.enabled"),
 						 baseManualDns = SystemConf::getInstance()->getBool("wifi.manual_dns");
 	const std::string baseHostname = SystemConf::getInstance()->get("system.hostname"),

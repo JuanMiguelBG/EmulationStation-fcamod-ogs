@@ -67,9 +67,9 @@ void ThreadedScraper::processError(int status, const std::string statusString)
 	{
 		mExit = true;
 		Window* w = mWindow;
-		std::string msg_status( Utils::String::trim(statusString) );
+		std::string msg_status( _(Utils::String::trim(statusString)) );
 		mWindow->postToUiThread([msg_status, w]() { w->pushGui(new GuiMsgBox(w, _("SCRAPE FAILED") + " : " + msg_status)); });
-		LOG(LogInfo) << "ThreadedScraper::processError():71 - ThreadedScraper search error for traslations: " << Utils::String::showSpecialCharacters(msg_status);
+		LOG(LogInfo) << "ThreadedScraper::processError() - ThreadedScraper search error for traslations: " << Utils::String::showSpecialCharacters(msg_status);
 	}
 	else
 		mErrors.push_back(statusString);
