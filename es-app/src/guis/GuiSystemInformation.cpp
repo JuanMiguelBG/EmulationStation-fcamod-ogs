@@ -11,6 +11,7 @@
 #include "Log.h"
 #include "components/UpdatableTextComponent.h"
 #include "ApiSystem.h"
+#include "renderers/Renderer.h"
 
 
 GuiSystemInformation::GuiSystemInformation(Window* window) : UpdatableGuiSettings(window, _("SYSTEM INFORMATION").c_str())
@@ -355,6 +356,13 @@ void GuiSystemInformation::openDisplayAndGpu()
 
 	// GPU model
 	s->addWithLabel(_("GPU"), std::make_shared<TextComponent>(window, di.gpu_model, font, color));
+
+	auto info = Renderer::getDriverInformation();
+	if (!info.empty())
+	{
+		// graphics API
+		s->addWithLabel(_("GRAPHICS API"), std::make_shared<TextComponent>(window, info.at(0).second, font, color));
+	}
 
 	// resolution
 	s->addWithLabel(_("RESOLUTION"), std::make_shared<TextComponent>(window, di.resolution, font, color));

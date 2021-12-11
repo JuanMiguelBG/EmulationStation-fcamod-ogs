@@ -2289,6 +2289,10 @@ msgid "DISPLAY AND GPU"
 msgstr "PANTALLA Y GPU"
 
 #:
+msgid "GRAPHICS API"
+msgstr "API DE GRÁFICOS"
+
+#:
 msgid "RESOLUTION"
 msgstr "RESOLUCIÓN"
 
