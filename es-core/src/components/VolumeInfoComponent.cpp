@@ -120,7 +120,7 @@ void VolumeInfoComponent::update(int deltaTime)
 
 void VolumeInfoComponent::render(const Transform4x4f& parentTrans)
 {
-	if (!mVisible || mDisplayTime < 0)
+	if (!isVisible() || mDisplayTime < 0)
 		return;
 
 	int opacity = BASEOPACITY - Math::max(0, (mDisplayTime - VISIBLE_TIME) * BASEOPACITY / FADE_TIME);

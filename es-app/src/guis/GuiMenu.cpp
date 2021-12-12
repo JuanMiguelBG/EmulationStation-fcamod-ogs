@@ -167,9 +167,7 @@ void GuiMenu::openDisplaySettings()
 	brightness->setOnValueChanged([window, s](const float &newVal)
 		{
 			int brightness_level = (int)Math::round( newVal );
-			window->getBrightnessInfoComponent()->setVisible(false);
-			window->getBrightnessInfoComponent()->setBrightness(brightness_level);
-			window->getBrightnessInfoComponent()->setVisible(true);
+			window->getBrightnessInfoComponent()->updateBrightness(brightness_level);
 			ApiSystem::getInstance()->setBrightnessLevel(brightness_level);
 			if (Settings::getInstance()->getBool("FullScreenMode"))
 				s->setVariable("reloadGuiMenu", true);
@@ -453,9 +451,7 @@ void GuiMenu::openSoundSettings()
 	volume->setOnValueChanged([window, s](const float &newVal)
 		{
 			int volume_level = (int)Math::round(newVal);
-			window->getVolumeInfoComponent()->setVisible(false);
-			window->getVolumeInfoComponent()->setVolume(volume_level);
-			window->getVolumeInfoComponent()->setVisible(true);
+			window->getVolumeInfoComponent()->updateVolume(volume_level);
 			ApiSystem::getInstance()->setVolume(volume_level);
 			if (Settings::getInstance()->getBool("FullScreenMode"))
 				s->setVariable("reloadGuiMenu", true);

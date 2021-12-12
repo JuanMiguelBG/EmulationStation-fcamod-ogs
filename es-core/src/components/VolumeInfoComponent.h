@@ -18,6 +18,13 @@ public:
 	void update(int deltaTime) override;
 
 	void setVolume(int volume) { mVolume = volume; }
+	void updateVolume(int volume)
+	{
+		setVisible(false);
+		setVolume(volume);
+		setVisible(true);
+	}
+
 	void reset() { mVolume = -1; }
 
 private:
