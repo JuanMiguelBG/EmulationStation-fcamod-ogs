@@ -18,6 +18,7 @@ public:
 	void render(const Transform4x4f& parentTrans) override;
 	void update(int deltaTime) override;
 
+	void setBrightness(int brightness) { mBrightness = brightness; }
 	void reset() { mBrightness = 1; }
 
 private:

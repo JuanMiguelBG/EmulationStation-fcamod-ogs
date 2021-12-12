@@ -9,6 +9,9 @@
 #include <memory>
 #include <functional>
 
+#include "components/BrightnessInfoComponent.h"
+#include "components/VolumeInfoComponent.h"
+
 class FileData;
 class Font;
 class GuiComponent;
@@ -22,8 +25,6 @@ class AsyncNotificationComponent;
 class ThemeData;
 class TextComponent;
 class ControllerActivityComponent;
-class VolumeInfoComponent;
-class BrightnessInfoComponent;
 class BatteryIndicatorComponent;
 
 struct HelpStyle;
@@ -101,6 +102,9 @@ public:
 	void reactivateGui();
 
 	void onThemeChanged(const std::shared_ptr<ThemeData>& theme);
+
+	VolumeInfoComponent* getVolumeInfoComponent() { return mVolumeInfo.get(); };
+	BrightnessInfoComponent* getBrightnessInfoComponent() { return mBrightnessInfo.get(); };
 
 private:
 	void processPostedFunctions();

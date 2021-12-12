@@ -1,10 +1,11 @@
 #include "guis/GuiMenu.h"
-
 #include "components/OptionListComponent.h"
 #include "components/FlagOptionListComponent.h"
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
 #include "components/UpdatableTextComponent.h"
+#include "components/BrightnessInfoComponent.h"
+#include "components/VolumeInfoComponent.h"
 #include "guis/GuiCollectionSystemsOptions.h"
 #include "guis/GuiDetectDevice.h"
 #include "guis/GuiGeneralScreensaverOptions.h"
@@ -163,9 +164,13 @@ void GuiMenu::openDisplaySettings()
 	auto brightness = std::make_shared<SliderComponent>(mWindow, 1.0f, 100.f, 1.0f, "%");
 	brightness->setValue((float) ApiSystem::getInstance()->getBrightnessLevel());
 	s->addWithLabel(_("BRIGHTNESS"), brightness);
-	brightness->setOnValueChanged([s](const float &newVal)
+	brightness->setOnValueChanged([window, s](const float &newVal)
 		{
-			ApiSystem::getInstance()->setBrightnessLevel( (int)Math::round( newVal ) );
+			int brightness_level = (int)Math::round( newVal );
+			window->getBrightnessInfoComponent()->setVisible(false);
+			window->getBrightnessInfoComponent()->setBrightness(brightness_level);
+			window->getBrightnessInfoComponent()->setVisible(true);
+			ApiSystem::getInstance()->setBrightnessLevel(brightness_level);
 			if (Settings::getInstance()->getBool("FullScreenMode"))
 				s->setVariable("reloadGuiMenu", true);
 		});
@@ -445,9 +450,13 @@ void GuiMenu::openSoundSettings()
 	auto volume = std::make_shared<SliderComponent>(mWindow, 0.f, 100.f, 1.f, "%");
 	volume->setValue( (float)ApiSystem::getInstance()->getVolume() );
 	s->addWithLabel(_("SYSTEM VOLUME"), volume);
-	volume->setOnValueChanged([s](const float &newVal)
+	volume->setOnValueChanged([window, s](const float &newVal)
 		{
-			ApiSystem::getInstance()->setVolume( (int)Math::round(newVal) );
+			int volume_level = (int)Math::round(newVal);
+			window->getVolumeInfoComponent()->setVisible(false);
+			window->getVolumeInfoComponent()->setVolume(volume_level);
+			window->getVolumeInfoComponent()->setVisible(true);
+			ApiSystem::getInstance()->setVolume(volume_level);
 			if (Settings::getInstance()->getBool("FullScreenMode"))
 				s->setVariable("reloadGuiMenu", true);
 		});

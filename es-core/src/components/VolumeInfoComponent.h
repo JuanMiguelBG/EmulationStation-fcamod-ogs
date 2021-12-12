@@ -17,6 +17,7 @@ public:
 	void render(const Transform4x4f& parentTrans) override;
 	void update(int deltaTime) override;
 
+	void setVolume(int volume) { mVolume = volume; }
 	void reset() { mVolume = -1; }
 
 private:
