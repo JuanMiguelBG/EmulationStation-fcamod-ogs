@@ -2,7 +2,6 @@
 
 #include <mutex>
 #include "GuiComponent.h"
-#include "Log.h"
 
 class ComponentGrid;
 class NinePatchComponent;
@@ -19,14 +18,7 @@ public:
 	void update(int deltaTime) override;
 
 	void setBrightness(int brightness){ mBrightness = brightness; }
-	void updateBrightness(int brightness)
-	{
-		setVisible(false);
-		setBrightness(brightness);
-		setVisible(true);
-	}
-
-	void reset() { mBrightness = 1; }
+	void reset() { mBrightness = -1; }
 
 private:
 	NinePatchComponent* mFrame;
