@@ -121,7 +121,7 @@ void BrightnessInfoComponent::update(int deltaTime)
 
 void BrightnessInfoComponent::render(const Transform4x4f& parentTrans)
 {
-	if (!isVisible() || mDisplayTime < 0)
+	if (isLocked() || !isVisible() || mDisplayTime < 0)
 		return;
 
 	int opacity = BASEOPACITY - Math::max(0, (mDisplayTime - VISIBLE_TIME) * BASEOPACITY / FADE_TIME);
@@ -143,4 +143,14 @@ void BrightnessInfoComponent::render(const Transform4x4f& parentTrans)
 
 	float px = (h*mBrightness) / 100;
 	Renderer::drawRect(x, y + h - px, w, px, (theme->TextSmall.color & 0xFFFFFF00) | opacity);
+}
+
+bool BrightnessInfoComponent::isLocked()
+{
+	if (Utils::FileSystem::exists( Utils::FileSystem::getEsConfigPath() + "/brightness.lock" ))
+	{
+		reset();
+		return true;
+	}
+	return false;
 }

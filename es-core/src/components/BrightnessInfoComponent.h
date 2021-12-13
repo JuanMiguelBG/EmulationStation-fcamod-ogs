@@ -21,6 +21,8 @@ public:
 	void reset() { mBrightness = -1; }
 
 private:
+	bool isLocked();
+
 	NinePatchComponent* mFrame;
 	TextComponent*      mLabel;
 

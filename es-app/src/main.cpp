@@ -364,7 +364,10 @@ void processAudioTitles(Window* window)
 	}
 }
 
-//#include "ApiSystem.h"
+void removeLockFiles()
+{
+	Utils::FileSystem::removeFile( Utils::FileSystem::getEsConfigPath() + "/brightness.lock" );
+}
 
 int main(int argc, char* argv[])
 {
@@ -379,6 +382,9 @@ int main(int argc, char* argv[])
 	Log::setupReportingLevel();
 	Log::init();
 	LOG(LogInfo) << "MAIN::main() - EmulationStation - v" << PROGRAM_VERSION_STRING << ", built " << PROGRAM_BUILT_STRING;
+
+	// remove special lock files
+	removeLockFiles();
 
 /*
 	ApiSystem::getInstance()->checkUpdateVersion();
@@ -581,6 +587,9 @@ int main(int argc, char* argv[])
 #endif
 
 	window.deinit(true);
+
+	// remove special lock files
+	removeLockFiles();
 
 	processQuitMode();
 
