@@ -20,6 +20,9 @@ public:
 	void setBrightness(int brightness){ mBrightness = brightness; }
 	void reset() { mBrightness = -1; }
 
+	void lock() { mLocked = true; }
+	void unlock() { mLocked = false; }
+
 private:
 	bool isLocked();
 
@@ -30,4 +33,5 @@ private:
 
 	int mCheckTime;
 	int mDisplayTime;
+	bool mLocked = false;
 };

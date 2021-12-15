@@ -107,7 +107,7 @@ void SystemScreenSaver::startScreenSaver()
 
 		if (!path.empty() && Utils::FileSystem::exists(path))
 		{
-			LOG(LogDebug) << "VideoScreenSaver::startScreenSaver " << path.c_str();
+			LOG(LogDebug) << "VideoScreenSaver::startScreenSaver() - video path: " << path.c_str();
 
 			mVideoScreensaver = std::make_shared<VideoScreenSaver>(mWindow);
 			mVideoScreensaver->setGame(mCurrentGame);
@@ -169,6 +169,16 @@ void SystemScreenSaver::startScreenSaver()
 		if (quitES(QuitMode::SUSPEND) != 0)
 			LOG(LogWarning) << "SystemScreenSaver::startScreenSaver() - Suspend terminated with non-zero result!";
 	}
+	else if (screensaver_behavior == "black")
+	{
+		mWindow->getBrightnessInfoComponent()->lock();
+		mCurrentBrightnessLevel = ApiSystem::getInstance()->getBrightnessLevel();
+		if (mCurrentBrightnessLevel < 1)
+			mCurrentBrightnessLevel = 50;
+
+		mWindow->getBrightnessInfoComponent()->setBrightness(0);
+		ApiSystem::getInstance()->setBrightnessLevel(0);
+	}
 
 	// No videos. Just use a standard screensaver
 	mState = STATE_SCREENSAVER_ACTIVE;
@@ -180,6 +190,16 @@ void SystemScreenSaver::stopScreenSaver()
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 	if ((screensaver_behavior == "none") || (screensaver_behavior == "suspend"))
 		return;
+	else if (screensaver_behavior == "black")
+	{
+		if (mCurrentBrightnessLevel < 1)
+			mCurrentBrightnessLevel = 50;
+
+		mWindow->getBrightnessInfoComponent()->setBrightness(mCurrentBrightnessLevel);
+		ApiSystem::getInstance()->setBrightnessLevel(mCurrentBrightnessLevel);
+		mCurrentBrightnessLevel = -1;
+		mWindow->getBrightnessInfoComponent()->unlock();
+	}
 
 	bool isExitingScreenSaver = !mLoadingNext;
 
@@ -259,7 +279,7 @@ void SystemScreenSaver::renderScreenSaver()
 	{
 		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 
-		if ((screensaver_behavior == "dim") && ApiSystem::getInstance()->isDisplayAutoDimStayAwakeCharging() && ApiSystem::getInstance()->isBatteryCharging())
+		if ( (screensaver_behavior == "dim") && ApiSystem::getInstance()->isDisplayAutoDimStayAwakeCharging() && ApiSystem::getInstance()->isBatteryCharging() )
 			return;
 
 		Renderer::setMatrix(Transform4x4f::Identity());

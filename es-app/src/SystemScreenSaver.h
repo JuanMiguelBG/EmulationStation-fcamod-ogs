@@ -103,9 +103,10 @@ private:
 
 private:
 	bool			mVideosCounted;
-	unsigned long		mVideoCount;	
+	unsigned long		mVideoCount;
 	bool			mImagesCounted;
 	unsigned long		mImageCount;
+	int mCurrentBrightnessLevel = -1;
 
 	std::shared_ptr<VideoScreenSaver>		mVideoScreensaver;
 

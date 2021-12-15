@@ -8,6 +8,9 @@
 #include "platform.h"
 #include "Window.h"
 
+
+#include "Log.h"
+
 #define PADDING_PX			(Renderer::getScreenWidth()*0.006)
 #define PADDING_BAR			(Renderer::isSmallScreen() ? Renderer::getScreenWidth()*0.02 : Renderer::getScreenWidth()*0.006)
 
@@ -147,10 +150,8 @@ void BrightnessInfoComponent::render(const Transform4x4f& parentTrans)
 
 bool BrightnessInfoComponent::isLocked()
 {
-	if (Utils::FileSystem::exists( Utils::FileSystem::getEsConfigPath() + "/brightness.lock" ))
-	{
-		reset();
+	if (mLocked || Utils::FileSystem::exists( Utils::FileSystem::getEsConfigPath() + "/brightness.lock" ))
 		return true;
-	}
+
 	return false;
 }
