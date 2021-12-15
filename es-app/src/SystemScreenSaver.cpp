@@ -66,19 +66,26 @@ bool SystemScreenSaver::isScreenSaverActive()
 
 void SystemScreenSaver::startScreenSaver()
 {
+	LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - Enter";
+
 	bool loadingNext = mLoadingNext;
-
-	stopScreenSaver();
-
-	if (!loadingNext && Settings::getInstance()->getBool("StopMusicOnScreenSaver")) //Settings::getInstance()->getBool("VideoAudio"))
-		AudioManager::getInstance()->deinit();
 
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 	if (screensaver_behavior == "none")
 	{
+		LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: running 'NONE Screensaver'";
 		return;
 	}
-	else if (screensaver_behavior == "random video")
+
+	stopScreenSaver();
+
+	if (!loadingNext && Settings::getInstance()->getBool("StopMusicOnScreenSaver")) //Settings::getInstance()->getBool("VideoAudio"))
+	{
+		LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - calling AudioManager::deinit()";
+		AudioManager::getInstance()->deinit();
+	}
+
+	if (screensaver_behavior == "random video")
 	{
 		mVideoChangeTime = Settings::getInstance()->getInt("ScreenSaverSwapVideoTimeout");
 
@@ -115,6 +122,7 @@ void SystemScreenSaver::startScreenSaver()
 
 			PowerSaver::runningScreenSaver(true);
 			mTimer = 0;
+			LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: running 'Video Screensaver'";
 			return;
 		}
 	}
@@ -156,13 +164,17 @@ void SystemScreenSaver::startScreenSaver()
 
 			PowerSaver::runningScreenSaver(true);
 			mTimer = 0;
+			LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: running 'Image Screensaver'";
 			return;
 		}	
 	}
 	else if (screensaver_behavior == "suspend")
 	{
 		if (ApiSystem::getInstance()->isDeviceAutoSuspendStayAwakeCharging() && ApiSystem::getInstance()->isBatteryCharging())
+		{
+			LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: screensaver_behavior 'suspend' and active 'AutoSuspendStayAwakeCharging' config";
 			return;
+		}
 
 		Scripting::fireEvent("quit", "suspend");
 		Scripting::fireEvent("suspend");
@@ -183,13 +195,19 @@ void SystemScreenSaver::startScreenSaver()
 	// No videos. Just use a standard screensaver
 	mState = STATE_SCREENSAVER_ACTIVE;
 	mCurrentGame = NULL;
+	LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: at the end of the function";
 }
 
 void SystemScreenSaver::stopScreenSaver()
 {
+	LOG(LogInfo) << "SystemScreenSaver::stopScreenSaver() - Enter";
+
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 	if ((screensaver_behavior == "none") || (screensaver_behavior == "suspend"))
+	{
+		LOG(LogInfo) << "SystemScreenSaver::stopScreenSaver() - exit: screensaver_behavior 'none' or 'suspend'";
 		return;
+	}
 	else if (screensaver_behavior == "black")
 	{
 		if (mCurrentBrightnessLevel < 1)

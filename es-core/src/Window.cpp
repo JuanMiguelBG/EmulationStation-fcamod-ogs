@@ -720,7 +720,8 @@ bool Window::cancelScreenSaver()
 
 void Window::renderScreenSaver()
 {
-	if (mScreenSaver)
+	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
+	if (mScreenSaver && !(screensaver_behavior == "none"))
 		mScreenSaver->renderScreenSaver();
 }
 
