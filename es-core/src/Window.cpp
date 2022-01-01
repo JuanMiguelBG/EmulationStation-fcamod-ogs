@@ -196,15 +196,15 @@ void Window::textInput(const char* text)
 
 void Window::input(InputConfig* config, Input input)
 {
-	if (mScreenSaver)
+	if (mScreenSaver && mScreenSaver->isEnabled())
 	{
 		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-		if ((screensaver_behavior != "suspend") && (screensaver_behavior != "none"))
+		if (screensaver_behavior != "suspend")
 		{
 			if (mScreenSaver->isScreenSaverActive() && Settings::getInstance()->getBool("ScreenSaverControls") &&
 				((screensaver_behavior == "slideshow") || (screensaver_behavior == "random video")))
 			{
-				if(mScreenSaver->getCurrentGame() != NULL && (config->isMappedLike("right", input) || config->isMappedTo("start", input) || config->isMappedTo("select", input)))
+				if((mScreenSaver->getCurrentGame() != NULL) && (config->isMappedLike("right", input) || config->isMappedTo("start", input) || config->isMappedTo("select", input)))
 				{
 					if(config->isMappedLike("right", input) || config->isMappedTo("select", input))
 					{
@@ -346,7 +346,7 @@ void Window::update(int deltaTime)
 		peekGui()->update(deltaTime);
 
 	// Update the screensaver
-	if (mScreenSaver)
+	if (isScreenSaverEnabled())
 		mScreenSaver->update(deltaTime);
 
 	// update pads // batocera
@@ -415,7 +415,7 @@ void Window::render()
 	Renderer::setMatrix(Transform4x4f::Identity());
 
 	unsigned int screensaverTime = (unsigned int)Settings::getInstance()->getInt("ScreenSaverTime");
-	if(mTimeSinceLastInput >= screensaverTime && screensaverTime != 0)
+	if( (mTimeSinceLastInput >= screensaverTime) && isScreenSaverEnabled() )
 		startScreenSaver();
 
 	if(!mRenderScreenSaver && mInfoPopup)
@@ -427,7 +427,7 @@ void Window::render()
 	// Always call the screensaver render function regardless of whether the screensaver is active
 	// or not because it may perform a fade on transition
 	renderScreenSaver();
-	
+
 	for (auto extra : mScreenExtras)
 		extra->render(transform);
 
@@ -437,9 +437,9 @@ void Window::render()
 	if (Settings::getInstance()->getBool("BrightnessPopup") && mBrightnessInfo)
 		mBrightnessInfo->render(transform);
 
-	if(mTimeSinceLastInput >= screensaverTime && screensaverTime != 0)
+	if((mTimeSinceLastInput >= screensaverTime) || (isScreenSaverEnabled() && mRenderScreenSaver))
 	{
-		if (!isProcessing() && mAllowSleep && (!mScreenSaver || mScreenSaver->allowSleep()))
+		if (!isProcessing() && mAllowSleep && (!isScreenSaverEnabled() || mScreenSaver->allowSleep()))
 		{
 			// go to sleep
 			if (mSleeping == false) {
@@ -679,7 +679,9 @@ bool Window::isProcessing()
 
 void Window::startScreenSaver()
 {
-	if (mScreenSaver && !mRenderScreenSaver)
+	LOG(LogInfo) << "Window::startScreenSaver()";
+
+	if (isScreenSaverEnabled() && !mRenderScreenSaver)
 	{
 		for (auto extra : mScreenExtras)
 			extra->onScreenSaverActivate();
@@ -695,8 +697,10 @@ void Window::startScreenSaver()
 
 bool Window::cancelScreenSaver()
 {
+	LOG(LogInfo) << "Window::cancelScreenSaver()";
+
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if ((screensaver_behavior == "suspend") || (screensaver_behavior == "none"))
+	if ((screensaver_behavior == "suspend") || !isScreenSaverEnabled())
 		return false;
 
 	if (mScreenSaver && mRenderScreenSaver)
@@ -720,8 +724,7 @@ bool Window::cancelScreenSaver()
 
 void Window::renderScreenSaver()
 {
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if (mScreenSaver && !(screensaver_behavior == "none"))
+	if (isScreenSaverEnabled())
 		mScreenSaver->renderScreenSaver();
 }
 

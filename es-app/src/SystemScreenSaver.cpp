@@ -56,12 +56,20 @@ SystemScreenSaver::~SystemScreenSaver()
 
 bool SystemScreenSaver::allowSleep()
 {
-	return (mVideoScreensaver == nullptr && mImageScreensaver == nullptr);
+	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
+	return (mVideoScreensaver == nullptr) && (mImageScreensaver == nullptr) && (screensaver_behavior != "suspend") && (screensaver_behavior != "none");
 }
 
 bool SystemScreenSaver::isScreenSaverActive()
 {
 	return (mState != STATE_INACTIVE);
+}
+
+bool SystemScreenSaver::isEnabled()
+{
+	unsigned int screensaverTime = (unsigned int)Settings::getInstance()->getInt("ScreenSaverTime");
+	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
+	return (screensaverTime > 0) && (screensaver_behavior != "none");
 }
 
 void SystemScreenSaver::startScreenSaver()
@@ -71,9 +79,9 @@ void SystemScreenSaver::startScreenSaver()
 	bool loadingNext = mLoadingNext;
 
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if (screensaver_behavior == "none")
+	if (!isEnabled())
 	{
-		LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: running 'NONE Screensaver'";
+		LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: running Screensaver not enabled";
 		return;
 	}
 
@@ -114,7 +122,7 @@ void SystemScreenSaver::startScreenSaver()
 
 		if (!path.empty() && Utils::FileSystem::exists(path))
 		{
-			LOG(LogDebug) << "VideoScreenSaver::startScreenSaver() - video path: " << path.c_str();
+			LOG(LogInfo) << "VideoScreenSaver::startScreenSaver() - video path: " << path.c_str();
 
 			mVideoScreensaver = std::make_shared<VideoScreenSaver>(mWindow);
 			mVideoScreensaver->setGame(mCurrentGame);
@@ -156,7 +164,7 @@ void SystemScreenSaver::startScreenSaver()
 
 		if (!path.empty() && Utils::FileSystem::exists(path))
 		{
-			LOG(LogDebug) << "ImageScreenSaver::startScreenSaver " << path.c_str();
+			LOG(LogInfo) << "ImageScreenSaver::startScreenSaver " << path.c_str();
 
 			mImageScreensaver = std::make_shared<ImageScreenSaver>(mWindow);
 			mImageScreensaver->setGame(mCurrentGame);
@@ -203,7 +211,7 @@ void SystemScreenSaver::stopScreenSaver()
 	LOG(LogInfo) << "SystemScreenSaver::stopScreenSaver() - Enter";
 
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if ((screensaver_behavior == "none") || (screensaver_behavior == "suspend"))
+	if (!isEnabled() || (screensaver_behavior == "suspend"))
 	{
 		LOG(LogInfo) << "SystemScreenSaver::stopScreenSaver() - exit: screensaver_behavior 'none' or 'suspend'";
 		return;
@@ -250,7 +258,7 @@ void SystemScreenSaver::stopScreenSaver()
 void SystemScreenSaver::renderScreenSaver()
 {
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if ((screensaver_behavior == "none") || (screensaver_behavior == "suspend"))
+	if (!isEnabled() || (screensaver_behavior == "suspend"))
 		return;
 
 	Transform4x4f transform = Transform4x4f::Identity();
@@ -276,12 +284,12 @@ void SystemScreenSaver::renderScreenSaver()
 		Renderer::setMatrix(transform);
 		Renderer::drawRect(0.0f, 0.0f, Renderer::getScreenWidth(), Renderer::getScreenHeight(), 0x000000FF);
 
-		if (mFadingImageScreensaver != nullptr)		
+		if (mFadingImageScreensaver != nullptr)
 			mFadingImageScreensaver->render(transform);
 
 		// Only render the video if the state requires it
 		if ((int)mState >= STATE_FADE_IN_VIDEO)
-		{			
+		{
 			if (mImageScreensaver->hasImage())
 			{
 				unsigned int opacity = 255 - (unsigned char)(mOpacity * 255);
@@ -303,6 +311,11 @@ void SystemScreenSaver::renderScreenSaver()
 		Renderer::setMatrix(Transform4x4f::Identity());
 		unsigned char color = screensaver_behavior == "dim" ? 0x000000A0 : 0x000000FF;
 		Renderer::drawRect(0.0f, 0.0f, Renderer::getScreenWidth(), Renderer::getScreenHeight(), color, color);
+		if (screensaver_behavior == "black")
+		{
+			mWindow->getBrightnessInfoComponent()->setBrightness(0);
+			ApiSystem::getInstance()->setBrightnessLevel(0);
+		}
 	}
 }
 

@@ -490,7 +490,7 @@ bool SystemView::input(InputConfig* config, Input input)
 		if (!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("select", input) && Settings::getInstance()->getBool("ScreenSaverControls"))
 		{
 			std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-			if ((screensaver_behavior != "suspend") && (screensaver_behavior != "none"))
+			if (mWindow->isScreenSaverEnabled() && (screensaver_behavior != "suspend"))
 			{
 				mWindow->startScreenSaver();
 				mWindow->renderScreenSaver();
@@ -743,7 +743,7 @@ std::vector<HelpPrompt> SystemView::getHelpPrompts()
 		prompts.push_back(HelpPrompt("y", _("SEARCH"))); // QUICK
 
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && ((screensaver_behavior != "suspend") && (screensaver_behavior != "none")))
+	if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && ((screensaver_behavior != "suspend") && mWindow->isScreenSaverEnabled()))
 		prompts.push_back(HelpPrompt("select", _("LAUNCH SCREENSAVER")));
 
 	return prompts;
@@ -758,7 +758,7 @@ HelpStyle SystemView::getHelpStyle()
 
 void  SystemView::onThemeChanged(const std::shared_ptr<ThemeData>& /*theme*/)
 {
-	LOG(LogDebug) << "SystemView::onThemeChanged()";
+	//LOG(LogDebug) << "SystemView::onThemeChanged()";
 	mViewNeedsReload = true;
 	populate();
 }
@@ -766,7 +766,7 @@ void  SystemView::onThemeChanged(const std::shared_ptr<ThemeData>& /*theme*/)
 //  Get the ThemeElements that make up the SystemView.
 void  SystemView::getViewElements(const std::shared_ptr<ThemeData>& theme)
 {
-	LOG(LogDebug) << "SystemView::getViewElements()";
+	//LOG(LogDebug) << "SystemView::getViewElements()";
 
 	getDefaultElements();
 

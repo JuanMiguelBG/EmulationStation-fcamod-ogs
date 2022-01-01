@@ -44,6 +44,7 @@ public:
 		virtual FileData* getCurrentGame() = 0;
 		virtual void launchGame() = 0;
 		virtual void resetCounts() = 0;
+		virtual bool isEnabled() = 0;
 	};
 
 	class InfoPopup {
@@ -85,6 +86,7 @@ public:
 	void setHelpPrompts(const std::vector<HelpPrompt>& prompts, const HelpStyle& style);
 
 	void setScreenSaver(ScreenSaver* screenSaver) { mScreenSaver = screenSaver; }
+	bool isScreenSaverEnabled() { return mScreenSaver && mScreenSaver->isEnabled(); }
 //	void setInfoPopup(InfoPopup* infoPopup) { delete mInfoPopup; mInfoPopup = infoPopup; }
 	inline void stopInfoPopup() { if (mInfoPopup) mInfoPopup->stop(); };
 
