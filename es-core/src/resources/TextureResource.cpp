@@ -3,8 +3,9 @@
 #include "utils/FileSystemUtil.h"
 #include "resources/TextureData.h"
 #include "ImageIO.h"
-#include "Settings.h"
+#include "utils/AsyncUtil.h"
 #include <cstring>
+#include "Log.h"
 
 TextureDataManager		TextureResource::sTextureDataManager;
 
@@ -24,7 +25,7 @@ TextureResource::TextureResource(const std::string& path, bool tile, bool linear
 		// data manager to manage loading/unloading of this texture
 		std::shared_ptr<TextureData> data;
 		if (dynamic)
-		{			
+		{
 			data = sTextureDataManager.add(this, tile, linear);
 			data->setMaxSize(maxSize);
 			data->initFromPath(path);
@@ -36,8 +37,9 @@ TextureResource::TextureResource(const std::string& path, bool tile, bool linear
 
 			unsigned int width, height;
 			
-			if (allowAsync && Settings::getInstance()->getBool("ThreadedLoading") && ImageIO::loadImageSize(fullpath.c_str(), &width, &height))
+			if (allowAsync && Utils::Async::isCanRunAsync() && ImageIO::loadImageSize(fullpath.c_str(), &width, &height))
 			{
+				LOG(LogDebug) << "TextureResource::TextureResource() - Async texture loading!";
 				data->setTemporarySize(width, height);
 				async = true;
 			}

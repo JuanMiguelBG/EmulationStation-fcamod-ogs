@@ -13,6 +13,7 @@
 #include <fstream>
 #include "utils/StringUtil.h"
 #include "utils/ThreadPool.h"
+#include "utils/AsyncUtil.h"
 #include "GuiComponent.h"
 #include "Window.h"
 #include "views/ViewController.h"
@@ -508,8 +509,9 @@ bool SystemData::loadConfig(Window* window)
 	ThreadPool* pThreadPool = NULL;
 	SystemDataPtr* systems = NULL;
 	
-	if (std::thread::hardware_concurrency() > 2 && Settings::getInstance()->getBool("ThreadedLoading"))
+	if (Utils::Async::isCanRunAsync())
 	{
+		LOG(LogInfo) << "SystemData::loadConfig() - Thread Loading Collection Systems!";
 		pThreadPool = new ThreadPool();
 
 		systems = new SystemDataPtr[systemCount];
@@ -526,7 +528,7 @@ bool SystemData::loadConfig(Window* window)
 		if (pThreadPool != NULL)
 		{
 			pThreadPool->queueWorkItem([system, currentSystem, systems, &processedSystem]
-			{				
+			{
 				systems[currentSystem] = loadSystem(system);
 				processedSystem++;
 			});

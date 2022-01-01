@@ -11,6 +11,9 @@
 
 #include <unistd.h>
 
+#include <future>
+#include "utils/AsyncUtil.h"
+
 FileData* findOrCreateFile(SystemData* system, const std::string& path, FileType type, std::unordered_map<std::string, FileData*>& fileMap)
 {
 	auto pGame = fileMap.find(path);
@@ -252,10 +255,9 @@ bool addFileDataNode(pugi::xml_node& parent, const FileData* file, const char* t
 	return true;
 }
 
-bool saveToGamelistRecovery(FileData* file)
+bool saveToGamelistRecoveryInternal(FileData* file)
 {
-	if (!Settings::getInstance()->getBool("SaveGamelistsOnExit"))
-		return false;
+	LOG(LogDebug) << "Gamelist::saveToGamelistRecoveryInternal() - Execute name: " << file->getName() << ", path: " << file->getPath();
 
 	pugi::xml_document doc;
 	pugi::xml_node root = doc.append_child("gameList");
@@ -281,15 +283,31 @@ bool saveToGamelistRecovery(FileData* file)
 
 		if (!doc.save_file(path.c_str()))
 		{
-			LOG(LogError) << "Gamelist::saveToGamelistRecovery() - Error saving gamelist.xml to \"" << path << "\" (for system " << system->getName() << ")!";
+			LOG(LogError) << "Gamelist::saveToGamelistRecoveryInternal() - Error saving gamelist.xml to \"" << path << "\" (for system " << system->getName() << ")!";
 			return false;
 		}
 
-		LOG(LogInfo) << "Gamelist::saveToGamelistRecovery() - Saving gamelist.xml to \"" << path << "\" (for system " << system->getName() << ")!";
+		LOG(LogInfo) << "Gamelist::saveToGamelistRecoveryInternal() - Saving gamelist.xml to \"" << path << "\" (for system " << system->getName() << ")!";
 		return true;
 	}
 
 	return false;
+}
+
+bool saveToGamelistRecovery(FileData* file)
+{
+	if (!Settings::getInstance()->getBool("SaveGamelistsOnExit"))
+		return false;
+
+	if (Utils::Async::isCanRunAsync())
+	{
+		LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - Asynchronous execution!";
+		auto dummy= std::async(std::launch::async, saveToGamelistRecoveryInternal, file);
+		LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - exit Asynchronous execution!";
+		return false;
+	}
+	LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - normal execution!";
+	return saveToGamelistRecoveryInternal(file);
 }
 
 bool hasDirtyFile(SystemData* system)
@@ -417,7 +435,7 @@ void updateGamelist(SystemData* system)
 			LOG(LogError) << "Gamelist::updateGamelist() - Error saving gamelist.xml to \"" << xmlWritePath << "\" (for system " << system->getName() << ")!";
 		}
 		else if (Utils::FileSystem::exists(tmpFile))
-		{				
+		{
 			doc.reset();
 
 			// Secure XML writing
@@ -427,7 +445,7 @@ void updateGamelist(SystemData* system)
 
 				// remove previous gamelist.xml.old file
 				if (Utils::FileSystem::exists(savFile))
-					Utils::FileSystem::removeFile(savFile);					
+					Utils::FileSystem::removeFile(savFile);
 
 				// rename gamelist.xml to gamelist.xml.old
 				if (Utils::FileSystem::exists(xmlWritePath))
