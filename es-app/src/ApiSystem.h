@@ -143,11 +143,13 @@ public:
 	bool setDisplayBlinkLowBattery(bool state);
 
 	bool isSystemHotkeyBrightnessEvent();
+	int getSystemHotkeyBrightnessStep();
 	bool isSystemHotkeyVolumeEvent();
+	int getSystemHotkeyVolumeStep();
 	bool isSystemHotkeyWifiEvent();
 	bool isSystemHotkeyPerformanceEvent();
 	bool isSystemHotkeySuspendEvent();
-	bool setSystemHotkeysValues(bool brightness_state, bool volume_state, bool wifi_state, bool performance_state, bool suspend_state);
+	bool setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool performance_state, bool suspend_state);
 
 	bool isDeviceAutoSuspend();
 	bool isDeviceAutoSuspendStayAwakeCharging();

@@ -746,11 +746,37 @@ bool ApiSystem::isSystemHotkeyBrightnessEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get brightness)"));
 }
 
+int ApiSystem::getSystemHotkeyBrightnessStep()
+{
+	LOG(LogInfo) << "ApiSystem::isSystemHotkeyBrightnessStep()";
+
+	int brightness_step = std::atoi(getShOutput(R"(es-system_hotkey get brightness_step)").c_str());
+	if (brightness_step <= 0)
+		return 1;
+	else if (brightness_step > 25)
+		return 25;
+
+	return brightness_step;
+}
+
 bool ApiSystem::isSystemHotkeyVolumeEvent()
 {
 	LOG(LogInfo) << "ApiSystem::isSystemHotkeyVolumeEvent()";
 
 	return stringToState(getShOutput(R"(es-system_hotkey get volume)"));
+}
+
+int ApiSystem::getSystemHotkeyVolumeStep()
+{
+	LOG(LogInfo) << "ApiSystem::getSystemHotkeyVolumeStep()";
+
+	int volume_step = std::atoi(getShOutput(R"(es-system_hotkey get volume_step)").c_str());
+	if (volume_step <= 0)
+		return 1;
+	else if (volume_step > 25)
+		return 25;
+
+	return volume_step;
 }
 
 bool ApiSystem::isSystemHotkeyWifiEvent()
@@ -774,11 +800,21 @@ bool ApiSystem::isSystemHotkeySuspendEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get suspend)"));
 }
 
-bool ApiSystem::setSystemHotkeysValues(bool brightness_state, bool volume_state, bool wifi_state, bool performance_state, bool suspend_state)
+bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool performance_state, bool suspend_state)
 {
 	LOG(LogInfo) << "ApiSystem::setSystemHotkeysValues()";
 
-	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + stateToString(volume_state) + " " + stateToString(wifi_state) + " " + stateToString(performance_state) + " " + stateToString(suspend_state) + " &");
+	if (brightness_step <= 0)
+		brightness_step = 1;
+	else if (brightness_step > 25)
+		brightness_step = 25;
+
+	if (volume_step <= 0)
+		volume_step = 1;
+	else if (volume_step > 25)
+		volume_step = 25;
+
+	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + std::to_string(brightness_step) + " " + stateToString(volume_state) + " " + std::to_string(volume_step) + " " + stateToString(wifi_state) + " " + stateToString(performance_state) + " " + stateToString(suspend_state) + " &");
 }
 
 bool ApiSystem::isDeviceAutoSuspendByTime()
