@@ -389,7 +389,11 @@ bool SystemView::input(InputConfig* config, Input input)
 			}
 			if (config->isMappedTo(BUTTON_PD, input))
 			{
-				int cursor = mCursor + 10;
+				int increment = 10;
+				if ( (int)mEntries.size() < increment )
+					increment = ((int)mEntries.size()) -1;
+
+				int cursor = mCursor + increment;
 				if (cursor < 0)
 					cursor += (int)mEntries.size();
 
@@ -403,7 +407,11 @@ bool SystemView::input(InputConfig* config, Input input)
 			}
 			if (config->isMappedTo(BUTTON_PU, input))
 			{
-				int cursor = mCursor - 10;
+				int increment = 10;
+				if ( (int)mEntries.size() < increment )
+					increment = ((int)mEntries.size()) -1;
+
+				int cursor = mCursor - increment;
 				if (cursor < 0)
 					cursor += (int)mEntries.size();
 				if (cursor >= (int)mEntries.size())
@@ -429,9 +437,13 @@ bool SystemView::input(InputConfig* config, Input input)
 				listInput(1);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PD, input) && mEntries.size() > 10)
+			if (config->isMappedTo(BUTTON_PD, input))
 			{
-				int cursor = mCursor + 10;
+				int increment = 10;
+				if ( (int)mEntries.size() < increment )
+					increment = ((int)mEntries.size()) -1;
+
+				int cursor = mCursor + increment;
 				if (cursor < 0)
 					cursor += (int)mEntries.size();
 
@@ -443,9 +455,13 @@ bool SystemView::input(InputConfig* config, Input input)
 				//listInput(10);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PU, input) && mEntries.size() > 10)
+			if (config->isMappedTo(BUTTON_PU, input))
 			{
-				int cursor = mCursor - 10;
+				int increment = 10;
+				if ( (int)mEntries.size() < increment )
+					increment = ((int)mEntries.size()) -1;
+
+				int cursor = mCursor - increment;
 				if (cursor < 0)
 					cursor += (int)mEntries.size();
 				if (cursor >= (int)mEntries.size())
