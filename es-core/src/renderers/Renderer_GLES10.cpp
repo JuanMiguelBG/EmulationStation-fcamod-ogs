@@ -22,6 +22,7 @@
 #include "PowerIcon.h"
 #include "BlankIcon.h"
 #include "ArkOS.h"
+#include "platform.h"
 
 
 static go2_input_t* input = nullptr;
@@ -460,8 +461,11 @@ namespace Renderer
 					uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
 					int dst_stride = go2_surface_stride_get(titlebarSurface);
 
+#ifdef _DEBUG
+					uint32_t volume = getVolume();
+#else
 					uint32_t volume = go2_audio_volume_get(NULL);
-
+#endif
 					int volumeIndex;
 					if (volume == 0)
 					{

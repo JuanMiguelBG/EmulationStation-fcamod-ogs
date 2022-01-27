@@ -337,7 +337,7 @@ private:
 	
 	class UnsortedViewMap : public std::vector<std::pair<std::string, ThemeView>>
 	{
-	public:		
+	public:
 		std::vector<std::pair<std::string, ThemeView>>::const_iterator find(std::string view) const
 		{
 			for (std::vector<std::pair<std::string, ThemeView>>::const_iterator it = cbegin(); it != cend(); it++)
@@ -357,7 +357,7 @@ private:
 		}
 
 		std::pair<std::vector<std::pair<std::string, ThemeView>>::iterator, bool> insert(std::pair<std::string, ThemeView> item)
-		{			
+		{
 			std::pair<std::vector<std::pair<std::string, ThemeView>>::iterator, bool> ret;
 
 			ret.first = find(item.first);
@@ -369,7 +369,7 @@ private:
 				ret.first = find(item.first);
 			}
 
-			return ret;			
+			return ret;
 		}
 	};
 
@@ -379,7 +379,7 @@ private:
 	std::vector<Subset> mSubsets;
 
 	static std::shared_ptr<ThemeData::ThemeMenu> mMenuTheme;
-	static ThemeData* mDefaultTheme;	
+	static ThemeData* mDefaultTheme;
 };
 
 #endif // ES_CORE_THEME_DATA_H

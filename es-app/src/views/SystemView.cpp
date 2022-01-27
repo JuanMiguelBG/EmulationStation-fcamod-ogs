@@ -173,6 +173,9 @@ void SystemView::populate()
 	{
 		const std::shared_ptr<ThemeData>& theme = (*it)->getTheme();
 
+		if (theme == nullptr)
+			 continue;
+
 		if(mViewNeedsReload)
 			getViewElements(theme);
 

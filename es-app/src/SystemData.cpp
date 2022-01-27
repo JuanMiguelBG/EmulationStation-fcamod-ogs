@@ -593,7 +593,8 @@ bool SystemData::loadConfig(Window* window)
 	if (SystemData::sSystemVector.size() > 0)
 	{
 		auto theme = SystemData::sSystemVector.at(0)->getTheme();
-		ViewController::get()->onThemeChanged(theme);		
+		if (theme != nullptr)
+			ViewController::get()->onThemeChanged(theme);
 	}
 
 	return true;

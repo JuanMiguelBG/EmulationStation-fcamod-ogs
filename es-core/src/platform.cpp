@@ -921,3 +921,15 @@ bool setCurrentTimezone(std::string timezone)
 
 	return executeSystemScript("sudo ln -sf \"/usr/share/zoneinfo/" + timezone +"\" /etc/localtime &");
 }
+
+#ifdef _DEBUG
+uint32_t getVolume()
+{
+	uint32_t value = 0;
+	if (Utils::FileSystem::exists("/usr/local/bin/current_volume"))
+		value = std::atoi( getShOutput(R"(/usr/local/bin/current_volume)").c_str() );
+	else
+		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Playback))").c_str() );
+	return value;
+}
+#endif

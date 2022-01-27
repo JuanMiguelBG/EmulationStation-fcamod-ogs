@@ -267,6 +267,10 @@ std::string queryTimezones();
 std::string queryCurrentTimezone();
 bool setCurrentTimezone(std::string timezone);
 
+#ifdef _DEBUG
+uint32_t getVolume();
+#endif
+
 std::string getShOutput(const std::string& mStr);
 
 #endif // ES_CORE_PLATFORM_H
