@@ -430,6 +430,9 @@ void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std
 {
 	Vector2f scale = getParent() ? getParent()->getSize() : Vector2f((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
 
+	if (theme == nullptr)
+		return;
+
 	const ThemeData::ThemeElement* elem = theme->getElement(view, element, "");
 	if(!elem)
 		return;

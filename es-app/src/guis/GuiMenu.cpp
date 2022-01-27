@@ -977,7 +977,7 @@ void GuiMenu::openUISettings()
 			}
 		});
 	
-		bool showThemeConfiguration = system->getTheme()->hasSubsets() || system->getTheme()->hasView("grid");
+		bool showThemeConfiguration = (system->getTheme() != nullptr) && ( system->getTheme()->hasSubsets() || system->getTheme()->hasView("grid") );
 		if (showThemeConfiguration)
 		{
 			s->addSubMenu(_("THEME CONFIGURATION"), [this, s, theme_set]() { openThemeConfiguration(mWindow, s, theme_set); });
@@ -989,7 +989,7 @@ void GuiMenu::openUISettings()
 			styles.push_back(std::pair<std::string, std::string>("automatic", _("automatic")));
 
 			auto system = ViewController::get()->getState().getSystem();
-			if (system != NULL)
+			if ((system != NULL) && (system->getTheme() != nullptr))
 			{
 				auto mViews = system->getTheme()->getViewsOfTheme();
 				for (auto it = mViews.cbegin(); it != mViews.cend(); ++it)
@@ -1004,7 +1004,7 @@ void GuiMenu::openUISettings()
 			}
 
 			auto viewPreference = Settings::getInstance()->getString("GamelistViewStyle");
-			if (!system->getTheme()->hasView(viewPreference))
+			if ((system->getTheme() == nullptr) || !system->getTheme()->hasView(viewPreference))
 				viewPreference = "automatic";
 
 			for (auto it = styles.cbegin(); it != styles.cend(); it++)

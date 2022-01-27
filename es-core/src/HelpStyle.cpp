@@ -16,6 +16,9 @@ HelpStyle::HelpStyle()
 
 void HelpStyle::applyTheme(const std::shared_ptr<ThemeData>& theme, const std::string& view)
 {
+	if (theme == nullptr)
+		return;
+
 	auto elem = theme->getElement(view, "help", "helpsystem");
 	if(!elem)
 		return;

@@ -84,7 +84,11 @@ bool GuiSettings::input(InputConfig* config, Input input)
 HelpStyle GuiSettings::getHelpStyle()
 {
 	HelpStyle style = HelpStyle();
-	style.applyTheme(ViewController::get()->getState().getSystem()->getTheme(), "system");
+	auto theme = ViewController::get()->getState().getSystem()->getTheme();
+
+	if (theme != nullptr)
+		style.applyTheme(theme, "system");
+
 	return style;
 }
 
@@ -104,6 +108,8 @@ void GuiSettings::addSubMenu(const std::string& label, const std::function<void(
 	row.makeAcceptInputHandler(func);
 
 	auto theme = ThemeData::getMenuTheme();
+	if (theme == nullptr)
+		return;
 
 	auto entryMenu = std::make_shared<TextComponent>(mWindow, label, theme->Text.font, theme->Text.color);
 	row.addElement(entryMenu, true);
@@ -116,6 +122,9 @@ void GuiSettings::addInputTextRow(std::string title, const char *settingsID, boo
 		const std::function<bool(std::string /*value*/)>& onValidateValue)
 {
 	auto theme = ThemeData::getMenuTheme();
+	if (theme == nullptr)
+		return;
+
 	std::shared_ptr<Font> font = theme->Text.font;
 	unsigned int color = theme->Text.color;
 
