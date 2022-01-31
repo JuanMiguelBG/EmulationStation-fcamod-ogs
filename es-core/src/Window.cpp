@@ -697,7 +697,6 @@ void Window::startScreenSaver()
 
 bool Window::cancelScreenSaver()
 {
-	LOG(LogInfo) << "Window::cancelScreenSaver()";
 
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 	if ((screensaver_behavior == "suspend") || !isScreenSaverEnabled())
@@ -705,6 +704,7 @@ bool Window::cancelScreenSaver()
 
 	if (mScreenSaver && mRenderScreenSaver)
 	{
+		LOG(LogInfo) << "Window::cancelScreenSaver()";
 		mScreenSaver->stopScreenSaver();
 		mRenderScreenSaver = false;
 		mScreenSaver->resetCounts();

@@ -527,7 +527,7 @@ namespace Utils
 
 		} // scramble
 
-		std::vector<std::string> split(const std::string& s, char seperator, bool removeEmptyEntries)
+		std::vector<std::string> split(const std::string& s, char separator, bool removeEmptyEntries)
 		{
 			std::vector<std::string> output;
 
@@ -538,7 +538,7 @@ namespace Utils
 
 			while (true)
 			{
-				const char* d = strchr(src, seperator);
+				const char* d = strchr(src, separator);
 				size_t len = (d) ? d - src : strlen(src);
 
 				if (len || !removeEmptyEntries)
@@ -550,12 +550,12 @@ namespace Utils
 			return output;
 		}
 
-		std::vector<std::string> splitAny(const std::string& s, const std::string& seperator, bool removeEmptyEntries)
+		std::vector<std::string> splitAny(const std::string& s, const std::string& separator, bool removeEmptyEntries)
 		{
 			std::vector<std::string> output;
 
 			unsigned prev_pos = 0;
-			auto pos = s.find_first_of(seperator);
+			auto pos = s.find_first_of(separator);
 			while (pos != std::string::npos)
 			{
 				std::string token = s.substr(prev_pos, pos - prev_pos);
@@ -564,7 +564,7 @@ namespace Utils
 
 				pos++;
 				prev_pos = pos;
-				pos = s.find_first_of(seperator, pos);
+				pos = s.find_first_of(separator, pos);
 			}
 
 			if (prev_pos < s.length())
