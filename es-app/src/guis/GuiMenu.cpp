@@ -885,7 +885,7 @@ void GuiMenu::openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shar
 		}
 
 		if (reloadAll || themeconfig->getVariable("reloadAll"))
-		{	
+		{
 			if (systemTheme.empty())
 			{
 				CollectionSystemManager::get()->updateSystemsList();
@@ -1158,11 +1158,14 @@ void GuiMenu::openUISettings()
 			}
 		}
 
-		if (Settings::getInstance()->setString("HiddenSystems", hiddenSystems))
+		if (hiddenSystems != Settings::getInstance()->getString("HiddenSystems"))
 		{
+			LOG(LogDebug) << "GuiMenu::openUISettings() - hiddenSystems changed, new value: " << hiddenSystems;
+			Settings::getInstance()->setString("HiddenSystems", hiddenSystems);
 			Settings::getInstance()->saveFile();
 			s->setVariable("reloadAll", true);
-		}		
+			s->setVariable("forceReloadGames", true);
+		}
 	});
 
 	// Open gamelist at start
@@ -1285,6 +1288,11 @@ void GuiMenu::openUISettings()
 		if (s->getVariable("reloadCollections"))
 			CollectionSystemManager::get()->updateSystemsList();
 
+		if (s->getVariable("forceReloadGames"))
+		{
+			ViewController::reloadAllGames(window, false);
+		}
+
 		if (s->getVariable("reloadAll"))
 		{
 			ViewController::get()->reloadAll(window);
@@ -1296,6 +1304,7 @@ void GuiMenu::openUISettings()
 			delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
+
 	});
 
 	s->updatePosition();

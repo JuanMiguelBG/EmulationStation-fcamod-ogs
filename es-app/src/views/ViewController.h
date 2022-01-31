@@ -46,7 +46,7 @@ public:
 	void goToSystemView(SystemData* system, bool forceImmediate = false);
 	void goToSystemView(std::string& systemName, bool forceImmediate = false, ViewMode mode = SYSTEM_SELECT);
 	void goToStart(bool forceImmediate = false);
-	void ReloadAndGoToStart();
+	void reloadAndGoToStart();
 
 	void onFileChanged(FileData* file, FileChangeType change);
 

@@ -28,7 +28,7 @@ void UIModeController::monitorUIMode()
 	if (uimode != mCurrentUIMode) // UIMODE HAS CHANGED
 	{
 		mCurrentUIMode = uimode;
-		ViewController::get()->ReloadAndGoToStart();
+		ViewController::get()->reloadAndGoToStart();
 	}
 }
 

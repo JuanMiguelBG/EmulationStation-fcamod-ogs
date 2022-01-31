@@ -85,7 +85,7 @@ void ViewController::goToStart(bool forceImmediate)
 		goToSystemView(SystemData::sSystemVector.at(0), forceImmediate);
 }
 
-void ViewController::ReloadAndGoToStart()
+void ViewController::reloadAndGoToStart()
 {
 	ViewController::get()->reloadAll();
 	ViewController::get()->goToStart(false);
