@@ -485,10 +485,18 @@ bool GuiMetaDataEd::input(InputConfig* config, Input input)
 		return true;
 
 	const bool isStart = config->isMappedTo("start", input);
-	if(input.value != 0 && (config->isMappedTo(BUTTON_BACK, input) || isStart))
+	if (input.value != 0)
 	{
-		close(isStart);
-		return true;
+		if (config->isMappedTo(BUTTON_BACK, input) || isStart)
+		{
+			close(isStart);
+			return true;
+		}
+		if (config->isMappedTo("select", input))
+		{
+			save();
+			delete this;
+		}
 	}
 
 	return false;
@@ -499,6 +507,7 @@ std::vector<HelpPrompt> GuiMetaDataEd::getHelpPrompts()
 	std::vector<HelpPrompt> prompts = mGrid.getHelpPrompts();
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	prompts.push_back(HelpPrompt("start", _("CLOSE")));
+	prompts.push_back(HelpPrompt("select", _("SAVE")));
 	return prompts;
 }
 
