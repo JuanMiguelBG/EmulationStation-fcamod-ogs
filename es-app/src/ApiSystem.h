@@ -52,7 +52,9 @@ public:
 		LANGUAGE = 6,
 		SYSTEM_INFORMATION = 7,
 		AUTO_SUSPEND = 8,
-		OPTMIZE_SYSTEM = 9
+		OPTMIZE_SYSTEM = 9,
+		SHOW_FPS = 10,
+		OVERCLOCK = 11
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -200,6 +202,12 @@ public:
 	bool setRetroachievementsValues(bool retroachievements_state, bool hardcore_state, bool leaderboards_state, bool verbose_state, bool automatic_screenshot_state, bool challenge_indicators_state, bool richpresence_state, bool badges_state, bool test_unofficial_state, bool start_active_state, const std::string sound, const std::string username, const std::string password);
 
 	bool setOptimizeSystem(bool state);
+
+	bool setShowRetroarchFps(bool state);
+	bool isShowRetroarchFps();
+
+	bool setOverclockSystem(bool state);
+	bool isOverclockSystem();
 
 	virtual std::string getSevenZipCommand() { return "7zr"; }
 

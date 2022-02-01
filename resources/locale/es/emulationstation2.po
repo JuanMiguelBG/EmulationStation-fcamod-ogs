@@ -552,6 +552,10 @@ msgid "OPTIMIZE SYSTEM"
 msgstr "OPTMIZAR EL SISTEMA"
 
 #:
+msgid "OVERCLOCK SYSTEM"
+msgstr "OVERCLOCKING DEL SISTEMA"
+
+#:
 msgid "SHOW FILE BROWSER"
 msgstr "MOSTRAR NAVEGADOR DE ARCHIVOS"
 
@@ -1033,8 +1037,16 @@ msgid "suspend"
 msgstr "suspender"
 
 #:
+msgid "SUSPEND"
+msgstr "SUSPENDER"
+
+#:
 msgid "SHOW FRAMERATE"
 msgstr "MOSTRAR TASA DE IMÁGENES"
+
+#:
+msgid "SHOW RETROARCH FPS"
+msgstr "MOSTRAR FPS EN RETROARCH"
 
 #:
 msgid "ON-SCREEN HELP"

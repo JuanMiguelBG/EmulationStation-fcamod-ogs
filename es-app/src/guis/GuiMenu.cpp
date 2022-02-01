@@ -1905,6 +1905,23 @@ void GuiMenu::openAdvancedSettings()
 	s->addWithLabel(_("SHOW FRAMERATE"), framerate);
 	s->addSaveFunc([framerate] { Settings::getInstance()->setBool("DrawFramerate", framerate->getState()); });
 
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SHOW_FPS))
+	{
+	// retroarch framerate
+		auto retroarch_fps = std::make_shared<SwitchComponent>(mWindow);
+		bool retroarch_fps_value = ApiSystem::getInstance()->isShowRetroarchFps();
+		retroarch_fps->setState(retroarch_fps_value);
+		s->addWithLabel(_("SHOW RETROARCH FPS"), retroarch_fps);
+		s->addSaveFunc([retroarch_fps, retroarch_fps_value]
+			{
+				bool retroarch_fps_new_value = retroarch_fps->getState();
+				if (retroarch_fps_value != retroarch_fps_new_value)
+				{
+					ApiSystem::getInstance()->setShowRetroarchFps(retroarch_fps_new_value);
+				}
+			});
+	}
+
 	// preload Medias
 	auto preloadMedias = std::make_shared<SwitchComponent>(mWindow);
 	preloadMedias->setState(Settings::getInstance()->getBool("PreloadMedias"));
@@ -1945,6 +1962,33 @@ void GuiMenu::openAdvancedSettings()
 												LOG(LogWarning) << "GuiMenu::openQuitMenu() - Restart terminated with non-zero result!";
 										}));
 					}));
+				}
+			});
+	}
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OVERCLOCK))
+	{
+		// overclock
+		auto overclock_system = std::make_shared<SwitchComponent>(mWindow);
+		bool overclock_system_old_value = ApiSystem::getInstance()->isOverclockSystem();
+		overclock_system->setState(overclock_system_old_value);
+		s->addWithLabel(_("OVERCLOCK SYSTEM"), overclock_system);
+		s->addSaveFunc([window, overclock_system, overclock_system_old_value]
+			{
+				if (overclock_system_old_value != overclock_system->getState())
+				{
+					LOG(LogInfo) << "GuiMenu::openAdvancedSettings() - overclock system: " << Utils::String::boolToString( overclock_system->getState() );
+					if ( ApiSystem::getInstance()->setOverclockSystem( overclock_system->getState() ) )
+					{
+						window->pushGui(new GuiMsgBox(window, _("THE SYSTEM WILL NOW REBOOT"),
+									_("OK"),
+										[] {
+										Scripting::fireEvent("quit", "reboot");
+										Scripting::fireEvent("reboot");
+										if (quitES(QuitMode::REBOOT) != 0)
+											LOG(LogWarning) << "GuiMenu::openQuitMenu() - Restart terminated with non-zero result!";
+									}));
+					}
 				}
 			});
 	}

@@ -180,6 +180,12 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 	case ApiSystem::OPTMIZE_SYSTEM:
 				executables.push_back("es-optimize_system");
 				break;
+	case ApiSystem::SHOW_FPS:
+				executables.push_back("es-show_fps");
+				break;
+	case ApiSystem::OVERCLOCK:
+				executables.push_back("es-overclock_system");
+				break;
 /*
 	case ApiSystem::RETROACHIVEMENTS:
 #ifdef CHEEVOS_DEV_LOGIN
@@ -1201,6 +1207,34 @@ bool ApiSystem::setOptimizeSystem(bool state)
 	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
 
 	return executeScript("es-optimize_system " + Utils::String::boolToString(state));
+}
+
+bool ApiSystem::setShowRetroarchFps(bool state)
+{
+	LOG(LogInfo) << "ApiSystem::setShowRetroarchFps()";
+
+	return executeScript("es-show_fps set fps_show " + Utils::String::boolToString(state) + " &");
+}
+
+bool ApiSystem::isShowRetroarchFps()
+{
+	LOG(LogInfo) << "ApiSystem::isShowRetroarchFps()";
+
+	return Utils::String::toBool( getShOutput(R"(es-show_fps get fps_show)") );
+}
+
+bool ApiSystem::setOverclockSystem(bool state)
+{
+	LOG(LogInfo) << "ApiSystem::setOverclockSystem()";
+
+	return executeScript("es-overclock_system set " + Utils::String::boolToString(state));
+}
+
+bool ApiSystem::isOverclockSystem()
+{
+	LOG(LogInfo) << "ApiSystem::isOverclockSystem()";
+
+	return Utils::String::toBool( getShOutput(R"(es-overclock_system get)") );
 }
 
 
