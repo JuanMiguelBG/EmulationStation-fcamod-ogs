@@ -1408,3 +1408,9 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 	LOG(LogDebug) << "unzipFile <<";
 	return ret;
 }
+
+
+void ApiSystem::preloadVLC()
+{
+	executeScript("/usr/local/bin/preload_vlc &");
+}

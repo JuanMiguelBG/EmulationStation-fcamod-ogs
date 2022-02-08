@@ -32,6 +32,10 @@
 #include "ImageIO.h"
 #include "ApiSystem.h"
 
+#include <future>
+#include "utils/AsyncUtil.h"
+
+
 const std::string INVALID_HOME_PATH = "Invalid home path supplied.";
 const std::string INVALID_CONFIG_PATH = "Invalid config path supplied.";
 const std::string INVALID_USERDATA_PATH = "Invalid userdata path supplied.";
@@ -223,6 +227,10 @@ bool parseArgs(int argc, char* argv[])
 		{
 			Settings::getInstance()->setBool("FullScreenMode", true);
 		}
+		else if (strcmp(argv[i], "--no-preload-vlc") == 0)
+		{
+			Settings::getInstance()->setBool("PreloadVLC", false);
+		}
 		else if (strcmp(argv[i], "--vsync") == 0 || strcmp(argv[i], "-vsync") == 0)
 		{			
 			bool vsync = false;
@@ -375,6 +383,17 @@ int main(int argc, char* argv[])
 
 	std::locale::global(std::locale("C"));
 
+
+	std::string async_log;
+	if (Settings::getInstance()->getBool("PreloadVLC") && Utils::Async::isCanRunAsync())
+	{
+		async_log.append("MAIN::main() - preload VLC - Asynchronous");
+		auto dummy= std::async(std::launch::async, [] {
+				ApiSystem::getInstance()->preloadVLC();
+		});
+	}
+
+
 	if(!parseArgs(argc, argv))
 		return 0;
 
@@ -382,7 +401,8 @@ int main(int argc, char* argv[])
 	Log::setupReportingLevel();
 	Log::init();
 	LOG(LogInfo) << "MAIN::main() - EmulationStation - v" << PROGRAM_VERSION_STRING << ", built " << PROGRAM_BUILT_STRING;
-
+	LOG(LogInfo) << async_log;
+	async_log.clear();
 	// remove special lock files
 	removeLockFiles();
 

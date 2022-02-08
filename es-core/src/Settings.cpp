@@ -82,6 +82,7 @@ void Settings::setDefaults()
 	mBoolMap["SplashScreenProgress"] = true;
 	mBoolMap["PreloadUI"] = false;
 	mBoolMap["PreloadMedias"] = false;
+	mBoolMap["PreloadVLC"] = true;
 	mBoolMap["StartupOnGameList"] = false;
 	mBoolMap["HideSystemView"] = false;
 	mBoolMap["FullScreenMode"] = false;

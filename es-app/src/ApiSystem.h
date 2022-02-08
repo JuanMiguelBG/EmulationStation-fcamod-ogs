@@ -224,6 +224,9 @@ public:
 
 	std::vector<ThemeDownloadInfo> getThemesList();
 	std::pair<std::string, int> installTheme(std::string themeName, const std::function<void(const std::string)>& func = nullptr);
+
+	void preloadVLC();
+
 };
 
 #endif
