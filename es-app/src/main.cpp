@@ -385,12 +385,20 @@ int main(int argc, char* argv[])
 
 
 	std::string async_log;
-	if (Settings::getInstance()->getBool("PreloadVLC") && Utils::Async::isCanRunAsync())
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
 	{
-		async_log.append("MAIN::main() - preload VLC - Asynchronous");
-		auto dummy= std::async(std::launch::async, [] {
-				ApiSystem::getInstance()->preloadVLC();
-		});
+		if (Utils::Async::isCanRunAsync())
+		{
+			async_log.append("MAIN::main() - preload VLC - Asynchronous");
+			auto dummy= std::async(std::launch::async, [] {
+					ApiSystem::getInstance()->preloadVLC();
+			});
+		}
+		else
+		{
+			async_log.append("MAIN::main() - preload VLC");
+			ApiSystem::getInstance()->preloadVLC();
+		}
 	}
 
 

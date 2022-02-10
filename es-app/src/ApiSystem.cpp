@@ -186,6 +186,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 	case ApiSystem::OVERCLOCK:
 				executables.push_back("es-overclock_system");
 				break;
+	case ApiSystem::PRELOAD_VLC:
+				executables.push_back("es-preload_vlc");
+				break;
 /*
 	case ApiSystem::RETROACHIVEMENTS:
 #ifdef CHEEVOS_DEV_LOGIN
@@ -1412,5 +1415,5 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 
 void ApiSystem::preloadVLC()
 {
-	executeScript("/usr/local/bin/preload_vlc &");
+	executeScript("/usr/local/bin/es-preload_vlc &");
 }
