@@ -439,17 +439,22 @@ void GuiMetaDataEd::fetchDone(const ScraperSearchResult& result)
 	//mScrappedPk2 = result.p2k;
 }
 
-void GuiMetaDataEd::close(bool closeAllWindows)
+void GuiMetaDataEd::close(bool closeAllWindows, bool ignoreChanges)
 {
+
 	// find out if the user made any changes
 	bool dirty = false;
-	for(unsigned int i = 0; i < mEditors.size(); i++)
+
+	if (!ignoreChanges)
 	{
-		auto key = mEditors.at(i)->getTag();
-		if(mMetaData->get(key) != mEditors.at(i)->getValue())
+		for(unsigned int i = 0; i < mEditors.size(); i++)
 		{
-			dirty = true;
-			break;
+			auto key = mEditors.at(i)->getTag();
+			if(mMetaData->get(key) != mEditors.at(i)->getValue())
+			{
+				dirty = true;
+				break;
+			}
 		}
 	}
 
@@ -495,7 +500,10 @@ bool GuiMetaDataEd::input(InputConfig* config, Input input)
 		if (config->isMappedTo("select", input))
 		{
 			save();
-			delete this;
+			if (Settings::getInstance()->getBool("GuiEditMetadataCloseAllWindows"))
+				close(true, true);
+			else
+				delete this;
 		}
 	}
 

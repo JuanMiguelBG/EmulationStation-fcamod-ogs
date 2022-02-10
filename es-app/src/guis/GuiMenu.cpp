@@ -1860,12 +1860,7 @@ void GuiMenu::openAdvancedSettings()
 	});
 
 
-	// maximum vram
-	auto max_vram = std::make_shared<SliderComponent>(mWindow, 40.f, 1000.f, 10.f, "Mb");
-	max_vram->setValue((float)(Settings::getInstance()->getInt("MaxVRAM")));
-	s->addWithLabel(_("VRAM LIMIT"), max_vram);
-	s->addSaveFunc([max_vram] { Settings::getInstance()->setInt("MaxVRAM", (int)Math::round(max_vram->getValue())); });
-
+	s->addGroup(_("GAME LIST"));
 
 	// gamelists
 	auto save_gamelists = std::make_shared<SwitchComponent>(mWindow);
@@ -1883,6 +1878,15 @@ void GuiMenu::openAdvancedSettings()
 	s->addWithLabel(_("SEARCH FOR LOCAL ART"), local_art);
 	s->addSaveFunc([local_art] { Settings::getInstance()->setBool("LocalArt", local_art->getState()); });
 
+
+	s->addGroup(_("PERFORMANCE"));
+
+	// maximum vram
+	auto max_vram = std::make_shared<SliderComponent>(mWindow, 40.f, 1000.f, 10.f, "Mb");
+	max_vram->setValue((float)(Settings::getInstance()->getInt("MaxVRAM")));
+	s->addWithLabel(_("VRAM LIMIT"), max_vram);
+	s->addSaveFunc([max_vram] { Settings::getInstance()->setInt("MaxVRAM", (int)Math::round(max_vram->getValue())); });
+
 	// preload UI
 	auto preloadUI = std::make_shared<SwitchComponent>(mWindow);
 	preloadUI->setState(Settings::getInstance()->getBool("PreloadUI"));
@@ -1898,29 +1902,6 @@ void GuiMenu::openAdvancedSettings()
 		TextureData::OPTIMIZEVRAM = optimizeVram->getState();
 		Settings::getInstance()->setBool("OptimizeVRAM", optimizeVram->getState());
 	});
-
-	// framerate
-	auto framerate = std::make_shared<SwitchComponent>(mWindow);
-	framerate->setState(Settings::getInstance()->getBool("DrawFramerate"));
-	s->addWithLabel(_("SHOW FRAMERATE"), framerate);
-	s->addSaveFunc([framerate] { Settings::getInstance()->setBool("DrawFramerate", framerate->getState()); });
-
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SHOW_FPS))
-	{
-	// retroarch framerate
-		auto retroarch_fps = std::make_shared<SwitchComponent>(mWindow);
-		bool retroarch_fps_value = ApiSystem::getInstance()->isShowRetroarchFps();
-		retroarch_fps->setState(retroarch_fps_value);
-		s->addWithLabel(_("SHOW RETROARCH FPS"), retroarch_fps);
-		s->addSaveFunc([retroarch_fps, retroarch_fps_value]
-			{
-				bool retroarch_fps_new_value = retroarch_fps->getState();
-				if (retroarch_fps_value != retroarch_fps_new_value)
-				{
-					ApiSystem::getInstance()->setShowRetroarchFps(retroarch_fps_new_value);
-				}
-			});
-	}
 
 	// preload Medias
 	auto preloadMedias = std::make_shared<SwitchComponent>(mWindow);
@@ -1993,6 +1974,32 @@ void GuiMenu::openAdvancedSettings()
 			});
 	}
 
+
+	s->addGroup(_("USER INTERFACE"));
+
+	// framerate
+	auto framerate = std::make_shared<SwitchComponent>(mWindow);
+	framerate->setState(Settings::getInstance()->getBool("DrawFramerate"));
+	s->addWithLabel(_("SHOW FRAMERATE"), framerate);
+	s->addSaveFunc([framerate] { Settings::getInstance()->setBool("DrawFramerate", framerate->getState()); });
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SHOW_FPS))
+	{
+	// retroarch framerate
+		auto retroarch_fps = std::make_shared<SwitchComponent>(mWindow);
+		bool retroarch_fps_value = ApiSystem::getInstance()->isShowRetroarchFps();
+		retroarch_fps->setState(retroarch_fps_value);
+		s->addWithLabel(_("SHOW RETROARCH FPS"), retroarch_fps);
+		s->addSaveFunc([retroarch_fps, retroarch_fps_value]
+			{
+				bool retroarch_fps_new_value = retroarch_fps->getState();
+				if (retroarch_fps_value != retroarch_fps_new_value)
+				{
+					ApiSystem::getInstance()->setShowRetroarchFps(retroarch_fps_new_value);
+				}
+			});
+	}
+
 	// show detailed system information
 	auto detailedSystemInfo = std::make_shared<SwitchComponent>(mWindow);
 	detailedSystemInfo->setState(Settings::getInstance()->getBool("ShowDetailedSystemInfo"));
@@ -2027,7 +2034,7 @@ void GuiMenu::openAdvancedSettings()
 		}
 	});
 */
-		// Battery Indicator
+	// Battery Indicator
 	auto battery = std::make_shared<SwitchComponent>(mWindow);
 	battery->setState(Settings::getInstance()->getBool("ShowBatteryIndicator"));
 	s->addWithLabel(_("SHOW BATTERY LEVEL"), battery);
@@ -2047,6 +2054,18 @@ void GuiMenu::openAdvancedSettings()
 		//s->setVariable("reloadAll", true);
 	});
 */
+
+	// Battery Indicator
+	auto gui_metadata_select = std::make_shared<SwitchComponent>(mWindow);
+	gui_metadata_select->setState(Settings::getInstance()->getBool("GuiEditMetadataCloseAllWindows"));
+	s->addWithLabel(_("GAME METADATA EDIT - \"SELECT\" CLOSE MENU"), gui_metadata_select);
+	s->addSaveFunc([s, gui_metadata_select]
+	{
+		Settings::getInstance()->setBool("GuiEditMetadataCloseAllWindows", gui_metadata_select->getState());
+	});
+
+
+	s->addGroup(_("OTHERS"));
 
 	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this] { openQuitSettings(); });
 
@@ -2070,6 +2089,7 @@ void GuiMenu::openAdvancedSettings()
 		s->addEntry(_("RETROACHIEVEMENTS SETTINGS"), true, [this] { openRetroAchievementsSettings(); });
 	}
 
+	s->addGroup(_("LOG INFO"));
 	// log level
 	auto logLevel = std::make_shared< OptionListComponent<std::string> >(mWindow, _("LOG LEVEL"), false);
 	std::vector<std::string> levels;
@@ -2108,7 +2128,6 @@ void GuiMenu::openAdvancedSettings()
 			Log::init();
 		}
 	});
-
 
 
 	s->updatePosition();

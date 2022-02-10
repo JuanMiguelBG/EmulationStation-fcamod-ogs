@@ -213,6 +213,8 @@ void Settings::setDefaults()
 
 	mBoolMap["ShowDetailedSystemInfo"] = false;
 
+	mBoolMap["GuiEditMetadataCloseAllWindows"] = false;
+
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;
 	mDefaultFloatMap = mFloatMap;
