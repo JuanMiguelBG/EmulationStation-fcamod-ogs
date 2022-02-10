@@ -13,6 +13,10 @@ msgid "EMULATOR SETTINGS"
 msgstr "CONFIGURACIÓN DE EMULADORES"
 
 #:
+msgid "LOG INFO"
+msgstr "INFORMACIÓN DE LOG"
+
+#:
 msgid "LOG LEVEL"
 msgstr "DETALLE DEL LOG"
 
@@ -451,6 +455,10 @@ msgid "POWER SAVER MODES"
 msgstr "MODOS AHORRO DE ENERGÍA"
 
 #:
+msgid "GAME LIST"
+msgstr "LISTA DE JUEGOS"
+
+#:
 msgid "SAVE METADATA ON EXIT"
 msgstr "GUARDAR METADATOS AL SALIR"
 
@@ -554,6 +562,10 @@ msgstr "OPTMIZAR EL SISTEMA"
 #:
 msgid "OVERCLOCK SYSTEM"
 msgstr "OVERCLOCKING DEL SISTEMA"
+
+#:
+msgid "PRELOAD VLC"
+msgstr "PRECARGAR VLC"
 
 #:
 msgid "SHOW FILE BROWSER"
@@ -1037,6 +1049,10 @@ msgid "suspend"
 msgstr "suspender"
 
 #:
+msgid "USER INTERFACE"
+msgstr "INTERFACE DE USUARIO"
+
+#:
 msgid "SUSPEND"
 msgstr "SUSPENDER"
 
@@ -1305,6 +1321,14 @@ msgstr "SCRAPEO TERMINADO. ACTUALIZE LA LISTAS DE JUEGOS PARA APLICAR CAMBIOS."
 #:
 msgid "QUIT"
 msgstr "SALIR"
+
+#:
+msgid "GAME METADATA EDIT - \"SELECT\" CLOSE MENU"
+msgstr "EDICIÓN METADATOS - \"SELECT\" CIERRA EL MENÚ"
+
+#:
+msgid "OTHERS"
+msgstr "OTROS"
 
 #:
 msgid "\"QUIT\" SETTINGS"

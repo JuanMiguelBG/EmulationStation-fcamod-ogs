@@ -409,8 +409,11 @@ int main(int argc, char* argv[])
 	Log::setupReportingLevel();
 	Log::init();
 	LOG(LogInfo) << "MAIN::main() - EmulationStation - v" << PROGRAM_VERSION_STRING << ", built " << PROGRAM_BUILT_STRING;
-	LOG(LogInfo) << async_log;
-	async_log.clear();
+	if (!async_log.empty())
+	{
+		LOG(LogInfo) << async_log;
+		async_log.clear();
+	}
 	// remove special lock files
 	removeLockFiles();
 

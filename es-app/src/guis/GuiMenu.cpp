@@ -1974,6 +1974,18 @@ void GuiMenu::openAdvancedSettings()
 			});
 	}
 
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC))
+	{
+		// preloa VLC - workaround for the freeze of the first video play
+		auto preloa_VLC = std::make_shared<SwitchComponent>(mWindow);
+		preloa_VLC->setState(Settings::getInstance()->getBool("PreloadVLC"));
+		s->addWithLabel(_("PRELOAD VLC"), preloa_VLC);
+		s->addSaveFunc([preloa_VLC]
+			{
+				Settings::getInstance()->setBool("PreloadVLC", preloa_VLC->getState());
+			});
+	}
+
 
 	s->addGroup(_("USER INTERFACE"));
 
