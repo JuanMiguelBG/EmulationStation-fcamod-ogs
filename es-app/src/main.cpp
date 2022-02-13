@@ -522,24 +522,24 @@ int main(int argc, char* argv[])
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
 	{
 		LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock'";
-		std::string preloa_vlc_lock_file_path = Utils::FileSystem::getEsConfigPath() + "/preloa_vlc.lock";
+		std::string preloa_vlc_lock_file_path = Utils::FileSystem::getEsConfigPath() + "/preload_vlc.lock";
 		if (Utils::FileSystem::exists(preloa_vlc_lock_file_path))
 		{
 			bool exit = false;
 			auto start = std::chrono::high_resolution_clock::now();
 			while (!exit)
 			{
-				LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock' - while()";
+				LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock' - while()";
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 				auto actual_time = std::chrono::high_resolution_clock::now();
 				auto elapsed = actual_time - start;
 				auto f_secs = std::chrono::duration_cast<std::chrono::duration<float>>(elapsed);
-				LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock' - while() - f_secs: " << std::to_string(f_secs.count());
+				LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock' - while() - f_secs: " << std::to_string(f_secs.count());
 				window.renderLoadingScreen(_("Preload VLC..."), (f_secs.count() * 3.3 / 100));
 				exit = !Utils::FileSystem::exists(preloa_vlc_lock_file_path);
 				if (!exit && (f_secs.count() > 30))
 				{
-					LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock' - while() - exit by time";
+					LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock' - while() - exit by time";
 					Utils::FileSystem::removeFile(preloa_vlc_lock_file_path);
 					exit = true;
 				}
