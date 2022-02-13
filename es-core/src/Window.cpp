@@ -512,7 +512,7 @@ void Window::renderLoadingScreen(std::string text, float percent, unsigned char 
 	float y = Math::round(Renderer::getScreenHeight() * 0.78f); // 35
 	trans = trans.translate(Vector3f(x, y, 0.0f));
 	Renderer::setMatrix(trans);
- 	font->renderTextCache(cache);
+	font->renderTextCache(cache);
 	delete cache;
 
 	Renderer::swapBuffers();

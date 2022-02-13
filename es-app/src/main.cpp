@@ -35,6 +35,8 @@
 #include <future>
 #include "utils/AsyncUtil.h"
 
+#include <thread>
+#include <chrono>
 
 const std::string INVALID_HOME_PATH = "Invalid home path supplied.";
 const std::string INVALID_CONFIG_PATH = "Invalid config path supplied.";
@@ -516,6 +518,35 @@ int main(int argc, char* argv[])
 
 	// Initialize input
 	InputConfig::AssignActionButtons();
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
+	{
+		LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock'";
+		std::string preloa_vlc_lock_file_path = Utils::FileSystem::getEsConfigPath() + "/preloa_vlc.lock";
+		if (Utils::FileSystem::exists(preloa_vlc_lock_file_path))
+		{
+			bool exit = false;
+			auto start = std::chrono::high_resolution_clock::now();
+			while (!exit)
+			{
+				LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock' - while()";
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+				auto actual_time = std::chrono::high_resolution_clock::now();
+				auto elapsed = actual_time - start;
+				auto f_secs = std::chrono::duration_cast<std::chrono::duration<float>>(elapsed);
+				LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock' - while() - f_secs: " << std::to_string(f_secs.count());
+				window.renderLoadingScreen(_("Preload VLC..."), (f_secs.count() * 3.3 / 100));
+				exit = !Utils::FileSystem::exists(preloa_vlc_lock_file_path);
+				if (!exit && (f_secs.count() > 30))
+				{
+					LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock' - while() - exit by time";
+					Utils::FileSystem::removeFile(preloa_vlc_lock_file_path);
+					exit = true;
+				}
+			}
+			window.renderLoadingScreen(_("Preload VLC..."), 1);
+		}
+	}
 
 	//choose which GUI to open depending on if an input configuration already exists
 	if (errorMsg == NULL)

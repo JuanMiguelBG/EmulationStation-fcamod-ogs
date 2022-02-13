@@ -263,6 +263,10 @@ msgid "Preloading UI..."
 msgstr "Precargando la interface de usuario..."
 
 #:
+msgid "Preload VLC..."
+msgstr "Precargando VLC..."
+
+#:
 msgid "ADD/REMOVE GAMES TO THIS GAME COLLECTION"
 msgstr "AÑADIR/QUITAR JUEGOS DE LA COLECCIÓN"
 
