@@ -85,6 +85,13 @@ void SystemScreenSaver::startScreenSaver()
 		return;
 	}
 
+	// get the bightness level before call stopScreenSaver
+	if (screensaver_behavior == "black")
+	{
+		mCurrentBrightnessLevel = ApiSystem::getInstance()->getBrightnessLevel();
+		LOG(LogDebug) << "SystemScreenSaver::startScreenSaver() - before 'stopScreenSaver()' - mCurrentBrightnessLevel: " << std::to_string(mCurrentBrightnessLevel);
+	}
+
 	stopScreenSaver();
 
 	if (!loadingNext && Settings::getInstance()->getBool("StopMusicOnScreenSaver")) //Settings::getInstance()->getBool("VideoAudio"))
@@ -192,7 +199,8 @@ void SystemScreenSaver::startScreenSaver()
 	else if (screensaver_behavior == "black")
 	{
 		mWindow->getBrightnessInfoComponent()->lock();
-		mCurrentBrightnessLevel = ApiSystem::getInstance()->getBrightnessLevel();
+		//mCurrentBrightnessLevel = ApiSystem::getInstance()->getBrightnessLevel();
+		LOG(LogDebug) << "SystemScreenSaver::startScreenSaver() - screensaver_behavior == 'black' - mCurrentBrightnessLevel: " << std::to_string(mCurrentBrightnessLevel);
 		if (mCurrentBrightnessLevel < 1)
 			mCurrentBrightnessLevel = 50;
 
@@ -218,12 +226,12 @@ void SystemScreenSaver::stopScreenSaver()
 	}
 	else if (screensaver_behavior == "black")
 	{
+		LOG(LogDebug) << "SystemScreenSaver::stopScreenSaver() - mCurrentBrightnessLevel: " << std::to_string(mCurrentBrightnessLevel);
 		if (mCurrentBrightnessLevel < 1)
 			mCurrentBrightnessLevel = 50;
 
 		mWindow->getBrightnessInfoComponent()->setBrightness(mCurrentBrightnessLevel);
 		ApiSystem::getInstance()->setBrightnessLevel(mCurrentBrightnessLevel);
-		mCurrentBrightnessLevel = -1;
 		mWindow->getBrightnessInfoComponent()->unlock();
 	}
 
@@ -313,6 +321,7 @@ void SystemScreenSaver::renderScreenSaver()
 		Renderer::drawRect(0.0f, 0.0f, Renderer::getScreenWidth(), Renderer::getScreenHeight(), color, color);
 		if (screensaver_behavior == "black")
 		{
+			LOG(LogDebug) << "SystemScreenSaver::renderScreenSaver() - mCurrentBrightnessLevel: " << std::to_string(mCurrentBrightnessLevel);
 			mWindow->getBrightnessInfoComponent()->setBrightness(0);
 			ApiSystem::getInstance()->setBrightnessLevel(0);
 		}
