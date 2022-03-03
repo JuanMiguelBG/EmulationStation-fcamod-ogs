@@ -198,6 +198,8 @@ void GuiMenu::openDisplaySettings()
 					[fullScreenMode] {
 					LOG(LogInfo) << "GuiMenu::openDisplaySettings() - change to screen mode: " << ( fullScreenMode->getState() ? "full" : "header" );
 					Settings::getInstance()->setBool("FullScreenMode", fullScreenMode->getState());
+					Settings::getInstance()->setBool("ShowBatteryIndicator", fullScreenMode->getState());
+					Settings::getInstance()->setBool("ShowNetworkIndicator", fullScreenMode->getState());
 					Settings::getInstance()->saveFile();
 					Scripting::fireEvent("quit");
 					//quitES();
