@@ -59,7 +59,6 @@ VideoComponent::VideoComponent(Window* window) :
 	mVideoWidth(0),
 	mStartDelayed(false),
 	mIsPlaying(false),
-	mShowing(false),
 	mScreensaverActive(false),
 	mDisable(false),
 	mScreensaverMode(false),
@@ -415,7 +414,7 @@ void VideoComponent::manageState()
 
 	// We will only show if the component is on display and the screensaver
 	// is not active
-	bool show = mShowing && !mScreensaverActive && !mDisable;
+	bool show = isShowing() && !mScreensaverActive && !mDisable;
 	if (!show)
 		mStartDelayed = false;
 
@@ -454,20 +453,20 @@ void VideoComponent::manageState()
 
 void VideoComponent::onShow()
 {
-	if (!mShowing && mPlaylist != nullptr && !mVideoPath.empty())
+	if (!isShowing() && mPlaylist != nullptr && !mVideoPath.empty())
 	{
 		auto video = mPlaylist->getNextItem();
 		if (!video.empty())
 			mVideoPath = video;
 	}
 
-	mShowing = true;
+	GuiComponent::onShow();
 	manageState();
 }
 
 void VideoComponent::onHide()
 {
-	mShowing = false;
+ GuiComponent::onHide();
 	manageState();
 }
 

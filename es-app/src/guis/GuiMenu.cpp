@@ -424,8 +424,6 @@ void GuiMenu::openScraperSettings()
 	openAndSave = [s, openAndSave] { s->save(); openAndSave(); };
 	s->addEntry(_("SCRAPE NOW"), true, openAndSave, "iconScraper");
 
-	s->updatePosition();
-
 	scraper_list->setSelectedChangedCallback([this, s, scraper, scraper_list](std::string value)
 	{
 		if (value != scraper && (scraper == "ScreenScraper" || value == "ScreenScraper"))
@@ -601,7 +599,6 @@ void GuiMenu::openSoundSettings()
 
 	}
 
-	s->updatePosition();
 	mWindow->pushGui(s);
 
 }
@@ -1114,68 +1111,6 @@ void GuiMenu::openUISettings()
 	// menus configurations
 	s->addEntry(_("MENUS SETTINGS"), true, [this] { openMenusSettings(); });
 
-	// Optionally start in selected system
-	auto systemfocus_list = std::make_shared< OptionListComponent<std::string> >(mWindow, _("START ON SYSTEM"), false);
-	systemfocus_list->add(_("NONE"), "", Settings::getInstance()->getString("StartupSystem") == "");
-
-	for (auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
-		if ("retropie" != (*it)->getName() && (*it)->isVisible())
-			systemfocus_list->add((*it)->getName(), (*it)->getName(), Settings::getInstance()->getString("StartupSystem") == (*it)->getName());
-
-	if (!systemfocus_list->hasSelection())
-		systemfocus_list->selectFirstItem();
-
-	s->addWithLabel(_("START ON SYSTEM"), systemfocus_list);
-	s->addSaveFunc([systemfocus_list] {
-		Settings::getInstance()->setString("StartupSystem", systemfocus_list->getSelected());
-	});
-
-	// Select systems to hide
-	auto hiddenSystems = Utils::String::split(Settings::getInstance()->getString("HiddenSystems"), ';');
-
-	auto displayedSystems = std::make_shared<OptionListComponent<SystemData*>>(mWindow, _("VISIBLE SYSTEMS"), true);
-
-	for (auto system : SystemData::sSystemVector)
-		if(!system->isCollection() && !system->isGroupChildSystem())
-			displayedSystems->add(system->getFullName(), system, std::find(hiddenSystems.cbegin(), hiddenSystems.cend(), system->getName()) == hiddenSystems.cend());
-
-	s->addWithLabel(_("VISIBLE SYSTEMS"), displayedSystems);
-	s->addSaveFunc([s, displayedSystems]
-	{
-		std::string hiddenSystems;
-
-		std::vector<SystemData*> sys = displayedSystems->getSelectedObjects();
-
-		for (auto system : SystemData::sSystemVector)
-		{
-			if (system->isCollection() || system->isGroupChildSystem())
-				continue;
-
-			if (std::find(sys.cbegin(), sys.cend(), system) == sys.cend())
-			{
-				if (hiddenSystems.empty())
-					hiddenSystems = system->getName();
-				else
-					hiddenSystems = hiddenSystems + ";" + system->getName();
-			}
-		}
-
-		if (hiddenSystems != Settings::getInstance()->getString("HiddenSystems"))
-		{
-			LOG(LogDebug) << "GuiMenu::openUISettings() - hiddenSystems changed, new value: " << hiddenSystems;
-			Settings::getInstance()->setString("HiddenSystems", hiddenSystems);
-			Settings::getInstance()->saveFile();
-			s->setVariable("reloadAll", true);
-			s->setVariable("forceReloadGames", true);
-		}
-	});
-
-	// Open gamelist at start
-	auto bootOnGamelist = std::make_shared<SwitchComponent>(mWindow);
-	bootOnGamelist->setState(Settings::getInstance()->getBool("StartupOnGameList"));
-	s->addWithLabel(_("BOOT ON GAMELIST"), bootOnGamelist);
-	s->addSaveFunc([bootOnGamelist] { Settings::getInstance()->setBool("StartupOnGameList", bootOnGamelist->getState()); });
-
 	// Hide system view
 	auto hideSystemView = std::make_shared<SwitchComponent>(mWindow);
 	hideSystemView->setState(Settings::getInstance()->getBool("HideSystemView"));
@@ -1291,9 +1226,7 @@ void GuiMenu::openUISettings()
 			CollectionSystemManager::get()->updateSystemsList();
 
 		if (s->getVariable("forceReloadGames"))
-		{
 			ViewController::reloadAllGames(window, false);
-		}
 
 		if (s->getVariable("reloadAll"))
 		{
@@ -1309,7 +1242,6 @@ void GuiMenu::openUISettings()
 
 	});
 
-	s->updatePosition();
 	mWindow->pushGui(s);
 }
 
@@ -1706,8 +1638,6 @@ void GuiMenu::openUpdateSettings()
 			s->close();			
 		}
 	});
-
-	s->updatePosition();
 
 	auto pthis = this;
 
@@ -2144,8 +2074,6 @@ void GuiMenu::openAdvancedSettings()
 	});
 
 
-	s->updatePosition();
-
 	auto pthis = this;
 
 	s->onFinalize([s, pthis, window]
@@ -2354,7 +2282,6 @@ void GuiMenu::openQuitMenu()
 	row.addElement(std::make_shared<TextComponent>(window, _("SHUTDOWN SYSTEM"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
 	s->addRow(row);
 
-	s->updatePosition();
 	mWindow->pushGui(s);
 }
 

@@ -503,12 +503,16 @@ bool GuiComponent::isProcessing() const
 
 void GuiComponent::onShow()
 {
+	mShowing = true;
+
 	for(unsigned int i = 0; i < getChildCount(); i++)
 		getChild(i)->onShow();
 }
 
 void GuiComponent::onHide()
 {
+	mShowing = false;
+
 	for(unsigned int i = 0; i < getChildCount(); i++)
 		getChild(i)->onHide();
 }

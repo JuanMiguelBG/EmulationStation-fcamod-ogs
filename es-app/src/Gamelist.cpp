@@ -265,6 +265,9 @@ bool saveToGamelistRecoveryInternal(FileData* file)
 	const char* tag = file->getType() == GAME ? "game" : "folder";
 
 	SystemData* system = file->getSourceFileData()->getSystem();
+	if (!Settings::HiddenSystemsShowGames() && !system->isVisible())
+		return false;
+
 	root.append_attribute("parentHash").set_value(system->getGamelistHash());
 
 	if (addFileDataNode(root, file, tag, system))
@@ -312,7 +315,7 @@ bool saveToGamelistRecovery(FileData* file)
 
 bool hasDirtyFile(SystemData* system)
 {
-	if (system == nullptr || !system->isGameSystem() || system->getName() == "imageviewer")
+	if (system == nullptr || !system->isGameSystem() || (system->getName() == "imageviewer") || (!Settings::HiddenSystemsShowGames() && !system->isVisible()))
 		return false;
 
 	FolderData* rootFolder = system->getRootFolder();
@@ -336,7 +339,7 @@ void updateGamelist(SystemData* system)
 	if(system == nullptr || Settings::getInstance()->getBool("IgnoreGamelist"))
 		return;
 
-	if (system->getName() == "imageviewer" || system->isCollection() || !system->isGameSystem())
+	if (system->getName() == "imageviewer" || system->isCollection() || !system->isGameSystem() || (!Settings::HiddenSystemsShowGames() && !system->isVisible()))
 		return;
 	
 	FolderData* rootFolder = system->getRootFolder();

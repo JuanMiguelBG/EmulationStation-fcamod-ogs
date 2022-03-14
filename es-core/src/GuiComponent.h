@@ -168,21 +168,9 @@ public:
 
 	bool isStaticExtra() const { return mStaticExtra; }
 	void setIsStaticExtra(bool value) { mStaticExtra = value; }
-/*
-	void setAutoUpdateFunction(const std::function<void()> &autoUpdateCallback, int autoUpdateElapsedTime = 100)
-	{
-		if (!autoUpdateCallback || (mAutoUpdateElapsedTime < 100))
-		{
-			clearAutoUpdateProperties();
-			LOG(LogError) << "GuiComponent::setAutoUpdateFunction() - Error in data to configure auto-update feature!!!";
-			return;
-		}
-//		mAutoUpdatedStartTime = SDL_GetTicks();
-		mAutoUpdated = true;
-		mAutoUpdateElapsedTime = autoUpdateElapsedTime;
-		mAutoUpdateCallback = autoUpdateCallback;
-	};
-*/
+
+	bool isShowing() { return mShowing; }
+
 protected:
 	void renderChildren(const Transform4x4f& transform) const;
 	void updateSelf(int deltaTime); // updates animations
@@ -209,46 +197,15 @@ protected:
 
 	bool mIsProcessing;
 	bool mVisible;
-
+	bool mShowing;
 	bool mStaticExtra;
 
 public:
 	const static unsigned char MAX_ANIMATIONS = 4;
 
 private:
-/*
-	bool isAutoUpdated() { return mAutoUpdated; };
-
-	void clearAutoUpdateProperties()
-	{
-		mAutoUpdatedStartTime = 0;
-		mAutoUpdated = false;
-		mAutoUpdateElapsedTime = 100;
-		mAutoUpdateCallback = nullptr;
-	}
-
-	void executeAutoUpdate();
-*/
-/*
-	void executeAutoUpdate()
-	{
-		int mAutoUpdatedEndTime = SDL_GetTicks();
-		int time = mAutoUpdatedEndTime - mAutoUpdatedStartTime;
-		if (time > mAutoUpdateElapsedTime)
-		{
-			mAutoUpdateCallback();
-			mAutoUpdatedStartTime = SDL_GetTicks();
-		}
-	}
-*/
 	Transform4x4f mTransform; //Don't access this directly! Use getTransform()!
 	AnimationController* mAnimationMap[MAX_ANIMATIONS];
-/*
-	bool mAutoUpdated = false;
-	int mAutoUpdateElapsedTime = 100;
-	std::function<void()> mAutoUpdateCallback;
-	int mAutoUpdatedStartTime = 0;
-*/
 };
 
 #endif // ES_CORE_GUI_COMPONENT_H

@@ -43,7 +43,6 @@ std::vector<const char*> settings_dont_save {
 
 Settings::Settings()
 {
-	mHasConfigRoot = false;
 	setDefaults();
 	loadFile();
 }
@@ -58,8 +57,8 @@ Settings* Settings::getInstance()
 
 void Settings::setDefaults()
 {
+	mHasConfigRoot = false;
 	mWasChanged = false;
-
 	mBoolMap.clear();
 	mIntMap.clear();
 
@@ -135,7 +134,6 @@ void Settings::setDefaults()
 	mStringMap["ScreenSaverBehavior"] = "dim";
 	mStringMap["GamelistViewStyle"] = "automatic";
 	mStringMap["DefaultGridSize"] = "";
-	mStringMap["HiddenSystems"] = "";
 	mBoolMap["ThemeRandom"] = false;
 	mBoolMap["ThemeRandomSet"] = false;
 	mStringMap["ThemeColorSet"] = "";
@@ -169,9 +167,11 @@ void Settings::setDefaults()
 	mIntMap["MusicVolume"] = 128;
 	mStringMap["CollectionSystemsAuto"] = "";
 	mStringMap["CollectionSystemsCustom"] = "";
-	mBoolMap["CollectionShowSystemInfo"] = true;
-	mBoolMap["SortAllSystems"] = false;
+	mStringMap["HiddenSystems"] = "";
+	mStringMap["SortSystems"] = ""; // "manufacturer" backward compatibility
 	mBoolMap["UseCustomCollectionsSystem"] = true;
+	mBoolMap["CollectionShowSystemInfo"] = true;
+	mBoolMap["HiddenSystemsShowGames"] = true;
 	mBoolMap["FavoritesFirst"] = true;
 
 	mBoolMap["LocalArt"] = false;
@@ -222,7 +222,7 @@ void Settings::setDefaults()
 }
 
 template <typename K, typename V>
-void saveMap(pugi::xml_node& doc, std::map<K, V>& map, const char* type, std::map<K, V>& defaultMap)
+void saveMap(pugi::xml_node& doc, std::map<K, V>& map, const char* type, std::map<K, V>& defaultMap, V defaultValue)
 {
 	for(auto iter = map.cbegin(); iter != map.cend(); iter++)
 	{
@@ -232,6 +232,9 @@ void saveMap(pugi::xml_node& doc, std::map<K, V>& map, const char* type, std::ma
 
 		auto def = defaultMap.find(iter->first);
 		if (def != defaultMap.cend() && def->second == iter->second)
+			continue;
+
+		if (def == defaultMap.cend() && iter->second == defaultValue)
 			continue;
 
 		pugi::xml_node node = doc.append_child(type);
@@ -258,9 +261,9 @@ bool Settings::saveFile()
 	if (mHasConfigRoot)
 		root = doc.append_child("config"); // batocera, root element
 
-	saveMap<std::string, bool>(root, mBoolMap, "bool", mDefaultBoolMap);
-	saveMap<std::string, int>(root, mIntMap, "int", mDefaultIntMap);
-	saveMap<std::string, float>(root, mFloatMap, "float", mDefaultFloatMap);
+	saveMap<std::string, bool>(root, mBoolMap, "bool", mDefaultBoolMap, false);
+	saveMap<std::string, int>(root, mIntMap, "int", mDefaultIntMap, 0);
+	saveMap<std::string, float>(root, mFloatMap, "float", mDefaultFloatMap, 0);
 
 	//saveMap<std::string, std::string>(doc, mStringMap, "string");
 	for(auto iter = mStringMap.cbegin(); iter != mStringMap.cend(); iter++)
@@ -357,4 +360,30 @@ bool Settings::setMethodName(const std::string& name, type value) \
 SETTINGS_GETSET(bool, mBoolMap, getBool, setBool, false);
 SETTINGS_GETSET(int, mIntMap, getInt, setInt, 0);
 SETTINGS_GETSET(float, mFloatMap, getFloat, setFloat, 0.0f);
-SETTINGS_GETSET(const std::string&, mStringMap, getString, setString, mEmptyString);
+//SETTINGS_GETSET(const std::string&, mStringMap, getString, setString, mEmptyString);
+
+std::string Settings::getString(const std::string& name)
+{
+	if (mStringMap.find(name) == mStringMap.cend())
+		return mEmptyString;
+
+	return mStringMap[name];
+}
+
+bool Settings::setString(const std::string& name, const std::string& value)
+{
+	if (mStringMap.count(name) == 0 || mStringMap[name] != value)
+	{
+		if (value == "" && mStringMap.count(name) == 0)
+			return false;
+
+		mStringMap[name] = value;
+
+		if (std::find(settings_dont_save.cbegin(), settings_dont_save.cend(), name) == settings_dont_save.cend())
+			mWasChanged = true;
+
+		return true;
+	}
+
+	return false;
+}

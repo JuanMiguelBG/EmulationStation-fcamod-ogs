@@ -195,7 +195,7 @@ void VideoVlcComponent::setColorShift(unsigned int color)
 
 void VideoVlcComponent::render(const Transform4x4f& parentTrans)
 {
-	if (!mShowing)
+	if (!isShowing())
 		return;
 
 	if (!isVisible())

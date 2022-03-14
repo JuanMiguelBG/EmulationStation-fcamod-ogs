@@ -34,7 +34,6 @@ ImageComponent::ImageComponent(Window* window, bool forceLoad, bool dynamic) : G
 	mLoadingTexture = nullptr;
 	mAllowFading = true;
 	mRoundCorners = 0.0f;
-	mShowing = false;
 	mPlaylistTimer = 0;
 }
 
@@ -703,22 +702,19 @@ void ImageComponent::setPlaylist(std::shared_ptr<IPlaylist> playList)
 
 void ImageComponent::onShow()
 {
-	GuiComponent::onShow();
-
-	if (!mShowing && mPlaylist != nullptr && !mPath.empty())
+	if (!isShowing() && mPlaylist != nullptr && !mPath.empty())
 	{
 		auto item = mPlaylist->getNextItem();
 		if (!item.empty())
 			setImage(item, false, getMaxSizeInfo());
 	}
 
-	mShowing = true;	
+	GuiComponent::onShow();
 }
 
 void ImageComponent::onHide()
 {
 	GuiComponent::onHide();
-	mShowing = false;	
 }
 
 
@@ -726,7 +722,7 @@ void ImageComponent::update(int deltaTime)
 {
 	GuiComponent::update(deltaTime);
 
-	if (mPlaylist != nullptr && mShowing)
+	if (mPlaylist != nullptr && isShowing())
 	{
 		mPlaylistTimer += deltaTime;
 

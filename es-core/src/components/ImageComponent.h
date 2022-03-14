@@ -172,7 +172,6 @@ private:
 	Alignment mHorizontalAlignment;
 	Alignment mVerticalAlignment;
 
-	bool mShowing;
 	std::shared_ptr<IPlaylist> mPlaylist;
 	float mPlaylistTimer;
 

@@ -189,7 +189,6 @@ protected:
 	bool								mStartDelayed;
 	unsigned						mStartTime;
 	bool								mIsPlaying;
-	bool								mShowing;
 	bool								mDisable;
 	bool								mScreensaverActive;
 	bool								mScreensaverMode;

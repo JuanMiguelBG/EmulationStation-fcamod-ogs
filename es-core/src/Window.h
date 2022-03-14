@@ -108,6 +108,8 @@ public:
 	VolumeInfoComponent* getVolumeInfoComponent() { return mVolumeInfo.get(); };
 	BrightnessInfoComponent* getBrightnessInfoComponent() { return mBrightnessInfo.get(); };
 
+	HelpComponent* getHelpComponent() { return mHelp; };
+
 private:
 	void processPostedFunctions();
 

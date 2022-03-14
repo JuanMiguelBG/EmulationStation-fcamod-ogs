@@ -11,7 +11,7 @@
 #include "guis/GuiMsgBox.h"
 
 
-GuiSettings::GuiSettings(Window* window, const std::string title) : GuiComponent(window), mMenu(window, title)
+GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) : GuiComponent(window), mMenu(window, title)
 {
 	addChild(&mMenu);
 
@@ -20,21 +20,27 @@ GuiSettings::GuiSettings(Window* window, const std::string title) : GuiComponent
 
 	setSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
 
-	if (Renderer::isSmallScreen())
-		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
+	if (animate)
+	{
+		if (Renderer::isSmallScreen())
+			animateTo((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
+		else
+			animateTo(
+				Vector2f((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.5),
+				Vector2f((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f));
+	}
 	else
-		mMenu.setPosition((mSize.x() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
+	{
+		if (Renderer::isSmallScreen())
+			mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
+		else
+			mMenu.setPosition((mSize.x() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
+	}
 }
 
 GuiSettings::~GuiSettings()
 {
 
-}
-
-void GuiSettings::updatePosition()
-{
-	setSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
-	mMenu.setPosition((mSize.x() - mMenu.getSize().x()) / 2, (mSize.y() - mMenu.getSize().y()) / 2);
 }
 
 void GuiSettings::close()

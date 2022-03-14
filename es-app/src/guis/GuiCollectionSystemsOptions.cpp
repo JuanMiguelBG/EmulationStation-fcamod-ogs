@@ -20,6 +20,69 @@ GuiCollectionSystemsOptions::GuiCollectionSystemsOptions(Window* window)
 
 void GuiCollectionSystemsOptions::initializeMenu()
 {
+
+	addGroup(_("COLLECTIONS TO DISPLAY"));
+
+	// Select systems to hide
+	auto hiddenSystems = Utils::String::split(Settings::getInstance()->getString("HiddenSystems"), ';');
+	auto displayedSystems = std::make_shared<OptionListComponent<SystemData*>>(mWindow, _("SYSTEMS DISPLAYED"), true);
+
+	if (SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "manufacturer")
+	{
+		std::string man;
+		for (auto system : SystemData::sSystemVector)
+		{
+			if (system->isCollection() || system->isGroupChildSystem())
+				continue;
+
+			if (man != system->getSystemMetadata().manufacturer)
+			{
+				displayedSystems->addGroup(system->getSystemMetadata().manufacturer);
+				man = system->getSystemMetadata().manufacturer;
+			}
+
+			displayedSystems->add(system->getFullName(), system, std::find(hiddenSystems.cbegin(), hiddenSystems.cend(), system->getName()) == hiddenSystems.cend());
+		}
+	}
+	else
+	{
+		for (auto system : SystemData::sSystemVector)
+			if (!system->isCollection() && !system->isGroupChildSystem())
+				displayedSystems->add(system->getFullName(), system, std::find(hiddenSystems.cbegin(), hiddenSystems.cend(), system->getName()) == hiddenSystems.cend());
+	}
+
+	addWithLabel(_("SYSTEMS DISPLAYED"), displayedSystems);
+	addSaveFunc([this, displayedSystems]
+	{
+		std::string hiddenSystems;
+
+		std::vector<SystemData*> sys = displayedSystems->getSelectedObjects();
+
+		for (auto system : SystemData::sSystemVector)
+		{
+			if (system->isCollection() || system->isGroupChildSystem())
+				continue;
+
+			if (std::find(sys.cbegin(), sys.cend(), system) == sys.cend())
+			{
+				if (hiddenSystems.empty())
+					hiddenSystems = system->getName();
+				else
+					hiddenSystems = hiddenSystems + ";" + system->getName();
+			}
+		}
+
+		if (hiddenSystems != Settings::getInstance()->getString("HiddenSystems"))
+		{
+			LOG(LogDebug) << "GuiMenu::openUISettings() - hiddenSystems changed, new value: " << hiddenSystems;
+			Settings::getInstance()->setString("HiddenSystems", hiddenSystems);
+			setVariable("reloadSystems", true);
+		}
+	});
+
+	// get collections
+	addSystemsToMenu();
+
 	auto groupNames = SystemData::getAllGroupNames();
 	if (groupNames.size() > 0)
 	{
@@ -52,8 +115,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 		});
 	}
 
-	// get collections
-	addSystemsToMenu();
+	addGroup(_("CREATE CUSTOM COLLECTION"));
 
 	// add "Create New Custom Collection from Theme"
 	std::vector<std::string> unusedFolders = CollectionSystemManager::get()->getUnusedSystemsFromTheme();
@@ -101,21 +163,60 @@ void GuiCollectionSystemsOptions::initializeMenu()
 		}
 	});
 
+	addGroup(_("OPTIONS"));
+
+	// SORT COLLECTIONS AND SYSTEMS
+	std::string sortMode = Settings::getInstance()->getString("SortSystems");
+
+	auto sortType = std::make_shared< OptionListComponent<std::string> >(mWindow, _("SORT COLLECTIONS AND SYSTEMS"), false);
+	sortType->add(_("NO"), "", sortMode.empty());
+	sortType->add(_("ALPHABETICALLY"), "alpha", sortMode == "alpha");
+
+	if (SystemData::isManufacturerSupported())
+	{
+		sortType->add(_("BY MANUFACTURER"), "manufacturer", sortMode == "manufacturer");
+		sortType->add(_("BY HARDWARE TYPE"), "hardware", sortMode == "hardware");
+		sortType->add(_("BY RELEASE YEAR"), "releaseDate", sortMode == "releaseDate");
+	}
+
+	if (!sortType->hasSelection())
+		sortType->selectFirstItem();
+
+	addWithLabel(_("SORT SYSTEMS"), sortType);
+	addSaveFunc([this, sortType]
+	{
+		if (Settings::getInstance()->setString("SortSystems", sortType->getSelected()))
+			setVariable("reloadAll", true);
+	});
+
+	// Optionally start in selected system
+	auto systemfocus_list = std::make_shared< OptionListComponent<std::string> >(mWindow, _("START ON SYSTEM"), false);
+	systemfocus_list->add(_("NONE"), "", Settings::getInstance()->getString("StartupSystem") == "");
+
+	for (auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
+		if ("retropie" != (*it)->getName() && (*it)->isVisible())
+			systemfocus_list->add((*it)->getName(), (*it)->getName(), Settings::getInstance()->getString("StartupSystem") == (*it)->getName());
+
+	if (!systemfocus_list->hasSelection())
+		systemfocus_list->selectFirstItem();
+
+	addWithLabel(_("START ON SYSTEM"), systemfocus_list);
+	addSaveFunc([systemfocus_list] {
+		Settings::getInstance()->setString("StartupSystem", systemfocus_list->getSelected());
+	});
+
+	// Open gamelist at start
+	auto bootOnGamelist = std::make_shared<SwitchComponent>(mWindow);
+	bootOnGamelist->setState(Settings::getInstance()->getBool("StartupOnGameList"));
+	addWithLabel(_("START ON GAMELIST"), bootOnGamelist);
+	addSaveFunc([bootOnGamelist] { Settings::getInstance()->setBool("StartupOnGameList", bootOnGamelist->getState()); });
+
 	std::shared_ptr<SwitchComponent> bundleCustomCollections = std::make_shared<SwitchComponent>(mWindow);
 	bundleCustomCollections->setState(Settings::getInstance()->getBool("UseCustomCollectionsSystem"));
 	addWithLabel(_("GROUP UNTHEMED CUSTOM COLLECTIONS"), bundleCustomCollections);
 	addSaveFunc([this, bundleCustomCollections]
 	{
 		if (Settings::getInstance()->setBool("UseCustomCollectionsSystem", bundleCustomCollections->getState()))
-			setVariable("reloadAll", true);
-	});
-
-	std::shared_ptr<SwitchComponent> sortAllSystemsSwitch = std::make_shared<SwitchComponent>(mWindow);
-	sortAllSystemsSwitch->setState(Settings::getInstance()->getBool("SortAllSystems"));
-	addWithLabel(_("SORT CUSTOM COLLECTIONS AND SYSTEMS"), sortAllSystemsSwitch);
-	addSaveFunc([this, sortAllSystemsSwitch]
-	{
-		if (Settings::getInstance()->setBool("SortAllSystems", sortAllSystemsSwitch->getState()))
 			setVariable("reloadAll", true);
 	});
 
@@ -126,6 +227,18 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	{
 		if (Settings::getInstance()->setBool("CollectionShowSystemInfo", toggleSystemNameInCollections->getState()))
 			setVariable("reloadAll", true);
+	});
+
+	std::shared_ptr<SwitchComponent> alsoHideGames = std::make_shared<SwitchComponent>(mWindow);
+	alsoHideGames->setState(Settings::HiddenSystemsShowGames());
+	addWithLabel(_("SHOW GAMES OF HIDDEN SYSTEMS IN COLLECTIONS"), alsoHideGames);
+	addSaveFunc([this, alsoHideGames]
+	{
+		if (Settings::setHiddenSystemsShowGames(alsoHideGames->getState()))
+		{
+			FileData::resetSettings();
+			setVariable("reloadSystems", true);
+		}
 	});
 
 	std::shared_ptr<SwitchComponent> favoritesFirstSwitch = std::make_shared<SwitchComponent>(mWindow);

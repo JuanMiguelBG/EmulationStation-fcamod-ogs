@@ -1,7 +1,6 @@
 #include "views/SystemView.h"
 
 #include "animations/LambdaAnimation.h"
-#include "guis/GuiMsgBox.h"
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "Log.h"
@@ -12,7 +11,10 @@
 #include "AudioManager.h"
 #include "components/VideoComponent.h"
 #include "components/VideoVlcComponent.h"
+#include "CollectionSystemManager.h"
 #include <random>
+#include "guis/GuiMsgBox.h"
+#include "guis/GuiSettings.h"
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiTextEditPopup.h"
 
@@ -27,10 +29,10 @@ SystemView::SystemView(Window* window) : IList<SystemViewData, SystemData*>(wind
 	mCamOffset = 0;
 	mExtrasCamOffset = 0;
 	mExtrasFadeOpacity = 0.0f;
+	mExtrasFadeMove = 0.0f;
 	mLastSystem = nullptr;
 	mScreensaverActive = false;
 	mDisable = false;
-	mShowing = false;
 	mLastCursor = 0;
 	mStaticBackground = nullptr;
 	mStaticVideoBackground = nullptr;
@@ -333,6 +335,110 @@ void SystemView::goToSystem(SystemData* system, bool animate)
 		finishAnimation(0);
 }
 
+static void _moveCursorInRange(int& value, int count, int sz)
+{
+	if (count >= sz)
+		return;
+
+	value += count;
+	if (value < 0) value += sz;
+	if (value >= sz) value -= sz;
+}
+
+int SystemView::moveCursorFast(bool forward)
+{
+	int cursor = mCursor;
+
+	if(SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "alpha" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		char alpha = Utils::String::toUpper(mEntries[mCursor].object->getFullName())[0];
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && Utils::String::toUpper(mEntries[cursor].object->getFullName())[0] == alpha)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			alpha = Utils::String::toUpper(mEntries[cursor].object->getFullName())[0];
+			while (cursor != mCursor && Utils::String::toUpper(mEntries[cursor].object->getFullName())[0] == alpha)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else if (SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "manufacturer" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		std::string man = mEntries[mCursor].object->getSystemMetadata().manufacturer;
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().manufacturer == man)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			man = mEntries[cursor].object->getSystemMetadata().manufacturer;
+			while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().manufacturer == man)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else if(SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "hardware" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		std::string hwt = mEntries[mCursor].object->getSystemMetadata().hardwareType;
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().hardwareType == hwt)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			hwt = mEntries[cursor].object->getSystemMetadata().hardwareType;
+			while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().hardwareType == hwt)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else if(SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "releaseDate" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		int year = (mEntries[mCursor].object->getSystemMetadata().releaseYear / 10) * 10;
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && ((mEntries[cursor].object->getSystemMetadata().releaseYear / 10) * 10) == year)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			year = (mEntries[cursor].object->getSystemMetadata().releaseYear / 10) * 10;
+			while (cursor != mCursor && ((mEntries[cursor].object->getSystemMetadata().releaseYear / 10) * 10) == year)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else
+		_moveCursorInRange(cursor, forward ? 10 : -10, mEntries.size());
+
+	return cursor;
+}
+
 void SystemView::showQuickSearch()
 {
 	SystemData* all = SystemData::getSystem("all");
@@ -387,39 +493,16 @@ bool SystemView::input(InputConfig* config, Input input)
 				listInput(1);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PD, input))
+			if ((Settings::getInstance()->getBool("QuickSystemSelect") && config->isMappedLike("right", input)) || config->isMappedTo(BUTTON_PD, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor + increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
-				auto sd = mEntries.at(cursor).object;
-				ViewController::get()->goToSystemView(sd, true);
-				//listInput(10);
+				int cursor = moveCursorFast(true);
+				listInput(cursor - mCursor);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PU, input))
+			if ((Settings::getInstance()->getBool("QuickSystemSelect") && config->isMappedLike("left", input)) || config->isMappedTo(BUTTON_PU, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor - increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
-				auto sd = mEntries.at(cursor).object;
-				ViewController::get()->goToSystemView(sd, true);
-				//listInput(-10);
+				int cursor = moveCursorFast(false);
+				listInput(cursor - mCursor);
 				return true;
 			}
 
@@ -437,39 +520,16 @@ bool SystemView::input(InputConfig* config, Input input)
 				listInput(1);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PD, input))
+			if ((Settings::getInstance()->getBool("QuickSystemSelect") && config->isMappedLike("down", input)) || config->isMappedTo(BUTTON_PD, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor + increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
-				auto sd = mEntries.at(cursor).object;
-				ViewController::get()->goToSystemView(sd, true);
-				//listInput(10);
+				int cursor = moveCursorFast(true);
+				listInput(cursor - mCursor);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PU, input))
+			if ((Settings::getInstance()->getBool("QuickSystemSelect") && config->isMappedLike("up", input)) || config->isMappedTo(BUTTON_PU, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor - increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
-				auto sd = mEntries.at(cursor).object;
-				ViewController::get()->goToSystemView(sd, true);
-				//listInput(-10);
+				int cursor = moveCursorFast(false);
+				listInput(cursor - mCursor);
 				return true;
 			}
 
@@ -482,6 +542,32 @@ bool SystemView::input(InputConfig* config, Input input)
 			ViewController::get()->goToGameList(getSelected());
 			return true;
 		}
+
+		if (config->isMappedTo(BUTTON_BACK, input) && SystemData::isManufacturerSupported())
+		{
+			auto sortMode = Settings::getInstance()->getString("SortSystems");
+			if (sortMode == "alpha")
+			{
+				showNavigationBar(_("GO TO LETTER"), [](SystemData* meta) { if (meta->isCollection()) return _("COLLECTIONS"); return Utils::String::toUpper(meta->getSystemMetadata().fullName.substr(0, 1)); });
+				return true;
+			}
+			else if (sortMode == "manufacturer")
+			{
+				showNavigationBar(_("GO TO MANUFACTURER"), [](SystemData* meta) { return meta->getSystemMetadata().manufacturer; });
+				return true;
+			}
+			else if (sortMode == "hardware")
+			{
+				showNavigationBar(_("GO TO HARDWARE"), [](SystemData* meta) { return meta->getSystemMetadata().hardwareType; });
+				return true;
+			}
+			else if (sortMode == "releaseDate")
+			{
+				showNavigationBar(_("GO TO DECADE"), [](SystemData* meta) { if (meta->getSystemMetadata().releaseYear == 0) return _("UNKNOWN"); return std::to_string((meta->getSystemMetadata().releaseYear / 10) * 10) + "'s"; });
+				return true;
+			}
+		}
+
 		if (config->isMappedTo("x", input))
 		{
 			// get random system
@@ -519,6 +605,67 @@ bool SystemView::input(InputConfig* config, Input input)
 	}
 
 	return GuiComponent::input(config, input);
+}
+
+void SystemView::showNavigationBar(const std::string& title, const std::function<std::string(SystemData* system)>& selector)
+{
+	stopScrolling();
+
+	GuiSettings* gs = new GuiSettings(mWindow, title);
+
+	int idx = 0;
+	std::string sel = selector(getSelected());
+
+	std::string man = "*-*";
+	for (int i = 0; i < SystemData::sSystemVector.size(); i++)
+	{
+		auto system = SystemData::sSystemVector[i];
+		if (!system->isVisible())
+			continue;
+
+		auto mf = selector(system);
+		if (man != mf)
+		{
+			std::vector<std::string> names;
+			for (auto sy : SystemData::sSystemVector)
+				if (sy->isVisible() && selector(sy) == mf)
+					names.push_back(sy->getFullName());
+
+			gs->getMenu().addWithDescription(_(Utils::String::toUpper(mf)), Utils::String::join(names, ", "), nullptr, [this, gs, system, idx]
+			{
+				listInput(idx - mCursor);
+				listInput(0);
+
+				auto pthis = this;
+
+				delete gs;
+
+				pthis->mLastCursor = -1;
+				pthis->onCursorChanged(CURSOR_STOPPED);
+
+			}, "", sel == mf);
+
+			man = mf;
+		}
+
+		idx++;
+	}
+
+	float w = Math::min(Renderer::getScreenWidth() * 0.5, ThemeData::getMenuTheme()->Text.font->getLetterWidth() * 31.0f);
+	w = Math::max(w, Renderer::getScreenWidth() / 3.0f);
+
+	// resize
+	float height_ratio = 1.0f;
+	if ( Settings::getInstance()->getBool("ShowHelpPrompts") && !Renderer::isSmallScreen() )
+		height_ratio = 0.93f;
+
+	gs->getMenu().setSize(w, Renderer::getScreenHeight() * height_ratio);
+
+	gs->getMenu().animateTo(
+		Vector2f(-w, 0),
+		Vector2f(0, 0), AnimateFlags::OPACITY | AnimateFlags::POSITION);
+
+	mWindow->pushGui(gs);
 }
 
 void SystemView::update(int deltaTime)
@@ -579,22 +726,35 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 		mSystemInfo.setOpacity((unsigned char)(Math::lerp(infoStartOpacity, 0.f, t) * 255));
 	}, (int)(infoStartOpacity * (goFast ? 10 : 150)));
 
-	unsigned int gameCount = getSelected()->getDisplayedGameCount();
+	unsigned int gameCount = getSelected()->getGameCountInfo()->visibleGames;
 
 	// also change the text after we've fully faded out
-	setAnimation(infoFadeOut, 0, [this, gameCount] {
-		std::stringstream ss;
-
+	setAnimation(infoFadeOut, 0, [this, gameCount]
+	{
 		if (!getSelected()->isGameSystem() && !getSelected()->isGroupSystem())
-			ss << _("CONFIGURATION");
+			mSystemInfo.setText(_("CONFIGURATION"));
+		else if (mCarousel.systemInfoCountOnly)
+			mSystemInfo.setText(std::to_string(gameCount));
 		else
 		{
-			char strbuf[128];
-			snprintf(strbuf, 128, EsLocale::nGetText("%i GAME AVAILABLE", "%i GAMES AVAILABLE", gameCount).c_str(), gameCount);
+			std::stringstream ss;
+			char strbuf[256];
+
+			if (getSelected() == CollectionSystemManager::get()->getCustomCollectionsBundle())
+			{
+				int collectionCount = getSelected()->getRootFolder()->getChildren().size();
+				snprintf(strbuf, 256, EsLocale::nGetText("%i COLLECTION", "%i COLLECTIONS", collectionCount).c_str(), collectionCount);
+			}
+			else if (getSelected()->hasPlatformId(PlatformIds::PLATFORM_IGNORE) && !getSelected()->isCollection())
+				snprintf(strbuf, 256, EsLocale::nGetText("%i ITEM", "%i ITEMS", gameCount).c_str(), gameCount);
+			else
+				snprintf(strbuf, 256, EsLocale::nGetText("%i GAME", "%i GAMES", gameCount).c_str(), gameCount);
+
 			ss << strbuf;
+			mSystemInfo.setText(ss.str());
 		}
-	
-		mSystemInfo.setText(ss.str());
+
+		mSystemInfo.onShow();
 	}, false, 1);
 
 	Animation* infoFadeIn = new LambdaAnimation(
@@ -700,6 +860,8 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 
 	setAnimation(anim, 0, [this]
 	{
+		mExtrasFadeOpacity = 0.0f;
+		mExtrasFadeMove = 0.0f;
 		mExtrasFadeOldCursor = -1;
 
 		for (int i = 0; i < mEntries.size(); i++)
@@ -777,7 +939,6 @@ HelpStyle SystemView::getHelpStyle()
 
 void  SystemView::onThemeChanged(const std::shared_ptr<ThemeData>& /*theme*/)
 {
-	//LOG(LogDebug) << "SystemView::onThemeChanged()";
 	mViewNeedsReload = true;
 	populate();
 }
@@ -785,8 +946,6 @@ void  SystemView::onThemeChanged(const std::shared_ptr<ThemeData>& /*theme*/)
 //  Get the ThemeElements that make up the SystemView.
 void  SystemView::getViewElements(const std::shared_ptr<ThemeData>& theme)
 {
-	//LOG(LogDebug) << "SystemView::getViewElements()";
-
 	getDefaultElements();
 
 	if (!theme->hasView("system"))
@@ -909,22 +1068,21 @@ void SystemView::renderCarousel(const Transform4x4f& trans)
 	int logoCount = Math::min(mCarousel.maxLogoCount, (int)mEntries.size());
 
 	// Adding texture loading buffers depending on scrolling speed and status
-	int bufferIndex = getScrollingVelocity() + 1;
+	int bufferIndex = Math::max(0, Math::min(2, getScrollingVelocity() + 1));
 	int bufferLeft = logoBuffersLeft[bufferIndex];
 	int bufferRight = logoBuffersRight[bufferIndex];
+
 	if (logoCount == 1 && mCamOffset == 0)
 	{
 		bufferLeft = 0;
 		bufferRight = 0;
 	}
 
-	for (int i = center - logoCount / 2 + bufferLeft; i <= center + logoCount / 2 + bufferRight; i++)
+	auto renderLogo = [this, carouselTrans, logoSpacing, xOff, yOff](int i)
 	{
-		int index = i;
-		while (index < 0)
+		int index = i % (int)mEntries.size();
+		if (index < 0)
 			index += (int)mEntries.size();
-		while (index >= (int)mEntries.size())
-			index -= (int)mEntries.size();
 
 		Transform4x4f logoTrans = carouselTrans;
 		logoTrans.translate(Vector3f(i * logoSpacing[0] + xOff, i * logoSpacing[1] + yOff, 0));
@@ -935,8 +1093,12 @@ void SystemView::renderCarousel(const Transform4x4f& trans)
 		scale = Math::min(mCarousel.logoScale, Math::max(1.0f, scale));
 		scale /= mCarousel.logoScale;
 
-		int opacity = (int)Math::round(0x80 + ((0xFF - 0x80) * (1.0f - fabs(distance))));
-		opacity = Math::max((int) 0x80, opacity);
+		int opref = 0x80;
+
+		int opacity = (int)Math::round(opref + ((0xFF - opref) * (1.0f - fabs(distance))));
+		opacity = Math::max((int)opref, opacity);
+
+		//ensureLogo(mEntries.at(index));
 
 		const std::shared_ptr<GuiComponent> &comp = mEntries.at(index).data.logo;
 		if (mCarousel.type == VERTICAL_WHEEL || mCarousel.type == HORIZONTAL_WHEEL) {
@@ -946,9 +1108,28 @@ void SystemView::renderCarousel(const Transform4x4f& trans)
 		comp->setScale(scale);
 		comp->setOpacity((unsigned char)opacity);
 		comp->render(logoTrans);
+	};
+
+
+	std::vector<int> activePositions;
+	for (int i = center - logoCount / 2 + bufferLeft; i <= center + logoCount / 2 + bufferRight; i++)
+	{
+		int index = i % (int)mEntries.size();
+		if (index < 0)
+			index += (int)mEntries.size();
+
+		if (index == mCursor)
+			activePositions.push_back(i);
+		else
+			renderLogo(i);
 	}
+
+	for (auto activePos : activePositions)
+		renderLogo(activePos);
+
 	Renderer::popClipRect();
 }
+
 
 void SystemView::renderInfoBar(const Transform4x4f& trans)
 {
@@ -961,10 +1142,10 @@ void SystemView::renderInfoBar(const Transform4x4f& trans)
 // Draw background extras
 void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upper)
 {
-	int extrasCenter = (int)mExtrasCamOffset;
+	int min = (int)mExtrasCamOffset;
+	int max = (int)(mExtrasCamOffset + 0.99999f);
 
-	// Adding texture loading buffers depending on scrolling speed and status
-	int bufferIndex = getScrollingVelocity() + 1;
+	int extrasCenter = (int)mExtrasCamOffset;
 
 	Renderer::pushClipRect(Vector2i::Zero(), Vector2i((int)mSize.x(), (int)mSize.y()));
 	
@@ -988,7 +1169,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 					continue;
 
 				std::string value = extra->getValue();
-				if (extra->isKindOf<ImageComponent>())
+				if (extra->isKindOf<ImageComponent>() || extra->isKindOf<VideoComponent>())
 					paths.insert(value);
 				else if (extra->isKindOf<TextComponent>())
 					values.insert(value);
@@ -1006,7 +1187,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 					continue;
 
 				std::string value = extra->getValue();
-				if (extra->isKindOf<ImageComponent>())
+				if (extra->isKindOf<ImageComponent>() || extra->isKindOf<VideoComponent>())
 					paths.erase(value);
 				else if (extra->isKindOf<TextComponent>())
 					values.erase(value);
@@ -1025,44 +1206,57 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 				continue;
 
 			std::string value = extra->getValue();
-			if (extra->isKindOf<ImageComponent>())
+			if (extra->isKindOf<ImageComponent>() || extra->isKindOf<VideoComponent>())
 			{
 				if (allPaths.find(value) == allPaths.cend())
-					extra->render(trans);
-				else if (((ImageComponent*)extra)->isTiled() && extra->getPosition() == Vector3f::Zero() && extra->getSize() == Vector2f(Renderer::getScreenWidth(), Renderer::getScreenHeight()))
+				{
+					if (extra->getTag() == "background" || extra->getTag().find("bg-") == 0 || extra->getTag().find("bg_") == 0)
+						extra->render(trans);
+					else
+					{
+						auto opa = extra->getOpacity();
+						extra->setOpacity(mExtrasFadeOpacity * opa);
+						extra->render(trans);
+						extra->setOpacity(opa);
+					}
+				}
+				else if (extra->isKindOf<ImageComponent>() && ((ImageComponent*)extra)->isTiled() && extra->getPosition() == Vector3f::Zero() && extra->getSize() == Vector2f(Renderer::getScreenWidth(), Renderer::getScreenHeight()))
 					extra->render(trans);
 			}
 			else if (extra->isKindOf<TextComponent>() && allValues.find(value) == allValues.cend())
+			{
+				auto opa = extra->getOpacity();
+				extra->setOpacity(mExtrasFadeOpacity * opa);
 				extra->render(trans);
+				extra->setOpacity(opa);
+			}
 		}
 
 		Renderer::popClipRect();
 	}
 
-	for (int i = extrasCenter + logoBuffersLeft[bufferIndex]; i <= extrasCenter + logoBuffersRight[bufferIndex]; i++)
+	for (int i = min ; i <= max; i++)
 	{
-		int index = i;
-		while (index < 0)
+		int index = i % (int)mEntries.size();
+		if (index < 0)
 			index += (int)mEntries.size();
-		while (index >= (int)mEntries.size())
-			index -= (int)mEntries.size();
 
 		if (mExtrasFadeOpacity && (index == mExtrasFadeOldCursor || index != mCursor))
 			continue;
 
 		//Only render selected system when not showing
-		if (!mShowing && index != mCursor)
+		if (!isShowing() && index != mCursor)
 			continue;
 
 		Entry& entry = mEntries.at(index);
-		
+
 		Vector2i size = Vector2i(Math::round(mSize.x()), Math::round(mSize.y()));
 
 		Transform4x4f extrasTrans = trans;
 		if (mCarousel.type == HORIZONTAL || mCarousel.type == HORIZONTAL_WHEEL)
 		{
 			extrasTrans.translate(Vector3f((i - mExtrasCamOffset) * mSize.x(), 0, 0));
-		
+
 			if (extrasTrans.translation()[0] >= 0 && extrasTrans.translation()[0] <= Renderer::getScreenWidth() && extrasTrans.translation()[0] + mSize.x() > Renderer::getScreenWidth())
 				size.x() = Renderer::getScreenWidth() - extrasTrans.translation()[0];
 		}
@@ -1086,22 +1280,47 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 		{
 			if (extra->getZIndex() < lower || extra->getZIndex() >= upper)
 				continue;
-								
+
 			// ExtrasFadeOpacity : Apply opacity only on elements that are not common with the original view
 			if (mExtrasFadeOpacity && !extra->isStaticExtra())
 			{
+				auto xt = extrasTrans;
+
+				// Fade Animation
+				if (mExtrasFadeMove)
+				{
+					float mvs = 48.0f;
+
+					if (mCarousel.type == HORIZONTAL || mCarousel.type == HORIZONTAL_WHEEL)
+					{
+						if ((mExtrasFadeOldCursor < mCursor && !(mExtrasFadeOldCursor == 0 && mCursor == mEntries.size() - 1)) ||
+							(mCursor == 0 && mExtrasFadeOldCursor == mEntries.size() - 1))
+							xt.translate(Vector3f((mExtrasFadeMove / mvs) * mSize.x(), 0, 0));
+						else
+							xt.translate(Vector3f(-(mExtrasFadeMove / mvs) * mSize.x(), 0, 0));
+					}
+					else
+					{
+						if ((mExtrasFadeOldCursor < mCursor && !(mExtrasFadeOldCursor == 0 && mCursor == mEntries.size() - 1)) ||
+							(mCursor == 0 && mExtrasFadeOldCursor == mEntries.size() - 1))
+							xt.translate(Vector3f(0, (mExtrasFadeMove / mvs) * mSize.y(), 0));
+						else
+							xt.translate(Vector3f(0, -(mExtrasFadeMove / mvs) * mSize.y(), 0));
+					}
+				}
+
 				std::string value = extra->getValue();
-				if (extra->isKindOf<ImageComponent>())
+				if (extra->isKindOf<ImageComponent>() || extra->isKindOf<VideoComponent>())
 				{
 					if (paths.find(value) != paths.cend())
-					{							
+					{
 						auto opa = extra->getOpacity();
 						extra->setOpacity((1.0f - mExtrasFadeOpacity) * opa);
-						extra->render(extra->isStaticExtra() ? trans : extrasTrans);
+						extra->render(extra->isStaticExtra() ? trans : xt);
 						extra->setOpacity(opa);
 						continue;
-					}								
-					else if (((ImageComponent*)extra)->isTiled() && extra->getPosition() == Vector3f::Zero() && extra->getSize() == Vector2f(Renderer::getScreenWidth(), Renderer::getScreenHeight()))
+					}
+					else if (extra->isKindOf<ImageComponent>() && ((ImageComponent*)extra)->isTiled() && extra->getPosition() == Vector3f::Zero() && extra->getSize() == Vector2f(Renderer::getScreenWidth(), Renderer::getScreenHeight()))
 					{
 						auto opa = extra->getOpacity();
 						extra->setOpacity((1.0f - mExtrasFadeOpacity) * opa);
@@ -1119,7 +1338,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 					continue;
 				}
 			}
-			
+
 			if (extra->isStaticExtra())
 			{
 				bool popClip = false;
@@ -1156,7 +1375,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 				extra->render(extrasTrans);
 		}
 
-		Renderer::popClipRect();		
+		Renderer::popClipRect();
 	}
 
 	Renderer::popClipRect();
@@ -1198,6 +1417,7 @@ void  SystemView::getDefaultElements(void)
 	mCarousel.maxLogoCount = 3;
 	mCarousel.zIndex = 40;
 	mCarousel.systemInfoDelay = 2000;
+	mCarousel.systemInfoCountOnly = false;
 	mCarousel.scrollSound = "";
 	mCarousel.defaultTransition = "";
 
@@ -1283,6 +1503,9 @@ void SystemView::getCarouselFromTheme(const ThemeData::ThemeElement* elem)
 	if (elem->has("systemInfoDelay"))
 		mCarousel.systemInfoDelay = elem->get<float>("systemInfoDelay");
 
+	if (elem->has("systemInfoCountOnly"))
+		mCarousel.systemInfoCountOnly = elem->get<bool>("systemInfoCountOnly");
+
 	if (elem->has("scrollSound"))
 		mCarousel.scrollSound = elem->get<std::string>("scrollSound");
 
@@ -1293,7 +1516,7 @@ void SystemView::getCarouselFromTheme(const ThemeData::ThemeElement* elem)
 void SystemView::onShow()
 {
 	GuiComponent::onShow();	
-	mShowing = true;
+
 	activateExtras(mCursor);
 
 	if (mStaticVideoBackground)
@@ -1303,7 +1526,7 @@ void SystemView::onShow()
 void SystemView::onHide()
 {
 	GuiComponent::onHide();
-	mShowing = false;
+
 	updateExtras([this](GuiComponent* p) { p->onHide(); });
 
 	if (mStaticVideoBackground)
@@ -1355,7 +1578,7 @@ void SystemView::activateExtras(int cursor, bool activate)
 	if (cursor < 0 || cursor >= mEntries.size())
 		return;
 
-	bool show = activate && mShowing && !mScreensaverActive && !mDisable;
+	bool show = activate && isShowing() && !mScreensaverActive && !mDisable;
 
 	SystemViewData data = mEntries.at(cursor).data;
 	for (unsigned int j = 0; j < data.backgroundExtras.size(); j++)

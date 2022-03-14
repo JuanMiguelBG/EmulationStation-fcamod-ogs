@@ -511,7 +511,7 @@ float Font::getLetterHeight()
 
 float Font::getLetterWidth()
 { // M character is widther
-	Glyph* glyph = getGlyph('M');
+	Glyph* glyph = getGlyph('S');
 	assert(glyph);
 	return glyph->texSize.x() * glyph->texture->textureSize.x();
 }

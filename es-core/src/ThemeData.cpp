@@ -13,7 +13,7 @@
 #include "EsLocale.h"
 
 std::vector<std::string> ThemeData::sSupportedViews { { "system" }, { "basic" }, { "detailed" }, { "grid" }, { "video" }, { "menu" }, { "screen" } };
-std::vector<std::string> ThemeData::sSupportedFeatures { { "video" }, { "carousel" }, { "z-index" }, { "visible" } };
+std::vector<std::string> ThemeData::sSupportedFeatures { { "video" }, { "carousel" }, { "z-index" }, { "visible" }, { "manufacturer" } };
 
 std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> ThemeData::sElementMap {
 	{ "image", {
@@ -175,6 +175,31 @@ std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> The
 		{ "color", COLOR },
 		{ "activityColor", COLOR },
 		{ "hotkeyColor", COLOR },
+		{ "networkIcon", PATH },
+		{ "incharge", PATH },
+		{ "full", PATH },
+		{ "at75", PATH },
+		{ "at50", PATH },
+		{ "at25", PATH },
+		{ "empty", PATH },
+		{ "visible", BOOLEAN },
+		{ "zIndex", FLOAT } } },
+	{ "batteryIndicator", {
+		{ "pos", NORMALIZED_PAIR },
+		{ "size", NORMALIZED_PAIR },
+		{ "itemSpacing", FLOAT },
+		{ "horizontalAlignment", STRING },
+		{ "imagePath", PATH },
+		{ "color", COLOR },
+		{ "activityColor", COLOR },
+		{ "hotkeyColor", COLOR },
+		{ "networkIcon", PATH },
+		{ "incharge", PATH },
+		{ "full", PATH },
+		{ "at75", PATH },
+		{ "at50", PATH },
+		{ "at25", PATH },
+		{ "empty", PATH },
 		{ "visible", BOOLEAN },
 		{ "zIndex", FLOAT } } },
 	{ "helpsystem", {
@@ -230,7 +255,8 @@ std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> The
 		{ "logoPos", NORMALIZED_PAIR },
 		{ "logoAlignment", STRING },
 		{ "maxLogoCount", FLOAT },
-		{ "systemInfoDelay", FLOAT },	
+		{ "systemInfoDelay", FLOAT },
+		{ "systemInfoCountOnly", BOOLEAN },
 		{ "defaultTransition", STRING },
 		{ "scrollSound", PATH },
 		{ "zIndex", FLOAT } } },
@@ -608,6 +634,13 @@ void ThemeData::parseFeature(const pugi::xml_node& node)
 		return;
 
 	const std::string supportedAttr = node.attribute("supported").as_string();
+
+	if (supportedAttr == "manufacturer")
+	{
+		auto it = mVariables.find("system.manufacturer");
+		if (it == mVariables.cend() || (*it).second.empty())
+			return;
+	}
 
 	if (std::find(sSupportedFeatures.cbegin(), sSupportedFeatures.cend(), supportedAttr) != sSupportedFeatures.cend())
 		parseViews(node);
