@@ -56,8 +56,7 @@ SystemScreenSaver::~SystemScreenSaver()
 
 bool SystemScreenSaver::allowSleep()
 {
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	return (mVideoScreensaver == nullptr) && (mImageScreensaver == nullptr) && (screensaver_behavior != "suspend") && (screensaver_behavior != "none");
+	return Settings::getInstance()->getString("ScreenSaverBehavior") == "black";
 }
 
 bool SystemScreenSaver::isScreenSaverActive()
@@ -67,9 +66,7 @@ bool SystemScreenSaver::isScreenSaverActive()
 
 bool SystemScreenSaver::isEnabled()
 {
-	unsigned int screensaverTime = (unsigned int)Settings::getInstance()->getInt("ScreenSaverTime");
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	return (screensaverTime > 0) && (screensaver_behavior != "none");
+	return Settings::getInstance()->getString("ScreenSaverBehavior") != "none";
 }
 
 void SystemScreenSaver::startScreenSaver()

@@ -437,9 +437,23 @@ void Window::render()
 	if (Settings::getInstance()->getBool("BrightnessPopup") && mBrightnessInfo)
 		mBrightnessInfo->render(transform);
 
-	if((mTimeSinceLastInput >= screensaverTime) || (isScreenSaverEnabled() && mRenderScreenSaver))
+	if(isScreenSaverEnabled() && (mTimeSinceLastInput >= screensaverTime))
 	{
-		if (!isProcessing() && mAllowSleep && (!isScreenSaverEnabled() || mScreenSaver->allowSleep()))
+		if (!isProcessing() && mAllowSleep && mScreenSaver->allowSleep())
+		{
+			// go to sleep
+			if (mSleeping == false) {
+				mSleeping = true;
+				onSleep();
+			}
+		}
+	}
+
+
+
+	if(mTimeSinceLastInput >= screensaverTime && screensaverTime != 0)
+	{
+		if (!isProcessing() && mAllowSleep && (!mScreenSaver || mScreenSaver->allowSleep()))
 		{
 			// go to sleep
 			if (mSleeping == false) {
