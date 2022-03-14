@@ -2052,6 +2052,10 @@ msgid "unknown"
 msgstr "desconocido"
 
 #:
+msgid "Unknown"
+msgstr "Desconocido"
+
+#:
 msgid "UNKNOWN"
 msgstr "DESCONOCIDO"
 

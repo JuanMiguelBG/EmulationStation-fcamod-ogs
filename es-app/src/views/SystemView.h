@@ -78,6 +78,7 @@ private:
 	void	 activateExtras(int cursor, bool activate = true);	
 	void	 updateExtras(const std::function<void(GuiComponent*)>& func);
 	void	 clearEntries();
+	void	 updateExtraTextBinding();
 	void	 showQuickSearch();
 
 	int		 moveCursorFast(bool forward = true);

@@ -54,6 +54,27 @@ protected:
 
 	FolderData* mRoot;
 	std::shared_ptr<ThemeData> mTheme;
+
+	std::string valueOrUnknown(const std::string value) { return value.empty() ? _("Unknown") : value; };
+	std::string valueOrOne(const std::string value)
+	{
+		auto split = value.rfind("+");
+		if (split != std::string::npos)
+			return value.substr(0, split);
+
+		split = value.rfind("-");
+		if (split != std::string::npos)
+			return value.substr(split + 1);
+
+		std::string ret = value;
+
+		int count = Utils::String::toInteger(value);
+
+		if (count >= 10) ret = "9";
+		else if (count == 0) ret = "1";
+
+		return ret;
+	};
 };
 
 #endif // ES_APP_VIEWS_GAME_LIST_IGAME_LIST_VIEW_H

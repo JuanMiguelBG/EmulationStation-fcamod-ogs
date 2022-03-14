@@ -613,7 +613,12 @@ void GridGameListView::updateInfoPanel()
 		mDeveloper.setValue(getMetadata(file, MetaDataId::Developer));
 		mPublisher.setValue(getMetadata(file, MetaDataId::Publisher));
 		mGenre.setValue(getMetadata(file, MetaDataId::Genre));
-		mPlayers.setValue(getMetadata(file, MetaDataId::Players));
+
+		if (mPlayers.getOriginalThemeText() == "1")
+			mPlayers.setValue(valueOrOne(getMetadata(file, MetaDataId::Players)));
+		else
+			mPlayers.setValue(valueOrUnknown(getMetadata(file, MetaDataId::Players)));
+
 		mName.setValue(getMetadata(file, MetaDataId::Name));
 
 		if(file->getType() == GAME)
