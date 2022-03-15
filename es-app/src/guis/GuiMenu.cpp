@@ -2250,7 +2250,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				window->postToUiThread([w]()
 				{
 					w->startScreenSaver();
-					w->renderScreenSaver();
+					w->renderScreenSaver(true);
 				});
 				delete s;
 			}, "iconScraper", true);

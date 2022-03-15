@@ -605,7 +605,7 @@ bool SystemView::input(InputConfig* config, Input input)
 			if (mWindow->isScreenSaverEnabled() && (screensaver_behavior != "suspend"))
 			{
 				mWindow->startScreenSaver();
-				mWindow->renderScreenSaver();
+				mWindow->renderScreenSaver(true);
 			}
 			return true;
 		}

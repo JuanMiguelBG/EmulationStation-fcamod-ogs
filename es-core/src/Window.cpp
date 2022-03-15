@@ -415,7 +415,7 @@ void Window::render()
 	Renderer::setMatrix(Transform4x4f::Identity());
 
 	unsigned int screensaverTime = (unsigned int)Settings::getInstance()->getInt("ScreenSaverTime");
-	if( (mTimeSinceLastInput >= screensaverTime) && isScreenSaverEnabled() )
+	if(isScreenSaverEnabled() && (mTimeSinceLastInput >= screensaverTime) )
 		startScreenSaver();
 
 	if(!mRenderScreenSaver && mInfoPopup)
@@ -438,30 +438,7 @@ void Window::render()
 		mBrightnessInfo->render(transform);
 
 	if(isScreenSaverEnabled() && (mTimeSinceLastInput >= screensaverTime))
-	{
-		if (!isProcessing() && mAllowSleep && mScreenSaver->allowSleep())
-		{
-			// go to sleep
-			if (mSleeping == false) {
-				mSleeping = true;
-				onSleep();
-			}
-		}
-	}
-
-
-
-	if(mTimeSinceLastInput >= screensaverTime && screensaverTime != 0)
-	{
-		if (!isProcessing() && mAllowSleep && (!mScreenSaver || mScreenSaver->allowSleep()))
-		{
-			// go to sleep
-			if (mSleeping == false) {
-				mSleeping = true;
-				onSleep();
-			}
-		}
-	}
+		screensaverNeedsToGoToSleep();
 }
 
 void Window::normalizeNextUpdate()
@@ -675,6 +652,18 @@ void Window::setHelpPrompts(const std::vector<HelpPrompt>& prompts, const HelpSt
 	mHelp->setPrompts(addPrompts);
 }
 
+void Window::screensaverNeedsToGoToSleep()
+{
+	if (!isProcessing() && mAllowSleep && mScreenSaver->allowSleep())
+	{
+		// go to sleep
+		if (mSleeping == false)
+		{
+			mSleeping = true;
+			onSleep();
+		}
+	}
+}
 
 void Window::onSleep()
 {
@@ -693,8 +682,6 @@ bool Window::isProcessing()
 
 void Window::startScreenSaver()
 {
-	LOG(LogInfo) << "Window::startScreenSaver()";
-
 	if (isScreenSaverEnabled() && !mRenderScreenSaver)
 	{
 		for (auto extra : mScreenExtras)
@@ -711,7 +698,6 @@ void Window::startScreenSaver()
 
 bool Window::cancelScreenSaver()
 {
-
 	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 	if ((screensaver_behavior == "suspend") || !isScreenSaverEnabled())
 		return false;
@@ -736,10 +722,15 @@ bool Window::cancelScreenSaver()
 	return false;
 }
 
-void Window::renderScreenSaver()
+void Window::renderScreenSaver(bool checkSleep)
 {
 	if (isScreenSaverEnabled())
 		mScreenSaver->renderScreenSaver();
+
+	if (mRenderScreenSaver && checkSleep)
+	{
+		screensaverNeedsToGoToSleep();
+	}
 }
 
 static std::mutex mNotificationMessagesLock;

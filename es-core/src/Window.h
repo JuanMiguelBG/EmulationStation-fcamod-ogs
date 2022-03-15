@@ -92,7 +92,7 @@ public:
 
 	void startScreenSaver();
 	bool cancelScreenSaver();
-	void renderScreenSaver();
+	void renderScreenSaver(bool checkSleep = false);
 
 	void displayNotificationMessage(std::string message, int duration = -1);
 
@@ -128,6 +128,7 @@ private:
 	std::vector<NotificationMessage> mNotificationMessages;
 	void processNotificationMessages();
 
+	void screensaverNeedsToGoToSleep();
 	void onSleep();
 	void onWake();
 
