@@ -628,6 +628,12 @@ int main(int argc, char* argv[])
 		Renderer::swapBuffers();
 	}
 
+	if (isFastShutdown())
+	{
+		LOG(LogInfo) << "MAIN::main() - EmulationStation Fast Shutting Down/Restarting, not saving metadata.";
+		Settings::getInstance()->setBool("IgnoreGamelist", true);
+	}
+
 	ThreadedScraper::stop();
 
 	ApiSystem::getInstance()->deinit();

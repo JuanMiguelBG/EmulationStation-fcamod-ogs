@@ -46,6 +46,16 @@ void GuiQuitOptions::initializeMenu()
 			}
 		});
 
+	// show quit menu with select
+	auto showQuitMenu = std::make_shared<SwitchComponent>(mWindow);
+	showQuitMenu->setState(Settings::getInstance()->getBool("ShowQuitMenuWithSelect"));
+	addWithLabel(_("SHOW QUIT MENU WITH SELECT"), showQuitMenu);
+	addSaveFunc([showQuitMenu]
+		{
+			Settings::getInstance()->setBool("ShowQuitMenuWithSelect", showQuitMenu->getState());
+		});
+
+
 	addGroup(_("NO MENU"));
 
 	// only exit action

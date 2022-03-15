@@ -13,13 +13,16 @@ enum QuitMode
 	RESTART = 1,
 	SHUTDOWN = 2,
 	REBOOT = 3,
-	SUSPEND = 4
+	SUSPEND = 4,
+	FAST_SHUTDOWN = 5,
+	FAST_REBOOT = 6
 };
 
 int runSystemCommand(const std::string& cmd_utf8, const std::string& name, Window* window); // run a utf-8 encoded in the shell (requires wstring conversion on Windows)
 bool executeSystemScript(const std::string command);
 std::vector<std::string> executeSystemEnumerationScript(const std::string command);
 int quitES(QuitMode mode = QuitMode::QUIT);
+bool isFastShutdown();
 void processQuitMode();
 
 #if !defined(TRACE)

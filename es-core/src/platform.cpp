@@ -7,6 +7,7 @@
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
 #include "Log.h"
+#include "Scripting.h"
 
 #include <ifaddrs.h>
 #include <netinet/in.h>
@@ -82,7 +83,31 @@ int quitES(QuitMode mode)
 {
 	quitMode = mode;
 
-	SDL_Event *quit = new SDL_Event();
+	switch (quitMode)
+	{
+		case QuitMode::QUIT:
+			Scripting::fireEvent("quit");
+			break;
+
+		case QuitMode::REBOOT:
+		case QuitMode::FAST_REBOOT:
+			Scripting::fireEvent("quit", "reboot");
+			Scripting::fireEvent("reboot");
+			break;
+
+		case QuitMode::SHUTDOWN:
+		case QuitMode::FAST_SHUTDOWN:
+			Scripting::fireEvent("quit", "shutdown");
+			Scripting::fireEvent("shutdown");
+			break;
+
+		case QuitMode::SUSPEND:
+			Scripting::fireEvent("quit", "suspend");
+			Scripting::fireEvent("suspend");
+			break;
+	}
+
+	SDL_Event* quit = new SDL_Event();
 	quit->type = SDL_QUIT;
 	SDL_PushEvent(quit);
 	return 0;
@@ -137,11 +162,13 @@ void processQuitMode()
 		touch("/tmp/es-restart");
 		break;
 	case QuitMode::REBOOT:
+	case QuitMode::FAST_REBOOT:
 		LOG(LogInfo) << "Platform::processQuitMode() - Rebooting system";
 		touch("/tmp/es-sysrestart");
 		runRestartCommand();
 		break;
 	case QuitMode::SHUTDOWN:
+	case QuitMode::FAST_SHUTDOWN:
 		LOG(LogInfo) << "Platform::processQuitMode() - Shutting system down";
 		touch("/tmp/es-shutdown");
 		runShutdownCommand();
@@ -151,6 +178,11 @@ void processQuitMode()
 		runSuspendCommand();
 		break;
 	}
+}
+
+bool isFastShutdown()
+{
+	return quitMode == QuitMode::FAST_REBOOT || quitMode == QuitMode::FAST_SHUTDOWN;
 }
 
 std::string queryBatteryRootPath()

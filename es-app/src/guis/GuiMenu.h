@@ -17,6 +17,7 @@ public:
 	bool input(InputConfig* config, Input input) override;
 	void onSizeChanged() override;
 	std::vector<HelpPrompt> getHelpPrompts() override;
+	static void openQuitMenu_static(Window *window, bool quickAccessMenu = false, bool animate = true);
 	HelpStyle getHelpStyle() override;
 
 	static void openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shared_ptr<OptionListComponent<std::string>> theme_set, const std::string systemTheme = "");
@@ -24,7 +25,7 @@ public:
 	static void updateGameLists(Window* window, bool confirm = true);
 
 private:
-	void addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName = "");	
+	void addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName = "");
 
 	void addVersionInfo();
 	void openCollectionSystemSettings();

@@ -556,8 +556,8 @@ msgid "PRELOAD METADATA MEDIA ON BOOT"
 msgstr "PRECARGA DE MULTIMEDIA EN EL ARRANQUE"
 
 #:
-msgid "Reduces lag when scrolling through a fully scraped gamelist, increases boot time"
-msgstr "Reduce el lag cuando navegamos por una lista de juegos completamente scrapeada, aumenta el tiempo de arranque"
+msgid "Reduces lag when scrolling through a fully scraped gamelist, increases boot time."
+msgstr "Reduce el lag cuando navegamos por una lista de juegos completamente scrapeada, aumenta el tiempo de arranque."
 
 #:
 msgid "THREADED LOADING"
@@ -1014,7 +1014,7 @@ msgstr "OVERSCAN"
 
 #:
 msgid "LAUNCH SCREENSAVER"
-msgstr "SALVAPANTALLAS"
+msgstr "LANZAR SALVAPANTALLAS"
 
 #:
 msgid "SCREENSAVER SETTINGS"
@@ -1331,6 +1331,18 @@ msgid "QUIT"
 msgstr "SALIR"
 
 #:
+msgid "QUICK ACCESS"
+msgstr "ACCESO RÁPIDO"
+
+#:
+msgid "SKIP TO THE NEXT SONG"
+msgstr "SALTAR A LA SIGUIENTE CANCIÓN"
+
+#:
+msgid "NOW PLAYING"
+msgstr "SONANDO"
+
+#:
 msgid "GAME METADATA EDIT - \"SELECT\" CLOSE MENU"
 msgstr "EDICIÓN METADATOS - \"SELECT\" CIERRA EL MENÚ"
 
@@ -1341,6 +1353,10 @@ msgstr "OTROS"
 #:
 msgid "\"QUIT\" SETTINGS"
 msgstr "CONFIGURACIÓN DE \"SALIR\""
+
+#:
+msgid "QUIT MENU"
+msgstr "MENÚ SALIR"
 
 #:
 msgid "POWERKEY BUTTON SETTINGS"
@@ -1387,6 +1403,18 @@ msgid "RESTART SYSTEM"
 msgstr "REINICIAR EL SISTEMA"
 
 #:
+msgid "FAST RESTART SYSTEM"
+msgstr "REINICIAR RÁPIDAMENTE"
+
+#:
+msgid "Restart without saving metadata."
+msgstr "Reinicia el sistema sin guardar metadatos."
+
+#:
+msgid "REALLY RESTART WITHOUT SAVING METADATA?"
+msgstr "¿DESEAS REINICIAR SIN GUARDAR METADATOS?"
+
+#:
 msgid "REALLY SUSPEND?"
 msgstr "¿SEGURO DE SUSPENDER?"
 
@@ -1405,6 +1433,18 @@ msgstr "¿SEGURO DE APAGAR?"
 #:
 msgid "SHUTDOWN SYSTEM"
 msgstr "APAGAR EL SISTEMA"
+
+#:
+msgid "FAST SHUTDOWN SYSTEM"
+msgstr "APAGAR RÁPIDAMENTE"
+
+#:
+msgid "Shutdown without saving metadata."
+msgstr "Apaga el sistema sin guardar metadatos."
+
+#:
+msgid "REALLY SHUTDOWN WITHOUT SAVING METADATA?"
+msgstr "¿DESEAS APAGAR SIN GUARDAR METADATOS?"
 
 #:
 msgid "POWERKEY BUTTON"
@@ -2756,6 +2796,10 @@ msgstr "VER MENÚ"
 #:
 msgid "CONFIRM TO \"QUIT\""
 msgstr "CONFIRMAR PARA \"SALIR\""
+
+#:
+msgid "SHOW QUIT MENU WITH SELECT"
+msgstr "MOSTAR EL MENÚ QUITAR CON SELECT"
 
 #:
 msgid "NO MENU"

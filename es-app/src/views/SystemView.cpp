@@ -17,6 +17,7 @@
 #include "guis/GuiSettings.h"
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiTextEditPopup.h"
+#include "guis/GuiMenu.h"
 
 // buffer values for scrolling velocity (left, stopped, right)
 const int logoBuffersLeft[] = { -5, -2, -1 };
@@ -592,7 +593,13 @@ bool SystemView::input(InputConfig* config, Input input)
 			config->isMappedTo(BUTTON_PU, input))
 			listInput(0);
 
-		if (!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("select", input) && Settings::getInstance()->getBool("ScreenSaverControls"))
+
+	if (config->isMappedTo("select", input) && Settings::getInstance()->getBool("ShowQuitMenuWithSelect"))
+	{
+		GuiMenu::openQuitMenu_static(mWindow, true);
+		return true;
+	}
+	else if (!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("select", input) && Settings::getInstance()->getBool("ScreenSaverControls"))
 		{
 			std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 			if (mWindow->isScreenSaverEnabled() && (screensaver_behavior != "suspend"))
@@ -991,9 +998,16 @@ std::vector<HelpPrompt> SystemView::getHelpPrompts()
 	if (SystemData::getSystem("all") != nullptr)
 		prompts.push_back(HelpPrompt("y", _("SEARCH"))); // QUICK
 
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && ((screensaver_behavior != "suspend") && mWindow->isScreenSaverEnabled()))
-		prompts.push_back(HelpPrompt("select", _("LAUNCH SCREENSAVER")));
+	if (Settings::getInstance()->getBool("ShowQuitMenuWithSelect"))
+	{
+			prompts.push_back(HelpPrompt("select", _("QUIT MENU")));
+	}
+	else
+	{
+		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
+		if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && ((screensaver_behavior != "suspend") && mWindow->isScreenSaverEnabled()))
+			prompts.push_back(HelpPrompt("select", _("LAUNCH SCREENSAVER")));
+	}
 
 	return prompts;
 }

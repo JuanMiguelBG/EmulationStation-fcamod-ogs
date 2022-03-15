@@ -1838,7 +1838,7 @@ void GuiMenu::openAdvancedSettings()
 	// preload Medias
 	auto preloadMedias = std::make_shared<SwitchComponent>(mWindow);
 	preloadMedias->setState(Settings::getInstance()->getBool("PreloadMedias"));
-	s->addWithDescription(_("PRELOAD METADATA MEDIA ON BOOT"), _("Reduces lag when scrolling through a fully scraped gamelist, increases boot time"), preloadMedias);
+	s->addWithDescription(_("PRELOAD METADATA MEDIA ON BOOT"), _("Reduces lag when scrolling through a fully scraped gamelist, increases boot time."), preloadMedias);
 	s->addSaveFunc([preloadMedias] { Settings::getInstance()->setBool("PreloadMedias", preloadMedias->getState()); });
 
 	// threaded loading
@@ -1869,10 +1869,8 @@ void GuiMenu::openAdvancedSettings()
 							window->pushGui(new GuiMsgBox(window, _("THE SYSTEM WILL NOW REBOOT"),
 										_("OK"),
 											[] {
-											Scripting::fireEvent("quit", "reboot");
-											Scripting::fireEvent("reboot");
 											if (quitES(QuitMode::REBOOT) != 0)
-												LOG(LogWarning) << "GuiMenu::openQuitMenu() - Restart terminated with non-zero result!";
+												LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
 										}));
 					}));
 				}
@@ -1896,10 +1894,8 @@ void GuiMenu::openAdvancedSettings()
 						window->pushGui(new GuiMsgBox(window, _("THE SYSTEM WILL NOW REBOOT"),
 									_("OK"),
 										[] {
-										Scripting::fireEvent("quit", "reboot");
-										Scripting::fireEvent("reboot");
 										if (quitES(QuitMode::REBOOT) != 0)
-											LOG(LogWarning) << "GuiMenu::openQuitMenu() - Restart terminated with non-zero result!";
+											LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
 									}));
 					}
 				}
@@ -2153,44 +2149,51 @@ void GuiMenu::openConfigInput()
 
 void GuiMenu::openQuitMenu()
 {
-	Window* window = mWindow;
+	GuiMenu::openQuitMenu_static(mWindow);
+}
 
+void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool animate)
+{
+	static std::function<void()> quitEsFunction = []
+		{
+			if(quitES() != 0)
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Quit ES terminated with non-zero result!";
+		};
 
 	static std::function<void()> restartEsFunction = []
 		{
-			Scripting::fireEvent("quit");
 			if(quitES(QuitMode::RESTART) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu() - Restart terminated with non-zero result!";
-		};
-
-	static std::function<void()> quitEsFunction = []
-		{
-			Scripting::fireEvent("quit");
-			quitES();
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Restart ES terminated with non-zero result!";
 		};
 
 	static std::function<void()> restartDeviceFunction = []
 		{
-			Scripting::fireEvent("quit", "reboot");
-			Scripting::fireEvent("reboot");
 			if (quitES(QuitMode::REBOOT) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu() - Restart terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Restart System terminated with non-zero result!";
+		};
+
+	static std::function<void()> fastRestartDeviceFunction = []
+		{
+			if (quitES(QuitMode::FAST_REBOOT) != 0)
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Fast Restart System terminated with non-zero result!";
 		};
 
 	static std::function<void()> suspendDeviceFunction = []
 		{
-			Scripting::fireEvent("quit", "suspend");
-			Scripting::fireEvent("suspend");
 			if (quitES(QuitMode::SUSPEND) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu() - Suspend terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Suspend System terminated with non-zero result!";
 		};
 
 	static std::function<void()> shutdownDeviceFunction = []
 		{
-			Scripting::fireEvent("quit", "shutdown");
-			Scripting::fireEvent("shutdown");
 			if (quitES(QuitMode::SHUTDOWN) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu() - Shutdown terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Shutdown System terminated with non-zero result!";
+		};
+
+	static std::function<void()> fastShutdownDeviceFunction = []
+		{
+			if (quitES(QuitMode::FAST_SHUTDOWN) != 0)
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Fast Shutdown System terminated with non-zero result!";
 		};
 
 	if (Settings::getInstance()->getBool("ShowOnlyExit"))
@@ -2209,7 +2212,6 @@ void GuiMenu::openQuitMenu()
 			exitFunction = quitEsFunction;
 			exit_label = "REALLY QUIT?";
 		}
-		
 
 		if (Settings::getInstance()->getBool("ConfirmToExit"))
 			window->pushGui(new GuiMsgBox(window, _(exit_label), _("YES"), exitFunction, _("NO"), nullptr));
@@ -2219,70 +2221,133 @@ void GuiMenu::openQuitMenu()
 		return;
 	}
 
-	auto s = new GuiSettings(window, _("QUIT"));
+	auto s = new GuiSettings(window, (quickAccessMenu ? _("QUICK ACCESS") : _("QUIT")));
+	s->setCloseButton("select");
 
-	ComponentListRow row;
+	if (quickAccessMenu)
+	{
+		s->addGroup(_("QUICK ACCESS"));
+
+		// Don't like one of the songs? Press next
+		if (AudioManager::getInstance()->isSongPlaying())
+		{
+			auto sname = AudioManager::getInstance()->getSongName();
+			if (!sname.empty())
+			{
+				s->addWithDescription(_("SKIP TO THE NEXT SONG"), _("NOW PLAYING") + ": " + sname, nullptr, [s, window]
+					{
+						Window* w = window;
+						AudioManager::getInstance()->playRandomMusic(false);
+						delete s;
+						openQuitMenu_static(w, true, false);
+					}, "iconSound");
+			}
+		}
+
+		s->addEntry(_("LAUNCH SCREENSAVER"), false, [s, window]
+			{
+				Window* w = window;
+				window->postToUiThread([w]()
+				{
+					w->startScreenSaver();
+					w->renderScreenSaver();
+				});
+				delete s;
+			}, "iconScraper", true);
+	}
+
+	if (quickAccessMenu)
+		s->addGroup(_("QUIT"));
+
+
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
-		// Restart does not work on Windows
-		row.makeAcceptInputHandler([window]
+		s->addEntry(_("RESTART EMULATIONSTATION"), false, [window]
 			{
 				if (Settings::getInstance()->getBool("ConfirmToExit"))
-					window->pushGui(new GuiMsgBox(window, _("REALLY RESTART?"), _("YES"), restartEsFunction, _("NO"), nullptr));
+					window->pushGui(new GuiMsgBox(window, _("REALLY RESTART?"),
+													_("YES"), restartEsFunction,
+													_("NO"), nullptr));
 				else
 					restartEsFunction();
-			});
-		row.addElement(std::make_shared<TextComponent>(window, _("RESTART EMULATIONSTATION"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-		s->addRow(row);
+			}, "iconRestartEmulationstaion");
 
 		if(Settings::getInstance()->getBool("ShowExit"))
 		{
-			row.elements.clear();
-			row.makeAcceptInputHandler([window]
-			{
-				if (Settings::getInstance()->getBool("ConfirmToExit"))
-					window->pushGui(new GuiMsgBox(window, _("REALLY QUIT?"), _("YES"), quitEsFunction, _("NO"), nullptr));
-				else
-					quitEsFunction();
-			});
-			row.addElement(std::make_shared<TextComponent>(window, _("QUIT EMULATIONSTATION"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-			s->addRow(row);
+			s->addEntry(_("QUIT EMULATIONSTATION"), false, [window]
+				{
+					if (Settings::getInstance()->getBool("ConfirmToExit"))
+						window->pushGui(new GuiMsgBox(window, _("REALLY QUIT?"),
+													_("YES"), quitEsFunction,
+													_("NO"), nullptr));
+					else
+						quitEsFunction();
+				}, "iconQuit");
 		}
 	}
-	row.elements.clear();
-	row.makeAcceptInputHandler([window]
+
+	s->addEntry(_("RESTART SYSTEM"), false, [window]
 		{
 			if (Settings::getInstance()->getBool("ConfirmToExit"))
-				window->pushGui(new GuiMsgBox(window, _("REALLY RESTART?"), _("YES"), restartDeviceFunction, _("NO"), nullptr));
+				window->pushGui(new GuiMsgBox(window, _("REALLY RESTART?"),
+												_("YES"), restartDeviceFunction,
+												_("NO"), nullptr));
 			else
 				restartDeviceFunction();
-		});
-	row.addElement(std::make_shared<TextComponent>(window, _("RESTART SYSTEM"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-	s->addRow(row);
+		}, "iconRestart");
 
-	row.elements.clear();
-	row.makeAcceptInputHandler([window]
+	if (UIModeController::getInstance()->isUIModeFull())
+	{
+		s->addWithDescription(_("FAST RESTART SYSTEM"), _("Restart without saving metadata."), nullptr, [window]
+			{
+				if (Settings::getInstance()->getBool("ConfirmToExit"))
+					window->pushGui(new GuiMsgBox(window, _("REALLY RESTART WITHOUT SAVING METADATA?"),
+													_("YES"), fastRestartDeviceFunction,
+													_("NO"), nullptr));
+				else
+					fastRestartDeviceFunction();
+			}, "iconFastRestart");
+
+		s->addEntry(_("SUSPEND SYSTEM"), false, [window]
+			{
+				if (Settings::getInstance()->getBool("ConfirmToExit"))
+					window->pushGui(new GuiMsgBox(window, _("REALLY SUSPEND?"),
+													_("YES"), suspendDeviceFunction,
+													_("NO"), nullptr));
+				else
+					suspendDeviceFunction();
+			}, "iconSuspend");
+	}
+
+	s->addEntry(_("SHUTDOWN SYSTEM"), false, [window]
 		{
 			if (Settings::getInstance()->getBool("ConfirmToExit"))
-				window->pushGui(new GuiMsgBox(window, _("REALLY SUSPEND?"), _("YES"), suspendDeviceFunction, _("NO"), nullptr));
-			else
-				suspendDeviceFunction();
-		});
-	row.addElement(std::make_shared<TextComponent>(window, _("SUSPEND SYSTEM"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-	s->addRow(row);
-
-	row.elements.clear();
-	row.makeAcceptInputHandler([window]
-		{
-			if (Settings::getInstance()->getBool("ConfirmToExit"))
-				window->pushGui(new GuiMsgBox(window, _("REALLY SHUTDOWN?"), _("YES"), shutdownDeviceFunction, _("NO"), nullptr));
+				window->pushGui(new GuiMsgBox(window, _("REALLY SHUTDOWN?"),
+												_("YES"), shutdownDeviceFunction,
+												_("NO"), nullptr));
 			else
 				shutdownDeviceFunction();
-		});
-	row.addElement(std::make_shared<TextComponent>(window, _("SHUTDOWN SYSTEM"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-	s->addRow(row);
+		}, "iconShutdown");
 
-	mWindow->pushGui(s);
+	if (UIModeController::getInstance()->isUIModeFull())
+	{
+		s->addWithDescription(_("FAST SHUTDOWN SYSTEM"), _("Shutdown without saving metadata."), nullptr, [window]
+			{
+				if (Settings::getInstance()->getBool("ConfirmToExit"))
+					window->pushGui(new GuiMsgBox(window, _("REALLY SHUTDOWN WITHOUT SAVING METADATA?"),
+													_("YES"), fastShutdownDeviceFunction,
+													_("NO"), nullptr));
+				else
+					fastShutdownDeviceFunction();
+			}, "iconFastShutdown");
+	}
+
+	if (quickAccessMenu && animate)
+		s->getMenu().animateTo(Vector2f((Renderer::getScreenWidth() - s->getMenu().getSize().x()) / 2, (Renderer::getScreenHeight() - s->getMenu().getSize().y()) / 2));
+	else if (quickAccessMenu)
+		s->getMenu().setPosition((Renderer::getScreenWidth() - s->getMenu().getSize().x()) / 2, (Renderer::getScreenHeight() - s->getMenu().getSize().y()) / 2);
+
+	window->pushGui(s);
 }
 
 std::string getBuildTime()
