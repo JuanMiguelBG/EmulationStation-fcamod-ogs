@@ -2296,7 +2296,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				restartDeviceFunction();
 		}, "iconRestart");
 
-	if (UIModeController::getInstance()->isUIModeFull())
+	if (UIModeController::getInstance()->isUIModeFull() && Settings::getInstance()->getBool("ShowFastQuitActions"))
 	{
 		s->addWithDescription(_("FAST RESTART SYSTEM"), _("Restart without saving metadata."), nullptr, [window]
 			{
@@ -2329,7 +2329,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				shutdownDeviceFunction();
 		}, "iconShutdown");
 
-	if (UIModeController::getInstance()->isUIModeFull())
+	if (UIModeController::getInstance()->isUIModeFull() && Settings::getInstance()->getBool("ShowFastQuitActions"))
 	{
 		s->addWithDescription(_("FAST SHUTDOWN SYSTEM"), _("Shutdown without saving metadata."), nullptr, [window]
 			{

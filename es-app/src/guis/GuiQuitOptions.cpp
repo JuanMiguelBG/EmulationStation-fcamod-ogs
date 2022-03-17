@@ -55,6 +55,19 @@ void GuiQuitOptions::initializeMenu()
 			Settings::getInstance()->setBool("ShowQuitMenuWithSelect", showQuitMenu->getState());
 		});
 
+	// show fast actions
+	auto showFastActions = std::make_shared<SwitchComponent>(mWindow);
+	showFastActions->setState(Settings::getInstance()->getBool("ShowFastQuitActions"));
+	addWithLabel(_("SHOW FAST QUIT ACTIONS"), showFastActions);
+	addSaveFunc([this, showFastActions]
+		{
+			bool old_value = Settings::getInstance()->getBool("ShowFastQuitActions");
+			if (old_value != showFastActions->getState())
+			{
+				Settings::getInstance()->setBool("ShowFastQuitActions", showFastActions->getState());
+				setVariable("reloadGuiMenu", true);
+			}
+		});
 
 	addGroup(_("NO MENU"));
 
