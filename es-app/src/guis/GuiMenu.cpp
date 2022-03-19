@@ -475,39 +475,36 @@ void GuiMenu::openSoundSettings()
 		// volume control device
 		s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("Playback")), font, color));
 
-		// output device
-		auto out_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("OUTPUT DEVICE"), false);
-		std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
-		std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
-		LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
-		for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
 		{
-			std::string out_dev_label;
-			if (*od == "OFF")
-				out_dev_label = "MUTE";
-			else if (*od == "SPK")
-				out_dev_label = "SPEAKER";
-			else if (*od == "HP")
-				out_dev_label = "HEADPHONES";
-			else if (*od == "SPK_HP")
-				out_dev_label = "SPEAKER AND HEADPHONES";
-			else
-				out_dev_label = *od;
+			// output device
+			auto out_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("OUTPUT DEVICE"), false);
+			std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
+			std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
+			LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
+			for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
+			{
+				std::string out_dev_label;
+				if (*od == "OFF")
+					out_dev_label = "MUTE";
+				else if (*od == "SPK")
+					out_dev_label = "SPEAKER";
+				else if (*od == "HP")
+					out_dev_label = "HEADPHONES";
+				else if (*od == "SPK_HP")
+					out_dev_label = "SPEAKER AND HEADPHONES";
+				else
+					out_dev_label = *od;
 
-			out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+				out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+			}
+			s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
+			out_dev->setSelectedChangedCallback([](const std::string &newVal)
+				{
+					ApiSystem::getInstance()->setOutputDevice(newVal);
+				});
 		}
-		s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
-		out_dev->setSelectedChangedCallback([](const std::string &newVal)
-			{
-				ApiSystem::getInstance()->setOutputDevice(newVal);
-			});
-/*
-		s->addSaveFunc([out_dev, out_dev_value]
-			{
-				if (out_dev_value != out_dev->getSelected())
-					ApiSystem::getInstance()->setOutputDevice(out_dev->getSelected());
-			});
-*/
+
 		// volume overlay
 		auto volumePopup = std::make_shared<SwitchComponent>(mWindow);
 		volumePopup->setState(Settings::getInstance()->getBool("VolumePopup"));
