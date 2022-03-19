@@ -189,6 +189,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 	case ApiSystem::PRELOAD_VLC:
 				executables.push_back("es-preload_vlc");
 				break;
+	case ApiSystem::SOUND:
+				executables.push_back("es-sound");
+				break;
 /*
 	case ApiSystem::RETROACHIVEMENTS:
 #ifdef CHEEVOS_DEV_LOGIN
@@ -1416,4 +1419,39 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 void ApiSystem::preloadVLC()
 {
 	executeScript("/usr/local/bin/es-preload_vlc &");
+}
+
+std::vector<std::string> ApiSystem::getAudioCards()
+{
+	LOG(LogInfo) << "ApiSystem::getAudioCards()";
+
+	return executeSystemEnumerationScript(R"(es-sound get audio_cards)");
+}
+
+std::vector<std::string> ApiSystem::getAudioDevices()
+{
+	LOG(LogInfo) << "ApiSystem::getAudioDevices()";
+
+	return executeSystemEnumerationScript(R"(es-sound get audio_devices)");
+}
+
+std::vector<std::string> ApiSystem::getOutputDevices()
+{
+	LOG(LogInfo) << "ApiSystem::getOutputDevices()";
+
+	return executeSystemEnumerationScript(R"(es-sound get output_devices)");
+}
+
+std::string ApiSystem::getOutputDevice()
+{
+	LOG(LogInfo) << "ApiSystem::getOutputDevice()";
+
+	return getShOutput(R"(es-sound get output_device)");
+}
+
+bool ApiSystem::setOutputDevice(const std::string device)
+{
+	LOG(LogInfo) << "ApiSystem::setOutputDevice()";
+
+	return executeScript("es-sound set output_device \"" + device + '"');
 }

@@ -554,7 +554,7 @@ private:
 		}
 
 		if (mSelectedChangedCallback)
-			mSelectedChangedCallback(mEntries.at(getSelectedId()).object);		
+			mSelectedChangedCallback(mEntries.at(getSelectedId()).object);
 	}
 
 	std::vector<HelpPrompt> getHelpPrompts() override

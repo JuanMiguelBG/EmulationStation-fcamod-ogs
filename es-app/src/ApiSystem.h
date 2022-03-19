@@ -55,7 +55,8 @@ public:
 		OPTMIZE_SYSTEM = 9,
 		SHOW_FPS = 10,
 		OVERCLOCK = 11,
-		PRELOAD_VLC = 12
+		PRELOAD_VLC = 12,
+		SOUND = 13
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -228,6 +229,11 @@ public:
 
 	void preloadVLC();
 
+	std::vector<std::string> getAudioCards();
+	std::vector<std::string> getAudioDevices();
+	std::vector<std::string> getOutputDevices();
+	std::string getOutputDevice();
+	bool setOutputDevice(const std::string device);
 };
 
 #endif

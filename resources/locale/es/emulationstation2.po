@@ -1135,12 +1135,8 @@ msgid "Speaker"
 msgstr "Altavoz"
 
 #:
-msgid "Master"
-msgstr "Maestro"
-
-#:
-msgid "Analogue"
-msgstr "Analógico"
+msgid "Record"
+msgstr "Grabadora"
 
 #:
 msgid "Playback"
@@ -1173,6 +1169,22 @@ msgstr "ESTA FUNCIÓN ESTÁ DESHABILITADA CUANDO SE ESTÁ SCRAPEANDO"
 #:
 msgid "OUTPUT DEVICE"
 msgstr "DISPOSITIVO DE SALIDA"
+
+#:
+msgid "MUTE"
+msgstr "SILENCIAR"
+
+#:
+msgid "SPEAKER"
+msgstr "ALTAVOCES"
+
+#:
+msgid "HEADPHONES"
+msgstr "AURICULARES"
+
+#:
+msgid "SPEAKER AND HEADPHONES"
+msgstr "ALTAVOCES Y AURICULARES"
 
 #:
 msgid "JACK"

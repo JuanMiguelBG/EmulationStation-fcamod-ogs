@@ -465,52 +465,50 @@ void GuiMenu::openSoundSettings()
 
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
+		auto theme = ThemeData::getMenuTheme();
+		std::shared_ptr<Font> font = theme->Text.font;
+		unsigned int color = theme->Text.color;
+
 		// audio card
-		auto audio_card = std::make_shared< OptionListComponent<std::string> >(mWindow, _("AUDIO CARD"), false);
-		std::vector<std::string> audio_cards;
-		audio_cards.push_back("default");
-		audio_cards.push_back("sysdefault");
-		audio_cards.push_back("dmix");
-		audio_cards.push_back("hw");
-		audio_cards.push_back("plughw");
-		audio_cards.push_back("null");
-		if (Settings::getInstance()->getString("AudioCard") != "") {
-			if(std::find(audio_cards.begin(), audio_cards.end(), Settings::getInstance()->getString("AudioCard")) == audio_cards.end()) {
-				audio_cards.push_back(Settings::getInstance()->getString("AudioCard"));
-			}
-		}
-		for(auto ac = audio_cards.cbegin(); ac != audio_cards.cend(); ac++)
-			audio_card->add(_(ac->c_str()), *ac, Settings::getInstance()->getString("AudioCard") == *ac);
-		s->addWithLabel(_("AUDIO CARD"), audio_card);
-		s->addSaveFunc([audio_card] {
-			Settings::getInstance()->setString("AudioCard", audio_card->getSelected());
-			VolumeControl::getInstance()->deinit();
-			VolumeControl::getInstance()->init();
-		});
+		s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("default")), font, color));
 
 		// volume control device
-		auto vol_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("AUDIO DEVICE"), false);
-		std::vector<std::string> transitions;
-		transitions.push_back("PCM");
-		transitions.push_back("Speaker");
-		transitions.push_back("Master");
-		transitions.push_back("Digital");
-		transitions.push_back("Analogue");
-		transitions.push_back("Playback");
-		if (Settings::getInstance()->getString("AudioDevice") != "") {
-			if(std::find(transitions.begin(), transitions.end(), Settings::getInstance()->getString("AudioDevice")) == transitions.end()) {
-				transitions.push_back(Settings::getInstance()->getString("AudioDevice"));
-			}
-		}
-		for(auto it = transitions.cbegin(); it != transitions.cend(); it++)
-			vol_dev->add(_(it->c_str()), *it, Settings::getInstance()->getString("AudioDevice") == *it);
-		s->addWithLabel(_("AUDIO DEVICE"), vol_dev);
-		s->addSaveFunc([vol_dev] {
-			Settings::getInstance()->setString("AudioDevice", vol_dev->getSelected());
-			VolumeControl::getInstance()->deinit();
-			VolumeControl::getInstance()->init();
-		});
+		s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("Playback")), font, color));
 
+		// output device
+		auto out_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("OUTPUT DEVICE"), false);
+		std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
+		std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
+		LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
+		for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
+		{
+			std::string out_dev_label;
+			if (*od == "OFF")
+				out_dev_label = "MUTE";
+			else if (*od == "SPK")
+				out_dev_label = "SPEAKER";
+			else if (*od == "HP")
+				out_dev_label = "HEADPHONES";
+			else if (*od == "SPK_HP")
+				out_dev_label = "SPEAKER AND HEADPHONES";
+			else
+				out_dev_label = *od;
+
+			out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+		}
+		s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
+		out_dev->setSelectedChangedCallback([](const std::string &newVal)
+			{
+				ApiSystem::getInstance()->setOutputDevice(newVal);
+			});
+/*
+		s->addSaveFunc([out_dev, out_dev_value]
+			{
+				if (out_dev_value != out_dev->getSelected())
+					ApiSystem::getInstance()->setOutputDevice(out_dev->getSelected());
+			});
+*/
+		// volume overlay
 		auto volumePopup = std::make_shared<SwitchComponent>(mWindow);
 		volumePopup->setState(Settings::getInstance()->getBool("VolumePopup"));
 		s->addWithLabel(_("SHOW OVERLAY WHEN VOLUME CHANGES"), volumePopup);
@@ -972,7 +970,7 @@ void GuiMenu::openUISettings()
 					window->pushGui(new GuiMsgBox(window, _("YOU SELECTED A THEME MANUALLY, THE RANDOM THEME SELECTION HAS BEEN DISABLED"), _("OK")));
 				}
 
-				Scripting::fireEvent("theme-changed", theme_set->getSelected(), oldTheme);
+    Scripting::fireEvent("theme-changed", theme_set->getSelected(), oldTheme);
 			}
 		});
 	
@@ -1725,7 +1723,7 @@ void GuiMenu::openAdvancedSettings()
 		if (languages.size() > 1)
 		{
 			auto language = std::make_shared< FlagOptionListComponent<std::string> >(mWindow, _("LANGUAGE"));
-
+			std::string language_value = Settings::getInstance()->getString("Language");
 			for (auto it = languages.cbegin(); it != languages.cend(); it++)
 			{
 				std::string language_label;
@@ -1748,13 +1746,13 @@ void GuiMenu::openAdvancedSettings()
 				else
 					language_label = *it;
 
-				language->add(_(language_label), *it, Settings::getInstance()->getString("Language") == *it, ":/flags/" + *it + ".png");
+				language->add(_(language_label), *it, language_value == *it, ":/flags/" + *it + ".png");
 			}
 
 			s->addWithLabel(_("LANGUAGE"), language);
-			s->addSaveFunc([language, window, s] {
+			s->addSaveFunc([language, window, s, language_value] {
 
-				if (language->getSelected() != Settings::getInstance()->getString("Language"))
+				if (language_value != language->getSelected())
 				{
 					Settings::getInstance()->setString("Language", language->getSelected());
 					s->setVariable("reloadGuiMenu", true);
