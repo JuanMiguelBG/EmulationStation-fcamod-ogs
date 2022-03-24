@@ -196,11 +196,8 @@ void BasicGameListView::launch(FileData* game)
 	ViewController::get()->launch(game);
 }
 
-void BasicGameListView::remove(FileData *game, bool deleteFile)
+void BasicGameListView::remove(FileData *game)
 {
-	if (deleteFile)
-		Utils::FileSystem::removeFile(game->getPath());  // actually delete the file on the filesystem
-
 	FolderData* parent = game->getParent();
 	if (getCursor() == game)                     // Select next element in list, or prev if none
 	{

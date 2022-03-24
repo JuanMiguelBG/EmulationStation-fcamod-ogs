@@ -403,7 +403,7 @@ void CollectionSystemManager::updateCollectionSystem(FileData* file, CollectionS
 			// found and we are removing
 			if (name == "favorites" && !file->getFavorite()) {
 				// need to check if still marked as favorite, if not remove
-				ViewController::get()->getGameListView(curSys).get()->remove(collectionEntry, false);
+				ViewController::get()->getGameListView(curSys).get()->remove(collectionEntry);
 				
 				ViewController::get()->onFileChanged(file, FILE_METADATA_CHANGED);
 				ViewController::get()->getGameListView(curSys)->onFileChanged(collectionEntry, FILE_METADATA_CHANGED);
@@ -470,7 +470,7 @@ void CollectionSystemManager::trimCollectionCount(FolderData* rootFolder, int li
 		if (listView == nullptr)
 			delete gameToRemove;
 		else
-			listView.get()->remove(gameToRemove, false);
+			listView.get()->remove(gameToRemove);
 	}
 }
 
@@ -479,6 +479,7 @@ void CollectionSystemManager::deleteCollectionFiles(FileData* file)
 {
 	// collection files use the full path as key, to avoid clashes
 	std::string key = file->getFullPath();
+
 	// find games in collection systems
 	std::map<std::string, CollectionSystemData> allCollections;
 	allCollections.insert(mAutoCollectionSystemsData.cbegin(), mAutoCollectionSystemsData.cend());
@@ -486,16 +487,24 @@ void CollectionSystemManager::deleteCollectionFiles(FileData* file)
 
 	for(auto sysDataIt = allCollections.begin(); sysDataIt != allCollections.end(); sysDataIt++)
 	{
-		if (sysDataIt->second.isPopulated)
-		{
-			FileData* collectionEntry = (sysDataIt->second.system)->getRootFolder()->FindByPath(key);
-			if (collectionEntry != nullptr)
-			{
-				sysDataIt->second.needsSave = true;
-				SystemData* systemViewToUpdate = getSystemToView(sysDataIt->second.system);
-				ViewController::get()->getGameListView(systemViewToUpdate).get()->remove(collectionEntry, false);
-			}
-		}
+		if (!sysDataIt->second.isPopulated || !sysDataIt->second.isEnabled)
+			continue;
+
+		FileData* collectionEntry = (sysDataIt->second.system)->getRootFolder()->FindByPath(key);
+		if (collectionEntry == nullptr)
+			continue;
+
+		sysDataIt->second.needsSave = true;
+
+		SystemData* systemViewToUpdate = getSystemToView(sysDataIt->second.system);
+		if (systemViewToUpdate == nullptr)
+			continue;
+
+		auto view = ViewController::get()->getGameListView(systemViewToUpdate);
+		if (view != nullptr)
+			view.get()->remove(collectionEntry);
+		else
+			delete collectionEntry;
 	}
 }
 
@@ -666,7 +675,7 @@ bool CollectionSystemManager::toggleGameInCollection(FileData* file)
 				if (systemViewToUpdate != sysData)
 					systemViewToUpdate->removeFromIndex(collectionEntry);
 
-				ViewController::get()->getGameListView(systemViewToUpdate).get()->remove(collectionEntry, false);
+				ViewController::get()->getGameListView(systemViewToUpdate).get()->remove(collectionEntry);
 			}
 			else
 			{

@@ -766,3 +766,19 @@ std::set<std::string> FileData::getContentFiles()
 
 	return files;
 }
+
+void FileData::deleteGameFiles()
+{
+	for (auto mdd : mMetadata.getMDD())
+	{
+		if (mMetadata.getType(mdd.id) != MetaDataType::MD_PATH)
+			continue;
+
+		Utils::FileSystem::removeFile(mMetadata.get(mdd.id));
+	}
+
+	Utils::FileSystem::removeFile(getPath());
+
+	for (auto contentFile : getContentFiles())
+		Utils::FileSystem::removeFile(contentFile);
+}

@@ -21,9 +21,13 @@ public:
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 	virtual HelpStyle getHelpStyle() override;
 
+	void close();
+
 	static std::vector<std::string> gridSizes;
 
 private:
+	static void deleteGame(FileData* file);
+
 	inline void addSaveFunc(const std::function<void()>& func) { mSaveFuncs.push_back(func); };
 
 	void addTextFilterToMenu();

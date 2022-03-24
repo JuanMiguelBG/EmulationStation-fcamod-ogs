@@ -90,6 +90,8 @@ public:
 	std::string getMetadata(MetaDataId key) { return getMetadata().get(key); }
 	void setMetadata(MetaDataId key, const std::string& value) { return getMetadata().set(key, value); }
 
+	void deleteGameFiles();
+
 	bool hasContentFiles();
 	std::set<std::string> getContentFiles();
 

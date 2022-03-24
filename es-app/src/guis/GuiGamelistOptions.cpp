@@ -147,7 +147,7 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 
 	auto glv = ViewController::get()->getGameListView(system);
 	
-	std::string viewName = glv->getName();	
+	std::string viewName = glv->getName();
 
 	
 
@@ -262,41 +262,43 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 
 	std::map<std::string, CollectionSystemData> customCollections = CollectionSystemManager::get()->getCustomCollectionSystems();
 
-	if(UIModeController::getInstance()->isUIModeFull() &&
-		((customCollections.find(system->getName()) != customCollections.cend() && CollectionSystemManager::get()->getEditingCollection() != system->getName()) ||
-		CollectionSystemManager::get()->getCustomCollectionsBundle()->getName() == system->getName()))
-	{
-		row.elements.clear();
-		row.addElement(std::make_shared<TextComponent>(mWindow, _("ADD/REMOVE GAMES TO THIS GAME COLLECTION"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-		row.makeAcceptInputHandler(std::bind(&GuiGamelistOptions::startEditMode, this));
-		mMenu.addRow(row);
-	}
-
-	if(UIModeController::getInstance()->isUIModeFull() && CollectionSystemManager::get()->isEditing())
-	{
-		row.elements.clear();
-		
-		char fecstrbuf[64];
-		snprintf(fecstrbuf, 64, _("FINISH EDITING '%s' COLLECTION").c_str(), Utils::String::toUpper(CollectionSystemManager::get()->getEditingCollection()).c_str());
-		
-		row.addElement(std::make_shared<TextComponent>(mWindow, fecstrbuf, ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-		row.makeAcceptInputHandler(std::bind(&GuiGamelistOptions::exitEditMode, this));
-		mMenu.addRow(row);
-	}
-
-	if (UIModeController::getInstance()->isUIModeFull() && !fromPlaceholder && !(mSystem->isCollection() && file->getType() == FOLDER))
-	{
-		row.elements.clear();
-		row.addElement(std::make_shared<TextComponent>(mWindow, _("EDIT THIS GAME'S METADATA"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
-		row.addElement(makeArrow(mWindow), false);
-		row.makeAcceptInputHandler(std::bind(&GuiGamelistOptions::openMetaDataEd, this));
-		mMenu.addRow(row);
-	}
-
-	// update game lists
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
+		if ((customCollections.find(system->getName()) != customCollections.cend() && CollectionSystemManager::get()->getEditingCollection() != system->getName()) ||
+			CollectionSystemManager::get()->getCustomCollectionsBundle()->getName() == system->getName())
+		{
+			mMenu.addEntry(_("ADD/REMOVE GAMES TO THIS GAME COLLECTION"), false, [this] { startEditMode(); });
+		}
+
+		if (CollectionSystemManager::get()->isEditing())
+		{
+			char fecstrbuf[64];
+			snprintf(fecstrbuf, 64, _("FINISH EDITING '%s' COLLECTION").c_str(), Utils::String::toUpper(CollectionSystemManager::get()->getEditingCollection()).c_str());
+
+			mMenu.addEntry(fecstrbuf, false, [this] { exitEditMode(); });
+		}
+
+		if (!fromPlaceholder && !(mSystem->isCollection() && file->getType() == FOLDER))
+		{
+			// edit game metadata
+			mMenu.addEntry(_("EDIT THIS GAME'S METADATA"), true, [this] { openMetaDataEd(); });
+
+			// delete game
+			mMenu.addEntry(_("DELETE GAME"), false, [this, file]
+			{
+				mWindow->pushGui(new GuiMsgBox(mWindow, _("THIS WILL DELETE THE ACTUAL GAME FILE(S)!\nARE YOU SURE?"),
+					_("YES"), [this, file]
+						{
+							deleteGame(file);
+							close();
+						},
+					_("NO"), nullptr));
+			});
+		}
+
+		// update game lists
 		mMenu.addEntry(_("UPDATE GAMES LISTS"), false, [this] { GuiMenu::updateGameLists(mWindow); }); // Game List Update
+
 	}
 
 	// center the menu
@@ -476,19 +478,10 @@ void GuiGamelistOptions::openMetaDataEd()
 	p.game = file;
 	p.system = file->getSystem();
 
-	std::function<void()> deleteBtnFunc;
+	std::function<void()> deleteBtnFunc = nullptr;
 
-	if (file->getType() == FOLDER)
-	{
-		deleteBtnFunc = NULL;
-	}
-	else
-	{
-		deleteBtnFunc = [this, file] {
-			CollectionSystemManager::get()->deleteCollectionFiles(file);
-			ViewController::get()->getGameListView(file->getSystem()).get()->remove(file, true);
-		};
-	}
+	if (file->getType() == GAME)
+		deleteBtnFunc = [file] { GuiGamelistOptions::deleteGame(file); };
 
 	mWindow->pushGui(new GuiMetaDataEd(mWindow, &file->getMetadata(), file->getMetadata().getMDD(), p, Utils::FileSystem::getFileName(file->getPath()),
 		std::bind(&IGameListView::onFileChanged, ViewController::get()->getGameListView(file->getSystem()).get(), file, FILE_METADATA_CHANGED), deleteBtnFunc, file));
@@ -557,4 +550,33 @@ std::vector<HelpPrompt> GuiGamelistOptions::getHelpPrompts()
 IGameListView* GuiGamelistOptions::getGamelist()
 {
 	return ViewController::get()->getGameListView(mSystem).get();
+}
+
+void GuiGamelistOptions::deleteGame(FileData* file)
+{
+/*
+			CollectionSystemManager::get()->deleteCollectionFiles(file);
+			ViewController::get()->getGameListView(file->getSystem()).get()->remove(file, true);
+*/
+
+	if (file->getType() != GAME)
+		return;
+
+	auto sourceFile = file->getSourceFileData();
+
+	auto sys = sourceFile->getSystem();
+	if (sys->isGroupChildSystem())
+		sys = sys->getParentGroupSystem();
+
+	CollectionSystemManager::get()->deleteCollectionFiles(sourceFile);
+	sourceFile->deleteGameFiles();
+
+	auto view = ViewController::get()->getGameListView(sys, false);
+	if (view != nullptr)
+		view.get()->remove(sourceFile);
+}
+
+void GuiGamelistOptions::close()
+{
+	delete this;
 }
