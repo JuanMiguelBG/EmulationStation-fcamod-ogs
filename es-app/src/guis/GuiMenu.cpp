@@ -1893,6 +1893,10 @@ void GuiMenu::openAdvancedSettings()
 											LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
 									}));
 					}
+					else
+					{
+						window->pushGui(new GuiMsgBox(window, _("OVERCLOCK CONFIGURATION ERROR"), _("OK"), nullptr));
+					}
 				}
 			});
 	}
