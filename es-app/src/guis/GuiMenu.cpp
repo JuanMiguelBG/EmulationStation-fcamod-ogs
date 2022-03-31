@@ -2195,7 +2195,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Fast Shutdown System terminated with non-zero result!";
 		};
 
-	if (Settings::getInstance()->getBool("ShowOnlyExit"))
+	if (Settings::getInstance()->getBool("ShowOnlyExit") && !quickAccessMenu)
 	{
 		std::string exit_action = Settings::getInstance()->getString("OnlyExitAction");
 		std::string exit_label = "REALLY SHUTDOWN?";
