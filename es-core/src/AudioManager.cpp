@@ -356,3 +356,13 @@ void AudioManager::update(int deltaTime)
 		Mix_VolumeMusic((int)sInstance->mMusicVolume);
 	}
 }
+
+std::string AudioManager::getSongName()
+{
+	LOG(LogDebug) << "AudioManager::getSongName() - mCurrentSong: " << mCurrentSong << ", mCurrentMusicPath: " << mCurrentMusicPath;
+
+	if (mCurrentSong.empty() && isSongPlaying())
+		return Utils::FileSystem::getStem(mCurrentMusicPath);
+
+	return mCurrentSong;
+}

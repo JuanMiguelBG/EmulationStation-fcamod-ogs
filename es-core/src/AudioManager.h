@@ -47,7 +47,7 @@ public:
 		return "";
 	}
 
-	inline const std::string getSongName() const { return mCurrentSong; }
+	std::string getSongName();
 	inline bool isSongPlaying() { return (mCurrentMusic != NULL); }
 
 	virtual ~AudioManager();
