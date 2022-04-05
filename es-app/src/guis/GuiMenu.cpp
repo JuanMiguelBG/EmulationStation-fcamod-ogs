@@ -2295,17 +2295,20 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				restartDeviceFunction();
 		}, "iconRestart");
 
-	if (UIModeController::getInstance()->isUIModeFull() && Settings::getInstance()->getBool("ShowFastQuitActions"))
+	if (UIModeController::getInstance()->isUIModeFull())
 	{
-		s->addWithDescription(_("FAST RESTART SYSTEM"), _("Restart without saving metadata."), nullptr, [window]
-			{
-				if (Settings::getInstance()->getBool("ConfirmToExit"))
-					window->pushGui(new GuiMsgBox(window, _("REALLY RESTART WITHOUT SAVING METADATA?"),
-													_("YES"), fastRestartDeviceFunction,
-													_("NO"), nullptr));
-				else
-					fastRestartDeviceFunction();
-			}, "iconFastRestart");
+		if (Settings::getInstance()->getBool("ShowFastQuitActions"))
+		{
+			s->addWithDescription(_("FAST RESTART SYSTEM"), _("Restart without saving metadata."), nullptr, [window]
+				{
+					if (Settings::getInstance()->getBool("ConfirmToExit"))
+						window->pushGui(new GuiMsgBox(window, _("REALLY RESTART WITHOUT SAVING METADATA?"),
+														_("YES"), fastRestartDeviceFunction,
+														_("NO"), nullptr));
+					else
+						fastRestartDeviceFunction();
+				}, "iconFastRestart");
+		}
 
 		s->addEntry(_("SUSPEND SYSTEM"), false, [window]
 			{
