@@ -221,6 +221,8 @@ void AudioManager::playMusic(std::string path)
 	Mix_HookMusicFinished(AudioManager::onMusicFinished);
 	mCurrentMusicPath = path;
 	mCurrentSong = Utils::FileSystem::getStem(path);
+	if (!mCurrentSong.empty())
+		mCurrentSong = Utils::String::replace(mCurrentSong, "_", " ");
 }
 
 void AudioManager::onMusicFinished()
