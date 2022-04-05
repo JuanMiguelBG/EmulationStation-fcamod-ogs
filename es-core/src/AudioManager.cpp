@@ -7,6 +7,7 @@
 #include <time.h>
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
+#include "utils/Randomizer.h"
 
 #include <unistd.h>
 
@@ -181,9 +182,7 @@ void AudioManager::playRandomMusic(bool continueIfPlaying)
 	if (musics.empty())
 		return;
 
-	srand(time(NULL) % getpid() + getppid());
-
-	int randomIndex = rand() % musics.size();
+	int randomIndex = Randomizer::random(musics.size());
 
 	// continue playing ?
 	if (mCurrentMusic != NULL && continueIfPlaying)

@@ -83,6 +83,7 @@ set(CORE_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/resources/TextureDataManager.h
 
 	# Utils
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Randomizer.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/FileSystemUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/md5.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/NetworkUtil.h
@@ -174,6 +175,7 @@ set(CORE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/resources/TextureDataManager.cpp
 
 	# Utils
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Randomizer.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/FileSystemUtil.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/md5.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/NetworkUtil.cpp

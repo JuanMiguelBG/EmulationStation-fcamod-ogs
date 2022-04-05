@@ -6,6 +6,7 @@
 #include "components/VideoVlcComponent.h"
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
+#include "utils/Randomizer.h"
 #include "Log.h"
 #include "platform.h"
 #include "Settings.h"
@@ -1362,10 +1363,9 @@ std::map<std::string, ThemeSet> ThemeData::getThemeSets()
 	}
 
 	if (!sets.empty() && Settings::getInstance()->getBool("ThemeRandom") && !Settings::getInstance()->getBool("ThemeRandomSet"))
-	{ // load theme randomly
-			/* initialize random seed: */
-		srand (time(NULL));
-		int position = rand() % sets.size(),
+	{
+		// load theme randomly
+		int position = Randomizer::random(sets.size()),
 				i = 0;
 
 		std::string oldTheme = Settings::getInstance()->getString("ThemeSet");

@@ -1,6 +1,7 @@
 #include "SystemScreenSaver.h"
 
 #include "components/VideoVlcComponent.h"
+#include "utils/Randomizer.h"
 #include "utils/FileSystemUtil.h"
 #include "views/gamelist/IGameListView.h"
 #include "views/ViewController.h"
@@ -423,7 +424,7 @@ std::string SystemScreenSaver::pickRandomVideo()
 	if (mVideoCount == 0)
 		return "";
 	
-	int video = (int)(((float)rand() / float(RAND_MAX)) * (float)mVideoCount);
+	int video = Randomizer::random(mVideoCount);
 	return pickGameListNode(video, "video");
 }
 
@@ -434,7 +435,7 @@ std::string SystemScreenSaver::pickRandomGameListImage()
 	if (mImageCount == 0)
 		return "";
 	
-	int image = (int)(((float)rand() / float(RAND_MAX)) * (float)mImageCount);
+	int image = Randomizer::random(mImageCount);
 	return pickGameListNode(image, "image");
 }
 
@@ -467,7 +468,7 @@ std::string SystemScreenSaver::pickRandomCustomImage()
 		if (fileCount > 0)
 		{
 			// get a random index in the range 0 to fileCount (exclusive)
-			int randomIndex = rand() % fileCount;
+			int randomIndex = Randomizer::random(fileCount);
 			path = matchingFiles[randomIndex];
 		}
 		else
@@ -635,7 +636,7 @@ void GameScreenSaverBase::setGame(FileData* game)
 	if (Settings::getInstance()->getBool("ScreenSaverDecoration"))
 	{
 		auto sets = GuiMenu::getDecorationsSets(game->getSystem());
-		int setId = (int)(((float)rand() / float(RAND_MAX)) * (float)sets.size());
+		int setId = Randomizer::random(sets.size());
 
 		if (setId >= 0 && setId < sets.size() && Utils::FileSystem::exists(sets[setId].imageUrl))
 		{

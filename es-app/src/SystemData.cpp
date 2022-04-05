@@ -1,5 +1,7 @@
 #include "SystemData.h"
 
+#include "utils/Randomizer.h"
+#include "utils/FileSystemUtil.h"
 #include "utils/FileSystemUtil.h"
 #include "CollectionSystemManager.h"
 #include "FileFilterIndex.h"
@@ -959,7 +961,7 @@ SystemData* SystemData::getRandomSystem()
 	}
 
 	// get random number in range
-	int target = (int)Math::round((std::rand() / (float)RAND_MAX) * (total - 1));
+	int target = Randomizer::random(total);
 	for (auto it = sSystemVector.cbegin(); it != sSystemVector.cend(); it++)
 	{
 		if ((*it)->isGameSystem())
@@ -983,11 +985,11 @@ FileData* SystemData::getRandomGame()
 {
 	std::vector<FileData*> list = mRootFolder->getFilesRecursive(GAME, true);
 	unsigned int total = (int)list.size();
-	int target = 0;
 	// get random number in range
 	if (total == 0)
 		return NULL;
-	target = (int)Math::round((std::rand() / (float)RAND_MAX) * (total - 1));
+
+	int target = Randomizer::random(total);
 	return list.at(target);
 }
 
