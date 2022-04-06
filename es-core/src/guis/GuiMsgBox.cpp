@@ -5,6 +5,7 @@
 #include "components/ImageComponent.h"
 #include "resources/ResourceManager.h"
 #include "EsLocale.h"
+#include "Log.h"
 
 #define HORIZONTAL_PADDING_PX  (Renderer::getScreenWidth()*0.01)
 
@@ -127,9 +128,9 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 	
 	// now that we know width, we can find height
 	mMsg->setSize(width, 0); // mMsg->getSize.y() now returns the proper length
-	
-	float msgHeight = Math::max(Font::get(FONT_SIZE_LARGE)->getHeight(), mMsg->getSize().y() * 1.225f);
-	
+
+	float msgHeight = Math::max(Font::get(FONT_SIZE_LARGE)->getHeight(), mMsg->getSize().y() * 1.125f);
+
 	if ((msgHeight + mButtonGrid->getSize().y()) > Renderer::getScreenHeight())
 	{
 		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
@@ -172,11 +173,9 @@ void GuiMsgBox::onSizeChanged()
 				height = Math::min(mSize.y(), (float) Renderer::getScreenHeight());
 
 	if (height == Renderer::getScreenHeight())
-		width = Renderer::getScreenWidth();
-	else if (height > (Renderer::getScreenHeight() / 2) && (width < Renderer::getScreenWidth()))
 	{
-		float percentage = height / Renderer::getScreenHeight();
-		width = Renderer::getScreenWidth() * percentage;
+		height = height * 0.95f;
+		width = Renderer::getScreenWidth();
 	}
 
 	mSize = Vector2f(width, height);
