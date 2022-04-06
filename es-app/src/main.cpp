@@ -370,7 +370,7 @@ void processAudioTitles(Window* window)
 	{
 		std::string songName = AudioManager::getInstance()->popSongName();
 		if (!songName.empty())
-			window->displayNotificationMessage(_U("\uF028  ") + songName);
+			window->displayNotificationMessage(_U("\u1F369  ") + songName);
 	}
 }
 
