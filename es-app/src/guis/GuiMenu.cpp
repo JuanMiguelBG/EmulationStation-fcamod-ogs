@@ -2236,8 +2236,8 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 	if (quickAccessMenu)
 		s->addGroup(_("QUIT"));
 
-
-	if (UIModeController::getInstance()->isUIModeFull())
+	bool isUIModeFull = UIModeController::getInstance()->isUIModeFull();
+	if (isUIModeFull)
 	{
 		s->addEntry(_("RESTART EMULATIONSTATION"), false, [window]
 			{
@@ -2263,6 +2263,19 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 		}
 	}
 
+	if (isUIModeFull)
+	{
+		s->addEntry(_("SUSPEND SYSTEM"), false, [window]
+			{
+				if (Settings::getInstance()->getBool("ConfirmToExit"))
+					window->pushGui(new GuiMsgBox(window, _("REALLY SUSPEND?"),
+													_("YES"), suspendDeviceFunction,
+													_("NO"), nullptr));
+				else
+					suspendDeviceFunction();
+			}, "iconSuspend");
+	}
+
 	s->addEntry(_("RESTART SYSTEM"), false, [window]
 		{
 			if (Settings::getInstance()->getBool("ConfirmToExit"))
@@ -2273,30 +2286,17 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				restartDeviceFunction();
 		}, "iconRestart");
 
-	if (UIModeController::getInstance()->isUIModeFull())
+	if (isUIModeFull && Settings::getInstance()->getBool("ShowFastQuitActions"))
 	{
-		if (Settings::getInstance()->getBool("ShowFastQuitActions"))
-		{
-			s->addWithDescription(_("FAST RESTART SYSTEM"), _("Restart without saving metadata."), nullptr, [window]
-				{
-					if (Settings::getInstance()->getBool("ConfirmToExit"))
-						window->pushGui(new GuiMsgBox(window, _("REALLY RESTART WITHOUT SAVING METADATA?"),
-														_("YES"), fastRestartDeviceFunction,
-														_("NO"), nullptr));
-					else
-						fastRestartDeviceFunction();
-				}, "iconFastRestart");
-		}
-
-		s->addEntry(_("SUSPEND SYSTEM"), false, [window]
+		s->addWithDescription(_("FAST RESTART SYSTEM"), _("Restart without saving metadata."), nullptr, [window]
 			{
 				if (Settings::getInstance()->getBool("ConfirmToExit"))
-					window->pushGui(new GuiMsgBox(window, _("REALLY SUSPEND?"),
-													_("YES"), suspendDeviceFunction,
+					window->pushGui(new GuiMsgBox(window, _("REALLY RESTART WITHOUT SAVING METADATA?"),
+													_("YES"), fastRestartDeviceFunction,
 													_("NO"), nullptr));
 				else
-					suspendDeviceFunction();
-			}, "iconSuspend");
+					fastRestartDeviceFunction();
+			}, "iconFastRestart");
 	}
 
 	s->addEntry(_("SHUTDOWN SYSTEM"), false, [window]
@@ -2309,7 +2309,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				shutdownDeviceFunction();
 		}, "iconShutdown");
 
-	if (UIModeController::getInstance()->isUIModeFull() && Settings::getInstance()->getBool("ShowFastQuitActions"))
+	if (isUIModeFull && Settings::getInstance()->getBool("ShowFastQuitActions"))
 	{
 		s->addWithDescription(_("FAST SHUTDOWN SYSTEM"), _("Shutdown without saving metadata."), nullptr, [window]
 			{
