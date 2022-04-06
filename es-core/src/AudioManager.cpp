@@ -4,17 +4,26 @@
 #include "Settings.h"
 #include "Sound.h"
 #include <SDL.h>
-#include <time.h>
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
 #include "utils/Randomizer.h"
+#include "SystemConf.h"
+#include "ThemeData.h"
 
+#ifdef WIN32
+#include <time.h>
+#else
 #include <unistd.h>
+#endif
 
+// batocera
+// Size of last played music history as a percentage of file total
+#define LAST_PLAYED_SIZE 0.4
+
+AudioManager* AudioManager::sInstance = NULL;
 std::vector<std::shared_ptr<Sound>> AudioManager::sSoundVector;
-std::shared_ptr<AudioManager> AudioManager::sInstance;
 
-AudioManager::AudioManager() : mCurrentMusic(NULL), mInitialized(false), mMusicVolume(MIX_MAX_VOLUME), mVideoPlaying(false)
+AudioManager::AudioManager() : mInitialized(false), mCurrentMusic(nullptr), mMusicVolume(MIX_MAX_VOLUME), mVideoPlaying(false)
 {
 	init();
 }
@@ -24,10 +33,11 @@ AudioManager::~AudioManager()
 	deinit();
 }
 
-std::shared_ptr<AudioManager> & AudioManager::getInstance()
+AudioManager* AudioManager::getInstance()
 {
+	//check if an AudioManager instance is already created, if not create one
 	if (sInstance == nullptr)
-		sInstance = std::shared_ptr<AudioManager>(new AudioManager);
+		sInstance = new AudioManager();
 
 	return sInstance;
 }
@@ -45,12 +55,14 @@ void AudioManager::init()
 	if (mInitialized)
 		return;
 
-	mRunningFromPlaylist = false;
+	mSongNameChanged = false;
 	mMusicVolume = 0;
+	mPlayingSystemThemeSong = "none";
+	std::deque<std::string> mLastPlayed;
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
 	{
-		LOG(LogError) << "AudioManager::init() - ERROR: problem to initializing SDL audio!\n" << SDL_GetError();
+		LOG(LogError) << "AudioManager::init() - Error initializing SDL audio!\n" << SDL_GetError();
 		return;
 	}
 
@@ -73,7 +85,7 @@ void AudioManager::deinit()
 	if (!mInitialized)
 		return;
 
-	LOG(LogInfo) << "AudioManager::deinit()";
+	LOG(LogDebug) << "AudioManager::deinit() - AudioManager::deinit";
 
 	mInitialized = false;
 
@@ -113,7 +125,7 @@ void AudioManager::unregisterSound(std::shared_ptr<Sound> & sound)
 			return;
 		}
 	}
-	LOG(LogWarning) << "AudioManager::unregisterSound() - ERROR: tried to unregister a sound that wasn't registered!";
+	LOG(LogWarning) << "AudioManager::unregisterSound() - Error - tried to unregister a sound that wasn't registered!";
 }
 
 void AudioManager::play()
@@ -129,7 +141,7 @@ void AudioManager::stop()
 			sSoundVector[i]->stop();
 }
 
-void AudioManager::findMusic(const std::string &path, std::vector<std::string>& all_matching_files)
+void AudioManager::getMusicIn(const std::string &path, std::vector<std::string>& all_matching_files)
 {
 	if (!Utils::FileSystem::isDirectory(path))
 		return;
@@ -145,51 +157,93 @@ void AudioManager::findMusic(const std::string &path, std::vector<std::string>& 
 				continue;
 
 			if (anySystem || mSystemName == Utils::FileSystem::getFileName(*it))
-				findMusic(*it, all_matching_files);
+				getMusicIn(*it, all_matching_files);
 		}
 		else
 		{
 			std::string extension = Utils::String::toLower(Utils::FileSystem::getExtension(*it));
-			if (extension == ".mp3" || extension == ".ogg")
+			if (extension == ".mp3" || extension == ".ogg" || extension == ".wav")
 				all_matching_files.push_back(*it);
 		}
 	}
 }
 
+// batocera
+// Add the current song to the last played history, truncating as needed
+void AudioManager::addLastPlayed(const std::string& newSong, int totalMusic)
+{
+	int historySize = std::floor(totalMusic * LAST_PLAYED_SIZE);
+	if (historySize < 1)
+	{
+		// Number of songs is too small to bother with
+		return;
+	}
+
+	while (mLastPlayed.size() > historySize) {
+		mLastPlayed.pop_back();
+	}
+	mLastPlayed.push_front(newSong);
+
+	LOG(LogDebug) << "AudioManager::addLastPlayed() - Adding " << newSong << " to last played, " << mLastPlayed.size() << " in history";
+}
+
+// batocera
+// Check if current song exists in last played history
+bool AudioManager::songWasPlayedRecently(const std::string& song)
+{
+	for (std::string i : mLastPlayed)
+	{
+		if (song == i)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void AudioManager::playRandomMusic(bool continueIfPlaying)
 {
-	if (!mInitialized || !Settings::getInstance()->getBool("audio.bgmusic"))
+	if (!Settings::getInstance()->getBool("audio.bgmusic"))
 		return;
 
 	std::vector<std::string> musics;
 
 	// check in Theme music directory
 	if (!mCurrentThemeMusicDirectory.empty())
-		findMusic(mCurrentThemeMusicDirectory, musics);
+		getMusicIn(mCurrentThemeMusicDirectory, musics);
 
 	// check in User music directory
-	if (musics.empty() && !Settings::getInstance()->getString("UserMusicDirectory").empty())
-		findMusic(Settings::getInstance()->getString("MusicDirectory"), musics);
+	std::string path = Settings::getInstance()->getString("UserMusicDirectory");
+	if (musics.empty() && !path.empty())
+		getMusicIn(path, musics);
 
-	// check in System music directory
-	if (musics.empty() && !Settings::getInstance()->getString("MusicDirectory").empty())
-		findMusic(Settings::getInstance()->getString("MusicDirectory"), musics);
+	// check in system sound directory
+	path = Settings::getInstance()->getString("MusicDirectory");
+	if (musics.empty())
+		getMusicIn(path, musics);
 
 	// check in .emulationstation/music directory
 	if (musics.empty())
-		findMusic(Utils::FileSystem::getEsConfigPath() + "/music", musics);
+		getMusicIn(Utils::FileSystem::getEsConfigPath() + "/music", musics);
 
 	if (musics.empty())
 		return;
 
 	int randomIndex = Randomizer::random(musics.size());
+	while (songWasPlayedRecently(musics.at(randomIndex)))
+	{
+		LOG(LogDebug) << "AudioManager::playRandomMusic() - Music \"" << musics.at(randomIndex) << "\" was played recently, trying again";
+		randomIndex = Randomizer::random(musics.size());
+	}
 
 	// continue playing ?
-	if (mCurrentMusic != NULL && continueIfPlaying)
+	if (mCurrentMusic != nullptr && continueIfPlaying)
 		return;
 
 	playMusic(musics.at(randomIndex));
-	mRunningFromPlaylist = true;
+	playSong(musics.at(randomIndex));
+	addLastPlayed(musics.at(randomIndex), musics.size());
+	mPlayingSystemThemeSong = "";
 }
 
 void AudioManager::playMusic(std::string path)
@@ -207,7 +261,7 @@ void AudioManager::playMusic(std::string path)
 	mCurrentMusic = Mix_LoadMUS(path.c_str());
 	if (mCurrentMusic == NULL)
 	{
-		LOG(LogError) << Mix_GetError() << " for " << path;
+		LOG(LogError) << "AudioManager::playMusic() - " << Mix_GetError() << " for " << path;
 		return;
 	}
 
@@ -217,15 +271,18 @@ void AudioManager::playMusic(std::string path)
 		return;
 	}
 
-	Mix_HookMusicFinished(AudioManager::onMusicFinished);
 	mCurrentMusicPath = path;
-	mCurrentSong = Utils::FileSystem::getStem(path);
-	if (!mCurrentSong.empty())
-		mCurrentSong = Utils::String::replace(mCurrentSong, "_", " ");
+	Mix_HookMusicFinished(AudioManager::musicEnd_callback);
 }
 
-void AudioManager::onMusicFinished()
+void AudioManager::musicEnd_callback()
 {
+	if (!AudioManager::getInstance()->mPlayingSystemThemeSong.empty())
+	{
+		AudioManager::getInstance()->playMusic(AudioManager::getInstance()->mPlayingSystemThemeSong);
+		return;
+	}
+
 	AudioManager::getInstance()->playRandomMusic(false);
 }
 
@@ -238,7 +295,7 @@ void AudioManager::stopMusic(bool fadeOut)
 
 	if (fadeOut)
 	{
-		// Fade-out is nicer on Batocera!
+		// Fade-out is nicer !
 		while (!Mix_FadeOutMusic(500) && Mix_PlayingMusic())
 			SDL_Delay(100);
 	}
@@ -249,7 +306,38 @@ void AudioManager::stopMusic(bool fadeOut)
 	mCurrentMusic = NULL;
 }
 
-void AudioManager::themeChanged(const std::shared_ptr<ThemeData>& theme, bool force)
+// Fast string hash in order to use strings in switch/case
+// How does this work? Look for Dan Bernstein hash on the internet
+constexpr unsigned int sthash(const char *s, int off = 0)
+{
+	return !s[off] ? 5381 : (sthash(s, off+1)*33) ^ s[off];
+}
+
+void AudioManager::setSongName(const std::string& song)
+{
+	if (song == mCurrentSong)
+		return;
+
+	mCurrentSong = Utils::String::replace(song, "_", " ");
+	mSongNameChanged = true;
+}
+
+void AudioManager::playSong(const std::string& song)
+{
+	if (song == mCurrentSong)
+		return;
+
+	if (song.empty())
+	{
+		mSongNameChanged = true;
+		mCurrentSong = "";
+		return;
+	}
+
+	setSongName(Utils::FileSystem::getStem(song.c_str()));
+}
+
+void AudioManager::changePlaylist(const std::shared_ptr<ThemeData>& theme, bool force)
 {
 	if (theme == nullptr)
 		return;
@@ -283,15 +371,13 @@ void AudioManager::themeChanged(const std::shared_ptr<ThemeData>& theme, bool fo
 		// Found a music for the system
 		if (!bgSound.empty())
 		{
-			mRunningFromPlaylist = false;
+			mPlayingSystemThemeSong = bgSound;
 			playMusic(bgSound);
 			return;
 		}
 	}
 
-
-	mSystemName = theme->getSystemThemeFolder();
-	if (!mRunningFromPlaylist || Settings::getInstance()->getBool("audio.persystem"))
+	if (force || !mPlayingSystemThemeSong.empty() || Settings::getInstance()->getBool("audio.persystem"))
 		playRandomMusic(false);
 }
 
@@ -356,14 +442,4 @@ void AudioManager::update(int deltaTime)
 
 		Mix_VolumeMusic((int)sInstance->mMusicVolume);
 	}
-}
-
-std::string AudioManager::getSongName()
-{
-	LOG(LogDebug) << "AudioManager::getSongName() - mCurrentSong: " << mCurrentSong << ", mCurrentMusicPath: " << mCurrentMusicPath;
-
-	if (mCurrentSong.empty() && isSongPlaying())
-		return Utils::String::replace(Utils::FileSystem::getStem(mCurrentMusicPath), "_", " ");
-
-	return mCurrentSong;
 }

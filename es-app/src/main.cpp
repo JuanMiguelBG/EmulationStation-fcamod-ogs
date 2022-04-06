@@ -366,11 +366,20 @@ void onExit()
 
 void processAudioTitles(Window* window)
 {
-	if (Settings::getInstance()->getBool("MusicTitles"))
+	if (Settings::getInstance()->getBool("audio.display_titles") && AudioManager::getInstance()->isSongNameChanged())
 	{
-		std::string songName = AudioManager::getInstance()->popSongName();
+		std::string songName = AudioManager::getInstance()->getSongName();
 		if (!songName.empty())
-			window->displayNotificationMessage(_U("\uF028  ") + songName);
+		{
+			int duration = Settings::getInstance()->getInt("audio.display_titles_time");
+			if (duration <= 2 || duration > 120)
+				duration = 10;
+
+			duration *= 1000;
+
+			window->displayNotificationMessage(_U("\uF028  ") + songName, duration);
+		}
+		AudioManager::getInstance()->resetSongNameChangedFlag();
 	}
 }
 
@@ -562,8 +571,12 @@ int main(int argc, char* argv[])
 
 	window.endRenderLoadingScreen();
 
-	if (Settings::getInstance()->getBool("audio.bgmusic"))
+	// Play music
+	if (ViewController::get()->getState().viewing == ViewController::GAME_LIST || ViewController::get()->getState().viewing == ViewController::SYSTEM_SELECT)
+		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
+	else
 		AudioManager::getInstance()->playRandomMusic();
+
 
 	unsigned int lastTime = SDL_GetTicks(),
 							 ps_time = lastTime;

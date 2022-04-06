@@ -9,6 +9,7 @@
 #include "guis/GuiTextEditPopup.h"
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiMsgBox.h"
+#include "components/SwitchComponent.h"
 
 
 GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) : GuiComponent(window), mMenu(window, title)
@@ -199,4 +200,31 @@ void GuiSettings::addInputTextRow(std::string title, const char *settingsID, boo
 	});
 
 	addRow(row);
+}
+
+std::shared_ptr<SwitchComponent> GuiSettings::addSwitch(const std::string& title, const std::string& description, const std::string& settingsID, bool storeInSettings, const std::function<void()>& onChanged)
+{
+	Window* window = mWindow;
+
+	bool value = storeInSettings ? Settings::getInstance()->getBool(settingsID) : SystemConf::getInstance()->getBool(settingsID);
+
+	auto comp = std::make_shared<SwitchComponent>(mWindow);
+	comp->setState(value);
+
+	if (!description.empty())
+		addWithDescription(title, description, comp);
+	else
+		addWithLabel(title, comp);
+
+	std::string localSettingsID = settingsID;
+	bool localStoreInSettings = storeInSettings;
+
+	addSaveFunc([comp, localStoreInSettings, localSettingsID, onChanged]
+	{
+		bool changed = localStoreInSettings ? Settings::getInstance()->setBool(localSettingsID, comp->getState()) : SystemConf::getInstance()->setBool(localSettingsID, comp->getState());
+		if (changed && onChanged != nullptr)
+			onChanged();
+	});
+
+	return comp;
 }

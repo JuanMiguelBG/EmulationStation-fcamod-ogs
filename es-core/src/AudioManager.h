@@ -6,16 +6,38 @@
 #include <memory>
 #include <vector>
 #include "SDL_mixer.h"
-#include "ThemeData.h"
 #include <string>
+#include <iostream>
+#include <deque>
+#include <math.h>
 
 class Sound;
+class ThemeData;
 
 class AudioManager
 {
+private:
+	AudioManager();
+
+	static std::vector<std::shared_ptr<Sound>> sSoundVector;
+	static AudioManager* sInstance;
+
+	Mix_Music* mCurrentMusic;
+	void getMusicIn(const std::string &path, std::vector<std::string>& all_matching_files);
+	void playMusic(std::string path);
+	static void musicEnd_callback();
+
+	std::string mSystemName;			// per system music folder
+	std::string mCurrentSong;			// pop-up for SongName.cpp
+	std::string mCurrentThemeMusicDirectory;
+	std::string mCurrentMusicPath;
+	std::deque<std::string> mLastPlayed;    // batocera
+
+	bool		mInitialized;
+	std::string	mPlayingSystemThemeSong;
 
 public:
-	static std::shared_ptr<AudioManager> & getInstance();
+	static AudioManager* getInstance();
 	static bool isInitialized();
 
 	void init();
@@ -29,26 +51,15 @@ public:
 
 	void playRandomMusic(bool continueIfPlaying = true);
 	void stopMusic(bool fadeOut=true);
-	void themeChanged(const std::shared_ptr<ThemeData>& theme, bool force=false);
 
-	void setSystemName(std::string name) {
-		mSystemName = name;
-	}
+	inline const std::string getSongName() const { return mCurrentSong; }
 
-	std::string popSongName()
-	{
-		if (!mCurrentSong.empty())
-		{
-			std::string ret = mCurrentSong;
-			mCurrentSong = "";
-			return ret;
-		}
+	bool isSongNameChanged() { return mSongNameChanged; }
+	void resetSongNameChangedFlag() { mSongNameChanged = false; }
 
-		return "";
-	}
-
-	std::string getSongName();
 	inline bool isSongPlaying() { return (mCurrentMusic != NULL); }
+
+	void changePlaylist(const std::shared_ptr<ThemeData>& theme, bool force = false);
 
 	virtual ~AudioManager();
 
@@ -61,27 +72,12 @@ public:
 	static int getMaxMusicVolume();
 
 private:
-	AudioManager();
+	void playSong(const std::string& song);
+	void setSongName(const std::string& song);
+	void addLastPlayed(const std::string& newSong, int totalMusic);
+	bool songWasPlayedRecently(const std::string& song);
 
-	static std::vector<std::shared_ptr<Sound>> sSoundVector;
-	static std::shared_ptr<AudioManager> sInstance;
-
-
-	static void onMusicFinished();
-
-	void	findMusic(const std::string &path, std::vector<std::string>& all_matching_files);
-	void	playMusic(std::string path);
-
-	std::string mCurrentSong;
-	std::string mCurrentMusicPath;
-	std::string mSystemName;
-	std::string mCurrentThemeMusicDirectory;
-	bool		mRunningFromPlaylist;
-	bool		mInitialized;
-
-	Mix_Music* mCurrentMusic;
-
-
+	bool mSongNameChanged;
 };
 
 #endif // ES_CORE_AUDIO_MANAGER_H

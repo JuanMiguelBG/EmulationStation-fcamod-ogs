@@ -443,19 +443,23 @@ void GuiMenu::openSoundSettings()
 	Window* window = mWindow;
 
 	auto s = new GuiSettings(mWindow, _("SOUND SETTINGS"));
-	
-	// volume
-	auto volume = std::make_shared<SliderComponent>(mWindow, 0.f, 100.f, 1.f, "%");
-	volume->setValue( (float)ApiSystem::getInstance()->getVolume() );
-	s->addWithLabel(_("SYSTEM VOLUME"), volume);
-	volume->setOnValueChanged([window, s](const float &newVal)
-		{
-			int volume_level = (int)Math::round(newVal);
-			window->getVolumeInfoComponent()->setVolume(volume_level);
-			ApiSystem::getInstance()->setVolume(volume_level);
-			if (Settings::getInstance()->getBool("FullScreenMode"))
-				s->setVariable("reloadGuiMenu", true);
-		});
+
+	if (VolumeControl::getInstance()->isAvailable())
+	{
+		s->addGroup(_("VOLUME"));
+
+		// volume
+		auto volume = std::make_shared<SliderComponent>(mWindow, 0.f, 100.f, 1.f, "%");
+		volume->setValue( (float)ApiSystem::getInstance()->getVolume() );
+		s->addWithLabel(_("SYSTEM VOLUME"), volume);
+		volume->setOnValueChanged([window, s](const float &newVal)
+			{
+				int volume_level = (int)Math::round(newVal);
+				window->getVolumeInfoComponent()->setVolume(volume_level);
+				ApiSystem::getInstance()->setVolume(volume_level);
+				if (Settings::getInstance()->getBool("FullScreenMode"))
+					s->setVariable("reloadGuiMenu", true);
+			});
 
 		// Music Volume
 		auto musicVolume = std::make_shared<SliderComponent>(mWindow, 0.f, 100.f, 1.f, "%");
@@ -463,122 +467,96 @@ void GuiMenu::openSoundSettings()
 		musicVolume->setOnValueChanged([](const float &newVal) { Settings::getInstance()->setInt("MusicVolume", (int)round(newVal)); });
 		s->addWithLabel(_("MUSIC VOLUME"), musicVolume);
 
-	if (UIModeController::getInstance()->isUIModeFull())
-	{
-		auto theme = ThemeData::getMenuTheme();
-		std::shared_ptr<Font> font = theme->Text.font;
-		unsigned int color = theme->Text.color;
+		s->addSwitch(_("SHOW OVERLAY WHEN VOLUME CHANGES"), "VolumePopup", true);
 
-		// audio card
-		s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("default")), font, color));
-
-		// volume control device
-		s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("Playback")), font, color));
-
-		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+		if (UIModeController::getInstance()->isUIModeFull())
 		{
-			// output device
-			auto out_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("OUTPUT DEVICE"), false);
-			std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
-			std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
-			LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
-			for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
-			{
-				std::string out_dev_label;
-				if (*od == "OFF")
-					out_dev_label = "MUTE";
-				else if (*od == "SPK")
-					out_dev_label = "SPEAKER";
-				else if (*od == "HP")
-					out_dev_label = "HEADPHONES";
-				else if (*od == "SPK_HP")
-					out_dev_label = "SPEAKER AND HEADPHONES";
-				else
-					out_dev_label = *od;
+			auto theme = ThemeData::getMenuTheme();
+			std::shared_ptr<Font> font = theme->Text.font;
+			unsigned int color = theme->Text.color;
 
-				out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
-			}
-			s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
-			out_dev->setSelectedChangedCallback([](const std::string &newVal)
+			// audio card
+			s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("default")), font, color));
+
+			// volume control device
+			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("Playback")), font, color));
+
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+			{
+				// output device
+				auto out_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("OUTPUT DEVICE"), false);
+				std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
+				std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
+				LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
+				for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
 				{
-					ApiSystem::getInstance()->setOutputDevice(newVal);
-				});
-		}
+					std::string out_dev_label;
+					if (*od == "OFF")
+						out_dev_label = "MUTE";
+					else if (*od == "SPK")
+						out_dev_label = "SPEAKER";
+					else if (*od == "HP")
+						out_dev_label = "HEADPHONES";
+					else if (*od == "SPK_HP")
+						out_dev_label = "SPEAKER AND HEADPHONES";
+					else
+						out_dev_label = *od;
 
-		// volume overlay
-		auto volumePopup = std::make_shared<SwitchComponent>(mWindow);
-		volumePopup->setState(Settings::getInstance()->getBool("VolumePopup"));
-		s->addWithLabel(_("SHOW OVERLAY WHEN VOLUME CHANGES"), volumePopup);
-		s->addSaveFunc([volumePopup]
-			{
-				bool old_value = Settings::getInstance()->getBool("VolumePopup");
-				if (old_value != volumePopup->getState())
-					Settings::getInstance()->setBool("VolumePopup", volumePopup->getState());
+					out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+				}
+				s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
+				out_dev->setSelectedChangedCallback([](const std::string &newVal)
+					{
+						ApiSystem::getInstance()->setOutputDevice(newVal);
+					});
 			}
-		);
+		}
+	}
 
-		// disable sounds
-		auto music_enabled = std::make_shared<SwitchComponent>(mWindow);
-		music_enabled->setState(Settings::getInstance()->getBool("audio.bgmusic"));
-		s->addWithLabel(_("FRONTEND MUSIC"), music_enabled);
-		s->addSaveFunc([music_enabled] {
-			Settings::getInstance()->setBool("audio.bgmusic", music_enabled->getState());
-			if (music_enabled->getState())
+	s->addGroup(_("MUSIC"));
+
+	// disable sounds
+	s->addSwitch(_("FRONTEND MUSIC"), "audio.bgmusic", true, []
+		{
+			if (Settings::getInstance()->getBool("audio.bgmusic"))
 				AudioManager::getInstance()->playRandomMusic();
 			else
 				AudioManager::getInstance()->stopMusic();
 		});
 
-		//display music titles
-		auto display_titles = std::make_shared<SwitchComponent>(mWindow);
-		display_titles->setState(Settings::getInstance()->getBool("MusicTitles"));
-		s->addWithLabel(_("DISPLAY SONG TITLES"), display_titles);
-		s->addSaveFunc([display_titles] {
-			Settings::getInstance()->setBool("MusicTitles", display_titles->getState());
+	//display music titles
+	s->addSwitch(_("DISPLAY SONG TITLES"), "audio.display_titles", true);
+
+	// how long to display the song titles?
+	auto titles_time = std::make_shared<SliderComponent>(mWindow, 2.f, 120.f, 2.f, "s");
+	titles_time->setValue(Settings::getInstance()->getInt("audio.display_titles_time"));
+	s->addWithLabel(_("SONG TITLE DISPLAY DURATION"), titles_time);
+	s->addSaveFunc([titles_time] {
+			Settings::getInstance()->setInt("audio.display_titles_time", (int)Math::round(titles_time->getValue()));
 		});
 
-		// music per system
-		auto music_per_system = std::make_shared<SwitchComponent>(mWindow);
-		music_per_system->setState(Settings::getInstance()->getBool("audio.persystem"));
-		s->addWithLabel(_("ONLY PLAY SYSTEM-SPECIFIC MUSIC FOLDER"), music_per_system);
-		s->addSaveFunc([music_per_system] {
-			Settings::getInstance()->setBool("audio.persystem", music_per_system->getState());
-		});
-		
-		// batocera - music per system
-		auto enableThemeMusics = std::make_shared<SwitchComponent>(mWindow);
-		enableThemeMusics->setState(Settings::getInstance()->getBool("audio.thememusics"));
-		s->addWithLabel(_("PLAY THEME MUSICS"), enableThemeMusics);
-		s->addSaveFunc([enableThemeMusics] {
-			if (Settings::getInstance()->setBool("audio.thememusics", enableThemeMusics->getState()))
-				AudioManager::getInstance()->themeChanged(ViewController::get()->getState().getSystem()->getTheme(), true);
-		});
+	// music per system
+	s->addSwitch(_("ONLY PLAY SYSTEM-SPECIFIC MUSIC FOLDER"), "audio.persystem", true, [] { AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true); } );
 
-		// disable sounds
-		auto sounds_enabled = std::make_shared<SwitchComponent>(mWindow);
-		sounds_enabled->setState(Settings::getInstance()->getBool("EnableSounds"));
-		s->addWithLabel(_("ENABLE NAVIGATION SOUNDS"), sounds_enabled);
-		s->addSaveFunc([sounds_enabled] {
-			if (sounds_enabled->getState()
-				&& !Settings::getInstance()->getBool("EnableSounds")
-				&& PowerSaver::getMode() == PowerSaver::INSTANT)
+	// batocera - music per system
+	s->addSwitch(_("PLAY SYSTEM-SPECIFIC MUSIC"), "audio.thememusics", true, [] { AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true); });
+
+	s->addSwitch(_("LOWER MUSIC WHEN PLAYING VIDEO"), "VideoLowersMusic", true);
+
+	s->addGroup(_("SOUNDS"));
+
+	// disable sounds
+	s->addSwitch(_("ENABLE NAVIGATION SOUNDS"), "EnableSounds", true, []
+		{
+			if (Settings::getInstance()->getBool("EnableSounds") && PowerSaver::getMode() == PowerSaver::INSTANT)
 			{
-				Settings::getInstance()->setString("PowerSaverMode", "default");
+				Settings::getInstance()->setPowerSaverMode("default");
 				PowerSaver::init();
 			}
-			Settings::getInstance()->setBool("EnableSounds", sounds_enabled->getState());
 		});
 
-		auto video_audio = std::make_shared<SwitchComponent>(mWindow);
-		video_audio->setState(Settings::getInstance()->getBool("VideoAudio"));
-		s->addWithLabel(_("ENABLE VIDEO AUDIO"), video_audio);
-		s->addSaveFunc([video_audio] { Settings::getInstance()->setBool("VideoAudio", video_audio->getState()); });
+	s->addSwitch(_("ENABLE VIDEO PREVIEW AUDIO"), "VideoAudio", true);
 
-		auto videolowermusic = std::make_shared<SwitchComponent>(mWindow);
-		videolowermusic->setState(Settings::getInstance()->getBool("VideoLowersMusic"));
-		s->addWithLabel(_("LOWER MUSIC WHEN PLAYING VIDEO"), videolowermusic);
-		s->addSaveFunc([videolowermusic] { Settings::getInstance()->setBool("VideoLowersMusic", videolowermusic->getState()); });
-	}
 
 	if (Settings::getInstance()->getBool("FullScreenMode"))
 	{

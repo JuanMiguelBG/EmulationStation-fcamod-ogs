@@ -4,6 +4,8 @@
 
 #include "components/MenuComponent.h"
 
+class SwitchComponent;
+
 // This is just a really simple template for a GUI that calls some save functions when closed.
 class GuiSettings : public GuiComponent
 {
@@ -25,6 +27,9 @@ public:
 	inline void addGroup(const std::string& label) { mMenu.addGroup(label); };
 
 	void addInputTextRow(std::string title, const char* settingsID, bool password, bool storeInSettings = false, const std::function<void(Window*, std::string/*title*/, std::string /*value*/, const std::function<bool(std::string)>& onsave)>& customEditor = nullptr, const std::function<bool(std::string /*value*/)>& onValidateValue = nullptr);
+
+	std::shared_ptr<SwitchComponent> addSwitch(const std::string& title, const std::string& settingsID, bool storeInSettings, const std::function<void()>& onChanged = nullptr) { return addSwitch(title, "", settingsID, storeInSettings, onChanged); }
+	std::shared_ptr<SwitchComponent> addSwitch(const std::string& title, const std::string& description, const std::string& settingsID, bool storeInSettings, const std::function<void()>& onChanged);
 
 	void addSubMenu(const std::string& label, const std::function<void()>& func);
 

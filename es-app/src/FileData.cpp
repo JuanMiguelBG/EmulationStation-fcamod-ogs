@@ -19,6 +19,8 @@
 #include "Gamelist.h"
 #include "MetaData.h"
 #include <fstream>
+#include "guis/GuiMsgBox.h"
+
 
 FileData::FileData(FileType type, const std::string& path, SystemData* system)
 	: mType(type), mSystem(system), mParent(NULL), mMetadata(type == GAME ? GAME_METADATA : FOLDER_METADATA) // metadata is REALLY set in the constructor!
@@ -278,9 +280,52 @@ FileData* FileData::getSourceFileData()
 	return this;
 }
 
+std::string FileData::getMessageFromExitCode(int exitCode)
+{
+	switch (exitCode)
+	{
+	case 200:
+		return _("THE EMULATOR EXITED UNEXPECTEDLY");
+	case 201:
+		return _("BAD COMMAND LINE ARGUMENTS");
+	case 202:
+		return _("INVALID CONFIGURATION");
+	case 203:
+		return _("UNKNOWN EMULATOR");
+	case 204:
+		return _("EMULATOR IS MISSING");
+	case 205:
+		return _("CORE IS MISSING");
+	case 206:
+		return _("EMPTY COMMAND LINE");
+	case 299:
+		{
+			std::string messageFile = "/tmp/launch_error.log";
+			if (Utils::FileSystem::exists(messageFile))
+			{
+				auto message = Utils::FileSystem::readAllText(messageFile);
+				Utils::FileSystem::removeFile(messageFile);
+
+				if (!message.empty())
+					return message;
+			}
+		}
+	}
+
+	return _("UKNOWN ERROR") + " : " + std::to_string(exitCode);
+}
+
 void FileData::launchGame(Window* window)
 {
 	LOG(LogInfo) << "FileData::launchGame() - Attempting to launch game...";
+
+	FileData* gameToUpdate = getSourceFileData();
+	if (gameToUpdate == nullptr)
+		return;
+
+	SystemData* system = gameToUpdate->getSystem();
+	if (system == nullptr)
+		return;
 
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
@@ -306,27 +351,33 @@ void FileData::launchGame(Window* window)
 	if (customCommandLine.length() > 0)
 		command = customCommandLine;
 	
+	int exitCode = -1;
+  time_t tstart;
+	if (command.empty())
+	{
+		exitCode = -206;
+	}
+	else
+	{
+		command = Utils::String::replace(command, "%EMULATOR%", emulator);
+		command = Utils::String::replace(command, "%CORE%", core);
 
+		command = Utils::String::replace(command, "%ROM%", rom);
+		command = Utils::String::replace(command, "%BASENAME%", basename);
+		command = Utils::String::replace(command, "%ROM_RAW%", rom_raw);
+		command = Utils::String::replace(command, "%SYSTEM%", getSystemName());
+		command = Utils::String::replace(command, "%HOME%", Utils::FileSystem::getHomePath());
 
-	command = Utils::String::replace(command, "%EMULATOR%", emulator);
-	command = Utils::String::replace(command, "%CORE%", core);
+		Scripting::fireEvent("game-start", rom, basename);
 
-	command = Utils::String::replace(command, "%ROM%", rom);
-	command = Utils::String::replace(command, "%BASENAME%", basename);
-	command = Utils::String::replace(command, "%ROM_RAW%", rom_raw);		
-	command = Utils::String::replace(command, "%SYSTEM%", getSystemName());
-	command = Utils::String::replace(command, "%HOME%", Utils::FileSystem::getHomePath());
+		tstart = time(NULL);
 
-	Scripting::fireEvent("game-start", rom, basename);
+		LOG(LogInfo) << "	" << command;
 
-	time_t tstart = time(NULL);
-
-	LOG(LogInfo) << "	" << command;
-
-	int exitCode = runSystemCommand(command, getDisplayName(), hideWindow ? NULL : window);
-	if (exitCode != 0)
-		LOG(LogWarning) << "FileData::launchGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
-
+		int exitCode = runSystemCommand(command, getDisplayName(), hideWindow ? NULL : window);
+		if (exitCode != 0)
+			LOG(LogWarning) << "FileData::launchGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
+	}
 	Scripting::fireEvent("game-end");
 
 	window->init(hideWindow, Settings::getInstance()->getBool("FullScreenMode"));
@@ -357,8 +408,13 @@ void FileData::launchGame(Window* window)
 	}
 
 	// music
-	if (Settings::getInstance()->getBool("audio.bgmusic"))
+	if (system != nullptr && system->getTheme() != nullptr)
+		AudioManager::getInstance()->changePlaylist(system->getTheme(), true);
+	else
 		AudioManager::getInstance()->playRandomMusic();
+
+	if (exitCode >= 200 && exitCode <= 300)
+		window->pushGui(new GuiMsgBox(window, _("AN ERROR OCCURED") + ":\r\n" + getMessageFromExitCode(exitCode), _("OK"), nullptr, GuiMsgBoxIcon::ICON_ERROR));
 }
 
 CollectionFileData::CollectionFileData(FileData* file, SystemData* system)

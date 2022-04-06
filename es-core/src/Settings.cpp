@@ -113,7 +113,6 @@ void Settings::setDefaults()
 	mBoolMap["OptimizeVRAM"] = true;
 	mBoolMap["ThreadedLoading"] = true;
 	mBoolMap["OptimizeSystem"] = false;
-	mBoolMap["MusicTitles"] = true;
 	mBoolMap["AutoMenuWidth"] = false;
 
 	mBoolMap["Debug"] = false;
@@ -194,9 +193,12 @@ void Settings::setDefaults()
 	mStringMap["ScrapperLogoSrc"] = "wheel";
 	mBoolMap["ScrapeVideos"] = false;
 
+	// Audio settings
 	mBoolMap["audio.bgmusic"] = true;
 	mBoolMap["audio.persystem"] = false;
-	mBoolMap["audio.thememusics"] = true;
+	mBoolMap["audio.display_titles"] = true;
+	mBoolMap["audio.thememusics"] = true;;
+	mIntMap["audio.display_titles_time"] = 10;
 
 	mStringMap["MusicDirectory"] = "/roms/bgmusic";
 	mStringMap["UserMusicDirectory"] = "";

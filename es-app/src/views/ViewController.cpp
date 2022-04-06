@@ -140,7 +140,8 @@ void ViewController::goToNextGameList()
 	system = system->getNext();
 	goToGameList(system);	
 
-	AudioManager::getInstance()->themeChanged(system->getTheme());
+	if (AudioManager::isInitialized())
+		AudioManager::getInstance()->changePlaylist(system->getTheme());
 }
 
 void ViewController::goToPrevGameList()
@@ -152,7 +153,8 @@ void ViewController::goToPrevGameList()
 	system = system->getPrev();
 	goToGameList(system);
 
-	AudioManager::getInstance()->themeChanged(system->getTheme());
+	if (AudioManager::isInitialized())
+		AudioManager::getInstance()->changePlaylist(system->getTheme());
 }
 
 void ViewController::goToGameList(SystemData* system, bool forceImmediate)
@@ -513,14 +515,22 @@ bool ViewController::input(InputConfig* config, Input input)
 		return true;
 	}
 	
-	// open menu
-	if(!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("start", input) && input.value != 0)
+	if (input.value != 0)
 	{
 		// open menu
-		mWindow->pushGui(new GuiMenu(mWindow, Settings::getInstance()->getBool("AnimatedMainMenu")));
-		return true;
+		if(!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("start", input))
+		{
+			// open menu
+			mWindow->pushGui(new GuiMenu(mWindow, Settings::getInstance()->getBool("AnimatedMainMenu")));
+			return true;
+		}
+		if (config->isMappedLike("leftthumb", input) || config->isMappedLike("rightthumb", input))
+		{
+			// next song
+			AudioManager::getInstance()->playRandomMusic(false);
+			return true;
+		}
 	}
-
 	if(UIModeController::getInstance()->listen(config, input))  // check if UI mode has changed due to passphrase completion
 	{
 		return true;

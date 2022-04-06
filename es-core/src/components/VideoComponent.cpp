@@ -64,7 +64,8 @@ VideoComponent::VideoComponent(Window* window) :
 	mScreensaverMode(false),
 	mTargetIsMax(false),
 	mTargetIsMin(false),
-	mTargetSize(0, 0)
+	mTargetSize(0, 0),
+	mPlayAudio(true)
 {
 	mVideoEnded = nullptr;
 	mRoundCorners = 0.0f;
@@ -278,6 +279,11 @@ void VideoComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const s
 		setVisible(elem->get<bool>("visible"));
 	else
 		setVisible(true);
+
+	if (properties & ThemeFlags::VISIBLE && elem->has("audio"))
+		setPlayAudio(elem->get<bool>("audio"));
+	else
+		setPlayAudio(true);
 
 	if (elem->has("path"))
 	{

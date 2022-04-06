@@ -576,12 +576,6 @@ bool SystemView::input(InputConfig* config, Input input)
 			setCursor(SystemData::getRandomSystem());
 			return true;
 		}
-		if (config->isMappedLike("leftthumb", input) || config->isMappedLike("rightthumb", input)) // emuelec
-		{
-			// next song
-			AudioManager::getInstance()->playRandomMusic(false);
-			return true;
-		}
 	}
 	else
 	{
@@ -750,9 +744,11 @@ void SystemView::updateExtraTextBinding()
 
 void SystemView::onCursorChanged(const CursorState& /*state*/)
 {
+
 	if (mLastSystem != getSelected()) {
 		mLastSystem = getSelected();
-		AudioManager::getInstance()->themeChanged(getSelected()->getTheme());
+		if (AudioManager::isInitialized())
+			AudioManager::getInstance()->changePlaylist(getSelected()->getTheme());
 	}
 
 	// update help style

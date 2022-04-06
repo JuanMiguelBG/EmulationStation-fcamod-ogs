@@ -256,7 +256,12 @@ void SystemScreenSaver::stopScreenSaver()
 		AudioManager::getInstance()->init();
 
 		if (Settings::getInstance()->getBool("audio.bgmusic"))
-			AudioManager::getInstance()->playRandomMusic();
+		{
+			if (ViewController::get()->getState().viewing == ViewController::GAME_LIST || ViewController::get()->getState().viewing == ViewController::SYSTEM_SELECT)
+				AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
+			else
+				AudioManager::getInstance()->playRandomMusic();
+		}
 
 	}
 }

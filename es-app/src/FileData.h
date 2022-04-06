@@ -96,6 +96,8 @@ public:
 	std::set<std::string> getContentFiles();
 
 private:
+	std::string getMessageFromExitCode(int exitCode);
+
 	MetaDataList mMetadata;
 
 protected:
