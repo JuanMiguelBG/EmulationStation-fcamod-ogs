@@ -377,7 +377,7 @@ void processAudioTitles(Window* window)
 
 			duration *= 1000;
 
-			window->displayNotificationMessage(_U("\uF028  ") + songName, duration);
+			window->displayNotificationMessage(_U("\u266B  ") + songName, duration);
 		}
 		AudioManager::getInstance()->resetSongNameChangedFlag();
 	}
