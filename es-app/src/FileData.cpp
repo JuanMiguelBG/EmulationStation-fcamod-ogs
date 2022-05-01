@@ -374,7 +374,7 @@ void FileData::launchGame(Window* window)
 
 		LOG(LogInfo) << "	" << command;
 
-		int exitCode = runSystemCommand(command, getDisplayName(), hideWindow ? NULL : window);
+		exitCode = runSystemCommand(command, getDisplayName(), hideWindow ? NULL : window);
 		if (exitCode != 0)
 			LOG(LogWarning) << "FileData::launchGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
 	}
