@@ -70,21 +70,22 @@ void GuiSettings::save()
 
 bool GuiSettings::input(InputConfig* config, Input input)
 {
-	if (config->isMappedTo(BUTTON_BACK, input) && input.value != 0)
+	if (input.value != 0)
 	{
-		close();
-		return true;
+		if (config->isMappedTo(BUTTON_BACK, input))
+		{
+			close();
+			return true;
+		}
+		else if (config->isMappedTo(mCloseButton, input))
+		{
+			// close everything
+			Window* window = mWindow;
+			while (window->peekGui() && window->peekGui() != ViewController::get())
+				delete window->peekGui();
+			return true;
+		}
 	}
-
-	if (config->isMappedTo(mCloseButton, input) && input.value != 0)
-	{
-		// close everything
-		Window* window = mWindow;
-		while (window->peekGui() && window->peekGui() != ViewController::get())
-			delete window->peekGui();
-		return true;
-	}
-
 	return GuiComponent::input(config, input);
 }
 
