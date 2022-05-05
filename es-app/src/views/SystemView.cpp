@@ -577,23 +577,10 @@ bool SystemView::input(InputConfig* config, Input input)
 			return true;
 		}
 
-		if (!UIModeController::getInstance()->isUIModeKid())
+		if (!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("select", input) && Settings::getInstance()->getBool("ShowQuitMenuWithSelect"))
 		{
-			if (config->isMappedTo("select", input) && Settings::getInstance()->getBool("ShowQuitMenuWithSelect"))
-			{
-				GuiMenu::openQuitMenu_static(mWindow, true);
-				return true;
-			}
-			else if (config->isMappedTo("select", input) && Settings::getInstance()->getBool("ScreenSaverControls"))
-			{
-				std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-				if (mWindow->isScreenSaverEnabled() && (screensaver_behavior != "suspend"))
-				{
-					mWindow->startScreenSaver();
-					mWindow->renderScreenSaver(true);
-				}
-				return true;
-			}
+			GuiMenu::openQuitMenu_static(mWindow, true);
+			return true;
 		}
 	}
 	else
@@ -605,6 +592,17 @@ bool SystemView::input(InputConfig* config, Input input)
 				config->isMappedTo(BUTTON_PD, input) ||
 				config->isMappedTo(BUTTON_PU, input))
 			listInput(0);
+
+		if (!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("select", input) && Settings::getInstance()->getBool("ScreenSaverControls") && !Settings::getInstance()->getBool("ShowQuitMenuWithSelect"))
+		{
+			std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
+			if (mWindow->isScreenSaverEnabled() && (screensaver_behavior != "suspend"))
+			{
+				mWindow->startScreenSaver();
+				mWindow->renderScreenSaver(true);
+			}
+			return true;
+		}
 	}
 
 	return GuiComponent::input(config, input);
