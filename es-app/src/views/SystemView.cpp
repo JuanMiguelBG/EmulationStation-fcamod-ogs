@@ -630,7 +630,13 @@ void SystemView::showNavigationBar(const std::string& title, const std::function
 			std::vector<std::string> names;
 			for (auto sy : SystemData::sSystemVector)
 				if (sy->isVisible() && selector(sy) == mf)
-					names.push_back(sy->getFullName());
+				{
+					std::string name = sy->getFullName();
+					if (system->isCollection())
+						 name = Utils::String::toUpper( _(name) );
+
+					names.push_back(name);
+				}
 
 			gs->getMenu().addWithDescription(_(Utils::String::toUpper(mf)), Utils::String::join(names, ", "), nullptr, [this, gs, system, idx]
 			{
