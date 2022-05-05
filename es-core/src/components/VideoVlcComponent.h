@@ -87,6 +87,8 @@ private:
 	void resize();
 	// Start the video Immediately
 	virtual void startVideo();
+	void startVideoInner(std::string path);
+
 	// Stop the video
 	virtual void stopVideo();
 	// Handle looping the video. Must be called periodically

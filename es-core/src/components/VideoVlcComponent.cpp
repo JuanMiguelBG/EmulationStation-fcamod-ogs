@@ -13,6 +13,8 @@
 #include "AudioManager.h"
 
 #include "ImageIO.h"
+#include <future>
+#include "utils/AsyncUtil.h"
 
 #define MATHPI          3.141592653589793238462643383279502884L
 
@@ -490,6 +492,86 @@ void VideoVlcComponent::handleLooping()
 	}
 }
 
+void VideoVlcComponent::startVideoInner(std::string path)
+{
+	// Set the video that we are going to be playing so we don't attempt to restart it
+	mPlayingVideoPath = mVideoPath;
+
+	// Open the media
+	mMedia = libvlc_media_new_path(mVLC, path.c_str());
+	if (mMedia)
+	{
+		// If we have a playlist : most videos have a fader, skip it 1 second
+		if (mPlaylist != nullptr && mConfig.startDelay == 0 && !mConfig.showSnapshotDelay && !mConfig.showSnapshotNoVideo)
+			libvlc_media_add_option(mMedia, ":start-time=0.7");
+
+		bool hasAudioTrack = false;
+
+		unsigned track_count;
+		// Get the media metadata so we can find the aspect ratio
+		libvlc_media_parse(mMedia);
+		libvlc_media_track_t** tracks;
+		track_count = libvlc_media_tracks_get(mMedia, &tracks);
+		for (unsigned track = 0; track < track_count; ++track)
+		{
+			if (tracks[track]->i_type == libvlc_track_audio)
+				hasAudioTrack = true;
+			else if (tracks[track]->i_type == libvlc_track_video)
+			{
+				mVideoWidth = tracks[track]->video->i_width;
+				mVideoHeight = tracks[track]->video->i_height;
+
+				if (hasAudioTrack)
+					break;
+			}
+		}
+		libvlc_media_tracks_release(tracks, track_count);
+
+		// Make sure we found a valid video track
+		if ((mVideoWidth > 0) && (mVideoHeight > 0))
+		{
+			if (Settings::getInstance()->getBool("OptimizeVideo"))
+			{
+				// Avoid videos bigger than resolution
+				Vector2f maxSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
+
+				if (!mTargetSize.empty() && (mTargetSize.x() < maxSize.x() || mTargetSize.y() < maxSize.y()))
+					maxSize = mTargetSize;
+
+				// If video is bigger than display, ask VLC for a smaller image
+				auto sz = ImageIO::adjustPictureSize(Vector2i(mVideoWidth, mVideoHeight), Vector2i(mTargetSize.x(), mTargetSize.y()), mTargetIsMin);
+				if (sz.x() < mVideoWidth || sz.y() < mVideoHeight)
+				{
+					mVideoWidth = sz.x();
+					mVideoHeight = sz.y();
+				}
+			}
+
+			PowerSaver::pause();
+			setupContext();
+
+			// Setup the media player
+			mMediaPlayer = libvlc_media_player_new_from_media(mMedia);
+
+			if (hasAudioTrack)
+			{
+				if (!getPlayAudio() || (!mScreensaverMode && !Settings::getInstance()->getBool("VideoAudio")) || (Settings::getInstance()->getBool("ScreenSaverVideoMute") && mScreensaverMode))
+					libvlc_audio_set_mute(mMediaPlayer, 1);
+				else
+					AudioManager::setVideoPlaying(true);
+			}
+
+			libvlc_media_player_play(mMediaPlayer);
+			libvlc_video_set_callbacks(mMediaPlayer, lock, unlock, display, (void*)&mContext);
+			libvlc_video_set_format(mMediaPlayer, "RGBA", (int)mVideoWidth, (int)mVideoHeight, (int)mVideoWidth * 4);
+
+			// Update the playing state -> Useless now set by display() & onVideoStarted
+			//mIsPlaying = true;
+			//mFadeIn = 0.0f;
+		}
+	}
+}
+
 void VideoVlcComponent::startVideo()
 {
 	if (mIsPlaying)
@@ -504,82 +586,19 @@ void VideoVlcComponent::startVideo()
 	// Make sure we have a video path
 	if (mVLC && (path.size() > 0))
 	{
-		// Set the video that we are going to be playing so we don't attempt to restart it
-		mPlayingVideoPath = mVideoPath;
-
-		// Open the media
-		mMedia = libvlc_media_new_path(mVLC, path.c_str());
-		if (mMedia)
+		if (Utils::Async::isCanRunAsync())
 		{
-			// If we have a playlist : most videos have a fader, skip it 1 second
-			if (mPlaylist != nullptr && mConfig.startDelay == 0 && !mConfig.showSnapshotDelay && !mConfig.showSnapshotNoVideo)
-				libvlc_media_add_option(mMedia, ":start-time=0.7");
-
-			bool hasAudioTrack = false;
-
-			unsigned track_count;
-			// Get the media metadata so we can find the aspect ratio
-			libvlc_media_parse(mMedia);
-			libvlc_media_track_t** tracks;
-			track_count = libvlc_media_tracks_get(mMedia, &tracks);
-			for (unsigned track = 0; track < track_count; ++track)
+			LOG(LogDebug) << "VideoVlcComponent::startVideo() - Asynchronous execution!";
+			auto dummy= std::async(std::launch::async, [this, path]
 			{
-				if (tracks[track]->i_type == libvlc_track_audio)
-					hasAudioTrack = true;
-				else if (tracks[track]->i_type == libvlc_track_video)
-				{
-					mVideoWidth = tracks[track]->video->i_width;
-					mVideoHeight = tracks[track]->video->i_height;		
-
-					if (hasAudioTrack)
-						break;
-				}
-			}
-			libvlc_media_tracks_release(tracks, track_count);
-
-			// Make sure we found a valid video track
-			if ((mVideoWidth > 0) && (mVideoHeight > 0))
-			{
-				if (Settings::getInstance()->getBool("OptimizeVideo"))
-				{
-					// Avoid videos bigger than resolution
-					Vector2f maxSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
-										
-
-					if (!mTargetSize.empty() && (mTargetSize.x() < maxSize.x() || mTargetSize.y() < maxSize.y()))
-						maxSize = mTargetSize;
-
-					// If video is bigger than display, ask VLC for a smaller image
-					auto sz = ImageIO::adjustPictureSize(Vector2i(mVideoWidth, mVideoHeight), Vector2i(mTargetSize.x(), mTargetSize.y()), mTargetIsMin);
-					if (sz.x() < mVideoWidth || sz.y() < mVideoHeight)
-					{
-						mVideoWidth = sz.x();
-						mVideoHeight = sz.y();
-					}
-				}
-
-				PowerSaver::pause();
-				setupContext();
-
-				// Setup the media player
-				mMediaPlayer = libvlc_media_player_new_from_media(mMedia);
-			
-				if (hasAudioTrack)
-				{
-					if (!getPlayAudio() || (!mScreensaverMode && !Settings::getInstance()->getBool("VideoAudio")) || (Settings::getInstance()->getBool("ScreenSaverVideoMute") && mScreensaverMode))
-						libvlc_audio_set_mute(mMediaPlayer, 1);
-					else
-						AudioManager::setVideoPlaying(true);
-				}
-
-				libvlc_media_player_play(mMediaPlayer);
-				libvlc_video_set_callbacks(mMediaPlayer, lock, unlock, display, (void*)&mContext);
-				libvlc_video_set_format(mMediaPlayer, "RGBA", (int)mVideoWidth, (int)mVideoHeight, (int)mVideoWidth * 4);
-
-				// Update the playing state -> Useless now set by display() & onVideoStarted
-				//mIsPlaying = true;
-				//mFadeIn = 0.0f;
-			}
+				startVideoInner(path);
+			});
+			LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - exit Asynchronous execution!";
+		} // if async
+		else
+		{
+			LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - normal execution!";
+			startVideoInner(path);
 		}
 	}
 }
