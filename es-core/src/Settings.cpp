@@ -86,7 +86,6 @@ void Settings::setDefaults()
 	mBoolMap["PreloadVLC"] = true;
 	mBoolMap["StartupOnGameList"] = false;
 	mBoolMap["HideSystemView"] = false;
-	mBoolMap["FullScreenMode"] = false;
 	mBoolMap["BrightnessPopup"] = true;
 	mBoolMap["DisplayBlinkLowBattery"] = false;
 	
@@ -96,8 +95,8 @@ void Settings::setDefaults()
 
 	mBoolMap["UseOSK"] = true;
 	//mBoolMap["ShowControllerActivity"] = false;
-	mBoolMap["ShowBatteryIndicator"] = false;
-	mBoolMap["ShowNetworkIndicator"] = false;
+	mBoolMap["ShowBatteryIndicator"] = true;
+	mBoolMap["ShowNetworkIndicator"] = true;
 
 	mBoolMap["VSync"] = true;
 	mBoolMap["DrawClock"] = true;
@@ -178,7 +177,7 @@ void Settings::setDefaults()
 	mBoolMap["LocalArt"] = false;
 
 	// Audio out device for volume control
-	mStringMap["AudioDevice"] = "Playback";
+	mStringMap["AudioDevice"] = "Master";
 	mStringMap["AudioCard"] = "default";
 
 	mStringMap["UIMode"] = "Full";

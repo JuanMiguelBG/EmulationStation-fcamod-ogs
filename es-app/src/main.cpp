@@ -225,10 +225,6 @@ bool parseArgs(int argc, char* argv[])
 			Settings::getInstance()->setBool("DebugImage", true);
 			Log::setReportingLevel(LogDebug);
 		}
-		else if (strcmp(argv[i], "--fullscreen") == 0)
-		{
-			Settings::getInstance()->setBool("FullScreenMode", true);
-		}
 		else if (strcmp(argv[i], "--no-preload-vlc") == 0)
 		{
 			Settings::getInstance()->setBool("PreloadVLC", false);
@@ -477,7 +473,7 @@ int main(int argc, char* argv[])
 
 	if (!scrape_cmdline)
 	{
-		if(!window.init(true, Settings::getInstance()->getBool("FullScreenMode")))
+		if(!window.init(true))
 		{
 			LOG(LogError) << WINDOW_FAILED_INITIALIZE;
 			Log::flush();

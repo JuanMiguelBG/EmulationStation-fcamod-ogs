@@ -223,6 +223,7 @@ BatteryInformation queryBatteryInformation(bool summary)
 				ret.health = Utils::String::toLower( Utils::String::replace( Utils::FileSystem::readAllText(batteryRootPath + "/health"), "\n", "" ) );
 				ret.max_capacity = std::atoi(Utils::FileSystem::readAllText(batteryRootPath + "/charge_full").c_str()) / 1000; // milli amperes
 				ret.voltage = queryBatteryVoltage();
+				ret.temperature = queryBatteryTemperature();
 			}
 		} catch (...) {
 			LOG(LogError) << "Platform::queryBatteryInformation() - Error reading battery data!!!";
@@ -257,6 +258,21 @@ float queryBatteryVoltage()
 		return std::atof(Utils::FileSystem::readAllText(batteryVoltagePath).c_str()) / 1000000; // volts
 
 	return false;
+}
+
+float queryBatteryTemperature()
+{
+	try
+	{
+		if (Utils::FileSystem::exists("/sys/devices/virtual/thermal/thermal_zone3/temp"))
+		{
+			float temperature = std::atof( getShOutput(R"(cat /sys/devices/virtual/thermal/thermal_zone3/temp)").c_str() );
+			return temperature / 1000;
+		}
+	} catch (...) {
+		LOG(LogError) << "Platform::queryTemperatureCpu() - Error reading Battery temperature  data!!!";
+	}
+	return 0.f;
 }
 
 std::string calculateIp4Netmask(std::string nbits_str)
@@ -580,7 +596,7 @@ float queryTemperatureCpu()
 			return temperature / 1000;
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryTemperatureCpu() - Error reading temperature CPU data!!!";
+		LOG(LogError) << "Platform::queryTemperatureCpu() - Error reading CPU temperature data!!!";
 	}
 	return 0.f;
 }
@@ -595,7 +611,7 @@ int queryFrequencyCpu()
 			return frequency / 1000; // MHZ
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryFrequencyCpu() - Error reading frequency CPU data!!!";
+		LOG(LogError) << "Platform::queryFrequencyCpu() - Error reading CPU frequency data!!!";
 	}
 	return 0;
 }
@@ -631,29 +647,29 @@ DisplayAndGpuInformation queryDisplayAndGpuInformation(bool summary)
 
 		if (!summary)
 		{
-			if (Utils::FileSystem::exists("/sys/devices/platform/ff400000.gpu/gpuinfo"))
-				data.gpu_model = getShOutput(R"(cat /sys/devices/platform/ff400000.gpu/gpuinfo | awk '{print $1}')");
+			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/gpuinfo"))
+				data.gpu_model = getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/gpuinfo | awk '{print $1}')");
 
-			if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/mode"))
-				data.resolution = getShOutput(R"(cat /sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/mode)");
+			if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes"))
+				data.resolution = getShOutput(R"(cat /sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes)");
 
 			if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/graphics/fb0/bits_per_pixel"))
 				data.bits_per_pixel = std::atoi( getShOutput(R"(cat /sys/devices/platform/display-subsystem/graphics/fb0/bits_per_pixel)").c_str() );
 
-			if (Utils::FileSystem::exists("/sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/governor"))
-				data.governor = Utils::String::replace ( getShOutput(R"(cat /sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/governor)"), "_" , " ");
+			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/governor"))
+				data.governor = Utils::String::replace ( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/governor)"), "_" , " ");
 
 			data.frequency = queryFrequencyGpu();
 
-			if (Utils::FileSystem::exists("/sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/max_freq"))
+			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/max_freq"))
 			{
-				data.frequency_max = std::atoi( getShOutput(R"(cat /sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/max_freq)").c_str() );
+				data.frequency_max = std::atoi( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/max_freq)").c_str() );
 				data.frequency_max = data.frequency_max / 1000000; // MHZ
 			}
 
-			if (Utils::FileSystem::exists("/sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/min_freq"))
+			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/min_freq"))
 			{
-				data.frequency_min = std::atoi( getShOutput(R"(cat /sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/min_freq)").c_str() );
+				data.frequency_min = std::atoi( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/min_freq)").c_str() );
 				data.frequency_min = data.frequency_min / 1000000; // MHZ
 			}
 
@@ -676,7 +692,7 @@ float queryTemperatureGpu()
 			return temperature / 1000;
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryTemperatureGpu() - Error reading temperature GPU data!!!";
+		LOG(LogError) << "Platform::queryTemperatureGpu() - Error reading GPU temperature data!!!";
 	}
 	return 0.f;
 }
@@ -685,13 +701,13 @@ int queryFrequencyGpu()
 {
 	try
 	{
-		if (Utils::FileSystem::exists("/sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/cur_freq"))
+		if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/cur_freq"))
 		{
-			int frequency = std::atoi( getShOutput(R"(cat /sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/cur_freq)").c_str() );
+			int frequency = std::atoi( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/cur_freq)").c_str() );
 			return frequency / 1000000; // MHZ
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryFrequencyGpu() - Error reading frequency GPU data!!!";
+		LOG(LogError) << "Platform::queryFrequencyGpu() - Error reading GPU frequency data!!!";
 	}
 	return 0;
 }
@@ -961,7 +977,12 @@ uint32_t getVolume()
 	if (Utils::FileSystem::exists("/usr/local/bin/current_volume"))
 		value = std::atoi( getShOutput(R"(/usr/local/bin/current_volume)").c_str() );
 	else
-		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Playback))").c_str() );
+		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Master))").c_str() );
 	return value;
 }
 #endif
+
+std::string queryBluetoothInformation()
+{
+	return getShOutput(R"(if [ -z $(pidof rtk_hciattach) ]; then echo "Off"; else echo "On"; fi)");
+}

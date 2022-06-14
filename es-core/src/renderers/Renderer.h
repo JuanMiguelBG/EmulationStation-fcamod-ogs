@@ -8,7 +8,7 @@
 class  Transform4x4f;
 class  Vector2i;
 struct SDL_Window;
-typedef struct go2_display go2_display_t;
+//typedef struct go2_display go2_display_t;
 
 namespace Renderer
 {
@@ -64,7 +64,7 @@ namespace Renderer
 
 	}; // Vertex
 
-	bool        init            (bool forceFullScreen = false);
+	bool        init            ();
 	void        deinit          ();
 	void        pushClipRect    (const Vector2i& _pos, const Vector2i& _size);
 	void        popClipRect     ();
@@ -79,7 +79,7 @@ namespace Renderer
 	int         getScreenOffsetX();
 	int         getScreenOffsetY();
 	int         getScreenRotate ();
-	go2_display_t* getDisplay();
+	//go2_display_t* getDisplay();
 
 	// API specific
 	unsigned int convertColor      (const unsigned int _color);
@@ -104,13 +104,11 @@ namespace Renderer
 	// FCA methods
 	bool         isClippingEnabled();
 	bool         isVisibleOnScreen(float x, float y, float w, float h);
-	void         activateWindow();
+	void		 activateWindow();
 //	void drawGradientRect(int _x, int _y, int _w, int _h, unsigned int _color, unsigned int _colorBottom, bool _horz = false, const Blend::Factor _srcBlendFactor = Blend::SRC_ALPHA, const Blend::Factor _dstBlendFactor = Blend::ONE_MINUS_SRC_ALPHA);
 
 	// GPI Case
 	bool         isSmallScreen();
-
-	bool         isFullScreenMode();
 
 	unsigned int mixColors(unsigned int first, unsigned int second, float percent);
 

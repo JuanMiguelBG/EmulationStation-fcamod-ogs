@@ -48,18 +48,27 @@
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU")), mVersion(window)
 {
+	addEntry(_("KODI MEDIA CENTER").c_str(), false, [this]
+	{
+		Window *window = mWindow;
+		delete this;
+		if (!ApiSystem::getInstance()->launchKodi(window))
+			LOG(LogWarning) << "Shutdown terminated with non-zero result!";
+
+	}, "iconKodi");
+
 	addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay");
 
 	auto theme = ThemeData::getMenuTheme();
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
-	
+
 	if (isFullUI)
 	{
 		addEntry(_("UI SETTINGS"), true, [this] { openUISettings(); }, "iconUI");
 		//addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); }, "iconControllers");
+		addEntry(_("CONTROLLERS SETTINGS").c_str(), true, [this] { openControllersSettings(); }, "iconControllers");
 	}
-	addEntry(_("CONTROLLERS SETTINGS").c_str(), true, [this] { openControllersSettings(); }, "iconControllers");
 
 	addEntry(_("SOUND SETTINGS"), true, [this] { openSoundSettings(); }, "iconSound");
 
@@ -98,15 +107,13 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 
 	addEntry(Utils::String::toUpper(_(quit_menu_label)), !Settings::getInstance()->getBool("ShowOnlyExit"), [this] { openQuitMenu(); }, "iconQuit");
 
-	if (Settings::getInstance()->getBool("FullScreenMode"))
-	{
-		BatteryInformation battery = ApiSystem::getInstance()->getBatteryInformation();
-		SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
+	BatteryInformation battery = ApiSystem::getInstance()->getBatteryInformation();
+	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
+	std::string bluetoothInfo = ApiSystem::getInstance()->getBluetoothInformation();
 
-		addEntry("BAT: " + std::to_string( battery.level ) + "%" + " | SND: " + std::to_string(ApiSystem::getInstance()->getVolume()) + "%" + " | BRT: " + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% |" + _("NETWORK")+ ": " + _( (ApiSystem::getInstance()->isNetworkConnected() ? "CONNECTED" : "NOT CONNECTED") ), false, [this] {  });
+	addEntry("BAT: " + std::to_string( battery.level ) + "%" + " | SND: " + std::to_string(ApiSystem::getInstance()->getVolume()) + "%" + " | BRT: " + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% | BT: " + bluetoothInfo + " | " + _("NETWORK")+ ": " + _( (ApiSystem::getInstance()->isNetworkConnected() ? "CONNECTED" : "NOT CONNECTED") ), false, [this] {  });
 
-		addEntry("Distro Version: " + software.application_name + " " + software.version, false, [this] {  });
-	}
+	addEntry("Distro Version: " + software.application_name + " " + software.version, false, [this] {  });
 
 	addChild(&mMenu);
 	addVersionInfo();
@@ -169,81 +176,51 @@ void GuiMenu::openDisplaySettings()
 			int brightness_level = (int)Math::round( newVal );
 			window->getBrightnessInfoComponent()->setBrightness(brightness_level);
 			ApiSystem::getInstance()->setBrightnessLevel(brightness_level);
-			if (Settings::getInstance()->getBool("FullScreenMode"))
-				s->setVariable("reloadGuiMenu", true);
+			s->setVariable("reloadGuiMenu", true);
 		});
 
-		// brightness
-		auto brightnessPopup = std::make_shared<SwitchComponent>(mWindow);
-		brightnessPopup->setState(Settings::getInstance()->getBool("BrightnessPopup"));
-		s->addWithLabel(_("SHOW OVERLAY WHEN BRIGHTNESS CHANGES"), brightnessPopup);
-		s->addSaveFunc([brightnessPopup]
-			{
-				bool old_value = Settings::getInstance()->getBool("BrightnessPopup");
-				if (old_value != brightnessPopup->getState())
-					Settings::getInstance()->setBool("BrightnessPopup", brightnessPopup->getState());
-			}
-		);
-
-	// Select Full Screen Mode
-	auto fullScreenMode = std::make_shared<SwitchComponent>(mWindow);
-	fullScreenMode->setState(Settings::getInstance()->getBool("FullScreenMode"));
-	s->addWithLabel(_("FULL SCREEN MODE"), fullScreenMode);
-	s->addSaveFunc([window, fullScreenMode]
+	// brightness
+	auto brightnessPopup = std::make_shared<SwitchComponent>(mWindow);
+	brightnessPopup->setState(Settings::getInstance()->getBool("BrightnessPopup"));
+	s->addWithLabel(_("SHOW OVERLAY WHEN BRIGHTNESS CHANGES"), brightnessPopup);
+	s->addSaveFunc([brightnessPopup]
 		{
-			bool old_value = Settings::getInstance()->getBool("FullScreenMode");
-			if (old_value != fullScreenMode->getState())
-			{
-				window->pushGui(new GuiMsgBox(window, _("REALLY WANT TO CHANGE THE SCREEN MODE ?"), _("YES"),
-					[fullScreenMode] {
-					LOG(LogInfo) << "GuiMenu::openDisplaySettings() - change to screen mode: " << ( fullScreenMode->getState() ? "full" : "header" );
-					Settings::getInstance()->setBool("FullScreenMode", fullScreenMode->getState());
-					Settings::getInstance()->setBool("ShowBatteryIndicator", fullScreenMode->getState());
-					Settings::getInstance()->setBool("ShowNetworkIndicator", fullScreenMode->getState());
-					Settings::getInstance()->saveFile();
-					Scripting::fireEvent("quit");
-					//quitES();
-					if(quitES(QuitMode::RESTART) != 0)
-						LOG(LogWarning) << "GuiMenu::openDisplaySettings() - Restart terminated with non-zero result!";
-				}, _("NO"), nullptr));
-			}
-		});
-
-		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
-		{
-			// blink with low battery
-			auto blink_low_battery = std::make_shared<SwitchComponent>(mWindow);
-			bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
-			blink_low_battery->setState(blink_low_battery_value);
-			s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
-			s->addSaveFunc([blink_low_battery, blink_low_battery_value]
-				{
-					bool new_blink_low_battery_value = blink_low_battery->getState();
-					if (blink_low_battery_value != new_blink_low_battery_value)
-					{
-						Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
-						ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
-					}
-				});
-
-			s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
+			bool old_value = Settings::getInstance()->getBool("BrightnessPopup");
+			if (old_value != brightnessPopup->getState())
+				Settings::getInstance()->setBool("BrightnessPopup", brightnessPopup->getState());
 		}
+	);
 
-	if (Settings::getInstance()->getBool("FullScreenMode"))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
 	{
-
-		s->onFinalize([s, pthis, window]
-		{
-			if (s->getVariable("reloadGuiMenu"))
+		// blink with low battery
+		auto blink_low_battery = std::make_shared<SwitchComponent>(mWindow);
+		bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
+		blink_low_battery->setState(blink_low_battery_value);
+		s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
+		s->addSaveFunc([blink_low_battery, blink_low_battery_value]
 			{
-				delete pthis;
-				window->pushGui(new GuiMenu(window, false));
-			}
-		});
+				bool new_blink_low_battery_value = blink_low_battery->getState();
+				if (blink_low_battery_value != new_blink_low_battery_value)
+				{
+					Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
+					ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
+				}
+			});
 
+		s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
 	}
 
- mWindow->pushGui(s);
+	s->onFinalize([s, pthis, window]
+	{
+		if (s->getVariable("reloadGuiMenu"))
+		{
+			delete pthis;
+			window->pushGui(new GuiMenu(window, false));
+		}
+	});
+
+	mWindow->pushGui(s);
 }
 
 void GuiMenu::openDisplayAutoDimSettings()
@@ -292,6 +269,8 @@ void GuiMenu::openControllersSettings()
 				s->setVariable("reloadAll", true);
 			}
 		});
+
+	s->addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); } );
 
 	mWindow->pushGui(s);
 }
@@ -457,8 +436,7 @@ void GuiMenu::openSoundSettings()
 				int volume_level = (int)Math::round(newVal);
 				window->getVolumeInfoComponent()->setVolume(volume_level);
 				ApiSystem::getInstance()->setVolume(volume_level);
-				if (Settings::getInstance()->getBool("FullScreenMode"))
-					s->setVariable("reloadGuiMenu", true);
+				s->setVariable("reloadGuiMenu", true);
 			});
 
 		// Music Volume
@@ -557,20 +535,14 @@ void GuiMenu::openSoundSettings()
 
 	s->addSwitch(_("ENABLE VIDEO PREVIEW AUDIO"), "VideoAudio", true);
 
-
-	if (Settings::getInstance()->getBool("FullScreenMode"))
+	s->onFinalize([s, pthis, window]
 	{
-
-		s->onFinalize([s, pthis, window]
+		if (s->getVariable("reloadGuiMenu"))
 		{
-			if (s->getVariable("reloadGuiMenu"))
-			{
-				delete pthis;
-				window->pushGui(new GuiMenu(window, false));
-			}
-		});
-
-	}
+			delete pthis;
+			window->pushGui(new GuiMenu(window, false));
+		}
+	});
 
 	mWindow->pushGui(s);
 

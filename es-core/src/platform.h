@@ -56,6 +56,7 @@ struct BatteryInformation
 		std::string health("Good");
 		max_capacity = 0;
 		voltage = 0.f;
+		temperature = 0.f;
 	}
 
 	bool hasBattery;
@@ -64,12 +65,14 @@ struct BatteryInformation
 	std::string health;
 	int max_capacity;
 	float voltage;
+	float temperature;
 };
 
 BatteryInformation queryBatteryInformation(bool summary);
 int queryBatteryLevel();
 bool queryBatteryCharging();
 float queryBatteryVoltage();
+float queryBatteryTemperature();
 
 struct NetworkInformation
 {
@@ -273,6 +276,8 @@ bool setCurrentTimezone(std::string timezone);
 #ifdef _DEBUG
 uint32_t getVolume();
 #endif
+
+std::string queryBluetoothInformation();
 
 std::string getShOutput(const std::string& mStr);
 

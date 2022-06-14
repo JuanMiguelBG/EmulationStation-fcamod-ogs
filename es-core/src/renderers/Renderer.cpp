@@ -10,16 +10,14 @@
 #include <SDL.h>
 #include <stack>
 
-#include <go2/display.h>
+//#include <go2/display.h>
 
 namespace Renderer
 {
 	static std::stack<Rect> clipStack;
 	static std::stack<Rect> nativeClipStack;
 
-	bool mFullScreenMode = false;
-
-	//static SDL_Window*      sdlWindow          = nullptr;
+	static SDL_Window*      sdlWindow          = nullptr;
 	static int              windowWidth        = 0;
 	static int              windowHeight       = 0;
 	static int              screenWidth        = 0;
@@ -28,44 +26,144 @@ namespace Renderer
 	static int              screenOffsetY      = 0;
 	static int              screenRotate       = 0;
 	static bool             initialCursorState = 1;
-	static go2_display_t*   display            = nullptr;
+	//static go2_display_t*   display            = nullptr;
 
 	static Vector2i			sdlWindowPosition  = Vector2i(SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED);
 
 	static void setIcon()
 	{
+//#if 0
+		size_t                     width   = 0;
+		size_t                     height  = 0;
+		ResourceData               resData = ResourceManager::getInstance()->getFileData(":/window_icon_256.png");
+		std::vector<unsigned char> rawData = ImageIO::loadFromMemoryRGBA32(resData.ptr.get(), resData.length, width, height);
+
+		if(!rawData.empty())
+		{
+			ImageIO::flipPixelsVert(rawData.data(), width, height);
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+			unsigned int rmask = 0xFF000000;
+			unsigned int gmask = 0x00FF0000;
+			unsigned int bmask = 0x0000FF00;
+			unsigned int amask = 0x000000FF;
+#else
+			unsigned int rmask = 0x000000FF;
+			unsigned int gmask = 0x0000FF00;
+			unsigned int bmask = 0x00FF0000;
+			unsigned int amask = 0xFF000000;
+#endif
+			// try creating SDL surface from logo data
+			SDL_Surface* logoSurface = SDL_CreateRGBSurfaceFrom((void*)rawData.data(), (int)width, (int)height, 32, (int)(width * 4), rmask, gmask, bmask, amask);
+
+			if(logoSurface != nullptr)
+			{
+				SDL_SetWindowIcon(sdlWindow, logoSurface);
+				SDL_FreeSurface(logoSurface);
+			}
+		}
+//#endif
 	} // setIcon
 
 	static bool createWindow()
 	{
-		LOG(LogInfo) << "Renderer::createWindow() - Creating window...";
+		LOG(LogInfo) << "Creating window...";
 
-		if(SDL_Init(SDL_INIT_EVENTS) != 0)
+		//if(SDL_Init(SDL_INIT_EVENTS) != 0)
+		if(SDL_Init(SDL_INIT_VIDEO) != 0)
 		{
-			LOG(LogError) << "Renderer::createWindow() - Error initializing SDL!\n	" << SDL_GetError();
+			LOG(LogError) << "Error initializing SDL!\n	" << SDL_GetError();
 			return false;
 		}
 
-		display = go2_display_create();
+//#if 0
+		static SDL_DisplayMode dispMode;
+
+		if (windowWidth == 0)
+		{
+			initialCursorState = (SDL_ShowCursor(0) != 0);
+			SDL_GetDesktopDisplayMode(0, &dispMode);
+		}
+
+		if (!Settings::getInstance()->getBool("Windowed"))
+			SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");
+
+		windowWidth   = Settings::getInstance()->getInt("WindowWidth")   ? Settings::getInstance()->getInt("WindowWidth")   : dispMode.w;
+		windowHeight  = Settings::getInstance()->getInt("WindowHeight")  ? Settings::getInstance()->getInt("WindowHeight")  : dispMode.h;
+		screenWidth   = Settings::getInstance()->getInt("ScreenWidth")   ? Settings::getInstance()->getInt("ScreenWidth")   : windowWidth;
+		screenHeight  = Settings::getInstance()->getInt("ScreenHeight")  ? Settings::getInstance()->getInt("ScreenHeight")  : windowHeight;
+		screenOffsetX = Settings::getInstance()->getInt("ScreenOffsetX") ? Settings::getInstance()->getInt("ScreenOffsetX") : 0;
+		screenOffsetY = Settings::getInstance()->getInt("ScreenOffsetY") ? Settings::getInstance()->getInt("ScreenOffsetY") : 0;
+		screenRotate  = Settings::getInstance()->getInt("ScreenRotate")  ? Settings::getInstance()->getInt("ScreenRotate")  : 0;
+
+		int monitorId = Settings::getInstance()->getInt("MonitorID");
+		if (monitorId >= 0 && sdlWindowPosition == Vector2i(SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED))
+		{
+			int displays = SDL_GetNumVideoDisplays();
+			if (displays > monitorId)
+			{
+				SDL_Rect rc;
+				SDL_GetDisplayBounds(monitorId, &rc);
+
+				sdlWindowPosition = Vector2i(rc.x, rc.y);
+
+				if (Settings::getInstance()->getBool("Windowed") && (Settings::getInstance()->getInt("WindowWidth") || Settings::getInstance()->getInt("ScreenWidth")))
+				{
+					if (windowWidth != rc.w || windowHeight != rc.h)
+					{
+						sdlWindowPosition = Vector2i(
+							rc.x + (rc.w - windowWidth) / 2,
+							rc.y + (rc.h - windowHeight) / 2
+						);
+					}
+				}
+				else
+				{
+					windowWidth = rc.w;
+					windowHeight = rc.h;
+					screenWidth = rc.w;
+					screenHeight = rc.h;
+				}
+			}
+		}
+
+		setupWindow();
+
+		unsigned int windowFlags = (Settings::getInstance()->getBool("Windowed") ? 0 : (Settings::getInstance()->getBool("FullscreenBorderless") ? SDL_WINDOW_BORDERLESS : SDL_WINDOW_FULLSCREEN)) | getWindowFlags();
+
+		if (Settings::getInstance()->getBool("AlwaysOnTop"))
+			windowFlags |= SDL_WINDOW_ALWAYS_ON_TOP;
+
+		windowFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+	
+		if((sdlWindow = SDL_CreateWindow("EmulationStation", 
+			sdlWindowPosition.x(),
+			sdlWindowPosition.y(), 
+			windowWidth, windowHeight,
+			windowFlags)) == nullptr)
+		{
+			LOG(LogError) << "Error creating SDL window!\n\t" << SDL_GetError();
+			return false;
+		}
+
+		LOG(LogInfo) << "Created window successfully.";
+
+		createContext();
+		setIcon();
+		setSwapInterval();
+//#endif
+
+		/*display = go2_display_create();
 		windowWidth = go2_display_height_get(display);
 		windowHeight = go2_display_width_get(display);
 		screenWidth = windowWidth;
-		if (Renderer::isFullScreenMode())
-		{
-			screenHeight = windowHeight;
-			screenOffsetY = 0;
-		}
-		else
-		{
-			screenHeight = windowHeight - 16;
-			screenOffsetY = 0 + 16;
-		}
-		
+		screenHeight = windowHeight;
 		screenOffsetX = 0;
+		screenOffsetY = 0;
 		screenRotate = 0;
 
 		setupWindow();
-		createContext();
+		createContext();*/
 
 		return true;
 
@@ -73,22 +171,35 @@ namespace Renderer
 
 	static void destroyWindow()
 	{
+		if (Settings::getInstance()->getBool("Windowed") && Settings::getInstance()->getInt("WindowWidth") && Settings::getInstance()->getInt("WindowHeight"))
+		{
+			int x; int y;
+			SDL_GetWindowPosition(sdlWindow, &x, &y);
+			sdlWindowPosition = Vector2i(x, y); // Save position to restore it later
+		}
+
 		destroyContext();
-		go2_display_destroy(display);
-		display = nullptr;
+//#if 0
+		SDL_DestroyWindow(sdlWindow);
+		sdlWindow = nullptr;
+
+		SDL_ShowCursor(initialCursorState);
+//#endif
+		/*go2_display_destroy(display);
+		display = nullptr;*/
 
 		SDL_Quit();
+
 	} // destroyWindow
 
 	void activateWindow()
 	{
-		//SDL_RaiseWindow(sdlWindow);
-		//SDL_SetWindowInputFocus(sdlWindow);
+		SDL_RaiseWindow(sdlWindow);
+		SDL_SetWindowInputFocus(sdlWindow);
 	}
 
-	bool init(bool forceFullScreen)
+	bool init()
 	{
-		mFullScreenMode = forceFullScreen;
 		if(!createWindow())
 			return false;
 
@@ -159,6 +270,7 @@ namespace Renderer
 	void deinit()
 	{
 		destroyWindow();
+
 	} // deinit
 
 	void pushClipRect(const Vector2i& _pos, const Vector2i& _size)
@@ -200,7 +312,7 @@ namespace Renderer
 	{
 		if(clipStack.empty())
 		{
-			LOG(LogError) << "Renderer::popClipRect() - Tried to popClipRect while the stack was empty!";
+			LOG(LogError) << "Tried to popClipRect while the stack was empty!";
 			return;
 		}
 
@@ -280,7 +392,7 @@ namespace Renderer
 
 	} // drawRect
 
-	//SDL_Window* getSDLWindow()     { return sdlWindow; }
+	SDL_Window* getSDLWindow()     { return sdlWindow; }
 	int         getWindowWidth()   { return windowWidth; }
 	int         getWindowHeight()  { return windowHeight; }
 	int         getScreenWidth()   { return screenWidth; }
@@ -289,11 +401,9 @@ namespace Renderer
 	int         getScreenOffsetY() { return screenOffsetY; }
 	int         getScreenRotate()  { return screenRotate; }
 
-	go2_display_t* getDisplay()    { return display; }
+	//go2_display_t* getDisplay()    { return display; }
 
-	bool        isSmallScreen()    { return screenWidth < 400 || screenHeight < 400; };
-
-	bool        isFullScreenMode()    { return mFullScreenMode; };
+	bool        isSmallScreen()    { return screenWidth < 2000 || screenHeight < 2000; };
 
 	unsigned int mixColors(unsigned int first, unsigned int second, float percent)
 	{

@@ -4,7 +4,7 @@
 #include "Log.h"
 #include "Settings.h"
 
-std::string VolumeControl::mixerName = "Playback";
+std::string VolumeControl::mixerName = "Master";
 std::string VolumeControl::mixerCard = "default";
 
 std::weak_ptr<VolumeControl> VolumeControl::sInstance;

@@ -67,8 +67,8 @@ public:
 	void update(int deltaTime);
 	void render();
 
-	bool init(bool initRenderer, bool forceFullScreen = false);
-	void deinit(bool deinitRenderer);
+	bool init(bool initRenderer = true, bool initInputManager = true);
+	void deinit(bool deinitRenderer = true);
 
 	void normalizeNextUpdate();
 

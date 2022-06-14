@@ -18,6 +18,7 @@
 #include "guis/GuiMsgBox.h"
 #include "AudioManager.h"
 #include <string>
+#include "utils/StringUtil.h"
 #include "utils/TimeUtil.h"
 #include "components/VolumeInfoComponent.h"
 #include "components/BrightnessInfoComponent.h"
@@ -84,13 +85,13 @@ GuiComponent* Window::peekGui()
 	return mGuiStack.back();
 }
 
-bool Window::init(bool initRenderer, bool forceFullScreen)
+bool Window::init(bool initRenderer, bool initInputManager)
 {
-	LOG(LogInfo) << "Window::init() - initRenderer: " << (initRenderer ? "true" : "false") << ", forceFullScreen: " << (forceFullScreen ? "true" : "false");
-	
+	LOG(LogInfo) << "Window::init() - initRenderer: " << Utils::String::boolToString(initRenderer) << ", initInputManager: " << Utils::String::boolToString(initInputManager);
+
 	if (initRenderer)
 	{
-		if (!Renderer::init(forceFullScreen))
+		if (!Renderer::init())
 		{
 			LOG(LogError) << "Window::init() --> Renderer failed to initialize!";
 			return false;
@@ -120,13 +121,8 @@ bool Window::init(bool initRenderer, bool forceFullScreen)
 		mClock->setFont(Font::get(FONT_SIZE_SMALL));
 		mClock->setHorizontalAlignment(ALIGN_RIGHT);
 		mClock->setVerticalAlignment(ALIGN_TOP);
-		float clockPosition = Renderer::getScreenWidth() * 0.90f;
+		float clockPosition = Renderer::getScreenWidth() * 0.89f;
 		float clockSize = mClock->getFont()->getLetterWidth() * 7.f;
-		if (Settings::getInstance()->getBool("FullScreenMode"))
-		{
-			clockPosition = Renderer::getScreenWidth() * 0.89f;
-			clockSize = mClock->getFont()->getLetterWidth() * 7.f;
-		}
 		mClock->setPosition(clockPosition, Renderer::getScreenHeight() * 0.9965 - mClock->getFont()->getHeight());
 		mClock->setSize(clockSize, 0);
 		mClock->setColor(0x777777FF);

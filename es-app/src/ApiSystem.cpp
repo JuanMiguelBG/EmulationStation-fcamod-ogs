@@ -12,6 +12,7 @@
 #include "Log.h"
 #include "Window.h"
 #include "components/AsyncNotificationComponent.h"
+#include "AudioManager.h"
 #include "VolumeControl.h"
 #include "EsLocale.h"
 #include <algorithm>
@@ -667,6 +668,12 @@ float ApiSystem::getBatteryVoltage()
 	LOG(LogDebug) << "ApiSystem::getBatteryVoltage()";
 
 	return queryBatteryVoltage();
+}
+
+float ApiSystem::getTemperatureBattery()
+{
+	LOG(LogDebug) << "ApiSystem::getTemperatureBattery()";
+	return queryBatteryTemperature();
 }
 
 std::string ApiSystem::getDeviceName()
@@ -1454,4 +1461,69 @@ bool ApiSystem::setOutputDevice(const std::string device)
 	LOG(LogInfo) << "ApiSystem::setOutputDevice()";
 
 	return executeScript("es-sound set output_device \"" + device + '"');
+}
+
+void ApiSystem::launchExternalWindow_before(Window *window)
+{
+	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before";
+
+	AudioManager::getInstance()->deinit();
+	VolumeControl::getInstance()->deinit();
+	window->deinit();
+
+	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before OK";
+}
+
+void ApiSystem::launchExternalWindow_after(Window *window)
+{
+	LOG(LogDebug) << "ApiSystem::launchExternalWindow_after";
+
+	window->init();
+	VolumeControl::getInstance()->init();
+	AudioManager::getInstance()->init();
+	window->normalizeNextUpdate();
+	window->reactivateGui();
+
+	AudioManager::getInstance()->playRandomMusic();
+
+	LOG(LogDebug) << "ApiSystem::launchExternalWindow_after OK";
+}
+
+bool ApiSystem::launchKodi(Window *window)
+{
+	LOG(LogDebug) << "ApiSystem::launchKodi()";
+
+	std::string command = "Kodi.sh";
+
+	ApiSystem::launchExternalWindow_before(window);
+
+	int exitCode = system(command.c_str());
+
+	// WIFEXITED returns a nonzero value if the child process terminated normally with exit or _exit.
+	// https://www.gnu.org/software/libc/manual/html_node/Process-Completion-Status.html
+	if (WIFEXITED(exitCode))
+		exitCode = WEXITSTATUS(exitCode);
+
+	ApiSystem::launchExternalWindow_after(window);
+
+	// handle end of kodi
+	switch (exitCode)
+	{
+	case 10: // reboot code
+		quitES(QuitMode::REBOOT);
+		return true;
+
+	case 11: // shutdown code
+		quitES(QuitMode::SHUTDOWN);
+		return true;
+	}
+
+	return exitCode == 0;
+}
+
+std::string ApiSystem::getBluetoothInformation()
+{
+	LOG(LogDebug) << "ApiSystem::getBluetoothInformation()";
+
+	return queryBluetoothInformation();
 }

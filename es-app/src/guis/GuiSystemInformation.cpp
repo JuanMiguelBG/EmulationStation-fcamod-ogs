@@ -47,6 +47,7 @@ void GuiSystemInformation::showSummarySystemInfo()
 	RamMemoryInformation memory = ApiSystem::getInstance()->getRamMemoryInformation();
 	NetworkInformation ni = ApiSystem::getInstance()->getNetworkInformation();
 
+
 	// device name
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SYSTEM_INFORMATION))
 		addWithLabel(_("DEVICE"), std::make_shared<TextComponent>(mWindow, ApiSystem::getInstance()->getDeviceName(), font, color));
@@ -66,14 +67,14 @@ void GuiSystemInformation::showSummarySystemInfo()
 	addUpdatableComponent(loadCpu.get());
 	addWithLabel(_("CPU LOAD"), loadCpu);
 
-	// temperature
+	// CPU temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( csi.temperature );
 	auto temperatureCpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( csi.temperature ), font, warning ? 0xFF0000FF : color);
 	temperatureCpu->setUpdatableFunction([temperatureCpu, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture CPU";
 			float temp_cpu_value = ApiSystem::getInstance()->getTemperatureCpu();
-			bool warning = ApiSystem::getInstance()->isLoadCpuLimit( temp_cpu_value );
+			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_cpu_value );
 			temperatureCpu->setText(formatTemperature( temp_cpu_value ));
 			temperatureCpu->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
@@ -81,19 +82,34 @@ void GuiSystemInformation::showSummarySystemInfo()
 	addWithLabel(_("TEMPERATURE"), temperatureCpu);
 
 	addGroup(_("OTHER INFORMATION"));
-	// temperature
+	// GPU temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( di.temperature );
 	auto temperature_gpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( di.temperature ), font, warning ? 0xFF0000FF : color);
 	temperature_gpu->setUpdatableFunction([temperature_gpu, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture GPU";
 			float temp_gpu_value = ApiSystem::getInstance()->getTemperatureGpu();
-			bool warning = ApiSystem::getInstance()->isLoadCpuLimit( temp_gpu_value );
+			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_gpu_value );
 			temperature_gpu->setText(formatTemperature( temp_gpu_value ));
 			temperature_gpu->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
 	addUpdatableComponent(temperature_gpu.get());
 	addWithLabel(_("GPU") + " - " + _("TEMPERATURE"), temperature_gpu);
+
+	// battery temperature
+	float temp_bat_value = ApiSystem::getInstance()->getTemperatureBattery();
+	warning = ApiSystem::getInstance()->isTemperatureLimit( temp_bat_value );
+	auto temperature_battery = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( temp_bat_value ), font, warning ? 0xFF0000FF : color);
+	temperature_battery->setUpdatableFunction([temperature_battery, color]
+		{
+			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture Battery";
+			float temp_bat_value = ApiSystem::getInstance()->getTemperatureBattery();
+			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_bat_value );
+			temperature_battery->setText(formatTemperature( temp_bat_value ));
+			temperature_battery->setColor(warning ? 0xFF0000FF : color);
+		}, 5000);
+	addUpdatableComponent(temperature_battery.get());
+	addWithLabel(_("BATTERY") + " - " + _("TEMPERATURE"), temperature_battery);
 
 	// free ram
 	warning = ApiSystem::getInstance()->isMemoryLimit( memory.total, memory.free );
@@ -610,6 +626,20 @@ void GuiSystemInformation::openBattery(const BatteryInformation *bi)
 		}, 5000);
 	s->addUpdatableComponent(voltage.get());
 	s->addWithLabel(_("VOLTAGE"), voltage);
+
+	// temperature
+	warning = ApiSystem::getInstance()->isTemperatureLimit( bi->temperature );
+	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( bi->temperature ), font, warning ? 0xFF0000FF : color);
+	temperature->setUpdatableFunction([temperature, color]
+		{
+			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture Battery";
+			float temp_bat_value = ApiSystem::getInstance()->getTemperatureBattery();
+			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_bat_value );
+			temperature->setText(formatTemperature( temp_bat_value ));
+			temperature->setColor(warning ? 0xFF0000FF : color);
+		}, 5000);
+	s->addWithLabel(_("TEMPERATURE"), temperature);
+	s->addUpdatableComponent(temperature.get());
 
 	window->pushGui(s);
 }

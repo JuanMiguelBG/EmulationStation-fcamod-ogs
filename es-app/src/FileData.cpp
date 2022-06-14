@@ -380,10 +380,10 @@ void FileData::launchGame(Window* window)
 	}
 	Scripting::fireEvent("game-end");
 
-	window->init(hideWindow, Settings::getInstance()->getBool("FullScreenMode"));
+	window->init(hideWindow);
 
 	VolumeControl::getInstance()->init();
-	AudioManager::getInstance()->init();	
+	AudioManager::getInstance()->init();
 	window->normalizeNextUpdate();
 
 	//update number of times the game has been launched

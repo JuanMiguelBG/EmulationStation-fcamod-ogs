@@ -40,6 +40,9 @@ protected:
 
 	static ApiSystem* instance;
 
+	void launchExternalWindow_before(Window *window);
+	void launchExternalWindow_after(Window *window);
+
 public:
 	enum ScriptId : unsigned int
 	{
@@ -118,6 +121,7 @@ public:
 	int getBatteryLevel();
 	bool isBatteryCharging();
 	float getBatteryVoltage();
+	float getTemperatureBattery();
 	std::string getDeviceName();
 
 	NetworkInformation getNetworkInformation(bool summary = true);
@@ -234,6 +238,11 @@ public:
 	std::vector<std::string> getOutputDevices();
 	std::string getOutputDevice();
 	bool setOutputDevice(const std::string device);
+
+	virtual bool launchKodi(Window *window);
+
+	std::string getBluetoothInformation();
+
 };
 
 #endif
