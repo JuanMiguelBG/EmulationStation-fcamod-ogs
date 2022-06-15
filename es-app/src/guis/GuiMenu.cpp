@@ -15,7 +15,6 @@
 #include "guis/UpdatableGuiSettings.h"
 #include "guis/GuiSystemInformation.h"
 #include "guis/GuiQuitOptions.h"
-#include "guis/GuiPowerkeyOptions.h"
 #include "guis/GuiMenusOptions.h"
 #include "guis/GuiSystemHotkeyEventsOptions.h"
 #include "guis/GuiWifi.h"
@@ -1958,11 +1957,6 @@ void GuiMenu::openAdvancedSettings()
 
 	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this] { openQuitSettings(); });
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::POWER_KEY))
-	{
-		s->addEntry(_("POWERKEY BUTTON SETTINGS"), true, [this] { openPowerkeySettings(); });
-	}
-
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::AUTO_SUSPEND))
 	{
 		s->addEntry(_("DEVICE AUTO SUSPEND SETTINGS"), true, [this] { openAutoSuspendSettings(); });
@@ -2051,11 +2045,6 @@ void GuiMenu::openQuitSettings()
 	});
 
 	mWindow->pushGui(s);
-}
-
-void GuiMenu::openPowerkeySettings()
-{
-	mWindow->pushGui(new GuiPowerkeyOptions(mWindow));
 }
 
 void GuiMenu::openAutoSuspendSettings()

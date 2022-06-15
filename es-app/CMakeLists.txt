@@ -39,7 +39,6 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSlideshowScreensaverOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemInformation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiQuitOptions.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiPowerkeyOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiMenusOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemHotkeyEventsOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiWifi.h
@@ -113,7 +112,6 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSlideshowScreensaverOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemInformation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiQuitOptions.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiPowerkeyOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiMenusOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemHotkeyEventsOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiWifi.cpp

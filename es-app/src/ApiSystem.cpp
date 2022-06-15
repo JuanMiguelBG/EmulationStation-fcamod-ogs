@@ -154,9 +154,6 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case TIMEZONE:
 				executables.push_back("timezones");
 				break;
-		case POWER_KEY:
-				executables.push_back("es-powerkey");
-				break;
 		case DISPLAY:
 				executables.push_back("es-display");
 				break;
@@ -702,53 +699,6 @@ bool ApiSystem::setTimezone(std::string timezone)
 	LOG(LogInfo) << "ApiSystem::setTimezone() - TZ: " << timezone;
 
 	return setCurrentTimezone(timezone);
-}
-
-bool ApiSystem::isPowerkeyState()
-{
-	LOG(LogInfo) << "ApiSystem::isPowerkeyState()";
-
-	return stringToState(getShOutput(R"(es-powerkey get two_push_shutdown)"));
-}
-
-int ApiSystem::getPowerkeyTimeInterval()
-{
-	LOG(LogInfo) << "ApiSystem::getPowerkeyTimeInterval()";
-	
-	std::string time_interval = Utils::String::replace(getShOutput(R"(es-powerkey get max_interval_time)"), "\n", "");
-	if (time_interval.empty())
-		return 5;
-
-	int time = std::atoi( time_interval.c_str() );
-	if (time < 1)
-		time = 1;
-	else if (time > 10)
-		time = 10;
-
-	return time;
-}
-
-std::string ApiSystem::getPowerkeyAction()
-{
-	LOG(LogInfo) << "ApiSystem::getPowerkeyAction()";
-
-	std::string action = Utils::String::replace(getShOutput(R"(es-powerkey get action)"), "\n", "");
-	if (action.empty())
-		return "shutdown";
-
-	return action;
-}
-
-bool ApiSystem::setPowerkeyValues(const std::string action, bool two_push_state, int time_interval)
-{
-	LOG(LogInfo) << "ApiSystem::setPowerkeyValues()";
-
-	if (time_interval < 1)
-		time_interval = 1;
-	else if (time_interval > 10)
-		time_interval = 10;
-
-	return executeScript("es-powerkey set_all_values " + action + " " + stateToString(two_push_state) + " " + std::to_string(time_interval) + " &");
 }
 
 bool ApiSystem::setDisplayBlinkLowBattery(bool state)

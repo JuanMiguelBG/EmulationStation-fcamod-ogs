@@ -264,9 +264,9 @@ float queryBatteryTemperature()
 {
 	try
 	{
-		if (Utils::FileSystem::exists("/sys/devices/virtual/thermal/thermal_zone3/temp"))
+		if (Utils::FileSystem::exists("/sys/devices/virtual/thermal/thermal_zone2/temp"))
 		{
-			float temperature = std::atof( getShOutput(R"(cat /sys/devices/virtual/thermal/thermal_zone3/temp)").c_str() );
+			float temperature = std::atof( getShOutput(R"(cat /sys/devices/virtual/thermal/thermal_zone2/temp)").c_str() );
 			return temperature / 1000;
 		}
 	} catch (...) {

@@ -47,19 +47,18 @@ public:
 	enum ScriptId : unsigned int
 	{
 		TIMEZONE = 0,
-		POWER_KEY = 1,
-		DISPLAY = 2,
-		SYSTEM_HOTKEY_EVENTS = 3,
-		WIFI = 4,
-		RETROACHIVEMENTS = 5,
-		LANGUAGE = 6,
-		SYSTEM_INFORMATION = 7,
-		AUTO_SUSPEND = 8,
-		OPTMIZE_SYSTEM = 9,
-		SHOW_FPS = 10,
-		OVERCLOCK = 11,
-		PRELOAD_VLC = 12,
-		SOUND = 13
+		DISPLAY = 1,
+		SYSTEM_HOTKEY_EVENTS = 2,
+		WIFI = 3,
+		RETROACHIVEMENTS = 4,
+		LANGUAGE = 5,
+		SYSTEM_INFORMATION = 6,
+		AUTO_SUSPEND = 7,
+		OPTMIZE_SYSTEM = 8,
+		SHOW_FPS = 9,
+		OVERCLOCK = 10,
+		PRELOAD_VLC = 11,
+		SOUND = 12
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -142,11 +141,6 @@ public:
 	std::string getTimezones();
 	std::string getCurrentTimezone();
 	bool setTimezone(std::string timezone);
-
-	bool isPowerkeyState();
-	int getPowerkeyTimeInterval();
-	std::string getPowerkeyAction();
-	bool setPowerkeyValues(const std::string action, bool two_push_state, int time_interval);
 
 	bool setDisplayBlinkLowBattery(bool state);
 
