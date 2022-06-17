@@ -338,7 +338,7 @@ void FileData::launchGame(Window* window)
 	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
 	const std::string basename = Utils::FileSystem::getStem(getPath());
 	const std::string rom_raw = Utils::FileSystem::getPreferredPath(getPath());
-	
+
 	std::string emulator = getEmulator();
 	if (emulator.length() == 0)
 		emulator = getSystemEnvData()->getDefaultEmulator();
@@ -350,9 +350,9 @@ void FileData::launchGame(Window* window)
 	std::string customCommandLine = getSystemEnvData()->getEmulatorCommandLine(emulator);
 	if (customCommandLine.length() > 0)
 		command = customCommandLine;
-	
+
 	int exitCode = -1;
-  time_t tstart;
+	time_t tstart;
 	if (command.empty())
 	{
 		exitCode = -206;

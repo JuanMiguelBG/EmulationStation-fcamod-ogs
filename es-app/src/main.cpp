@@ -573,7 +573,6 @@ int main(int argc, char* argv[])
 	else
 		AudioManager::getInstance()->playRandomMusic();
 
-
 	unsigned int lastTime = SDL_GetTicks(),
 							 ps_time = lastTime;
 	int exitMode = 0;

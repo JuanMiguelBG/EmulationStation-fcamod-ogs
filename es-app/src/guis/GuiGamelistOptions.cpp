@@ -274,7 +274,6 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 		{
 			char fecstrbuf[64];
 			snprintf(fecstrbuf, 64, _("FINISH EDITING '%s' COLLECTION").c_str(), Utils::String::toUpper(CollectionSystemManager::get()->getEditingCollection()).c_str());
-
 			mMenu.addEntry(fecstrbuf, false, [this] { exitEditMode(); });
 		}
 
@@ -298,7 +297,6 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 
 		// update game lists
 		mMenu.addEntry(_("UPDATE GAMES LISTS"), false, [this] { GuiMenu::updateGameLists(mWindow); }); // Game List Update
-
 	}
 
 	// center the menu
@@ -554,11 +552,6 @@ IGameListView* GuiGamelistOptions::getGamelist()
 
 void GuiGamelistOptions::deleteGame(FileData* file)
 {
-/*
-			CollectionSystemManager::get()->deleteCollectionFiles(file);
-			ViewController::get()->getGameListView(file->getSystem()).get()->remove(file, true);
-*/
-
 	if (file->getType() != GAME)
 		return;
 

@@ -67,12 +67,11 @@ namespace Renderer
 
 	static bool createWindow()
 	{
-		LOG(LogInfo) << "Creating window...";
+		LOG(LogInfo) << "Renderer::createWindow() - Creating window...";
 
-		//if(SDL_Init(SDL_INIT_EVENTS) != 0)
 		if(SDL_Init(SDL_INIT_VIDEO) != 0)
 		{
-			LOG(LogError) << "Error initializing SDL!\n	" << SDL_GetError();
+			LOG(LogError) << "Renderer::createWindow() - Error initializing SDL!\n	" << SDL_GetError();
 			return false;
 		}
 
@@ -189,7 +188,6 @@ namespace Renderer
 		display = nullptr;*/
 
 		SDL_Quit();
-
 	} // destroyWindow
 
 	void activateWindow()
@@ -270,7 +268,6 @@ namespace Renderer
 	void deinit()
 	{
 		destroyWindow();
-
 	} // deinit
 
 	void pushClipRect(const Vector2i& _pos, const Vector2i& _size)
@@ -312,7 +309,7 @@ namespace Renderer
 	{
 		if(clipStack.empty())
 		{
-			LOG(LogError) << "Tried to popClipRect while the stack was empty!";
+			LOG(LogError) << "Renderer::popClipRect() - Tried to popClipRect while the stack was empty!";
 			return;
 		}
 

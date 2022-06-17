@@ -916,7 +916,7 @@ void GuiMenu::openUISettings()
 					window->pushGui(new GuiMsgBox(window, _("YOU SELECTED A THEME MANUALLY, THE RANDOM THEME SELECTION HAS BEEN DISABLED"), _("OK")));
 				}
 
-    Scripting::fireEvent("theme-changed", theme_set->getSelected(), oldTheme);
+				Scripting::fireEvent("theme-changed", theme_set->getSelected(), oldTheme);
 			}
 		});
 	
@@ -2012,7 +2012,6 @@ void GuiMenu::openAdvancedSettings()
 		}
 	});
 
-
 	auto pthis = this;
 
 	s->onFinalize([s, pthis, window]
@@ -2079,8 +2078,8 @@ void GuiMenu::openConfigInput()
 		
 	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO CONFIGURE INPUT?"), _("YES"),
 		[window] {
-		window->pushGui(new GuiDetectDevice(window, false, nullptr));
-	}, _("NO"), nullptr)
+			window->pushGui(new GuiDetectDevice(window, false, nullptr));
+		}, _("NO"), nullptr)
 	);
 
 }

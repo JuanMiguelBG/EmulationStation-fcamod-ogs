@@ -545,7 +545,6 @@ void VideoVlcComponent::startVideo()
 					// Avoid videos bigger than resolution
 					Vector2f maxSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 
-
 					if (!mTargetSize.empty() && (mTargetSize.x() < maxSize.x() || mTargetSize.y() < maxSize.y()))
 						maxSize = mTargetSize;
 

@@ -62,11 +62,11 @@ void HelpComponent::updateGrid()
 	if(!Settings::getInstance()->getBool("ShowHelpPrompts") || mPrompts.empty())
 	{
 		mGrid.reset();
-		mVisible = false;
+		setVisible(false);
 		return;
 	}
 
-	mVisible = true;
+	setVisible(true);
 
 	std::shared_ptr<Font>& font = mStyle.font;
 

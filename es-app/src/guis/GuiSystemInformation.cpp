@@ -47,7 +47,6 @@ void GuiSystemInformation::showSummarySystemInfo()
 	RamMemoryInformation memory = ApiSystem::getInstance()->getRamMemoryInformation();
 	NetworkInformation ni = ApiSystem::getInstance()->getNetworkInformation();
 
-
 	// device name
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SYSTEM_INFORMATION))
 		addWithLabel(_("DEVICE"), std::make_shared<TextComponent>(mWindow, ApiSystem::getInstance()->getDeviceName(), font, color));

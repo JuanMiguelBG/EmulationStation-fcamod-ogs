@@ -22,10 +22,10 @@ enum GuiMsgBoxIcon
 class GuiMsgBox : public GuiComponent
 {
 public:
-	GuiMsgBox(Window* window, const std::string& text, 
+	GuiMsgBox(Window* window, const std::string& text,
 		const std::string& name1, const std::function<void()>& func1,
-		const std::string& name2, const std::function<void()>& func2, 
-		const std::string& name3, const std::function<void()>& func3, 
+		const std::string& name2, const std::function<void()>& func2,
+		const std::string& name3, const std::function<void()>& func3,
 		GuiMsgBoxIcon icon = ICON_AUTOMATIC);
 
 
@@ -48,7 +48,7 @@ private:
 	void deleteMeAndCall(const std::function<void()>& func);
 
 	NinePatchComponent mBackground;
-	ComponentGrid mGrid;	
+	ComponentGrid mGrid;
 
 	std::shared_ptr<ImageComponent> mImage;
 	std::shared_ptr<TextComponent> mMsg;

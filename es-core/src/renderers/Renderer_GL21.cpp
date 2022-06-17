@@ -281,10 +281,15 @@ namespace Renderer
 			// if vsync is requested, try normal vsync; if that doesn't work, try late swap tearing
 			// if that doesn't work, report an error
 			if(SDL_GL_SetSwapInterval(1) != 0 && SDL_GL_SetSwapInterval(-1) != 0)
-				LOG(LogWarning) << "Tried to enable vsync, but failed! (" << SDL_GetError() << ")";
+				LOG(LogWarning) << "Renderer_GL21::setSwapInterval() - Tried to enable vsync, but failed! (" << SDL_GetError() << ")";
+			else
+				LOG(LogInfo) << "Renderer_GL21::setSwapInterval() - vsync is enabled";
 		}
 		else
+		{
+			LOG(LogInfo) << "Renderer_GL21::setSwapInterval() - vsync is not configured";
 			SDL_GL_SetSwapInterval(0);
+		}
 
 	} // setSwapInterval
 
