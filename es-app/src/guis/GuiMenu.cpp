@@ -53,13 +53,13 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	auto theme = ThemeData::getMenuTheme();
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
-	
+
 	if (isFullUI)
 	{
 		addEntry(_("UI SETTINGS"), true, [this] { openUISettings(); }, "iconUI");
 		//addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); }, "iconControllers");
+		addEntry(_("CONTROLLERS SETTINGS").c_str(), true, [this] { openControllersSettings(); }, "iconControllers");
 	}
-	addEntry(_("CONTROLLERS SETTINGS").c_str(), true, [this] { openControllersSettings(); }, "iconControllers");
 
 	addEntry(_("SOUND SETTINGS"), true, [this] { openSoundSettings(); }, "iconSound");
 
@@ -1199,9 +1199,7 @@ void GuiMenu::openUISettings()
 			CollectionSystemManager::get()->updateSystemsList();
 
 		if (s->getVariable("forceReloadGames"))
-		{
 			ViewController::reloadAllGames(window, false);
-		}
 
 		if (s->getVariable("reloadAll"))
 		{
@@ -1700,7 +1698,6 @@ void GuiMenu::openAdvancedSettings()
 		if (languages.size() > 1)
 		{
 			auto language = std::make_shared< FlagOptionListComponent<std::string> >(mWindow, _("LANGUAGE"));
-
 			std::string language_value = Settings::getInstance()->getString("Language");
 			for (auto it = languages.cbegin(); it != languages.cend(); it++)
 			{
@@ -2142,13 +2139,13 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 	static std::function<void()> restartEsFunction = []
 		{
 			if(quitES(QuitMode::RESTART) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Restart terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Restart ES terminated with non-zero result!";
 		};
 
 	static std::function<void()> restartDeviceFunction = []
 		{
 			if (quitES(QuitMode::REBOOT) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Restart terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Restart System terminated with non-zero result!";
 		};
 
 	static std::function<void()> fastRestartDeviceFunction = []
@@ -2160,13 +2157,13 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 	static std::function<void()> suspendDeviceFunction = []
 		{
 			if (quitES(QuitMode::SUSPEND) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Suspend terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Suspend System terminated with non-zero result!";
 		};
 
 	static std::function<void()> shutdownDeviceFunction = []
 		{
 			if (quitES(QuitMode::SHUTDOWN) != 0)
-				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Shutdown terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::openQuitMenu_static() - Shutdown System terminated with non-zero result!";
 		};
 
 	static std::function<void()> fastShutdownDeviceFunction = []
@@ -2191,7 +2188,6 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 			exitFunction = quitEsFunction;
 			exit_label = "REALLY QUIT?";
 		}
-		
 
 		if (Settings::getInstance()->getBool("ConfirmToExit"))
 			window->pushGui(new GuiMsgBox(window, _(exit_label), _("YES"), exitFunction, _("NO"), nullptr));
@@ -2238,7 +2234,6 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 
 	if (quickAccessMenu)
 		s->addGroup(_("QUIT"));
-
 
 	bool isUIModeFull = UIModeController::getInstance()->isUIModeFull();
 	if (isUIModeFull)

@@ -21,6 +21,7 @@
 #include <fstream>
 #include "guis/GuiMsgBox.h"
 
+
 FileData::FileData(FileType type, const std::string& path, SystemData* system)
 	: mType(type), mSystem(system), mParent(NULL), mMetadata(type == GAME ? GAME_METADATA : FOLDER_METADATA) // metadata is REALLY set in the constructor!
 {
@@ -377,7 +378,6 @@ void FileData::launchGame(Window* window)
 		if (exitCode != 0)
 			LOG(LogWarning) << "FileData::launchGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
 	}
-
 	Scripting::fireEvent("game-end");
 
 	window->init(hideWindow, Settings::getInstance()->getBool("FullScreenMode"));

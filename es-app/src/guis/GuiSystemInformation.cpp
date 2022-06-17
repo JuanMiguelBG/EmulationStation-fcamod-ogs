@@ -66,14 +66,14 @@ void GuiSystemInformation::showSummarySystemInfo()
 	addUpdatableComponent(loadCpu.get());
 	addWithLabel(_("CPU LOAD"), loadCpu);
 
-	// temperature
+	// CPU temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( csi.temperature );
 	auto temperatureCpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( csi.temperature ), font, warning ? 0xFF0000FF : color);
 	temperatureCpu->setUpdatableFunction([temperatureCpu, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture CPU";
 			float temp_cpu_value = ApiSystem::getInstance()->getTemperatureCpu();
-			bool warning = ApiSystem::getInstance()->isLoadCpuLimit( temp_cpu_value );
+			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_cpu_value );
 			temperatureCpu->setText(formatTemperature( temp_cpu_value ));
 			temperatureCpu->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
@@ -81,14 +81,14 @@ void GuiSystemInformation::showSummarySystemInfo()
 	addWithLabel(_("TEMPERATURE"), temperatureCpu);
 
 	addGroup(_("OTHER INFORMATION"));
-	// temperature
+	// GPU temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( di.temperature );
 	auto temperature_gpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( di.temperature ), font, warning ? 0xFF0000FF : color);
 	temperature_gpu->setUpdatableFunction([temperature_gpu, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture GPU";
 			float temp_gpu_value = ApiSystem::getInstance()->getTemperatureGpu();
-			bool warning = ApiSystem::getInstance()->isLoadCpuLimit( temp_gpu_value );
+			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_gpu_value );
 			temperature_gpu->setText(formatTemperature( temp_gpu_value ));
 			temperature_gpu->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);

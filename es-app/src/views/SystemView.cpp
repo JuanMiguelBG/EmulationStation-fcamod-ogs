@@ -654,7 +654,8 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 	updateExtraTextBinding();
 
 	// also change the text after we've fully faded out
-	setAnimation(infoFadeOut, 0, [this, gameCount] {
+	setAnimation(infoFadeOut, 0, [this, gameCount]
+	{
 		std::stringstream ss;
 
 		if (!getSelected()->isGameSystem() && !getSelected()->isGroupSystem())
@@ -665,7 +666,7 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 			snprintf(strbuf, 128, EsLocale::nGetText("%i GAME AVAILABLE", "%i GAMES AVAILABLE", gameCount).c_str(), gameCount);
 			ss << strbuf;
 		}
-	
+
 		mSystemInfo.setText(ss.str());
 	}, false, 1);
 
@@ -1134,14 +1135,14 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 			continue;
 
 		Entry& entry = mEntries.at(index);
-		
+
 		Vector2i size = Vector2i(Math::round(mSize.x()), Math::round(mSize.y()));
 
 		Transform4x4f extrasTrans = trans;
 		if (mCarousel.type == HORIZONTAL || mCarousel.type == HORIZONTAL_WHEEL)
 		{
 			extrasTrans.translate(Vector3f((i - mExtrasCamOffset) * mSize.x(), 0, 0));
-		
+
 			if (extrasTrans.translation()[0] >= 0 && extrasTrans.translation()[0] <= Renderer::getScreenWidth() && extrasTrans.translation()[0] + mSize.x() > Renderer::getScreenWidth())
 				size.x() = Renderer::getScreenWidth() - extrasTrans.translation()[0];
 		}
@@ -1165,7 +1166,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 		{
 			if (extra->getZIndex() < lower || extra->getZIndex() >= upper)
 				continue;
-								
+
 			// ExtrasFadeOpacity : Apply opacity only on elements that are not common with the original view
 			if (mExtrasFadeOpacity && !extra->isStaticExtra())
 			{
@@ -1173,13 +1174,13 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 				if (extra->isKindOf<ImageComponent>())
 				{
 					if (paths.find(value) != paths.cend())
-					{							
+					{
 						auto opa = extra->getOpacity();
 						extra->setOpacity((1.0f - mExtrasFadeOpacity) * opa);
 						extra->render(extra->isStaticExtra() ? trans : extrasTrans);
 						extra->setOpacity(opa);
 						continue;
-					}								
+					}
 					else if (((ImageComponent*)extra)->isTiled() && extra->getPosition() == Vector3f::Zero() && extra->getSize() == Vector2f(Renderer::getScreenWidth(), Renderer::getScreenHeight()))
 					{
 						auto opa = extra->getOpacity();
@@ -1198,7 +1199,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 					continue;
 				}
 			}
-			
+
 			if (extra->isStaticExtra())
 			{
 				bool popClip = false;
@@ -1235,7 +1236,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 				extra->render(extrasTrans);
 		}
 
-		Renderer::popClipRect();		
+		Renderer::popClipRect();
 	}
 
 	Renderer::popClipRect();

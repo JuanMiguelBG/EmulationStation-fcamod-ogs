@@ -502,7 +502,6 @@ bool ViewController::input(InputConfig* config, Input input)
 	if (mLockInput)
 		return true;
 
-
 	if (config->getDeviceId() == DEVICE_KEYBOARD && input.value && input.id == SDLK_F5)
 	{
 		mWindow->render();

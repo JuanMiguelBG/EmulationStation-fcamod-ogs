@@ -87,7 +87,7 @@ GuiComponent* Window::peekGui()
 bool Window::init(bool initRenderer, bool forceFullScreen)
 {
 	LOG(LogInfo) << "Window::init() - initRenderer: " << (initRenderer ? "true" : "false") << ", forceFullScreen: " << (forceFullScreen ? "true" : "false");
-	
+
 	if (initRenderer)
 	{
 		if (!Renderer::init(forceFullScreen))

@@ -1421,7 +1421,6 @@ void ApiSystem::preloadVLC()
 	executeScript("/usr/local/bin/es-preload_vlc &");
 }
 
-
 std::vector<std::string> ApiSystem::getAudioCards()
 {
 	LOG(LogInfo) << "ApiSystem::getAudioCards()";

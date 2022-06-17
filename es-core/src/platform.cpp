@@ -580,7 +580,7 @@ float queryTemperatureCpu()
 			return temperature / 1000;
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryTemperatureCpu() - Error reading temperature CPU data!!!";
+		LOG(LogError) << "Platform::queryTemperatureCpu() - Error reading CPU temperature data!!!";
 	}
 	return 0.f;
 }
@@ -595,7 +595,7 @@ int queryFrequencyCpu()
 			return frequency / 1000; // MHZ
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryFrequencyCpu() - Error reading frequency CPU data!!!";
+		LOG(LogError) << "Platform::queryFrequencyCpu() - Error reading CPU frequency data!!!";
 	}
 	return 0;
 }
@@ -676,7 +676,7 @@ float queryTemperatureGpu()
 			return temperature / 1000;
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryTemperatureGpu() - Error reading temperature GPU data!!!";
+		LOG(LogError) << "Platform::queryTemperatureGpu() - Error reading GPU temperature data!!!";
 	}
 	return 0.f;
 }
@@ -691,7 +691,7 @@ int queryFrequencyGpu()
 			return frequency / 1000000; // MHZ
 		}
 	} catch (...) {
-		LOG(LogError) << "Platform::queryFrequencyGpu() - Error reading frequency GPU data!!!";
+		LOG(LogError) << "Platform::queryFrequencyGpu() - Error reading GPU frequency data!!!";
 	}
 	return 0;
 }
