@@ -472,6 +472,11 @@ public:
 		return (int)mEntries.size();
 	}
 
+	bool empty()
+	{
+		return size() == 0;
+	}
+
 	void selectFirstItem()
 	{
 		for (unsigned int i = 0; i < mEntries.size(); i++)
