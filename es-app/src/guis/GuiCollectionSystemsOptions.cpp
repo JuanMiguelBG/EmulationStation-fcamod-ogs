@@ -308,56 +308,49 @@ GuiCollectionSystemsOptions::~GuiCollectionSystemsOptions()
 
 void GuiCollectionSystemsOptions::addSystemsToMenu()
 {
-
+	// add Auto Systems && preserve order
 	std::map<std::string, CollectionSystemData> &autoSystems = CollectionSystemManager::get()->getAutoCollectionSystems();
-	if (!autoSystems.empty())
+	autoOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, _("SELECT COLLECTIONS"), true);
+	bool hasGroup = false;
+
+	for (auto systemDecl : CollectionSystemManager::getSystemDecls())
 	{
-		autoOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, _("SELECT COLLECTIONS"), true);
+		auto it = autoSystems.find(systemDecl.name);
+		if (it == autoSystems.cend())
+			continue;
 
-		bool hasGroup = false;
-
-		// add Auto Systems && preserve order
-		for (auto systemDecl : CollectionSystemManager::getSystemDecls())
+		if (it->second.decl.displayIfEmpty)
+			autoOptionList->add(_(it->second.decl.longName.c_str()), it->second.decl.name, it->second.isEnabled);
+		else
 		{
-			auto it = autoSystems.find(systemDecl.name);
-			if (it == autoSystems.cend())
+			if (!it->second.isPopulated)
+				CollectionSystemManager::get()->populateAutoCollection(&(it->second));
+
+			if (it->second.system->getRootFolder()->getChildren().size() == 0)
 				continue;
 
-			if (it->second.decl.displayIfEmpty)
-				autoOptionList->add(_(it->second.decl.longName.c_str()), it->second.decl.name, it->second.isEnabled);
-			else
+			if (!hasGroup)
 			{
-				if (!it->second.isPopulated)
-					CollectionSystemManager::get()->populateAutoCollection(&(it->second));
-
-				if (it->second.system->getRootFolder()->getChildren().size() == 0)
-					continue;
-
-				if (!hasGroup)
-				{
-					autoOptionList->addGroup(_("ARCADE SYSTEMS"));
-					hasGroup = true;
-				}
-
-				autoOptionList->add(_(it->second.decl.longName.c_str()), it->second.decl.name, it->second.isEnabled);
+				autoOptionList->addGroup(_("ARCADE SYSTEMS"));
+				hasGroup = true;
 			}
+
+			autoOptionList->add(_(it->second.decl.longName.c_str()), it->second.decl.name, it->second.isEnabled);
 		}
+	}
+	if (!autoOptionList->empty())
 		addWithLabel(_("AUTOMATIC GAME COLLECTIONS"), autoOptionList);
-	}
 
-
+	// add Custom Systems
 	std::map<std::string, CollectionSystemData> customSystems = CollectionSystemManager::get()->getCustomCollectionSystems();
-	if (!customSystems.empty())
+	customOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, _("SELECT COLLECTIONS"), true);
+	for (std::map<std::string, CollectionSystemData>::const_iterator it = customSystems.cbegin(); it != customSystems.cend(); it++)
 	{
-		customOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, _("SELECT COLLECTIONS"), true);
-
-		// add Custom Systems
-		for (std::map<std::string, CollectionSystemData>::const_iterator it = customSystems.cbegin(); it != customSystems.cend(); it++)
-		{
-			customOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
-		}
-		addWithLabel(_("CUSTOM GAME COLLECTIONS"), customOptionList);
+		customOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
 	}
+	if (!customOptionList->empty())
+		addWithLabel(_("CUSTOM GAME COLLECTIONS"), customOptionList);
+
 }
 
 void GuiCollectionSystemsOptions::updateSettings(std::string newAutoSettings, std::string newCustomSettings)
