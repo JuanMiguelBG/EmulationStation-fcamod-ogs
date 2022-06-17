@@ -28,13 +28,13 @@ sudo dpkg -i --force-all /var/cache/apt/archives/libwayland-dev_1.18.0-1_arm64.d
 Note this Repository uses a git submodule - to checkout the source and all submodules, use
 
 ```bash
-git clone --recursive https://github.com/JuanMiguelBG/EmulationStation-fcamod-ogs.git
+git clone --recursive https://github.com/JuanMiguelBG/EmulationStation-fcamod-ogs.git -b rg503
 ```
 
 or 
 
 ```bash
-git clone https://github.com/JuanMiguelBG/EmulationStation-fcamod-ogs.git
+git clone https://github.com/JuanMiguelBG/EmulationStation-fcamod-ogs.git -b rg503
 cd EmulationStation-fcamod-ogs
 git submodule update --init
 ```
