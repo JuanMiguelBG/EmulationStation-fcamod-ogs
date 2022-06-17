@@ -14,7 +14,7 @@ bool GuiComponent::ALLOWANIMATIONS = true;
 GuiComponent::GuiComponent(Window* window) : mWindow(window), mParent(NULL), mOpacity(255),
 	mPosition(Vector3f::Zero()), mOrigin(Vector2f::Zero()), mRotationOrigin(0.5, 0.5),
 	mSize(Vector2f::Zero()), mTransform(Transform4x4f::Identity()), mIsProcessing(false), mVisible(true),
-	mStaticExtra(false)
+	mStaticExtra(false), mShowing(false)
 {
 	for(unsigned char i = 0; i < MAX_ANIMATIONS; i++)
 		mAnimationMap[i] = NULL;
@@ -162,15 +162,6 @@ float GuiComponent::getDefaultZIndex() const
 void GuiComponent::setDefaultZIndex(float z)
 {
 	mDefaultZIndex = z;
-}
-
-bool GuiComponent::isVisible() const
-{
-	return mVisible;
-}
-void GuiComponent::setVisible(bool visible)
-{
-	mVisible = visible;
 }
 
 Vector2f GuiComponent::getCenter() const

@@ -69,6 +69,7 @@ void GuiQuitOptions::initializeMenu()
 			}
 		});
 
+
 	addGroup(_("NO MENU"));
 
 	// only exit action

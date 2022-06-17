@@ -97,9 +97,6 @@ public:
 	float getDefaultZIndex() const;
 	void setDefaultZIndex(float zIndex);
 
-	bool isVisible() const;
-	void setVisible(bool visible);
-
 	// Returns the center point of the image (takes origin into account).
 	Vector2f getCenter() const;
 
@@ -171,6 +168,9 @@ public:
 
 	bool isShowing() { return mShowing; }
 
+	bool isVisible() { return mVisible; }
+	void setVisible(bool visible) { mVisible = visible; }
+
 protected:
 	void renderChildren(const Transform4x4f& transform) const;
 	void updateSelf(int deltaTime); // updates animations
@@ -197,6 +197,7 @@ protected:
 
 	bool mIsProcessing;
 	bool mVisible;
+
 	bool mShowing;
 	bool mStaticExtra;
 
@@ -204,8 +205,10 @@ public:
 	const static unsigned char MAX_ANIMATIONS = 4;
 
 private:
+
 	Transform4x4f mTransform; //Don't access this directly! Use getTransform()!
 	AnimationController* mAnimationMap[MAX_ANIMATIONS];
+
 };
 
 #endif // ES_CORE_GUI_COMPONENT_H

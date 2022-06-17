@@ -21,7 +21,6 @@
 #include <fstream>
 #include "guis/GuiMsgBox.h"
 
-
 FileData::FileData(FileType type, const std::string& path, SystemData* system)
 	: mType(type), mSystem(system), mParent(NULL), mMetadata(type == GAME ? GAME_METADATA : FOLDER_METADATA) // metadata is REALLY set in the constructor!
 {
@@ -338,7 +337,7 @@ void FileData::launchGame(Window* window)
 	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
 	const std::string basename = Utils::FileSystem::getStem(getPath());
 	const std::string rom_raw = Utils::FileSystem::getPreferredPath(getPath());
-	
+
 	std::string emulator = getEmulator();
 	if (emulator.length() == 0)
 		emulator = getSystemEnvData()->getDefaultEmulator();
@@ -350,9 +349,9 @@ void FileData::launchGame(Window* window)
 	std::string customCommandLine = getSystemEnvData()->getEmulatorCommandLine(emulator);
 	if (customCommandLine.length() > 0)
 		command = customCommandLine;
-	
+
 	int exitCode = -1;
-  time_t tstart;
+	time_t tstart;
 	if (command.empty())
 	{
 		exitCode = -206;
@@ -378,12 +377,13 @@ void FileData::launchGame(Window* window)
 		if (exitCode != 0)
 			LOG(LogWarning) << "FileData::launchGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
 	}
+
 	Scripting::fireEvent("game-end");
 
 	window->init(hideWindow, Settings::getInstance()->getBool("FullScreenMode"));
 
 	VolumeControl::getInstance()->init();
-	AudioManager::getInstance()->init();	
+	AudioManager::getInstance()->init();
 	window->normalizeNextUpdate();
 
 	//update number of times the game has been launched

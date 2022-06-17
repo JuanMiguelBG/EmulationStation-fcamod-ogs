@@ -529,7 +529,7 @@ void VideoVlcComponent::startVideo()
 				else if (tracks[track]->i_type == libvlc_track_video)
 				{
 					mVideoWidth = tracks[track]->video->i_width;
-					mVideoHeight = tracks[track]->video->i_height;
+					mVideoHeight = tracks[track]->video->i_height;		
 
 					if (hasAudioTrack)
 						break;
@@ -544,7 +544,7 @@ void VideoVlcComponent::startVideo()
 				{
 					// Avoid videos bigger than resolution
 					Vector2f maxSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
-
+										
 
 					if (!mTargetSize.empty() && (mTargetSize.x() < maxSize.x() || mTargetSize.y() < maxSize.y()))
 						maxSize = mTargetSize;
@@ -563,7 +563,7 @@ void VideoVlcComponent::startVideo()
 
 				// Setup the media player
 				mMediaPlayer = libvlc_media_player_new_from_media(mMedia);
-
+			
 				if (hasAudioTrack)
 				{
 					if (!getPlayAudio() || (!mScreensaverMode && !Settings::getInstance()->getBool("VideoAudio")) || (Settings::getInstance()->getBool("ScreenSaverVideoMute") && mScreensaverMode))

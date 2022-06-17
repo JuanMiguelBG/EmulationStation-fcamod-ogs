@@ -472,7 +472,7 @@ void VideoComponent::onShow()
 
 void VideoComponent::onHide()
 {
- GuiComponent::onHide();
+	GuiComponent::onHide();
 	manageState();
 }
 

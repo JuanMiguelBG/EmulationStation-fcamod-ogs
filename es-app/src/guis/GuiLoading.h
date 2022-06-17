@@ -43,7 +43,7 @@ public:
 
 	void render(const Transform4x4f &parentTrans) override
 	{
-		if (!mRunning || !mVisible)
+		if (!mRunning || !isVisible())
 			return;
 
 		Transform4x4f trans = parentTrans * getTransform();

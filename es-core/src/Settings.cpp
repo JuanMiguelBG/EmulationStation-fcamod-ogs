@@ -89,7 +89,7 @@ void Settings::setDefaults()
 	mBoolMap["FullScreenMode"] = false;
 	mBoolMap["BrightnessPopup"] = true;
 	mBoolMap["DisplayBlinkLowBattery"] = false;
-	
+
 	mStringMap["StartupSystem"] = "";
 
 	mStringMap["FolderViewMode"] = "never";
@@ -130,7 +130,7 @@ void Settings::setDefaults()
 
 	mStringMap["GameTransitionStyle"] = "fade";
 	mStringMap["TransitionStyle"] = "auto";
-	mStringMap["Language"] = "en";	
+	mStringMap["Language"] = "en";
 	mStringMap["ThemeSet"] = "";
 	mStringMap["ScreenSaverBehavior"] = "dim";
 	mStringMap["GamelistViewStyle"] = "automatic";
@@ -282,7 +282,7 @@ bool Settings::saveFile()
 
 		if (def != mDefaultStringMap.cend() && def->second == iter->second)
 			continue;
-		
+
 		pugi::xml_node node = root.append_child("string");
 		node.append_attribute("name").set_value(iter->first.c_str());
 		node.append_attribute("value").set_value(iter->second.c_str());

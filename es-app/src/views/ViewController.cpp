@@ -502,7 +502,7 @@ bool ViewController::input(InputConfig* config, Input input)
 	if (mLockInput)
 		return true;
 
-	
+
 	if (config->getDeviceId() == DEVICE_KEYBOARD && input.value && input.id == SDLK_F5)
 	{
 		mWindow->render();
@@ -514,7 +514,7 @@ bool ViewController::input(InputConfig* config, Input input)
 		mWindow->endRenderLoadingScreen();
 		return true;
 	}
-	
+
 	if (input.value != 0)
 	{
 		// open menu
@@ -531,10 +531,9 @@ bool ViewController::input(InputConfig* config, Input input)
 			return true;
 		}
 	}
+
 	if(UIModeController::getInstance()->listen(config, input))  // check if UI mode has changed due to passphrase completion
-	{
 		return true;
-	}
 
 	if (mCurrentView)
 		return mCurrentView->input(config, input);

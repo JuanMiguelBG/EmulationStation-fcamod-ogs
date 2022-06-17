@@ -16,5 +16,3 @@ int Randomizer::random(int max)
 	std::uniform_int_distribution<int> uniformDistribution(0, max - 1);
 	return uniformDistribution(Instance->mMt19937);
 }
-
-

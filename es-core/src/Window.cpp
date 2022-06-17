@@ -728,9 +728,7 @@ void Window::renderScreenSaver(bool checkSleep)
 		mScreenSaver->renderScreenSaver();
 
 	if (mRenderScreenSaver && checkSleep)
-	{
 		screensaverNeedsToGoToSleep();
-	}
 }
 
 static std::mutex mNotificationMessagesLock;
