@@ -505,6 +505,11 @@ std::string queryDnsTwo()
 	return getShOutput("es-wifi get_dns2");
 }
 
+std::string queryWifiNetworkExistFlag()
+{
+	return getShOutput("es-wifi get_network_exist_flag");
+}
+
 std::string querySocName() {
 	return getShOutput("es-system_inf get_soc_name");
 }

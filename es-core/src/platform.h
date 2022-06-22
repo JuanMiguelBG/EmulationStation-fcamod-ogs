@@ -121,6 +121,7 @@ std::string queryWifiPsk(std::string ssid = queryWifiSsid());
 std::string queryDnsOne();
 std::string queryDnsTwo();
 bool queryNetworkConnected();
+std::string queryWifiNetworkExistFlag();
 
 
 struct CpuAndSocketInformation

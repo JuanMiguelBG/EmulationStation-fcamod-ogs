@@ -1363,7 +1363,7 @@ void GuiMenu::updateGameLists(Window* window, bool confirm)
 
 void GuiMenu::openWifiSettings(Window* win, std::string title, std::string data, const std::function<bool(std::string)>& onsave)
 {
-	win->pushGui(new GuiWifi(win, title, data, onsave));
+	win->pushGui(new GuiWifi(win, title, _("\"(**)\" WIFI ALREADY CONFIGURED, NOT NEED ENTER PASSWORD TO CONNECT"), data, onsave));
 }
 
 void GuiMenu::preloadNetworkSettings()
@@ -1488,10 +1488,15 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 
 				if (baseSSID != newSSID || baseKEY != newKey || !baseWifiEnabled)
 				{
-					if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
-						window->pushGui(new GuiMsgBox(window, _("WIFI ENABLED")));
-					else
-						window->pushGui(new GuiMsgBox(window, _("WIFI CONFIGURATION ERROR")));
+					window->pushGui(new GuiMsgBox(window,
+						_("THE PROCESS MAY DURE SOME SECONDS.\nPLEASE WAIT."),
+						_("OK"), [newSSID, newKey, window]
+							{
+								if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
+									window->pushGui(new GuiMsgBox(window, _U("\u270C  ") + newSSID + " - " + _("WIFI ENABLED")));
+								else
+									window->pushGui(new GuiMsgBox(window, _U("\u26D4  ") + newSSID + " - " + _("WIFI CONFIGURATION ERROR")));
+							}));
 				}
 			}
 			else if (baseWifiEnabled)
@@ -1500,7 +1505,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			}
 		});
 
-	enable_wifi->setOnChangedCallback([this, s, baseWifiEnabled, enable_wifi]()
+	enable_wifi->setOnChangedCallback([this, s, baseWifiEnabled, enable_wifi, window]()
 		{
 			bool wifienabled = enable_wifi->getState();
 			if (baseWifiEnabled != wifienabled)
@@ -1508,7 +1513,13 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				SystemConf::getInstance()->setBool("wifi.enabled", wifienabled);
 
 				if (wifienabled)
-					ApiSystem::getInstance()->enableWifi(SystemConf::getInstance()->get("wifi.ssid"), SystemConf::getInstance()->get("wifi.key"));
+				{
+					std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
+					if (ApiSystem::getInstance()->enableWifi(ssid, SystemConf::getInstance()->get("wifi.key")))
+						window->displayNotificationMessage(_U("\u270C  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
+					else
+						window->displayNotificationMessage(_U("\u26D4  ") + ssid + " - " + _("WIFI CONFIGURATION ERROR"), 10000);
+				}
 				else
 					ApiSystem::getInstance()->disableWifi();
 
@@ -2045,6 +2056,18 @@ void GuiMenu::openAdvancedSettings()
 			Log::init();
 		}
 	});
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OPTMIZE_SYSTEM))
+	{
+		auto scripts_log_activated = std::make_shared<SwitchComponent>(mWindow);
+		bool scripts_log_activated_value = ApiSystem::getInstance()->isEsScriptsLoggingActivated();
+		scripts_log_activated->setState(scripts_log_activated_value);
+		s->addWithLabel(_("ACTIVATE ES SCRIPTS LOGGING"), scripts_log_activated);
+		s->addSaveFunc([scripts_log_activated_value, scripts_log_activated] {
+			if (scripts_log_activated_value != scripts_log_activated->getState())
+				ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState());
+		});
+	}
 
 	auto pthis = this;
 

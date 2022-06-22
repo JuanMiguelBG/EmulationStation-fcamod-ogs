@@ -1000,7 +1000,7 @@ bool ApiSystem::disableWifi()
 {
 	LOG(LogInfo) << "ApiSystem::disableWifi()";
 
-	return executeScript("es-wifi disable ");
+	return executeScript("es-wifi disable");
 }
 
 bool ApiSystem::resetWifi(const std::string ssid)
@@ -1057,6 +1057,13 @@ std::string ApiSystem::getDnsTwo()
 	LOG(LogInfo) << "ApiSystem::getDnsTwo()";
 
 	return queryDnsTwo();
+}
+
+std::string ApiSystem::getWifiNetworkExistFlag()
+{
+	LOG(LogInfo) << "ApiSystem::getDnsTwo()";
+
+	return queryWifiNetworkExistFlag();
 }
 
 std::string ApiSystem::stateToString(bool state)
@@ -1212,7 +1219,21 @@ bool ApiSystem::setOptimizeSystem(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
 
-	return executeScript("es-optimize_system " + Utils::String::boolToString(state));
+	return executeScript("es-optimize_system active_optimize_system " + Utils::String::boolToString(state));
+}
+
+bool ApiSystem::isEsScriptsLoggingActivated()
+{
+	LOG(LogInfo) << "ApiSystem::isEsScriptsLoggingActivated()";
+
+	return Utils::String::toBool( getShOutput(R"(es-optimize_system is_actived_scripts_log)") );
+}
+
+bool ApiSystem::setEsScriptsLoggingActivated(bool state)
+{
+	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
+
+	return executeScript("es-optimize_system active_es_scripts_log " + Utils::String::boolToString(state));
 }
 
 bool ApiSystem::setShowRetroarchFps(bool state)

@@ -305,6 +305,12 @@ bool parseArgs(int argc, char* argv[])
 	return true;
 }
 
+void	loadOtherSettings()
+{
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::WIFI))
+		Settings::getInstance()->setString("wifi.already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+}
+
 bool verifyHomeFolderExists()
 {
 	//make sure the config directory exists
@@ -420,6 +426,7 @@ int main(int argc, char* argv[])
 	Log::setupReportingLevel();
 	Log::init();
 	LOG(LogInfo) << "MAIN::main() - EmulationStation - v" << PROGRAM_VERSION_STRING << ", built " << PROGRAM_BUILT_STRING;
+
 	if (!async_log.empty())
 	{
 		LOG(LogInfo) << async_log;
@@ -427,6 +434,8 @@ int main(int argc, char* argv[])
 	}
 	// remove special lock files
 	removeLockFiles();
+
+	loadOtherSettings();
 
 /*
 	ApiSystem::getInstance()->checkUpdateVersion();

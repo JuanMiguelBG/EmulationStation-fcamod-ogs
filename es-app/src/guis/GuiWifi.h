@@ -9,7 +9,8 @@
 class GuiWifi : public GuiComponent
 {
 public:
-	GuiWifi(Window* window, const std::string title, std::string data, const std::function<bool(std::string)>& onsave);
+	GuiWifi(Window* window, const std::string title, const std::string subtitle, std::string data, const std::function<bool(std::string)>& onsave);
+
 	bool input(InputConfig* config, Input input) override;
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 
