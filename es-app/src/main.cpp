@@ -301,6 +301,12 @@ bool parseArgs(int argc, char* argv[])
 	return true;
 }
 
+void	loadOtherSettings()
+{
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::WIFI))
+		Settings::getInstance()->setString("wifi.already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+}
+
 bool verifyHomeFolderExists()
 {
 	//make sure the config directory exists
@@ -423,6 +429,8 @@ int main(int argc, char* argv[])
 	}
 	// remove special lock files
 	removeLockFiles();
+
+	loadOtherSettings();
 
 /*
 	ApiSystem::getInstance()->checkUpdateVersion();

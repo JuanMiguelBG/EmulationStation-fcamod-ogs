@@ -1,4 +1,5 @@
-//#include "guis/GuiBackup.h"
+#include "GuiWifi.h"
+
 #include "guis/GuiMsgBox.h"
 #include "Window.h"
 #include <string>
@@ -6,18 +7,19 @@
 #include "Settings.h"
 #include "ApiSystem.h"
 #include "EsLocale.h"
-#include "GuiWifi.h"
 #include "guis/GuiTextEditPopup.h"
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "GuiLoading.h"
+#include "Settings.h"
 
-GuiWifi::GuiWifi(Window* window, const std::string title, std::string data, const std::function<bool(std::string)>& onsave)
+GuiWifi::GuiWifi(Window* window, const std::string title, const std::string subtitle, std::string data, const std::function<bool(std::string)>& onsave)
 	: GuiComponent(window), mMenu(window, title.c_str())
 {
 	mTitle = title;
 	mInitialData = data;
 	mSaveFunction = onsave;
 	mWaitingLoad = false;
+	mMenu.setSubTitle(subtitle);
 
 	auto theme = ThemeData::getMenuTheme();
 
@@ -72,7 +74,8 @@ bool GuiWifi::onSave(const std::string& value)
 	if (mWaitingLoad)
 		return false;
 
-	if (mSaveFunction(value))
+	std::string rep_value = Utils::String::replace(value, Settings::getInstance()->getString("wifi.already.connection.exist.flag"), "");
+	if (mSaveFunction(rep_value))
 	{
 		delete this;
 		return true;

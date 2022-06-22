@@ -204,6 +204,7 @@ void Settings::setDefaults()
 
 	mBoolMap["updates.enabled"] = false;
 	mBoolMap["wifi.manual_dns"] = false;
+	mStringMap["wifi.already.connection.exist.flag"] = " (**)";
 
 	// Log settings
 	mStringMap["LogLevel"] = "default";

@@ -181,7 +181,7 @@ public:
 	std::string getWifiPsk(const std::string ssid);
 	std::string getDnsOne();
 	std::string getDnsTwo();
-
+	std::string getWifiNetworkExistFlag();
 
 	bool setLanguage(std::string language);
 
@@ -202,6 +202,8 @@ public:
 	bool setRetroachievementsValues(bool retroachievements_state, bool hardcore_state, bool leaderboards_state, bool verbose_state, bool automatic_screenshot_state, bool challenge_indicators_state, bool richpresence_state, bool badges_state, bool test_unofficial_state, bool start_active_state, const std::string sound, const std::string username, const std::string password);
 
 	bool setOptimizeSystem(bool state);
+	bool isEsScriptsLoggingActivated();
+	bool setEsScriptsLoggingActivated(bool state);
 
 	bool setShowRetroarchFps(bool state);
 	bool isShowRetroarchFps();
