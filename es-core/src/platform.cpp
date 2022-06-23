@@ -217,9 +217,9 @@ BatteryInformation queryBatteryInformation(bool summary)
 		{
 			ret.hasBattery = true;
 			ret.level = queryBatteryLevel();
+			ret.isCharging = queryBatteryCharging();
 			if (!summary)
 			{
-				ret.isCharging = queryBatteryCharging();
 				ret.health = Utils::String::toLower( Utils::String::replace( Utils::FileSystem::readAllText(batteryRootPath + "/health"), "\n", "" ) );
 				ret.max_capacity = std::atoi(Utils::FileSystem::readAllText(batteryRootPath + "/charge_full").c_str()) / 1000; // milli amperes
 				ret.voltage = queryBatteryVoltage();
@@ -524,6 +524,29 @@ std::string queryDnsTwo()
 std::string queryWifiNetworkExistFlag()
 {
 	return getShOutput("es-wifi get_network_exist_flag");
+}
+
+bool queryNetworkConnectedFast()
+{
+ bool result = false;
+	// Wifi
+	int fd;
+	char buffer[10];
+	fd = open("/sys/class/net/wlan0/operstate", O_RDONLY);
+	if (fd > 0)
+	{
+		memset(buffer, 0, 10);
+		ssize_t count = read(fd, buffer, 10);
+		if( count > 0 )
+		{
+			if( strstr( buffer, "up") != NULL )
+				result = true;
+			else
+				result = false;
+		}
+		close(fd);
+	}
+	return result;
 }
 
 std::string querySocName() {
@@ -982,7 +1005,7 @@ uint32_t getVolume()
 	if (Utils::FileSystem::exists("/usr/local/bin/current_volume"))
 		value = std::atoi( getShOutput(R"(/usr/local/bin/current_volume)").c_str() );
 	else
-		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Master))").c_str() );
+		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Playback))").c_str() );
 	return value;
 }
 #endif

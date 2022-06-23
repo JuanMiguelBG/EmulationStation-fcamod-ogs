@@ -110,10 +110,10 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 	std::string bluetoothInfo = ApiSystem::getInstance()->getBluetoothInformation();
 
-	addEntry(_U("\uF0E7 ") + std::to_string( battery.level ) + "% | " + _U("\uF028 ") + std::to_string(ApiSystem::getInstance()->getVolume()) + "% | " + _U("\uF185 ") + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% | " + (bluetoothInfo == "On" ? _U("\uF293") : _U("\uF294")) + " | " + _U("\uF0E8 ") + _U( (ApiSystem::getInstance()->isNetworkConnected() ? "\uF1EB" : "\uF10C") ), false, [this] {  });
+	// battery | Sound | Brightness | Network
+	addEntry(formatBatteryStatus(battery.level, battery.isCharging) + " | " + formatSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + _U("\uF185 ") + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% | " + (bluetoothInfo == "On" ? _U("\uF293") : _U("\uF294")) + " | " + _U("\uF0E8 ") + _U( (ApiSystem::getInstance()->isNetworkConnected() ? "\uF1EB" : "\uF10C") ), false, [this] {  });
 
 	addEntry(_U("\uF02B Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
-
 
 	addChild(&mMenu);
 	addVersionInfo();
@@ -534,6 +534,7 @@ void GuiMenu::openSoundSettings()
 		});
 
 	s->addSwitch(_("ENABLE VIDEO PREVIEW AUDIO"), "VideoAudio", true);
+
 
 	s->onFinalize([s, pthis, window]
 	{
@@ -2479,4 +2480,42 @@ std::vector<HelpPrompt> GuiMenu::getHelpPrompts()
 std::string GuiMenu::formatNetworkStatus(bool isConnected)
 {
 	return (isConnected ? "    " + _("CONNECTED") + " " : _("NOT CONNECTED"));
+}
+
+std::string GuiMenu::formatBatteryStatus(int  level, bool isCharging)
+{
+	std::string batteryInfo("");
+	if (level > 75)
+		batteryInfo.append(_U("\uF240 "));
+	else if (level > 50)
+		batteryInfo.append(_U("\uF241 "));
+	else if (level > 25)
+		batteryInfo.append(_U("\uF242 "));
+	else if (level > 5)
+		batteryInfo.append(_U("\uF243 "));
+	else
+		batteryInfo.append(_U("\uF244 "));
+
+	batteryInfo.append(std::to_string( level ) ).append("% ");
+
+	if (isCharging)
+		batteryInfo.append(_U("\uF0E7"));
+
+	return batteryInfo;
+}
+
+std::string GuiMenu::formatSoundStatus(int  level)
+{
+	std::string soundInfo("");
+
+	if (level > 70)
+		soundInfo.append(_U("\uF028 "));
+	else if (level > 20)
+		soundInfo.append(_U("\uF027 "));
+	else
+		soundInfo.append(_U("\uF026 "));
+
+	soundInfo.append(std::to_string( level ) ).append("% ");
+
+	return soundInfo;
 }
