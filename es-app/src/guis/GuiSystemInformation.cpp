@@ -68,13 +68,13 @@ void GuiSystemInformation::showSummarySystemInfo()
 
 	// CPU temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( csi.temperature );
-	auto temperatureCpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( csi.temperature ), font, warning ? 0xFF0000FF : color);
+	auto temperatureCpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( csi.temperature, warning ), font, warning ? 0xFF0000FF : color);
 	temperatureCpu->setUpdatableFunction([temperatureCpu, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture CPU";
 			float temp_cpu_value = ApiSystem::getInstance()->getTemperatureCpu();
 			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_cpu_value );
-			temperatureCpu->setText(formatTemperature( temp_cpu_value ));
+			temperatureCpu->setText(formatTemperature( temp_cpu_value, warning ));
 			temperatureCpu->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
 	addUpdatableComponent(temperatureCpu.get());
@@ -83,13 +83,13 @@ void GuiSystemInformation::showSummarySystemInfo()
 	addGroup(_("OTHER INFORMATION"));
 	// GPU temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( di.temperature );
-	auto temperature_gpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( di.temperature ), font, warning ? 0xFF0000FF : color);
+	auto temperature_gpu = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( di.temperature, warning ), font, warning ? 0xFF0000FF : color);
 	temperature_gpu->setUpdatableFunction([temperature_gpu, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture GPU";
 			float temp_gpu_value = ApiSystem::getInstance()->getTemperatureGpu();
 			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_gpu_value );
-			temperature_gpu->setText(formatTemperature( temp_gpu_value ));
+			temperature_gpu->setText(formatTemperature( temp_gpu_value, warning ));
 			temperature_gpu->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
 	addUpdatableComponent(temperature_gpu.get());
@@ -98,13 +98,13 @@ void GuiSystemInformation::showSummarySystemInfo()
 	// battery temperature
 	float temp_bat_value = ApiSystem::getInstance()->getTemperatureBattery();
 	warning = ApiSystem::getInstance()->isTemperatureLimit( temp_bat_value );
-	auto temperature_battery = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( temp_bat_value ), font, warning ? 0xFF0000FF : color);
+	auto temperature_battery = std::make_shared<UpdatableTextComponent>(mWindow, formatTemperature( temp_bat_value, warning ), font, warning ? 0xFF0000FF : color);
 	temperature_battery->setUpdatableFunction([temperature_battery, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture Battery";
 			float temp_bat_value = ApiSystem::getInstance()->getTemperatureBattery();
 			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_bat_value );
-			temperature_battery->setText(formatTemperature( temp_bat_value ));
+			temperature_battery->setText(formatTemperature( temp_bat_value, warning ));
 			temperature_battery->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
 	addUpdatableComponent(temperature_battery.get());
@@ -281,13 +281,13 @@ void GuiSystemInformation::openCpuAndSocket()
 
 	// temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( csi.temperature );
-	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( csi.temperature ), font, warning ? 0xFF0000FF : color);
+	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( csi.temperature, warning ), font, warning ? 0xFF0000FF : color);
 	temperature->setUpdatableFunction([temperature, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture CPU";
 			float temp_cpu_value = ApiSystem::getInstance()->getTemperatureCpu();
 			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_cpu_value );
-			temperature->setText(formatTemperature( temp_cpu_value ));
+			temperature->setText(formatTemperature( temp_cpu_value, warning ));
 			temperature->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
 	s->addWithLabel(_("TEMPERATURE"), temperature);
@@ -387,13 +387,13 @@ void GuiSystemInformation::openDisplayAndGpu()
 
 	// temperature
 	bool warning = ApiSystem::getInstance()->isTemperatureLimit( di.temperature );
-	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( di.temperature ), font, warning ? 0xFF0000FF : color);
+	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( di.temperature, warning ), font, warning ? 0xFF0000FF : color);
 	temperature->setUpdatableFunction([temperature, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture GPU";
 			float temp_gpu_value = ApiSystem::getInstance()->getTemperatureGpu();
 			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_gpu_value );
-			temperature->setText(formatTemperature( temp_gpu_value ));
+			temperature->setText(formatTemperature( temp_gpu_value, warning ));
 			temperature->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
 	s->addUpdatableComponent(temperature.get());
@@ -628,13 +628,13 @@ void GuiSystemInformation::openBattery(const BatteryInformation *bi)
 
 	// temperature
 	warning = ApiSystem::getInstance()->isTemperatureLimit( bi->temperature );
-	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( bi->temperature ), font, warning ? 0xFF0000FF : color);
+	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( bi->temperature, warning ), font, warning ? 0xFF0000FF : color);
 	temperature->setUpdatableFunction([temperature, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture Battery";
 			float temp_bat_value = ApiSystem::getInstance()->getTemperatureBattery();
 			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_bat_value );
-			temperature->setText(formatTemperature( temp_bat_value ));
+			temperature->setText(formatTemperature( temp_bat_value, warning ));
 			temperature->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
 	s->addWithLabel(_("TEMPERATURE"), temperature);
@@ -708,12 +708,12 @@ void GuiSystemInformation::openDevice()
 	window->pushGui(s);
 }
 
-std::string GuiSystemInformation::formatTemperature(float temp_raw)
+std::string GuiSystemInformation::formatTemperature(float temp_raw, bool warning)
 {
 	char buffer [16];
 	sprintf (buffer, "%.2f° C", temp_raw);
 	std::string temperature(buffer);
-	return temperature;
+	return (warning ? _U("\uF2C7 ") : "  ") + temperature;
 }
 
 std::string GuiSystemInformation::formatFrequency(int freq_raw)

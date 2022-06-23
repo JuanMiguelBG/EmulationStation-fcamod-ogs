@@ -36,16 +36,19 @@ GuiFileBrowser::GuiFileBrowser(Window* window, const std::string startPath, cons
 	{
 		mMenu.addButton(_("RESET"), _("BACK"), [&]
 		{
-			mOkCallback("");
-			delete this;
+			onOk("");
 		});
 	}
 
 	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
 
-	if (startPath.empty() || !Utils::FileSystem::exists(startPath))
+	if (startPath.empty() || !Utils::FileSystem::isDirectory(startPath))
 	{
-		navigateTo(Utils::FileSystem::getHomePath() + "/screenshots");
+		mCurrentPath = Settings::getInstance()->getString("LastFileBrowserFolder");
+		if (mCurrentPath.empty() || !Utils::FileSystem::isDirectory(mCurrentPath))
+			mCurrentPath = Utils::FileSystem::getHomePath() + "/screenshots";
+
+		navigateTo(mCurrentPath);
 	}
 	else
 		navigateTo(startPath);
@@ -124,13 +127,9 @@ void GuiFileBrowser::navigateTo(const std::string path)
 
 			bool isSelected = (mSelectedFile == file.path);
 
-			mMenu.addEntry(icon + Utils::FileSystem::getFileName(file.path), false, [this, file]()
-			{
-				if (mOkCallback)
-					mOkCallback(file.path);
-
-				delete this;
-			}, "", isSelected, true, false, file.path, false);
+			mMenu.addEntry(icon + Utils::FileSystem::getFileName(file.path), false,
+				[this, file]() { onOk(file.path); },
+				"", isSelected, true, false, file.path, false);
 		}
 	}
 
@@ -180,15 +179,9 @@ bool GuiFileBrowser::input(InputConfig* config, Input input)
 			auto path = mMenu.getSelected();
 
 			if (mTypes == FileTypes::DIRECTORY && path.empty())
-			{
-				mOkCallback(mCurrentPath);
-				delete this;
-			}
+				onOk(mCurrentPath);
 			else if (!path.empty() && (mTypes == FileTypes::DIRECTORY || !Utils::FileSystem::isDirectory(path)))
-			{
-				mOkCallback(path);
-				delete this;
-			}
+				onOk(path);
 		}
 
 		return true;
@@ -196,8 +189,7 @@ bool GuiFileBrowser::input(InputConfig* config, Input input)
 
 	if (config->isMappedTo("x", input) && input.value && mOkCallback != nullptr)
 	{
-		mOkCallback("");
-		delete this;
+		onOk("");
 		return true;
 	}
 
@@ -223,4 +215,15 @@ std::vector<HelpPrompt> GuiFileBrowser::getHelpPrompts()
 	prompts.push_back(HelpPrompt("start", _("SELECT")));
 
 	return prompts;
+}
+
+void GuiFileBrowser::onOk(const std::string& path)
+{
+	if (Utils::FileSystem::isDirectory(mCurrentPath) && Settings::getInstance()->setString("LastFileBrowserFolder", mCurrentPath))
+		Settings::getInstance()->saveFile();
+
+	if (mOkCallback)
+		mOkCallback(path);
+
+	delete this;
 }

@@ -242,23 +242,23 @@ void Font::getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_ou
 
 std::vector<std::string> getFallbackFontPaths()
 {
-	// Linux
-
-	const char* paths[] = { 
-		"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-		"/usr/share/fonts/truetype/freefont/FreeMono.ttf",
-		"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf" // japanese, chinese, present on Debian
+	std::vector<std::string> fallbackFonts =
+	{
+		":/fontawesome-webfont.ttf",
+		":/DroidSansFallbackFull.ttf",// japanese, chinese, present on Debian
+		":/NanumMyeongjo.ttf", // korean font
+		":/Cairo.ttf", // arabic
+		":/Rubik-Regular.ttf" // hebrew (https://fontmeme.com/polices/police-rubik-hebrew public domain)
 	};
 
-	std::vector<std::string> fontPaths;
-	for(unsigned int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
-	{
-		if(ResourceManager::getInstance()->fileExists(paths[i]))
-			fontPaths.push_back(paths[i]);
-	}
+	std::vector<std::string> paths;
 
-	fontPaths.shrink_to_fit();
-	return fontPaths;
+	for (auto font : fallbackFonts)
+		if (ResourceManager::getInstance()->fileExists(font))
+			paths.push_back(font);
+
+	paths.shrink_to_fit();
+	return paths;
 }
 
 FT_Face Font::getFaceForChar(unsigned int id)

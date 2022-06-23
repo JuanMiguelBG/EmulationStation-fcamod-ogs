@@ -225,6 +225,10 @@ bool parseArgs(int argc, char* argv[])
 			Settings::getInstance()->setBool("DebugImage", true);
 			Log::setReportingLevel(LogDebug);
 		}
+		else if (strcmp(argv[i], "--fullscreen") == 0)
+		{
+			Settings::getInstance()->setBool("FullScreenMode", true);
+		}
 		else if (strcmp(argv[i], "--no-preload-vlc") == 0)
 		{
 			Settings::getInstance()->setBool("PreloadVLC", false);
@@ -379,7 +383,7 @@ void processAudioTitles(Window* window)
 
 			duration *= 1000;
 
-			window->displayNotificationMessage(_U("\u266B  ") + songName, duration);
+			window->displayNotificationMessage(_U("\uF001  ") + songName, duration);
 		}
 		AudioManager::getInstance()->resetSongNameChangedFlag();
 	}
@@ -422,6 +426,7 @@ int main(int argc, char* argv[])
 	Log::setupReportingLevel();
 	Log::init();
 	LOG(LogInfo) << "MAIN::main() - EmulationStation - v" << PROGRAM_VERSION_STRING << ", built " << PROGRAM_BUILT_STRING;
+
 	if (!async_log.empty())
 	{
 		LOG(LogInfo) << async_log;
@@ -481,7 +486,7 @@ int main(int argc, char* argv[])
 
 	if (!scrape_cmdline)
 	{
-		if(!window.init(true))
+		if(!window.init(true, Settings::getInstance()->getBool("FullScreenMode")))
 		{
 			LOG(LogError) << WINDOW_FAILED_INITIALIZE;
 			Log::flush();

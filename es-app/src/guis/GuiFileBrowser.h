@@ -27,6 +27,7 @@ public:
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 
 private:
+	void onOk(const std::string& path);
 	void navigateTo(const std::string path);
 	void centerWindow();
 
