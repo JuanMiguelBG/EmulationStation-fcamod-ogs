@@ -1,0 +1,59 @@
+#!/bin/sh
+
+if [ ! "$1" ];then
+	printf "usage : blink-screen [value]\n"
+	exit 1
+fi
+
+number_blinks="$1"
+
+curbright=$(cat /sys/class/backlight/backlight/brightness);
+maxbright=$(cat /sys/class/backlight/backlight/max_brightness);
+
+blink () {
+	create_brightness_lock_file
+	brightnessctl s 25 > /dev/null
+
+	create_brightness_lock_file
+	brightnessctl s 225 > /dev/null
+
+	create_brightness_lock_file
+	brightnessctl s 25 > /dev/null
+
+	create_brightness_lock_file
+	brightnessctl s 225 > /dev/null
+
+}
+
+create_brightness_lock_file () {
+	if [ ! -f $ES_BRIGTHNESS_LOCK_FILE ]; then
+		echo "#--" | sudo tee "$ES_BRIGTHNESS_LOCK_FILE" > /dev/null
+	fi
+	sleep 0.5
+}
+
+remove_brightness_lock_file () {
+	sleep 0.3
+
+	if [ -f $ES_BRIGTHNESS_LOCK_FILE ]; then
+		sudo rm -f "$ES_BRIGTHNESS_LOCK_FILE" > /dev/null
+	fi
+}
+
+
+# ******************************************************************************************
+
+
+# Configure ES commons variables
+. /usr/local/bin/es-commons
+
+
+for i in $(seq 1 $number_blinks); do
+	blink
+done
+
+create_brightness_lock_file
+
+brightnessctl s "$curbright" > /dev/null
+
+remove_brightness_lock_file

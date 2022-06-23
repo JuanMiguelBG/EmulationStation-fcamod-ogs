@@ -1,0 +1,489 @@
+#!/bin/sh
+
+if [ ! "$1" ];then
+	printf "usage : es-language [set value/get]\n"
+	exit 1
+fi
+
+# Configure ES commons variables
+. es-commons
+
+command="$1"
+pvalue="$2"
+
+esConfigFile="$ES_CONFIG_FILE"
+
+# RETROARCH
+#----------
+
+#enum retro_language
+#{
+#   RETRO_LANGUAGE_ENGLISH             = 0,
+#   RETRO_LANGUAGE_JAPANESE            = 1,
+#   RETRO_LANGUAGE_FRENCH              = 2,
+#   RETRO_LANGUAGE_SPANISH             = 3,
+#   RETRO_LANGUAGE_GERMAN              = 4,
+#   RETRO_LANGUAGE_ITALIAN             = 5,
+#   RETRO_LANGUAGE_DUTCH               = 6,
+#   RETRO_LANGUAGE_PORTUGUESE_BRAZIL   = 7,
+#   RETRO_LANGUAGE_PORTUGUESE_PORTUGAL = 8,
+#   RETRO_LANGUAGE_RUSSIAN             = 9,
+#   RETRO_LANGUAGE_KOREAN              = 10,
+#   RETRO_LANGUAGE_CHINESE_TRADITIONAL = 11,
+#   RETRO_LANGUAGE_CHINESE_SIMPLIFIED  = 12,
+#   RETRO_LANGUAGE_ESPERANTO           = 13,
+#   RETRO_LANGUAGE_POLISH              = 14,
+#   RETRO_LANGUAGE_VIETNAMESE          = 15,
+#   RETRO_LANGUAGE_ARABIC              = 16,
+#   RETRO_LANGUAGE_GREEK               = 17,
+#   RETRO_LANGUAGE_TURKISH             = 18,
+#   RETRO_LANGUAGE_SLOVAK              = 19,
+#   RETRO_LANGUAGE_PERSIAN             = 20,
+#   RETRO_LANGUAGE_HEBREW              = 21,
+#   RETRO_LANGUAGE_ASTURIAN            = 22,
+#   RETRO_LANGUAGE_FINNISH             = 23,
+#   RETRO_LANGUAGE_LAST,
+#}
+
+raConfigFile="$RA_CONFIG_FOLDER/retroarch.cfg"
+ra32ConfigFile="$RA32_CONFIG_FOLDER/retroarch.cfg"
+
+setRetroarchLanguage ()
+{
+	value=$1
+	configFile=$2
+
+	cat "$configFile" | grep -iw "user_language" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "user_language = \"$value\"" | sudo tee -a "$configFile" > /dev/null
+	else
+		sudo sed -i "s/#\?user_language =.*/user_language = \"$value\"/g" "$configFile" > /dev/null
+	fi
+}
+
+setRetroarchLanguageValue ()
+{
+#property -->  user_language = "0"
+
+	getRetroarchLanguageValue $pvalue
+	value=$?
+
+	setRetroarchLanguage $value $raConfigFile
+	setRetroarchLanguage $value $ra32ConfigFile
+}
+
+getRetroarchLanguageValue ()
+{
+#echo "language: $1"
+  case $1 in
+    br)
+      return 7
+    ;;
+    de)
+      return 4
+    ;;
+    es)
+      return 3
+    ;;
+    fr)
+      return 2
+    ;;
+    ko)
+      return 10
+    ;;
+    pt)
+      return 8
+    ;;
+    it)
+      return 5
+    ;;
+    zh-CN)
+      return 12
+    ;;
+    jp)
+      return 1
+    ;;
+    *) # default ENGLISH
+      return 0
+    ;;
+  esac
+}
+
+
+
+# PPSSPP/GO
+#----------
+
+#[PSP - SystemLanguage]
+# ja_JP = "JAPANESE" 0
+# en_US = "ENGLISH" 1
+# fr_FR = "FRENCH" 2
+# es_ES = "SPANISH" 3
+# gl_ES = "SPANISH" 4
+# es_LA = "SPANISH" 5
+# de_DE = "GERMAN" 6
+# it_IT = "ITALIAN" 7
+# nl_NL = "DUTCH" 8
+# pt_PT = "PORTUGUESE" 9
+# pt_BR = "PORTUGUESE" 10
+# ru_RU = "RUSSIAN" 11
+# ko_KR = "KOREAN" 12
+# th_TH = "THAI" 13
+# zh_TW = "CHINESE_TRADITIONAL" 14
+# zh_CN = "CHINESE_SIMPLIFIED" 15
+
+pspHomeRomsConfigFile="$USER_HOME_PATH/.config/ppsspp/PSP/SYSTEM/ppsspp.ini"
+pspSdlHomeConfigFile="$USER_HOME_PATH/.config/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl"
+pspGoHomeConfigFile="$USER_HOME_PATH/.config/ppsspp/PSP/SYSTEM/ppsspp.ini.go"
+
+pspRomsConfigFile="$ROMS_DIR/ppsspp/PSP/SYSTEM/ppsspp.ini"
+pspSdlRomsConfigFile="$ROMS_DIR/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl"
+pspGoRomsConfigFile="$ROMS_DIR/ppsspp/PSP/SYSTEM/ppsspp.ini.go"
+
+
+setPpssppLanguage ()
+{
+	valuestr=$1
+	valuenum=$2
+	configFile=$3
+
+	sudo sed -i -E "s/^Language = [a-z]{2}_[A-Z]{2}$/Language = $valuestr/g" "$configFile" > /dev/null
+	sudo sed -i -E "s/^Language = [0-9]?$/Language = $valuenum/g" "$configFile" > /dev/null
+}
+
+setPpssppLanguageValue ()
+{
+#property --> Language = en_US
+#property --> Language = 1
+
+	# language string
+	valuestr=$(getPpssppLanguageString $pvalue)
+
+	# language number
+	getPpssppLanguageNumber $pvalue
+	valuenum=$?
+
+	setPpssppLanguage $valuestr $valuenum $pspHomeRomsConfigFile
+	setPpssppLanguage $valuestr $valuenum $pspRomsConfigFile
+
+	setPpssppLanguage $valuestr $valuenum $pspSdlHomeConfigFile
+	setPpssppLanguage $valuestr $valuenum $pspSdlRomsConfigFile
+
+	setPpssppLanguage $valuestr $valuenum $pspGoHomeConfigFile
+	setPpssppLanguage $valuestr $valuenum $pspGoRomsConfigFile
+}
+
+getPpssppLanguageString ()
+{
+  case $1 in
+    br)
+      echo "pt_BR"
+    ;;
+    de)
+      echo "de_DE"
+    ;;
+    es)
+      echo "es_ES"
+    ;;
+    fr)
+      echo "fr_FR"
+    ;;
+    ko)
+      echo "ko_KR"
+    ;;
+    pt)
+      echo "pt_PT"
+    ;;
+    it)
+      echo "it_IT"
+    ;;
+    zh-CN)
+      echo "zh_CN"
+    ;;
+    jp)
+      echo "ja_JP"
+    ;;
+    *) # default ENGLISH
+      echo "en_US"
+    ;;
+  esac
+}
+
+
+getPpssppLanguageNumber ()
+{
+  case $1 in
+    br)
+      return 10
+    ;;
+    de)
+      return 6
+    ;;
+    es)
+      return 3
+    ;;
+    fr)
+      return 2
+    ;;
+    ko)
+      return 12
+    ;;
+    pt)
+      return 9
+    ;;
+    it)
+      return 7
+    ;;
+    zh-CN)
+      return 15
+    ;;
+    jp)
+      return 0
+    ;;
+    *) # default ENGLISH
+      return 1
+    ;;
+  esac
+}
+
+# SCUMMVM
+#---------
+
+
+#    gb  - English (Great Britain) (default)
+#    en  - English (USA)
+#    de  - German
+#    fr  - French
+#    it  - Italian
+#    pt  - Portuguese
+#    es  - Spanish
+#    se  - Swedish
+#    jp  - Japannese
+#    zh  - CHINESE_SIMPLIFIED
+#    kr  - KOREAN
+#    ru  - Russian
+#    cz  - Czech
+
+
+scummvmConfigFile="$USER_HOME_PATH/.config/scummvm/scummvm.ini"
+
+setScummvmLanguageValue ()
+{
+#property --> gui_language=en
+
+	value=$(getScummvmLanguageValue $pvalue)
+
+	cat "$scummvmConfigFile" | grep -iw "gui_language" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo sed -i "/\[scummvm\]/ a gui_language=$value" "$scummvmConfigFile"
+	else
+		sudo sed -i "s/#\?gui_language=.*/gui_language=$value/g" "$scummvmConfigFile" > /dev/null
+	fi
+}
+
+getScummvmLanguageValue ()
+{
+  case $1 in
+    br)
+      echo "pt"
+    ;;
+    de)
+      echo "de"
+    ;;
+    es)
+      echo "es"
+    ;;
+    fr)
+      echo "fr"
+    ;;
+    ko)
+      echo "kr"
+    ;;
+    pt)
+      echo "pt"
+    ;;
+    it)
+      echo "it"
+    ;;
+    zh-CN)
+      echo "zh"
+    ;;
+    jp)
+      echo "jp"
+    ;;
+    *) # default ENGLISH
+      echo "en"
+    ;;
+  esac
+}
+
+
+
+
+# LZDOOM
+#---------
+
+
+# en:  English (all variants)
+# de:  German (all variants)
+# esp: Castilian Spanish
+# fr:  French (all variants)
+# ptb: Brazilian Portuguese
+# ptg: Portuguese
+# ru:  Russian
+# ita: Italian
+
+
+lzdoomConfigFile="$USER_HOME_PATH/.config/lzdoom/lzdoom.ini"
+
+setLzdoomLanguageValue ()
+{
+#property --> language=auto
+
+	value=$(getLzdoomLanguageValue $pvalue)
+
+	cat "$lzdoomConfigFile" | grep -iw "language" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo sed -i "/\[GlobalSettings\]/ a language=$value" "$lzdoomConfigFile"
+	else
+		sudo sed -i "s/#\?language=.*/language=$value/g" "$lzdoomConfigFile" > /dev/null
+	fi
+
+}
+
+getLzdoomLanguageValue ()
+{
+  case $1 in
+    br)
+      echo "ptb"
+    ;;
+    de)
+      echo "de"
+    ;;
+    es)
+      echo "esp"
+    ;;
+    fr)
+      echo "fr"
+    ;;
+#    ko)
+#      echo "kr"
+#    ;;
+    pt)
+      echo "ptg"
+    ;;
+    it)
+      echo "ita"
+    ;;
+#    zh-CN)
+#      echo "zh"
+#    ;;
+#    jp)
+#      echo "jp"
+#    ;;
+    *) # default automatic
+      echo "auto"
+    ;;
+  esac
+}
+
+
+
+
+# GZDOOM
+#---------
+
+
+# en:  English (all variants)
+# de:  German (all variants)
+# esp: Castilian Spanish
+# fr:  French (all variants)
+# ptb: Brazilian Portuguese
+# ptg: Portuguese
+# ru:  Russian
+# ita: Italian
+
+
+gzdoomConfigFile="$USER_HOME_PATH/.config/gzdoom/gzdoom.ini"
+
+setGzdoomLanguageValue ()
+{
+#property --> language=auto
+
+	value=$(getGzdoomLanguageValue $pvalue)
+
+	cat "$gzdoomConfigFile" | grep -iw "language" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo sed -i "/\[GlobalSettings\]/ a language=$value" "$gzdoomConfigFile"
+	else
+		sudo sed -i "s/#\?language=.*/language=$value/g" "$gzdoomConfigFile" > /dev/null
+	fi
+
+}
+
+getGzdoomLanguageValue ()
+{
+  case $1 in
+    br)
+      echo "ptb"
+    ;;
+    de)
+      echo "de"
+    ;;
+    es)
+      echo "esp"
+    ;;
+    fr)
+      echo "fr"
+    ;;
+#    ko)
+#      echo "kr"
+#    ;;
+    pt)
+      echo "ptg"
+    ;;
+    it)
+      echo "ita"
+    ;;
+#    zh-CN)
+#      echo "zh"
+#    ;;
+#    jp)
+#      echo "jp"
+#    ;;
+    *) # default automatic
+      echo "auto"
+    ;;
+  esac
+}
+
+
+
+get_es_language_value () {
+#<string name="Language" value="es" />
+	sed -n "s/.*name=\"Language\".*value=\"\([^\"]*\).*/\1/p" "$esConfigFile"
+}
+
+
+# ******************************************************************************************
+
+
+if [ "$command" = "set" ]; then
+	setRetroarchLanguageValue
+	setPpssppLanguageValue
+	setScummvmLanguageValue
+	setLzdoomLanguageValue
+	setGzdoomLanguageValue
+
+	exit 0
+elif [ "$command" = "get" ]; then
+	get_es_language_value
+fi

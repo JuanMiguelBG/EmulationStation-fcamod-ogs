@@ -1,0 +1,147 @@
+#!/bin/sh
+
+if [ ! "$1" ];then
+	printf "usage : es-cheevos set key value|get key]\n"
+	printf "Valid keys: cheevos_enable, cheevos_hardcore_mode_enable, cheevos_leaderboards_enable, cheevos_verbose_enable, cheevos_auto_screenshot, cheevos_challenge_indicators, cheevos_richpresence_enable, cheevos_badges_enable, cheevos_test_unofficial, cheevos_start_active, cheevos_unlock_sound_enable, cheevos_unlock_sound, cheevos_sound_folders, cheevos_username, cheevos_password, cheevos_token\n"
+	printf "or\n"
+	printf "usage : es-cheevos set_all_values [cheevos_enable_value] [cheevos_hardcore_mode_value] [cheevos_leaderboards_value] [cheevos_verbose_value] [cheevos_auto_screenshot_value] [cheevos_challenge_value] [cheevos_richpresence_value] [cheevos_badges_value] [cheevos_test_unofficial_value] [cheevos_start_active_value] [sound_value] [username_value] [password_value]\n"
+	exit 1
+fi
+
+# Configure ES commons variables
+. es-commons
+
+raConfigFolder="$RA_CONFIG_FOLDER"
+raConfigFile="$raConfigFolder/retroarch.cfg"
+ra32ConfigFolder="$RA32_CONFIG_FOLDER"
+ra32ConfigFile="$ra32ConfigFolder/retroarch.cfg"
+unlock_sound_file="$raConfigFolder/assets/sounds/unlock.ogg"
+unlock_sound_file_save="$unlock_sound_file.save"
+
+
+set_ra_value () {
+	configFile=$1
+	key=$2
+	value=$3
+
+	[ -z "$value" ] && value=0
+	cat "$configFile" | grep -iw "$key" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "$key = \"$value\"" | sudo tee -a "$configFile" > /dev/null
+	else
+		sudo sed -i "s/#\?$key =.*/$key = \"$value\"/g" "$configFile" > /dev/null
+	fi
+}
+
+restore_unlock_sound () {
+	sleep 1
+	set_ra_value $raConfigFile "cheevos_unlock_sound_enable" "false"
+	set_ra_value $ra32ConfigFile "cheevos_unlock_sound_enable" "false"
+
+	if [ -f "$unlock_sound_file_save" ]; then
+		rm -f "$unlock_sound_file"
+		mv -f "$unlock_sound_file_save" "$unlock_sound_file"
+	fi
+
+}
+
+config_unlock_sound () {
+		value_file=$1
+
+		if [ "$value_file" = "none" ] || [ "$value_file" = "" ]; then
+			restore_unlock_sound
+			return 0
+		else
+			set_ra_value $raConfigFile "cheevos_unlock_sound_enable" "true"
+			set_ra_value $ra32ConfigFile "cheevos_unlock_sound_enable" "true"
+
+			if [ "$value_file" = "unlock" ]; then
+				if [ -f "$unlock_sound_file_save" ]; then
+					rm -f "$unlock_sound_file"
+					mv -f "$unlock_sound_file_save" "$unlock_sound_file"
+				fi
+			else
+				sound_file=$(find "$raConfigFolder/assets/sounds" -type f -name "$value_file.ogg")
+				if [ ! -f "$sound_file" ]; then
+					sound_file=$(find "$HOME/sounds/retroachievements" -type f -name "$value_file.ogg")
+				fi
+
+				if [ -f "$sound_file" ]; then
+					if [ ! -f "$unlock_sound_file_save" ]; then
+						mv -f "$unlock_sound_file" "$unlock_sound_file_save"
+					fi
+					cp -f "$sound_file" "$unlock_sound_file"
+				fi
+			fi
+		fi
+}
+
+get_unlock_sound_folders () {
+	echo "$raConfigFolder/assets/sounds\n$HOME/sounds/retroachievements"
+}
+
+config_set_value () {
+	key=$1
+	value=$2
+
+	if [ "$key" = "cheevos_unlock_sound" ]; then
+		config_unlock_sound $value
+	else
+		set_ra_value $raConfigFile $key $value
+		set_ra_value $ra32ConfigFile $key $value
+	fi
+}
+
+config_get_value () {
+	key=$1
+
+	if [ "$key" = "cheevos_sound_folders" ]; then
+		get_unlock_sound_folders
+	else
+		sed -rn "s/^$key = \"([^\n]+)\"$/\1/p" "$raConfigFile"
+	fi
+}
+
+config_set_all_values () {
+	config_set_value "cheevos_enable" $1
+	config_set_value "cheevos_hardcore_mode_enable" $2
+	config_set_value "cheevos_leaderboards_enable" $3
+	config_set_value "cheevos_verbose_enable" $4
+	config_set_value "cheevos_auto_screenshot" $5
+	config_set_value "cheevos_challenge_indicators" $6
+	config_set_value "cheevos_richpresence_enable" $7
+	config_set_value "cheevos_badges_enable" $8
+	config_set_value "cheevos_test_unofficial" $9
+	config_set_value "cheevos_start_active" $10
+	config_set_value "cheevos_unlock_sound" $11
+	config_set_value "cheevos_username" $12
+	config_set_value "cheevos_password" $13
+}
+
+
+# ******************************************************************************************
+
+
+command="$1"
+
+if [ "$#" -eq 3 ]; then
+	pkey="$2"
+	pvalue="$3"
+	if [ "$command" = "set" ]; then
+		config_set_value $pkey $pvalue
+		exit 0
+	fi
+elif [ "$#" -eq 2 ]; then
+	pkey="$2"
+	if [ "$command" = "get" ]; then
+		config_get_value $pkey
+	fi
+elif [ "$#" -eq 14 ]; then
+	if [ "$command" = "set_all_values" ]; then
+		config_set_all_values "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14"
+	fi
+	exit 0
+fi
+

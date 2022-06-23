@@ -1,0 +1,81 @@
+#!/bin/sh
+
+if [ ! "$1" ];then
+	printf "usage : es-system_hotkey [set key value|get key]\n"
+	printf "Valid keys: brightness, volume, wifi, performance and suspend\n"
+	printf "Valid values: enabled and disabled\n"
+	printf "or\n"
+	printf "usage : es-system_hotkey set_all_values [brightness_value] [brightness_step_value] [volume_value] [volume_step_value] [wifi_value] [performance_value] [suspend_value]\n"
+	printf "Valid values: enabled and disabled\n"
+	exit 1
+fi
+
+configFile="/usr/local/etc/ogage.conf"
+
+config_set_value () {
+	key=$1
+	value=$2
+
+	[ -z "$value" ] && value=0
+	cat "$configFile" | grep -iw "$key" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "$key=$value" | sudo tee -a "$configFile" > /dev/null
+	else
+		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$configFile" > /dev/null
+	fi
+
+	sudo systemctl restart oga_events.service
+}
+
+config_get_value () {
+	key=$1
+	sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"
+}
+
+config_set_all_values () {
+	config_file $1 $2 $3 $4 $5 $6 $7
+
+	sudo systemctl restart oga_events.service
+}
+
+config_file () {
+	echo "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nperformance=$6\nsuspend=$7\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
+}
+
+
+# ******************************************************************************************
+
+
+# Configure ES commons variables
+. es-commons
+
+if [ ! -f "$configFile" ]; then
+	#echo "The system hotkey events configuration file '$configFile' doesn't exist, creating it."
+	# config with default values: brightness brightness_step volume volume_step wifi performance suspend
+	config_file "enabled" "1" "enabled" "1" "enabled" "enabled" "enabled"
+fi
+
+command="$1"
+
+if [ "$#" -eq 3 ]; then
+	pkey="$2"
+	pvalue="$3"
+
+	if [ "$command" = "set" ]; then
+		config_set_value $pkey $pvalue
+		exit 0
+	fi
+elif [ "$#" -eq 2 ]; then
+	pkey="$2"
+
+	if [ "$command" = "get" ]; then
+		config_get_value $pkey
+	fi
+elif [ "$#" -eq 8 ]; then
+	if [ "$command" = "set_all_values" ]; then
+		config_set_all_values "$2" "$3" "$4" "$5" "$6" "$7" "$8"
+	fi
+	exit 0
+fi

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Configure ES commons variables
+. es-commons
+
+	if [ ! -f $ES_PRELOAD_VLC_LOCK_FILE ]; then
+		echo "#--" | sudo tee "$ES_PRELOAD_VLC_LOCK_FILE" > /dev/null
+	fi
+
+/usr/bin/find $ROMS_DIR -type f -name '*.mp4' -exec /bin/cat "{}" > /dev/null  \; -quit
+
+	if [ -f $ES_PRELOAD_VLC_LOCK_FILE ]; then
+		sudo rm -f "$ES_PRELOAD_VLC_LOCK_FILE" > /dev/null
+	fi

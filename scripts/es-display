@@ -1,0 +1,111 @@
+#!/bin/sh
+
+if [ ! "$1" ];then
+	printf "usage : es-display [set key value|get key]\n"
+	printf "Valid keys: blink_low_battery, auto_dim_stay_awake_while_charging, auto_dim_time, auto_dim_timeout, auto_dim_brightness\n"
+	printf "or\n"
+	printf "usage : es-display set_auto_dim_all_values [auto_dim_stay_awake_while_charging_value] [auto_dim_time_value] [auto_dim_timeout_value] [auto_dim_brightness_value]\n"
+	exit 1
+fi
+
+configFile="/usr/local/etc/auto_dim.conf"
+blinkLowBatteryRules="/etc/udev/rules.d/99-lowbat.rules"
+
+deactive_udev_rule () {
+	sudo rm -f "$blinkLowBatteryRules"
+	echo "# " | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+}
+
+active_udev_rule () {
+		echo "# Blink the display with low battery" | sudo tee "$blinkLowBatteryRules" > /dev/null
+		echo "# the display blink one time at battery levels 29 and 25" | sudo tee "$blinkLowBatteryRules" > /dev/null
+		echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"2[59]\", RUN+=\"/usr/local/bin/blink-screen 1\"" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+		echo "# the display blink two times at battery levels 19, 16 and 13" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+		echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"1[369]\", RUN+=\"/usr/local/bin/blink-screen 2\"" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+		echo "# the display blink three times at battery levels from 9 to 0" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+		echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"[0-9]\", RUN+=\"/usr/local/bin/blink-screen 3\"" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+}
+
+config_blink_low_battery() {
+
+	if [ "$1" = "enabled" ]; then
+		active_udev_rule
+	else
+		deactive_udev_rule
+	fi
+
+	sudo udevadm control --reload-rules
+	sudo systemctl restart udev.service
+
+	exit 0
+}
+
+config_set_value () {
+	key=$1
+	value=$2
+
+	[ -z "$value" ] && value=0
+	cat "$configFile" | grep -iw "$key" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "$key=$value" | sudo tee -a "$configFile" > /dev/null
+	else
+		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$configFile" > /dev/null
+	fi
+
+	sudo systemctl restart oga_events.service
+}
+
+config_get_value () {
+	key=$1
+	sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"
+}
+
+config_set_auto_dim_all_values () {
+	config_file $1 $2 $3 $4
+
+	sudo systemctl restart oga_events.service
+}
+
+config_file () {
+	echo "#The display auto dim configuration file\nauto_dim_stay_awake_while_charging=$1\nauto_dim_time=$2\nauto_dim_timeout=$3\nauto_dim_brightness=$4\n" | sudo tee "$configFile" > /dev/null
+}
+
+
+# ******************************************************************************************
+
+
+if [ ! -f "$configFile" ]; then
+	#echo "The display auto dim configuration file '$configFile' doesn't exist, creating it."
+	# config with default values
+	config_file "disabled" "disabled" "5" "25"
+fi
+
+command="$1"
+
+if [ "$#" -eq 3 ]; then
+	pkey="$2"
+	pvalue="$3"
+
+	if [ "$command" = "set" ]; then
+		if [ "$pkey" = "blink_low_battery" ]; then
+			config_blink_low_battery $pvalue
+		else
+			config_set_value $pkey $pvalue
+		fi
+
+		exit 0
+	fi
+elif [ "$#" -eq 2 ]; then
+	pkey="$2"
+
+	if [ "$command" = "get" ]; then
+		config_get_value $pkey
+	fi
+elif [ "$#" -eq 5 ]; then
+	if [ "$command" = "set_auto_dim_all_values" ]; then
+		config_set_auto_dim_all_values "$2" "$3" "$4" "$5"
+	fi
+	exit 0
+fi
