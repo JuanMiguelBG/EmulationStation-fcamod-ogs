@@ -4,6 +4,7 @@
 #include "utils/FileSystemUtil.h"
 #include "Log.h"
 #include <pugixml/src/pugixml.hpp>
+#include "utils/StringUtil.h"
 #include <string.h>
 
 MameNames* MameNames::sInstance = nullptr;
@@ -36,73 +37,89 @@ MameNames* MameNames::getInstance()
 
 MameNames::MameNames()
 {
-	std::string xmlpath = ResourceManager::getInstance()->getResourcePath(":/mamenames.xml");
-
-	if(!Utils::FileSystem::exists(xmlpath))
-		return;
-
-	LOG(LogInfo) << "MameNames::MameNames() - Parsing XML file \"" << xmlpath << "\"...";
+	std::string xmlpath;
 
 	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(xmlpath.c_str());
+	pugi::xml_parse_result result;
 
-	if(!result)
+	// Read mame games information
+	xmlpath = ResourceManager::getInstance()->getResourcePath(":/mamenames.xml");
+	if (Utils::FileSystem::exists(xmlpath))
 	{
-		LOG(LogError) << "MameNames::MameNames() - Error parsing XML file \"" << xmlpath << "\"!\n	" << result.description();
-		return;
-	}
+		result = doc.load_file(xmlpath.c_str());
+		if (result)
+		{
+			LOG(LogInfo) << "MameNames::MameNames() - Parsing XML file \"" << xmlpath << "\"...";
 
-	for(pugi::xml_node gameNode = doc.child("game"); gameNode; gameNode = gameNode.next_sibling("game"))
-	{
-		NamePair namePair = { gameNode.child("mamename").text().get(), gameNode.child("realname").text().get() };
-		mNamePairs.push_back(namePair);
+			pugi::xml_node root = doc;
 
-		if (gameNode.attribute("vert") && gameNode.attribute("vert").value() == "true")
-			mVerticalGames.insert(namePair.mameName);
+			pugi::xml_node games = doc.child("games");
+			if (games)
+				root = games;
+
+			std::string sTrue = "true";
+			for (pugi::xml_node gameNode = root.child("game"); gameNode; gameNode = gameNode.next_sibling("game"))
+			{
+				NamePair namePair = { gameNode.child("mamename").text().get(), gameNode.child("realname").text().get() };
+				mNamePairs.push_back(namePair);
+
+				if (gameNode.attribute("vert") && gameNode.attribute("vert").value() == sTrue)
+					mVerticalGames.insert(namePair.mameName);
+			}
+		}
+		else
+			LOG(LogError) << "MameNames::MameNames() - Error parsing XML file \"" << xmlpath << "\"!\n	" << result.description();
 	}
 
 	// Read bios
 	xmlpath = ResourceManager::getInstance()->getResourcePath(":/mamebioses.xml");
-
-	if(!Utils::FileSystem::exists(xmlpath))
-		return;
-
-	LOG(LogInfo) << "MameNames::MameNames() - Parsing XML file \"" << xmlpath << "\"...";
-
-	result = doc.load_file(xmlpath.c_str());
-
-	if(!result)
+	if (Utils::FileSystem::exists(xmlpath))
 	{
-		LOG(LogError) << "MameNames::MameNames() - Error parsing XML file \"" << xmlpath << "\"!\n	" << result.description();
-		return;
-	}
+		result = doc.load_file(xmlpath.c_str());
+		if (result)
+		{
+			LOG(LogInfo) << "MameNames::MameNames() - Parsing XML file \"" << xmlpath << "\"...";
 
-	for(pugi::xml_node biosNode = doc.child("bios"); biosNode; biosNode = biosNode.next_sibling("bios"))
-	{
-		std::string bios = biosNode.text().get();
-		mMameBioses.insert(bios);
+			pugi::xml_node root = doc;
+
+			pugi::xml_node bioses = doc.child("bioses");
+			if (bioses)
+				root = bioses;
+
+			for (pugi::xml_node biosNode = root.child("bios"); biosNode; biosNode = biosNode.next_sibling("bios"))
+			{
+				std::string bios = biosNode.text().get();
+				mMameBioses.insert(bios);
+			}
+		}
+		else
+			LOG(LogError) << "MameNames::MameNames() - Error parsing XML file \"" << xmlpath << "\"!\n	" << result.description();
+
 	}
 
 	// Read devices
 	xmlpath = ResourceManager::getInstance()->getResourcePath(":/mamedevices.xml");
-
-	if(!Utils::FileSystem::exists(xmlpath))
-		return;
-
-	LOG(LogInfo) << "MameNames::MameNames() - Parsing XML file \"" << xmlpath << "\"...";
-
-	result = doc.load_file(xmlpath.c_str());
-
-	if(!result)
+	if (Utils::FileSystem::exists(xmlpath))
 	{
-		LOG(LogError) << "MameNames::MameNames() - Error parsing XML file \"" << xmlpath << "\"!\n	" << result.description();
-		return;
-	}
+		result = doc.load_file(xmlpath.c_str());
+		if (result)
+		{
+			LOG(LogInfo) << "MameNames::MameNames() - Parsing XML file \"" << xmlpath << "\"...";
 
-	for(pugi::xml_node deviceNode = doc.child("device"); deviceNode; deviceNode = deviceNode.next_sibling("device"))
-	{		
-		std::string device = deviceNode.text().get();
-		mMameDevices.insert(device);
+			pugi::xml_node root = doc;
+
+			pugi::xml_node devices = doc.child("devices");
+			if (devices)
+				root = devices;
+
+			for (pugi::xml_node deviceNode = root.child("device"); deviceNode; deviceNode = deviceNode.next_sibling("device"))
+			{
+				std::string device = deviceNode.text().get();
+				mMameDevices.insert(device);
+			}
+		}
+		else
+			LOG(LogError) << "MameNames::MameNames() - Error parsing XML file \"" << xmlpath << "\"!\n	" << result.description();
 	}
 
 } // MameNames
@@ -144,4 +161,4 @@ const bool MameNames::isDevice(const std::string& _deviceName)
 const bool MameNames::isVertical(const std::string& _nameName)
 {
 	return (mVerticalGames.find(_nameName) != mVerticalGames.cend());
-} // isVertical
+}
