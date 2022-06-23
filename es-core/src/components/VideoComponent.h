@@ -43,7 +43,7 @@ public:
 		if (mPlayingVideoPath.empty())
 			return mPlayingVideoPath;
 
-		return mVideoPath;		
+		return mVideoPath;
 	}
 
 	// Loads the video at the given filepath
@@ -117,7 +117,7 @@ public:
 	void setSnapshotSource(ImageSource source) { mConfig.snapshotSource = source; };
 
 	void setShowSnapshot(bool showSnapshot = false) { mConfig.showSnapshot = showSnapshot; };
-	bool isShowSnapshot() { return mConfig.showSnapshot; };
+	bool isShowSnapshot();
 
 
 	void setStaticImage(ImageComponent staticImage) { mStaticImage = staticImage; }
@@ -129,7 +129,7 @@ public:
 
 	float getRoundCorners() { return mRoundCorners; }
 	void setRoundCorners(float value);
-	
+
 	bool isFading() {
 		return mIsPlaying && mFadeIn < 1.0;
 	}
@@ -159,7 +159,6 @@ protected:
 	std::shared_ptr<IPlaylist> mPlaylist;
 	std::function<bool()> mVideoEnded;
 
-private:
 	// Start the video Immediately
 	virtual void startVideo() = 0;
 	// Stop the video
@@ -167,9 +166,15 @@ private:
 	// Handle looping the video. Must be called periodically
 	virtual void handleLooping();
 
+	// Pause/Resume
+	virtual void pauseVideo() { stopVideo(); };
+	virtual void resumeVideo() { startVideoWithDelay(); };
+	virtual bool isPaused() { return false; }
+
 	// Start the video after any configured delay
 	void startVideoWithDelay();
 
+private:
 	// Handle any delay to the start of playing the video clip. Must be called periodically
 	void handleStartDelay();
 

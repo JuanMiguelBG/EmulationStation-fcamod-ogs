@@ -48,10 +48,10 @@ class VideoVlcComponent : public VideoComponent
 	// Structure that groups together the configuration of the video component
 	struct Configuration
 	{
-		unsigned						startDelay;
+		unsigned					startDelay;
 		bool							showSnapshotNoVideo;
 		bool							showSnapshotDelay;
-		std::string						defaultVideoPath;
+		std::string				defaultVideoPath;
 	};
 
 public:
@@ -81,14 +81,22 @@ public:
 
 	void setEffect(VideoVlcFlags::VideoVlcEffect effect) { mEffect = effect; }
 
+	virtual void onShow() override;
+
 private:
 	// Calculates the correct mSize from our resizing information (set by setResize/setMaxSize).
 	// Used internally whenever the resizing parameters or texture change.
 	void resize();
 	// Start the video Immediately
+
 	virtual void startVideo();
 	// Stop the video
 	virtual void stopVideo();
+
+	virtual void pauseVideo();
+	virtual void resumeVideo();
+	virtual bool isPaused();
+
 	// Handle looping the video. Must be called periodically
 	virtual void handleLooping();
 
@@ -99,9 +107,9 @@ private:
 
 private:
 	static libvlc_instance_t*		mVLC;
-	libvlc_media_t*					mMedia;
+	libvlc_media_t*							mMedia;
 	libvlc_media_player_t*			mMediaPlayer;
-	VideoContext					mContext;
+	VideoContext								mContext;
 	std::shared_ptr<TextureResource> mTexture;
 
 	std::string				mSubtitlePath;

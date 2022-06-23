@@ -420,7 +420,7 @@ void VideoComponent::manageState()
 
 	// We will only show if the component is on display and the screensaver
 	// is not active
-	bool show = isShowing() && !mScreensaverActive && !mDisable;
+	bool show = isShowing() && !mScreensaverActive && !mDisable && isVisible();
 	if (!show)
 		mStartDelayed = false;
 
@@ -432,7 +432,11 @@ void VideoComponent::manageState()
 		{
 			mIsWaitingForVideoToStart = false;
 			mStartDelayed = false;
-			stopVideo();
+
+			if (mDisable && isShowing() && !mScreensaverActive && mIsPlaying && isVisible())
+				pauseVideo();
+			else
+				stopVideo();
 		}
 		else
 		{
@@ -452,7 +456,10 @@ void VideoComponent::manageState()
 		// If we are on display then see if we should start the video
 		if (show && !mVideoPath.empty())
 		{
-			startVideoWithDelay();
+			if (isPaused())
+				resumeVideo();
+			else
+				startVideoWithDelay();
 		}
 	}	
 }
@@ -510,4 +517,9 @@ void VideoComponent::setRoundCorners(float value)
 { 
 	mRoundCorners = value;
 	mStaticImage.setRoundCorners(value);
+}
+
+bool VideoComponent::isShowSnapshot()
+{
+	return mConfig.showSnapshotNoVideo || (mConfig.showSnapshotDelay && mConfig.startDelay);
 }
