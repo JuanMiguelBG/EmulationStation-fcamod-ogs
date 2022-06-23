@@ -405,7 +405,7 @@ void ControllerActivityComponent::applyTheme(const std::shared_ptr<ThemeData>& t
 
 void ControllerActivityComponent::updateNetworkInfo()
 {
-	mNetworkConnected = Settings::getInstance()->getBool("ShowNetworkIndicator") && queryNetworkConnected();
+	mNetworkConnected = Settings::getInstance()->getBool("ShowNetworkIndicator") && queryNetworkConnectedFast();
 }
 
 void ControllerActivityComponent::updateBatteryInfo()

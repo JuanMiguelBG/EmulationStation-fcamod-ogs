@@ -122,6 +122,7 @@ std::string queryDnsOne();
 std::string queryDnsTwo();
 bool queryNetworkConnected();
 std::string queryWifiNetworkExistFlag();
+bool queryNetworkConnectedFast();
 
 
 struct CpuAndSocketInformation
