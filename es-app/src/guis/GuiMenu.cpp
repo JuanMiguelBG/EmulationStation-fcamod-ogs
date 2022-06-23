@@ -103,9 +103,9 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		BatteryInformation battery = ApiSystem::getInstance()->getBatteryInformation();
 		SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 
-		addEntry("BAT: " + std::to_string( battery.level ) + "%" + " | SND: " + std::to_string(ApiSystem::getInstance()->getVolume()) + "%" + " | BRT: " + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% |" + _("NETWORK")+ ": " + _( (ApiSystem::getInstance()->isNetworkConnected() ? "CONNECTED" : "NOT CONNECTED") ), false, [this] {  });
+		addEntry(_U("\uF0E7 ") + std::to_string( battery.level ) + "% | " + _U("\uF028 ") + std::to_string(ApiSystem::getInstance()->getVolume()) + "% | " + _U("\uF185 ") + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% | " + _U("\uF0E8 ") + _U( (ApiSystem::getInstance()->isNetworkConnected() ? "\uF1EB" : "\uF10C") ), false, [this] {  });
 
-		addEntry("Distro Version: " + software.application_name + " " + software.version, false, [this] {  });
+		addEntry(_U("\uF02B Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 	}
 
 	addChild(&mMenu);
@@ -1493,9 +1493,9 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						_("OK"), [newSSID, newKey, window]
 							{
 								if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
-									window->pushGui(new GuiMsgBox(window, _U("\u270C  ") + newSSID + " - " + _("WIFI ENABLED")));
+									window->pushGui(new GuiMsgBox(window, _U("\uF161  ") + newSSID + " - " + _("WIFI ENABLED")));
 								else
-									window->pushGui(new GuiMsgBox(window, _U("\u26D4  ") + newSSID + " - " + _("WIFI CONFIGURATION ERROR")));
+									window->pushGui(new GuiMsgBox(window, _U("\uF071  ") + newSSID + " - " + _("WIFI CONFIGURATION ERROR")));
 							}));
 				}
 			}
@@ -1516,9 +1516,9 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				{
 					std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
 					if (ApiSystem::getInstance()->enableWifi(ssid, SystemConf::getInstance()->get("wifi.key")))
-						window->displayNotificationMessage(_U("\u270C  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
+						window->displayNotificationMessage(_U("\uF161  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
 					else
-						window->displayNotificationMessage(_U("\u26D4  ") + ssid + " - " + _("WIFI CONFIGURATION ERROR"), 10000);
+						window->displayNotificationMessage(_U("\uF071  ") + ssid + " - " + _("WIFI CONFIGURATION ERROR"), 10000);
 				}
 				else
 					ApiSystem::getInstance()->disableWifi();
