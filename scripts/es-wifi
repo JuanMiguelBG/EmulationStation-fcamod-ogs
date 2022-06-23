@@ -1,0 +1,418 @@
+#!/bin/bash
+
+do_help() {
+    echo "$0 scanlist" >&2
+    echo "$0 list" >&2
+    echo "$0 start" >&2
+    echo "$0 enable <SSID> <PWD>" >&2
+    echo "$0 reset <SSID>" >&2
+    echo "$0 remove <SSID>" >&2
+    echo "$0 disable" >&2
+    echo "$0 internet_status" >&2
+    echo "$0 disconnect" >&2
+    echo "$0 is_connected" >&2
+    echo "$0 is_enabled" >&2
+    echo "$0 get_ssid" >&2
+    echo "$0 get_ssid_psk <SSID>" >&2
+    echo "$0 enable_manual_dns <SSID> <DNS1> <DNS2>" >&2
+    echo "$0 disable_manual_dns <SSID>" >&2
+    echo "$0 enable_network_manager" >&2
+    echo "$0 disable_network_manager" >&2
+    echo "$0 test_network_manager" >&2
+}
+
+is_network_manager_active() {
+    print_log $LOG_FILE "INFO" "Executing 'is_network_manager_active()'"
+
+    sudo systemctl is-active NetworkManager --quiet
+    if [ $? -eq 0 ]; then
+      # active
+      print_log $LOG_FILE "INFO" "is_network_manager_active() - NetworkManager is active"
+      return 0
+    fi
+    # inactive
+    print_log $LOG_FILE "INFO" "is_network_manager_active() - NetworkManager is inactive"
+    return 1
+}
+
+is_network_manager_enabled() {
+    print_log $LOG_FILE "INFO" "Executing 'is_network_manager_enabled()'"
+
+    sudo systemctl is-enabled NetworkManager --quiet
+    if [ $? -eq 0 ]; then
+      # enabled
+      print_log $LOG_FILE "INFO" "is_network_manager_enabled() - NetworkManager is enabled"
+      return 0
+    fi
+    # disabled
+    print_log $LOG_FILE "INFO" "is_network_manager_enabled() - NetworkManager is disabled"
+    return 1
+}
+
+enable_network_manager() {
+    print_log $LOG_FILE "INFO" "Executing 'enable_network_manager()'"
+
+    is_network_manager_active
+    if [ $? -eq 1 ]; then
+      # inactive
+      print_log $LOG_FILE "INFO" "disable_network_manager() - NetworkManager is inactive, activing..."
+      sudo systemctl enable NetworkManager --quiet
+      sudo systemctl start NetworkManager --quiet
+      sudo systemctl daemon-reload --quiet &
+      sudo nmcli network on
+      sudo nmcli radio wifi on
+    fi
+}
+
+disable_network_manager() {
+    print_log $LOG_FILE "INFO" "Executing 'enable_network_manager()'"
+
+    is_network_manager_active
+    if [ $? -eq 0 ]; then
+      # active
+      print_log $LOG_FILE "INFO" "disable_network_manager() - NetworkManager is active, inactiving..."
+      sudo nmcli radio wifi off
+      sudo network off
+      sudo systemctl stop NetworkManager --quiet
+      sudo systemctl disable NetworkManager --quiet
+      sudo systemctl daemon-reload --quiet &
+    fi
+}
+
+test_network_manager() {
+    print_log $LOG_FILE "INFO" "Executing 'test_network_manager()'"
+
+    is_network_manager_active
+    if [ $? -eq 1 ]; then
+      echo "inactive"
+    else
+      echo "active"
+    fi
+}
+
+do_list() {
+    print_log $LOG_FILE "INFO" "Executing 'do_list()'"
+    #sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u
+
+    networks=$(sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u)
+    result=""
+    while IFS= read -r line; do
+      net_regexp=`echo "$line" | tr -s " "`
+      net_regexp=${net_regexp=// /\s}
+      exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
+      if [ ! -z "$exist" ]; then
+        result="$result\n$line$EXIST_CONNECTION_FLAG"
+      else
+        result="$result\n$line"
+      fi
+    done <<< "$networks"
+    echo -e "${result#\\n}"
+}
+
+do_scanlist() {
+    print_log $LOG_FILE "INFO" "Executing 'do_scanlist()'"
+
+    enable_network_manager
+
+    sudo nmcli device wifi rescan
+    do_list
+}
+
+do_enable() {
+    local SSID=$1
+    local PSK=$2
+
+    print_log $LOG_FILE "INFO" "Executing 'do_enable()' - New connection to '$SSID'"
+
+    enable_network_manager
+
+    sudo nmcli device wifi rescan || return 1
+
+    output=""
+    actual_network=`iw dev wlan0 info | grep ssid | cut -c 7-30`
+    if [ ! -z "$actual_network" ]; then
+      print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Disconnecting of '$actual_network'"
+      sudo nmcli con down "$actual_network" > /dev/null 2>&1
+    fi
+    net_regexp=`echo "$SSID" | tr -s " "`
+    net_regexp=${net_regexp=// /\s}
+    exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
+
+    if [ ! -z "$exist" ]; then
+      print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Connection '$SSID' already exist"
+      output=`sudo nmcli con up "$SSID"`
+    else
+      # try to connect
+      output=`sudo nmcli device wifi connect "$SSID" password "$PSK"`
+    fi
+
+    success=`echo "$output" | grep successfully`
+    if [ -z "$success" ]; then
+      # NOT connected
+      print_log $LOG_FILE "INFO" "Executing 'do_enable()' - NOT connected, reason:'$output'"
+      if [ ! -z "$actual_network" ]; then
+        print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Re-connecting to '$actual_network'"
+        sudo nmcli con up "$actual_network" > /dev/null 2>&1
+      fi
+      return 1
+    fi
+
+    # connected
+    print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Successfully connected to '$SSID'"
+    return 0
+}
+
+do_remove() {
+    local SSID=$1
+
+    print_log $LOG_FILE "INFO" "Executing 'do_remove()': $SSID"
+    #fnmcli connection delete id "$SSID" || return 1
+    sudo nmcli con delete "$SSID" || return 1
+}
+
+do_disable() {
+    print_log $LOG_FILE "INFO" "Executing 'do_disable()'"
+#    sudo nmcli radio wifi off || return 1
+    disable_network_manager
+}
+
+do_reset() {
+    local SSID=$1
+
+    print_log $LOG_FILE "INFO" "Executing 'do_reset()': $SSID"
+    do_remove $SSID
+    do_disable || return 1
+}
+
+do_start() {
+    print_log $LOG_FILE "INFO" "Executing 'do_start()'"
+    enable_network_manager
+
+    sudo nmcli device wifi rescan || return 1
+}
+
+do_test_internet() {
+    print_log $LOG_FILE "INFO" "Executing 'do_test_internet()'"
+    echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 > /dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+      print_log $LOG_FILE "INFO" "do_test_internet() - connected to internet"
+      return 0
+    fi
+
+    print_log $LOG_FILE "INFO" "do_test_internet() - NOT connected to internet"
+    return 1
+}
+
+do_disconnect() {
+    local SSID=$1
+
+    print_log $LOG_FILE "INFO" "Executing 'do_disconnect()': $SSID"
+    sudo nmcli con down id "$SSID" || return 1
+}
+
+is_connected() {
+    print_log $LOG_FILE "INFO" "Executing 'is_connected()'"
+
+    output=`sudo nmcli dev status`
+
+    connected=`echo "$output" | grep -e "wifi[ ]*connected"`
+
+    if [ -z "$connected" ]; then
+      # NOT connected
+      print_log $LOG_FILE "INFO" "is_connected() - NOT connected to Wifi"
+      return 1
+    fi
+
+    # connected
+    print_log $LOG_FILE "INFO" "is_connected() - connected to Wifi"
+    return 0
+}
+
+is_enabled() {
+    print_log $LOG_FILE "INFO" "Executing 'is_enabled()'"
+
+    output=`sudo nmcli radio wifi`
+
+    enabled=`echo "$output" | grep enabled`
+
+    if [ -z "$enabled" ]; then
+      # disaled
+      print_log $LOG_FILE "INFO" "is_enabled() - Wifi is disabled"
+      return 1
+    fi
+
+    # enabled
+    print_log $LOG_FILE "INFO" "is_enabled() - Wifi is enabled"
+    return 0
+}
+
+get_ssid() {
+    print_log $LOG_FILE "INFO" "Executing 'get_ssid()'"
+    #sudo nmcli -f GENERAL.CONNECTION device show wlan0 | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}'
+    iw dev wlan0 info | grep ssid | cut -c 7-30
+}
+
+get_ssid_psk() {
+    local SSID=$1
+
+    print_log $LOG_FILE "INFO" "Executing 'get_ssid_psk()': $SSID"
+    sudo nmcli -s -g 802-11-wireless-security.psk connection show "$SSID"
+}
+
+get_dns1() {
+    print_log $LOG_FILE "INFO" "Executing 'get_dns1()'"
+    sudo nmcli -f IP4.DNS device show wlan0 | awk '$1 ~ /^IP4.DNS\[1\]/ {print $2}'
+}
+
+get_dns2() {
+    print_log $LOG_FILE "INFO" "Executing 'get_dns2()'"
+    sudo nmcli -f IP4.DNS device show wlan0 | awk '$1 ~ /^IP4.DNS\[2\]/ {print $2}'
+}
+
+enable_manual_dns() {
+    local SSID=$1
+    local DNS1=$2
+    local DNS2=$3
+
+    print_log $LOG_FILE "INFO" "Executing 'enable_manual_dns()': SSID=$SSID, DNS1=$DNS1, DNS2=$DNS2"
+    sudo nmcli con mod "$SSID" ipv4.dns "$DNS1 $DNS2" || return 1
+    sudo nmcli con mod "$SSID" ipv4.ignore-auto-dns yes || return 1
+    sudo systemctl restart NetworkManager || return 1
+
+    sleep 2
+    return 0
+}
+
+disable_manual_dns() {
+    local SSID=$1
+
+    print_log $LOG_FILE "INFO" "Executing 'disable_manual_dns()': SSID=$SSID"
+    sudo nmcli con mod "$SSID" ipv4.ignore-auto-dns no || return 1
+    sudo systemctl restart NetworkManager || return 1
+
+    sleep 2
+    return 0
+}
+
+is_network_exist()
+{
+    local SSID=$1
+
+    exist=$(ls -1 /etc/NetworkManager/system-connections/ | grep $SSID)
+    if [ ! -z "$exist" ]; then
+      # Exist
+      print_log $LOG_FILE "INFO" "Executing 'is_network_exist()': Connection to network '$SSID' exist on system"
+      return 0;
+    fi
+    # Not exist
+    print_log $LOG_FILE "INFO" "Executing 'is_network_exist()': Connection to network '$SSID' not exist on system"
+    return 1;
+}
+
+get_network_exist_flag()
+{
+    echo "$EXIST_CONNECTION_FLAG"
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-commons
+
+EXIST_CONNECTION_FLAG=" (**)"
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-wifi.log"
+
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+shift
+
+print_log $LOG_FILE "INFO" "Executing operation: $ACTION"
+
+case "${ACTION}" in
+    "list")
+        do_list
+    ;;
+    "scanlist")
+        do_scanlist
+    ;;
+    "start")
+        do_start
+    ;;
+    "enable")
+        do_enable "$1" "$2" || exit 1
+    ;;
+    "remove")
+        do_remove "$1" || exit 1
+    ;;
+    "reset")
+        do_reset "$1" || exit 1
+    ;;
+    "disable")
+        do_disable || exit 1
+    ;;
+    "internet_status")
+        do_test_internet || exit 1
+    ;;
+    "disconnect")
+        do_disconnect || exit 1
+    ;;
+    "is_connected")
+        is_connected || exit 1
+    ;;
+    "is_enabled")
+        is_enabled || exit 1
+    ;;
+    "get_ssid")
+        get_ssid
+    ;;
+    "get_ssid_psk")
+        get_ssid_psk
+    ;;
+    "get_dns1")
+        get_dns1
+    ;;
+    "get_dns2")
+        get_dns2
+    ;;
+    "enable_manual_dns")
+        enable_manual_dns "$1" "$2" "$3" || exit 1
+    ;;
+    "disable_manual_dns")
+        disable_manual_dns || exit 1
+    ;;
+    "enable_network_manager")
+        enable_network_manager || exit 1
+    ;;
+    "disable_network_manager")
+        disable_network_manager || exit 1
+    ;;
+    "is_network_manager_active")
+        is_network_manager_active || exit 1
+    ;;
+    "test_network_manager")
+        test_network_manager
+    ;;
+    "is_network_exist")
+        is_network_exist "$1"
+    ;;
+    "get_network_exist_flag")
+        get_network_exist_flag
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        print_log $LOG_FILE "ERROR" "Invalid command ${ACTION}"
+        exit 1
+esac
+exit 0

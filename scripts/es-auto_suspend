@@ -1,0 +1,111 @@
+#!/bin/sh
+
+if [ ! "$1" ];then
+	printf "usage : es-auto_suspend [set key value|get key]\n"
+	printf "Valid keys: auto_suspend_stay_awake_charging, auto_suspend_time, auto_suspend_timeout, auto_suspend_battery, auto_suspend_battery_level\n"
+	printf "or\n"
+	printf "usage : es-auto_suspend set_all_values [auto_suspend_stay_awake_charging_value] [auto_suspend_time_value] [auto_suspend_timeout_value] [auto_suspend_battery_value] [auto_suspend_battery_level_value]\n"
+	exit 1
+fi
+
+configFile="/usr/local/etc/auto_suspend.conf"
+batteryRules="/etc/udev/rules.d/99-auto_suspend_battery.rules"
+
+deactive_udev_rule () {
+	sudo rm -f "$batteryRules"
+	echo "# " | sudo tee -a "$batteryRules" > /dev/null
+}
+
+active_udev_rule () {
+		echo "# suspend the device with $1 battery level" | sudo tee "$batteryRules" > /dev/null
+		echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"$1\", RUN+=\"/usr/bin/sudo /bin/systemctl suspend\"" | sudo tee -a "$batteryRules" > /dev/null
+}
+
+config_set_value () {
+	key=$1
+	value=$2
+
+	[ -z "$value" ] && value=0
+	cat "$configFile" | grep -iw "$key" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "$key=$value" | sudo tee -a "$configFile" > /dev/null
+	else
+		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$configFile" > /dev/null
+	fi
+
+	if [ "$key" = "auto_suspend_time" ] || [ "$key" = "auto_suspend_timeout" ]; then
+		sudo systemctl restart ogs_events.service
+	elif [ "$key" = "auto_suspend_battery" ]; then
+		if [ "$value" = "enabled" ]; then
+			battery_level=$(config_get_value "auto_suspend_battery_level")
+			active_udev_rule "$battery_level"
+		elif [ "$value" = "disabled" ]; then
+			deactive_udev_rule
+		else
+			return 0
+		fi
+
+		sudo udevadm control --reload-rules
+		sudo systemctl restart udev.service
+	elif [ "$key" = "auto_suspend_battery_level" ]; then
+		as_battery=$(config_get_value "auto_suspend_battery")
+		if [ "$as_battery" = "enabled" ]; then
+			active_udev_rule "$value"
+
+			sudo udevadm control --reload-rules
+			sudo systemctl restart udev.service
+		fi
+	fi
+}
+
+config_get_value () {
+	key=$1
+	sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"
+}
+
+config_set_all_values () {
+	config_file $1 $2 $3 $4 $5
+
+	sudo systemctl restart ogs_events.service
+	sudo udevadm control --reload-rules
+	sudo systemctl restart udev.service
+}
+
+config_file () {
+	echo "#The device auto suspend configuration file\nauto_suspend_stay_awake_while_charging=$1\nauto_suspend_time=$2\nauto_suspend_timeout=$3\nauto_suspend_battery=$4\nauto_suspend_battery_level=$5\n" | sudo tee "$configFile" > /dev/null
+}
+
+
+# ******************************************************************************************
+
+
+if [ ! -f "$configFile" ]; then
+	#echo "The device auto suspend configuration file '$configFile' doesn't exist, creating it."
+	# config with default values
+	config_file "disabled" "disabled" "5" "disabled" "10"
+fi
+
+command="$1"
+
+if [ "$#" -eq 3 ]; then
+	pkey="$2"
+	pvalue="$3"
+
+	if [ "$command" = "set" ]; then
+		config_set_value $pkey $pvalue
+		exit 0
+	fi
+elif [ "$#" -eq 2 ]; then
+	pkey="$2"
+
+	if [ "$command" = "get" ]; then
+		config_get_value $pkey
+	fi
+elif [ "$#" -eq 6 ]; then
+	if [ "$command" = "set_all_values" ]; then
+		config_set_all_values "$2" "$3" "$4" "$5" "$6"
+	fi
+	exit 0
+fi

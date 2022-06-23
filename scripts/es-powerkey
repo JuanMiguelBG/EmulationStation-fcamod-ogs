@@ -1,0 +1,127 @@
+#!/bin/sh
+
+if [ ! "$1" ];then
+	printf "usage : es-powerkey [set key value|get key]\n"
+	printf "Valid keys: two_push_shutdown, max_interval_time and action\n"
+	printf "or\n"
+	printf "usage : es-powerkey set_all_values [action_value] [two_push_shutdown_value] [max_interval_time_value]\n"
+	exit 1
+fi
+
+configFile="/usr/local/etc/powerkey.conf"
+logindConf="/etc/systemd/logind.conf"
+
+deactive_systemd_powerkey () {
+	cat "$logindConf" | grep -iw "HandlePowerKey" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "HandlePowerKey=ignore" | sudo tee -a "$logindConf" > /dev/null
+	else
+		sudo sed -i "s/#\?HandlePowerKey=.*/HandlePowerKey=ignore/g" "$logindConf" > /dev/null
+	fi
+}
+
+active_systemd_powerkey () {
+	cat "$logindConf" | grep -iw "HandlePowerKey" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "HandlePowerKey=poweroff" | sudo tee -a "$logindConf" > /dev/null
+	else
+		sudo sed -i "s/#\?HandlePowerKey=.*/HandlePowerKey=poweroff/g" "$logindConf" > /dev/null
+	fi
+}
+
+config_set_value () {
+	key=$1
+	value=$2
+
+	[ -z "$value" ] && value=0
+	cat "$configFile" | grep -iw "$key" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		echo "$key=$value" | sudo tee -a "$configFile" > /dev/null
+	else
+		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$configFile" > /dev/null
+	fi
+
+	action=""
+	two_push_shutdown=""
+
+	if [ "$key" = "two_push_shutdown" ]; then
+		two_push_shutdown=$value
+		action=$(config_get_value "action")
+	elif [ "$key" = "action" ]; then
+		two_push_shutdown=$(config_get_value "two_push_shutdown")
+		action=$value
+	else
+		two_push_shutdown=$(config_get_value "two_push_shutdown")
+		action=$(config_get_value "action")
+	fi
+
+	fire_events $action $two_push_shutdown
+}
+
+fire_events () {
+	action=$1
+	two_push_shutdown=$2
+
+	if [ "$action" = "shutdown" ] && [ "$two_push_shutdown" = "disabled" ]; then
+		active_systemd_powerkey
+	else
+		deactive_systemd_powerkey
+	fi
+
+	sudo systemctl restart systemd-logind.service
+	sudo systemctl restart ogs_events.service
+}
+
+config_get_value () {
+	key=$1
+	sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"
+}
+
+config_set_all_values () {
+	config_file $1 $2 $3
+
+	fire_events $1 $2
+}
+
+config_file () {
+	echo "#The powerkey configuration file\naction=$1\ntwo_push_shutdown=$2\nmax_interval_time=$3\n" | sudo tee "$configFile" > /dev/null
+}
+
+
+# ******************************************************************************************
+
+
+if [ ! -f "$configFile" ]; then
+	#echo "The powerkey configuration file '$configFile' doesn't exist, creating it."
+	# config with default values
+	config_file "shutdown" "disabled" "5"
+fi
+
+command="$1"
+
+if [ "$#" -eq 3 ]; then
+	pkey="$2"
+	pvalue="$3"
+
+	if [ "$command" = "set" ]; then
+		config_set_value $pkey $pvalue
+		exit 0
+	fi
+elif [ "$#" -eq 2 ]; then
+	pkey="$2"
+
+	if [ "$command" = "get" ]; then
+		config_get_value $pkey
+	fi
+elif [ "$#" -eq 4 ]; then
+	if [ "$command" = "set_all_values" ]; then
+		config_set_all_values "$2" "$3" "$4"
+	fi
+	exit 0
+fi

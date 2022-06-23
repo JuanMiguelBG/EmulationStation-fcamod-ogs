@@ -1,0 +1,30 @@
+#!/bin/sh
+
+export USER_HOME_PATH="/home/odroid"
+export ES_HOME_PATH="$USER_HOME_PATH/.emulationstation"
+export ES_CONFIG_FILE="$ES_HOME_PATH/es_settings.cfg"
+export ES_BRIGTHNESS_LOCK_FILE="$ES_HOME_PATH/brightness.lock"
+export ES_PRELOAD_VLC_LOCK_FILE="$ES_HOME_PATH/preload_vlc.lock"
+export RA_CONFIG_FOLDER="$USER_HOME_PATH/.config/retroarch"
+export RA32_CONFIG_FOLDER="$USER_HOME_PATH/.config/retroarch32"
+export ES_SCRIPTS_PATH="/usr/local/bin"
+export ROMS_DIR="/roms"
+
+#export ES_SCRIPT_LOGS_DIR="$ES_HOME_PATH"
+export ES_SCRIPT_LOGS_DIR="$ROMS_DIR/logs"
+if [ ! -d "$ES_SCRIPT_LOGS_DIR" ]; then
+  sudo mkdir "$ES_SCRIPT_LOGS_DIR"
+fi
+
+ES_LOGGING_ENABLED=1
+
+print_log() {
+  local LOG_FILE="$1"
+  local LEVEL="$2"
+  local MESSAGE="$3"
+
+  if [ $ES_LOGGING_ENABLED -eq 1 ]; then
+    mdate=$( date '+%d/%m/%Y %H:%M:%S:%N')
+    echo "$mdate $LEVEL $MESSAGE" >> $LOG_FILE
+  fi
+}

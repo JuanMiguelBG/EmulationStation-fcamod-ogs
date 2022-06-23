@@ -1,0 +1,329 @@
+#!/bin/sh
+
+do_help() {
+	echo "$0 usage : active_optimize_system [true/false]" >&2
+	echo "$0 usage : active_es_scripts_log [true/false]" >&2
+	echo "$0 usage : is_actived_scripts_log" >&2
+	exit 1
+}
+
+#****************** rsyslog *************************
+
+rsyslogConfigFile="/etc/rsyslog.d/50-default.conf"
+
+rsyslog_config () {
+	cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo chmod 644 "$rsyslogConfigFile"
+		sudo sed -i -e '4 i\if $msg contains "rtl8723b_c2h_packet_handler" then { stop }\nif $msg contains "_btmpoper_cmd: C2H status" then { stop }\nif $msg contains "IsBtDisabled" then { stop }\nif $msg contains "rtl8723b_fill_default_txdesc" then { stop }\n' -e "s/#\?\*\.\*;auth,authpriv\.none/\*\.\*;auth\.none,authpriv\.none,kern\.none/g" -e "s/#\?mail\.\*/#mail\.\*/g" -e "s/#\?mail.err/#mail.err/g" "$rsyslogConfigFile" > /dev/null
+
+		sudo systemctl restart rsyslog.service
+	fi
+}
+
+rsyslog_restore() {
+	cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		# ignore
+		echo "" > /dev/null
+	else
+		sudo chmod 644 "$rsyslogConfigFile"
+		sudo sed -i -e 4,8d -e "s/#\?\*\.\*;auth\.none,authpriv\.none,kern\.none/\*\.\*;auth,authpriv\.none/g" "$rsyslogConfigFile" > /dev/null
+		sudo systemctl restart rsyslog.service
+	fi
+}
+
+
+#****************** sysctl *************************
+sysctlConfigFile="/etc/sysctl.conf"
+
+sysctl_config () {
+	sudo chmod 644 "$sysctlConfigFile"
+	sudo sed -i "s/#\?#kernel\.printk = 3 4 1 3/kernel\.printk = 3 3 1 3/g" "$sysctlConfigFile" > /dev/null
+	sudo sysctl --system
+	#sudo sysctl -p "$sysctlConfigFile" > /dev/null
+}
+
+sysctl_restore() {
+	sudo chmod 644 "$sysctlConfigFile"
+	sudo sed -i "s/#\?kernel\.printk = 3 3 1 3/#kernel\.printk = 3 4 1 3/g" "$sysctlConfigFile" > /dev/null
+	sudo sysctl --system
+	#sudo sysctl -p "$sysctlConfigFile" > /dev/null
+}
+
+
+#****************** journald *************************
+journaldConfigFile="/etc/systemd/journald.conf"
+
+journald_config () {
+	cat "$journaldConfigFile" | grep -iw "Compress=no" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo chmod 644 "$journaldConfigFile"
+		sudo sed -i -e '17 i\Compress=no' -e '19 i\SplitMode=none' -e '23 i\SystemMaxUse=10M' -e '27 i\RuntimeMaxUse=2M' -e '29 i\RuntimeMaxFileSize=128K' -e '32 i\MaxFileSec=2day' -e '38 i\MaxLevelStore=warning' -e '39 i\MaxLevelSyslog=warning' -e '40 i\MaxLevelKMsg=warning' -e '41 i\MaxLevelConsole=warning' -e '43 i\ReadKMsg=no' "$journaldConfigFile" > /dev/null
+		sudo systemctl restart systemd-journald
+	fi
+
+}
+
+journald_restore () {
+	cat "$journaldConfigFile" | grep -iw "Compress=no" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		# ignore
+		echo "" > /dev/null
+	else
+		sudo chmod 644 "$journaldConfigFile"
+		sudo sed -i -e '53d;50d;48d;46d;44d;37d;33d;30d;25d;20d;17d' "$journaldConfigFile" > /dev/null
+		sudo systemctl restart systemd-journald
+	fi
+}
+
+
+#****************** bluetooth *************************
+bluetooth_config () {
+	sudo systemctl stop bluetooth.service
+	sudo systemctl disable bluetooth.service
+	sudo systemctl daemon-reload
+}
+
+bluetooth__restore () {
+	sudo systemctl stop bluetooth.service
+	sudo systemctl enable bluetooth.service
+	sudo systemctl daemon-reload
+	sudo systemctl start bluetooth.service
+}
+
+
+#****************** logrotate *************************
+logrotateConfigFile="/etc/logrotate.conf"
+logrotateRsyslogConfigFile="/etc/logrotate.d/rsyslog"
+log_path="/var/log"
+
+logrotate_config () {
+	sudo chmod 644 "$logrotateConfigFile"
+	sudo chmod 755 "$log_path"
+	sudo sed -i -e "s/#\?weekly/daily/g" -e "s/#\?#dateext/dateext/g" "$logrotateConfigFile" > /dev/null
+	sudo logrotate -v -f "$logrotateConfigFile"
+
+	cat "$logrotateRsyslogConfigFile" | grep -iw "compress" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		# ignore
+		echo "" > /dev/null
+	else
+		sudo chmod 644 "$logrotateRsyslogConfigFile"
+		sudo sed -i -e "s/#\?rotate 7/rotate 4/g" -e "s/#\?weekly/daily/g" -e '7,8d;31,32d' "$logrotateRsyslogConfigFile" > /dev/null
+		sudo logrotate -v -f "$logrotateRsyslogConfigFile" > /dev/null
+	fi
+}
+
+logrotate_restore () {
+	sudo chmod 644 "$logrotateConfigFile"
+	sudo chmod 755 "$log_path"
+	sudo sed -i -e "s/#\?daily/weekly/g" -e "s/#\?dateext/#dateext/g" "$logrotateConfigFile" > /dev/null
+	sudo logrotate -v -f "$logrotateConfigFile"
+
+	cat "$logrotateRsyslogConfigFile" | grep -iw "compress" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo chmod 644 "$logrotateRsyslogConfigFile"
+		sudo sed -i -e '3d;26d' "$logrotateRsyslogConfigFile" > /dev/null
+		sudo sed -i -e '3 i\	rotate 7' -e '6 i\	delaycompress' -e '6 i\	compress' -e '25 i\	weekly' -e '27 i\	compress' -e '27 i\	delaycompress' "$logrotateRsyslogConfigFile" > /dev/null
+		sudo chmod 644 "$logrotateRsyslogConfigFile"
+		sudo logrotate -v -f "$logrotateRsyslogConfigFile" > /dev/null
+	fi
+}
+
+
+#****************** fstab *************************
+fstabConfigFile="/etc/fstab"
+
+fstab_config () {
+	cat "$fstabConfigFile" | grep -iw "nodiratime" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo chmod 644 "$fstabConfigFile"
+		sudo sed -i -e "s/#\?defaults/defaults,noatime,nodiratime/g" -e "s/#\?nodiratimeauto/nodiratime,auto/g" -e "s/#\?umask=000,noatime/umask=000/g" "$fstabConfigFile" > /dev/null
+	fi
+}
+
+fstab_restore () {
+	cat "$fstabConfigFile" | grep -iw "nodiratime" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		# ignore
+		echo "" > /dev/null
+	else
+		sudo chmod 644 "$fstabConfigFile"
+		sudo sed -i -e "s/#\?defaults,noatime,nodiratime/defaults/g" -e "s/#\?umask=000/umask=000,noatime/g" "$fstabConfigFile" > /dev/null
+	fi
+}
+
+
+#****************** boot *************************
+bootConfigFile="/boot/boot.ini"
+
+boot_config () {
+	cat "$bootConfigFile" | grep -iw "elevator=noop" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		sudo sed -i -e "s/#\?consoleblank=0/consoleblank=0 elevator=noop/g" "$bootConfigFile" > /dev/null
+	fi
+}
+
+boot_restore () {
+	cat "$bootConfigFile" | grep -iw "elevator=noop" > /dev/null
+	valPresent=$?
+
+	if [ "$valPresent" != "0" ]; then
+		# ignore
+		echo "" > /dev/null
+	else
+		sudo sed -i -e "s/#\?[ ]\+elevator=noop//g" "$bootConfigFile" > /dev/null
+	fi
+}
+
+
+#************* remove log / journals *************
+remove_log () {
+	sudo rm -f "$log_path"/*.log*
+	sudo rm -f "$log_path"/dmesg*
+	sudo rm -f "$log_path"/syslog*
+	sudo rm -f "$log_path"/lastlog*
+	sudo rm -f "$log_path"/btmp*
+	sudo rm -f "$log_path"/wtmp*
+}
+
+remove_journal () {
+	#sudo systemctl stop systemd-journald
+	sudo rm -f "$PWD/*@*.journal"
+	#sudo systemctl start systemd-journald
+}
+
+
+#******************* ES Scripts logs functions ********************
+
+active_es_scripts_log_feature() {
+	sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/' $ES_SCRIPTS_PATH/es-commons
+}
+
+inactive_es_scripts_log_feature() {
+	sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/' $ES_SCRIPTS_PATH/es-commons
+}
+
+remove_es_scripts_log() {
+	sudo rm -f "$ES_SCRIPT_LOGS_DIR"/es-*.log*
+}
+
+#******************* global funtions ********************
+
+is_actived_scripts_log() {
+  cat "$ES_SCRIPTS_PATH/es-commons" | grep -iw "ES_LOGGING_ENABLED=1" > /dev/null
+  valPresent=$?
+
+  if [ "$valPresent" != "0" ]; then
+    echo "false"
+  else
+    echo "true"
+  fi
+}
+
+optimize_system () {
+	rsyslog_config
+	sysctl_config
+	journald_config
+	bluetooth_config
+	logrotate_config
+	fstab_config
+	boot_config
+	inactive_es_scripts_log_feature
+}
+
+normal_system () {
+	rsyslog_restore
+	sysctl_restore
+	journald_restore
+	bluetooth__restore
+	logrotate_restore
+	fstab_restore
+	boot_restore
+}
+
+do_active_optimize_system() {
+	local pvalue="$1"
+
+	if [ "$pvalue" = "true" ]; then
+		optimize_system
+	else
+		normal_system
+	fi
+}
+
+do_active_es_scripts_log() {
+	local pvalue="$1"
+
+	if [ "$pvalue" = "true" ]; then
+		active_es_scripts_log_feature
+	else
+		inactive_es_scripts_log_feature
+	fi
+}
+
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-commons
+
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-optimize_system.log"
+
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+VALUE=$2
+shift
+
+print_log $LOG_FILE "INFO" "Executing operation: '$ACTION', value: $VALUE"
+
+case "${ACTION}" in
+    "active_optimize_system")
+        do_active_optimize_system $VALUE
+        remove_log
+        remove_journal
+    ;;
+    "active_es_scripts_log")
+        do_active_es_scripts_log $VALUE
+        remove_es_scripts_log
+    ;;
+    "is_actived_scripts_log")
+        is_actived_scripts_log
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        print_log $LOG_FILE "ERROR" "Invalid command ${ACTION}"
+        exit 1
+esac
+
+exit 0

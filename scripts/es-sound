@@ -1,0 +1,91 @@
+#!/bin/bash
+
+if [ ! "$1" ]; then
+	printf "usage : es-sound [set key value|get key]\n"
+	printf "Valid keys: audio_cards, audio_devices, output_devices, output_device\n"
+	exit 1
+fi
+
+get_output_device() {
+		output_device=$(awk -F'[=]' '/values=/ { print $2 }' <(amixer cget name='Playback Path' | grep ": values="))
+		output_device=$(awk -F"['\'']" '{ print $2 }' <(amixer cget name='Playback Path' | grep "#$output_device"))
+		if [ "$output_device" = "" ]; then
+			output_device="SPK"
+		fi
+		echo "$output_device"
+}
+
+get_volume_level() {
+	awk -F'[][%]' '/Left:/ { print $2 }' <(amixer sget Playback)
+}
+
+config_set_value () {
+	key=$1
+	value=$2
+
+	if [ "$key" = "output_device" ]; then
+		output_device=$(get_output_device)
+		if [[ "$output_device" = *"HP" ]]; then
+			if [ "$value" = "SPK" ]; then
+				amixer cset name='Playback Path' "OFF" > /dev/null
+				volume=$(get_volume_level)
+				volume=$(($volume+8))
+				amixer sset Playback "$volume%" > /dev/null
+			fi
+		fi
+		amixer cset name='Playback Path' $value > /dev/null
+	fi
+}
+
+config_get_value () {
+	key=$1
+
+	if [ "$key" = "audio_cards" ]; then
+		audio_cards=$(awk -F'[][]' '/\[/ { print $2 }' <(aplay --list-devices | egrep "card [[:digit:]]:"))
+		if [ "$audio_cards" = "" ]; then
+			audio_cards="default"
+		fi
+		echo "$audio_cards"
+	fi
+
+	if [ "$key" = "audio_devices" ]; then
+		audio_devices=$(awk -F"['\'' ]" '/ / { print $2 }' <(amixer controls | grep -i volume))
+		if [ "$audio_devices" = "" ]; then
+			audio_devices="Playback"
+		fi
+		echo "$audio_devices"
+	fi
+
+	if [ "$key" = "output_devices" ]; then
+		output_devices=$(awk -F"['\'']" '{ print $2 }' <(amixer cget name='Playback Path' | grep "#"))
+		if [ "$output_devices" = "" ]; then
+			output_devices="SPK"
+		fi
+		echo "$output_devices"
+	fi
+
+	if [ "$key" = "output_device" ]; then
+		get_output_device
+	fi
+}
+
+# ******************************************************************************************
+
+command="$1"
+
+if [ "$#" -eq 3 ]; then
+	pkey="$2"
+	pvalue="$3"
+
+	if [ "$command" = "set" ]; then
+			config_set_value $pkey $pvalue
+	fi
+
+	exit 0
+elif [ "$#" -eq 2 ]; then
+	pkey="$2"
+
+	if [ "$command" = "get" ]; then
+		config_get_value $pkey
+	fi
+fi

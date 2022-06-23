@@ -1,0 +1,144 @@
+#!/bin/bash
+
+do_help() {
+    echo "$0 get_system_name" >&2
+    echo "$0 get_system_version" >&2
+    echo "$0 get_system_info" >&2
+    echo "$0 get_base_os_info" >&2
+    echo "$0 get_kernel_info" >&2
+    echo "$0 get_device_name" >&2
+}
+
+is_enabled() {
+    output=$(nmcli radio wifi)
+
+    enabled=$(echo "$output" | grep enabled)
+
+    if [ -z "$enabled" ]; then
+      # disaled
+      return 1
+    fi
+
+    # enabled
+    return 0
+}
+
+get_system_name() {
+  file=""
+
+  if [ -f "/usr/share/plymouth/themes/text.plymouth" ]; then
+    file="/usr/share/plymouth/themes/text.plymouth"
+  elif [ -f "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" ]; then
+    file="/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth"
+  fi
+
+  name=$(cat "$file" | grep -iw "title" | awk '{ gsub(/=/," "); print $2}')
+  echo "$name"
+}
+
+get_system_version() {
+  version=""
+
+  if [ -f "/opt/.retrooz/version" ]; then
+    version=$(cat "/opt/.retrooz/version")
+  elif [ -f "/usr/share/plymouth/themes/text.plymouth" ]; then
+    version=$(cat "/usr/share/plymouth/themes/text.plymouth" | grep -iw "title" | awk '{gsub(/=/," ")}; {for (i=3; i<NF; i++) printf $i " "; print $NF}')
+  elif [ -f "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" ]; then
+    version=$(cat "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" | grep -iw "title" | awk '{gsub(/=/," ")}; {for (i=3; i<NF; i++) printf $i " "; print $NF}')
+  fi
+  echo "$version"
+}
+
+get_system_info() {
+  echo "$(get_system_name) $(get_system_version)"
+}
+
+get_base_os_info() {
+  base_os=""
+
+  if [ -f "/usr/bin/hostnamectl" ]; then
+    base_os=$(hostnamectl | grep -iw "system" | awk '{gsub(/=/," ")}; {for (i=3; i<NF; i++) printf $i " "; print $NF}')
+  elif [ -f "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" ]; then
+    base_os=$(cat "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" | grep -iw "title" | awk '{gsub(/=/," ")}; {for (i=2; i<NF; i++) printf $i " "; print $NF}')
+  else
+    base_os=$(/bin/uname)
+  fi
+  echo "$base_os"
+}
+
+get_kernel_info() {
+  kernel=""
+
+  if [ -f "/usr/bin/hostnamectl" ]; then
+    kernel=$(hostnamectl | grep -iw "kernel" | awk '{gsub(/=/," ")}; {for (i=2; i<NF; i++) printf $i " "; print $NF}')
+  else
+    kernel="$(/bin/uname) $(/bin/uname -r)"
+  fi
+  echo "$kernel"
+}
+
+get_device_name() {
+  device=""
+  device_name="Odroid Go Super"
+
+  if [ -f "/opt/.retrooz/device" ]; then
+    device=$(cat "/opt/.retrooz/device")
+    if [ "$device" = "oga" ]; then
+      device_name="Odroid Go Advance"
+    elif [ "$device" = "oga1" ]; then
+      device_name="Odroid Go Advance 1.1"
+    elif [ "$device" = "ogs" ]; then
+      device_name="Odroid Go Super"
+    elif [[ $device = rgb10max2* ]]; then
+      device_name="RGB10 MAX2"
+    elif [[ $device = rgb10max* ]]; then
+      device_name="RGB10 MAX"
+    fi
+  fi
+  echo "$device_name"
+}
+
+get_soc_name() {
+  echo "Rockchip RK3326"
+}
+
+
+# ******************************************************************************************
+
+
+if [ $# -eq 0 ]; then
+	do_help
+	exit 1
+fi
+
+ACTION=$1
+shift
+
+case "${ACTION}" in
+    "get_system_name")
+        get_system_name
+    ;;
+    "get_system_version")
+        get_system_version
+    ;;
+    "get_system_info")
+        get_system_info
+    ;;
+    "get_base_os_info")
+        get_base_os_info
+    ;;
+    "get_kernel_info")
+        get_kernel_info
+    ;;
+    "get_device_name")
+        get_device_name
+    ;;
+    "get_soc_name")
+        get_soc_name
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        exit 1
+esac
+exit 0
