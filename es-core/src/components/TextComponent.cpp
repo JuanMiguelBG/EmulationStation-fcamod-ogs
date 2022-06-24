@@ -183,128 +183,122 @@ void TextComponent::render(const Transform4x4f& parentTrans)
 	if (mAutoScroll)
 		Renderer::pushClipRect(Vector2i(trans.translation().x(), trans.translation().y()), Vector2i(mSize.x(), mSize.y()));
 
-	if (mTextCache && mFont)
+	if (mTextCache == nullptr || mFont == nullptr)
+		return;
+
+	const Vector2f& textSize = mTextCache->metrics.size;
+	float yOff = 0;
+	switch (mVerticalAlignment)
 	{
-		const Vector2f& textSize = mTextCache->metrics.size;
-		float yOff = 0;
-		switch (mVerticalAlignment)
+	case ALIGN_TOP:
+		yOff = 0;
+		break;
+	case ALIGN_BOTTOM:
+		yOff = (getSize().y() - textSize.y());
+		break;
+	case ALIGN_CENTER:
+		yOff = (getSize().y() - textSize.y()) / 2.0f;
+		break;
+	}
+	Vector3f off(mPadding.x(), mPadding.y() + yOff, 0);
+
+	if (Settings::getInstance()->getBool("DebugText"))
+	{
+		// draw the "textbox" area, what we are aligned within
+		Renderer::setMatrix(trans);
+		Renderer::drawRect(0.0f, 0.0f, mSize.x(), mSize.y(), 0xFF000033, 0xFF000033);
+	}
+
+	if ((mGlowColor & 0x000000FF) != 0 && mGlowSize > 0)
+	{
+		renderGlow(parentTrans, yOff, -mMarqueeOffset);
+		onColorChanged();
+	}
+
+	Transform4x4f drawTrans = trans;
+
+	if (mMarqueeOffset != 0.0)
+		trans.translate(off - Vector3f((float)mMarqueeOffset, 0, 0));
+	else
+		trans.translate(off);
+
+//	trans.translate(off);
+	Renderer::setMatrix(trans);
+
+	// draw the text area, where the text actually is going
+	if (Settings::getInstance()->getBool("DebugText"))
+	{
+		switch (mHorizontalAlignment)
 		{
-		case ALIGN_TOP:
-			yOff = 0;
-			break;
-		case ALIGN_BOTTOM:
-			yOff = (getSize().y() - textSize.y());
+		case ALIGN_LEFT:
+			Renderer::drawRect(0.0f, 0.0f, mTextCache->metrics.size.x(), mTextCache->metrics.size.y(), 0x00000033, 0x00000033);
 			break;
 		case ALIGN_CENTER:
-			yOff = (getSize().y() - textSize.y()) / 2.0f;
+			Renderer::drawRect((mSize.x() - mTextCache->metrics.size.x()) / 2.0f, 0.0f, mTextCache->metrics.size.x(), mTextCache->metrics.size.y(), 0x00000033, 0x00000033);
+			break;
+		case ALIGN_RIGHT:
+			Renderer::drawRect(mSize.x() - mTextCache->metrics.size.x(), 0.0f, mTextCache->metrics.size.x(), mTextCache->metrics.size.y(), 0x00000033, 0x00000033);
 			break;
 		}
-		Vector3f off(mPadding.x(), mPadding.y() + yOff, 0);
+	}
 
-		if (Settings::getInstance()->getBool("DebugText"))
-		{
-			// draw the "textbox" area, what we are aligned within
-			Renderer::setMatrix(trans);
-			Renderer::drawRect(0.0f, 0.0f, mSize.x(), mSize.y(), 0xFF000033, 0xFF000033);
-		}
+	mFont->renderTextCache(mTextCache.get());
+
+	// render currently selected item text again if
+	// marquee is scrolled far enough for it to repeat
+
+	if (mMarqueeOffset2 != 0.0)
+	{
+		trans = drawTrans;
+		trans.translate(off - Vector3f((float)mMarqueeOffset2, 0, 0));
 
 		if ((mGlowColor & 0x000000FF) != 0 && mGlowSize > 0)
 		{
-			renderGlow(parentTrans, yOff, -mMarqueeOffset);
+			renderGlow(parentTrans, yOff, -mMarqueeOffset2);
 			onColorChanged();
 		}
 
-		Transform4x4f drawTrans = trans;
-
-		if (mMarqueeOffset != 0.0)
-			trans.translate(off - Vector3f((float)mMarqueeOffset, 0, 0));
-		else
-			trans.translate(off);
-
-//		trans.translate(off);
 		Renderer::setMatrix(trans);
-
-		// draw the text area, where the text actually is going
-		if (Settings::getInstance()->getBool("DebugText"))
-		{
-			switch (mHorizontalAlignment)
-			{
-			case ALIGN_LEFT:
-				Renderer::drawRect(0.0f, 0.0f, mTextCache->metrics.size.x(), mTextCache->metrics.size.y(), 0x00000033, 0x00000033);
-				break;
-			case ALIGN_CENTER:
-				Renderer::drawRect((mSize.x() - mTextCache->metrics.size.x()) / 2.0f, 0.0f, mTextCache->metrics.size.x(), mTextCache->metrics.size.y(), 0x00000033, 0x00000033);
-				break;
-			case ALIGN_RIGHT:
-				Renderer::drawRect(mSize.x() - mTextCache->metrics.size.x(), 0.0f, mTextCache->metrics.size.x(), mTextCache->metrics.size.y(), 0x00000033, 0x00000033);
-				break;
-			}
-		}
-
 		mFont->renderTextCache(mTextCache.get());
-
-		// render currently selected item text again if
-		// marquee is scrolled far enough for it to repeat
-		
-		if (mMarqueeOffset2 != 0.0)
-		{
-			trans = drawTrans;
-			trans.translate(off - Vector3f((float)mMarqueeOffset2, 0, 0));
-
-			if ((mGlowColor & 0x000000FF) != 0 && mGlowSize > 0)
-			{
-				renderGlow(parentTrans, yOff, -mMarqueeOffset2);
-				onColorChanged();
-			}
-
-			Renderer::setMatrix(trans);
-			mFont->renderTextCache(mTextCache.get());
-			Renderer::setMatrix(drawTrans);
-		}
-
-		if (mReflection.x() != 0 || mReflection.y() != 0)
-		{
-			Transform4x4f mirror = trans;
-			mirror.translate(-off);
-			mirror.r1().y() = -mirror.r1().y();
-			mirror.r3().y() = mirror.r3().y() + off.y() + textSize.y();
-
-			if (mReflectOnBorders)
-				mirror.r3().y() = mirror.r3().y() + mSize.y();
-			else
-				mirror.r3().y() = mirror.r3().y() + textSize.y();
-
-			Renderer::setMatrix(mirror);
-			
-			float baseOpacity = mOpacity / 255.0;
-			float alpha = baseOpacity * ((mColor & 0x000000ff)) / 255.0;
-			float alpha2 = baseOpacity * alpha * mReflection.y();
-
-			alpha *= mReflection.x();
-
-			const unsigned int colorT = Renderer::convertColor((mColor & 0xffffff00) + (unsigned char)(255.0*alpha));
-			const unsigned int colorB = Renderer::convertColor((mColor & 0xffffff00) + (unsigned char)(255.0*alpha2));
-
-			mFont->renderGradientTextCache(mTextCache.get(), colorB, colorT);
-		}
-
-		if (mAutoScroll)
-			Renderer::popClipRect();
+		Renderer::setMatrix(drawTrans);
 	}
+
+	if (mReflection.x() != 0 || mReflection.y() != 0)
+	{
+		Transform4x4f mirror = trans;
+		mirror.translate(-off);
+		mirror.r1().y() = -mirror.r1().y();
+		mirror.r3().y() = mirror.r3().y() + off.y() + textSize.y();
+
+		if (mReflectOnBorders)
+			mirror.r3().y() = mirror.r3().y() + mSize.y();
+		else
+			mirror.r3().y() = mirror.r3().y() + textSize.y();
+
+		Renderer::setMatrix(mirror);
+
+		float baseOpacity = mOpacity / 255.0;
+		float alpha = baseOpacity * ((mColor & 0x000000ff)) / 255.0;
+		float alpha2 = baseOpacity * alpha * mReflection.y();
+
+		alpha *= mReflection.x();
+
+		const unsigned int colorT = Renderer::convertColor((mColor & 0xffffff00) + (unsigned char)(255.0*alpha));
+		const unsigned int colorB = Renderer::convertColor((mColor & 0xffffff00) + (unsigned char)(255.0*alpha2));
+
+		mFont->renderGradientTextCache(mTextCache.get(), colorB, colorT);
+	}
+
+	if (mAutoScroll)
+		Renderer::popClipRect();
 }
 
 void TextComponent::calculateExtent()
 {
 	if (mAutoCalcExtent.x())
-	{
 		mSize = mFont->sizeText(mUppercase ? Utils::String::toUpper(mText) : mText, mLineSpacing);
-	}
-	else {
-		if (mAutoCalcExtent.y())
-		{
-			mSize[1] = mFont->sizeWrappedText(mUppercase ? Utils::String::toUpper(mText) : mText, getSize().x(), mLineSpacing).y();
-		}
-	}
+	else if (mAutoCalcExtent.y())
+		mSize[1] = mFont->sizeWrappedText(mUppercase ? Utils::String::toUpper(mText) : mText, getSize().x(), mLineSpacing).y();
 }
 
 void TextComponent::onTextChanged()
