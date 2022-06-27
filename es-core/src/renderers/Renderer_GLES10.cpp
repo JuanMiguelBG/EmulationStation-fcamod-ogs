@@ -317,7 +317,7 @@ namespace Renderer
 	{
 	} // setSwapInterval
 
-	void swapBuffers()
+	void swapBuffersFullScreen()
 	{
 		//SDL_GL_SwapWindow(getSDLWindow());
 
@@ -327,508 +327,8 @@ namespace Renderer
 			int w = go2_display_height_get(display);
 			int h = go2_display_width_get(display);
 
-			if (!Renderer::isFullScreenMode())
-			{
-				{
-					// Battery level
-					const uint8_t* src = battery_image.pixel_data;
-					int src_stride = 32 * sizeof(short);
-
-					uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
-					int dst_stride = go2_surface_stride_get(titlebarSurface);
-
-					int batcapacity = 0;
-					int fd;
-					char buffer[10];
-					fd = open("/sys/class/power_supply/battery/capacity", O_RDONLY);
-					if (fd > 0)
-					{
-						memset(buffer, 0, 10);
-						ssize_t count = read(fd, buffer, 10);
-						if( count > 0 )
-						{
-							batcapacity = atoi(buffer);
-						}
-						close(fd);
-					}
-
-					int batteryIndex;
-					if (batcapacity == 1)
-					{
-						batteryIndex = 0;
-					}
-					else if (batcapacity <= 5)
-					{
-						batteryIndex = 1;
-					}
-					else if (batcapacity <= 10)
-					{
-						batteryIndex = 2;
-					}
-					else if (batcapacity <= 15)
-					{
-						batteryIndex = 3;
-					}
-					else if (batcapacity <= 20)
-					{
-						batteryIndex = 4;
-					}
-					else if (batcapacity <= 25)
-					{
-						batteryIndex = 5;
-					}
-					else if (batcapacity <= 30)
-					{
-						batteryIndex = 6;
-					}
-					else if (batcapacity <= 35)
-					{
-						batteryIndex = 7;
-					}
-					else if (batcapacity <= 40)
-					{
-						batteryIndex = 8;
-					}
-					else if (batcapacity <= 45)
-					{
-						batteryIndex = 9;
-					}
-					else if (batcapacity <= 50)
-					{
-						batteryIndex = 10;
-					}
-					else if (batcapacity <= 55)
-					{
-						batteryIndex = 11;
-					}
-					else if (batcapacity <= 60)
-					{
-						batteryIndex = 12;
-					}
-					else if (batcapacity <= 65)
-					{
-						batteryIndex = 13;
-					}
-					else if (batcapacity <= 70)
-					{
-						batteryIndex = 14;
-					}
-					else if (batcapacity <= 75)
-					{
-						batteryIndex = 15;
-					}
-					else if (batcapacity <= 80)
-					{
-						batteryIndex = 16;
-					}
-					else if (batcapacity <= 85)
-					{
-						batteryIndex = 17;
-					}
-					else if (batcapacity <= 90)
-					{
-						batteryIndex = 18;
-					}
-					else if (batcapacity <= 95)
-					{
-						batteryIndex = 19;
-					}
-					else if (batcapacity == 100)
-					{
-						batteryIndex = 20;
-					}
-					else
-					{
-						batteryIndex = 20;
-					}
-
-					src += (batteryIndex * 16 * src_stride);
-					dst += (w - 32) * sizeof(short);
-
-					for (int y = 0; y < 16; ++y)
-					{
-						memcpy(dst, src, 32 * sizeof(short));
-
-						src += src_stride;
-						dst += dst_stride;
-					}
-				} // Battery level END
-
-				{
-					// Volume level
-					const uint8_t* src = volume_image.pixel_data;
-					int src_stride = 32 * sizeof(short);
-
-					uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
-					int dst_stride = go2_surface_stride_get(titlebarSurface);
-
-#ifdef _DEBUG
-					uint32_t volume = getVolume();
-#else
-					uint32_t volume = go2_audio_volume_get(NULL);
-#endif
-					int volumeIndex;
-					if (volume == 0)
-					{
-						volumeIndex = 0;
-					}
-					else if (volume <= 5)
-					{
-						volumeIndex = 1;
-					}
-					else if (volume <= 10)
-					{
-						volumeIndex = 2;
-					}
-					else if (volume <= 15)
-					{
-						volumeIndex = 3;
-					}
-					else if (volume <= 20)
-					{
-						volumeIndex = 4;
-					}
-					else if (volume <= 25)
-					{
-						volumeIndex = 5;
-					}
-					else if (volume <= 30)
-					{
-						volumeIndex = 6;
-					}
-					else if (volume <= 35)
-					{
-						volumeIndex = 7;
-					}
-					else if (volume <= 40)
-					{
-						volumeIndex = 8;
-					}
-					else if (volume <= 45)
-					{
-						volumeIndex = 9;
-					}
-					else if (volume <= 50)
-					{
-						volumeIndex = 10;
-					}
-					else if (volume <= 55)
-					{
-						volumeIndex = 11;
-					}
-					else if (volume <= 60)
-					{
-						volumeIndex = 12;
-					}
-					else if (volume <= 65)
-					{
-						volumeIndex = 13;
-					}
-					else if (volume <= 70)
-					{
-						volumeIndex = 14;
-					}
-					else if (volume <= 75)
-					{
-						volumeIndex = 15;
-					}
-					else if (volume <= 80)
-					{
-						volumeIndex = 16;
-					}
-					else if (volume <= 85)
-					{
-						volumeIndex = 17;
-					}
-					else if (volume <= 90)
-					{
-						volumeIndex = 18;
-					}
-					else if (volume <= 95)
-					{
-						volumeIndex = 19;
-					}
-					else if (volume = 100)
-					{
-						volumeIndex = 20;
-					}
-					else
-					{
-						volumeIndex = 20;
-					}
-
-					src += (volumeIndex * 16 * src_stride);
-					//dst += (480 - 32) * sizeof(short);
-
-					for (int y = 0; y < 16; ++y)
-					{
-						memcpy(dst, src, 32 * sizeof(short));
-
-						src += src_stride;
-						dst += dst_stride;
-					}
-				} // Volume level END
-				{
-					// Title
-					const uint8_t* src = header.pixel_data;
-					int src_stride = header.width * sizeof(short);
-
-					uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
-					int dst_stride = go2_surface_stride_get(titlebarSurface);
-
-					dst += ((w / 2) - (header.width / 2)) * sizeof(short);
-
-					for (int y = 0; y < 16; ++y)
-					{
-						memcpy(dst, src, src_stride);
-
-						src += src_stride;
-						dst += dst_stride;
-					}
-				} // Title END
-				{
-					// Brightness level
-					const uint8_t* src = brightness_image.pixel_data;
-					int src_stride = 32 * sizeof(short);
-
-					uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
-					int dst_stride = go2_surface_stride_get(titlebarSurface);
-
-					int brightnessIndex = 0;
-					int brightness = 50;
-
-					try {
-						brightness = (int) go2_display_backlight_get(NULL);
-					} catch (...) {}
-
-					if (brightness == 0)
-					{
-						brightnessIndex = 0;
-					}
-					else if (brightness <= 5)
-					{
-						brightnessIndex = 1;
-					}
-					else if (brightness <= 10)
-					{
-						brightnessIndex = 2;
-					}
-					else if (brightness <= 15)
-					{
-						brightnessIndex = 3;
-					}
-					else if (brightness <= 20)
-					{
-						brightnessIndex = 4;
-					}
-					else if (brightness <= 25)
-					{
-						brightnessIndex = 5;
-					}
-					else if (brightness <= 30)
-					{
-						brightnessIndex = 6;
-					}
-					else if (brightness <= 35)
-					{
-						brightnessIndex = 7;
-					}
-					else if (brightness <= 40)
-					{
-						brightnessIndex = 8;
-					}
-					else if (brightness <= 45)
-					{
-						brightnessIndex = 9;
-					}
-					else if (brightness <= 50)
-					{
-						brightnessIndex = 10;
-					}
-					else if (brightness <= 55)
-					{
-						brightnessIndex = 11;
-					}
-					else if (brightness <= 60)
-					{
-						brightnessIndex = 12;
-					}
-					else if (brightness <= 65)
-					{
-						brightnessIndex = 13;
-					}
-					else if (brightness <= 70)
-					{
-						brightnessIndex = 14;
-					}
-					else if (brightness <= 75)
-					{
-						brightnessIndex = 15;
-					}
-					else if (brightness <= 80)
-					{
-						brightnessIndex = 16;
-					}
-					else if (brightness <= 85)
-					{
-						brightnessIndex = 17;
-					}
-					else if (brightness <= 90)
-					{
-						brightnessIndex = 18;
-					}
-					else if (brightness <= 95)
-					{
-						brightnessIndex = 19;
-					}
-					else if (brightness = 100)
-					{
-						brightnessIndex = 20;
-					}
-					else
-					{
-						brightnessIndex = 20;
-					}
-
-					src += (brightnessIndex * 16 * src_stride);
-					dst += (64) * sizeof(short);
-
-					for (int y = 0; y < 16; ++y)
-					{
-						memcpy(dst, src, 32 * sizeof(short));
-
-						src += src_stride;
-						dst += dst_stride;
-					}
-				} // Brightness level END
-
-				{
-
-					// WIFI ICONS
-					const uint8_t* src = wifi_image.pixel_data;
-					int src_stride = 32 * sizeof(short);
-
-					uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
-					int dst_stride = go2_surface_stride_get(titlebarSurface);
-
-					int wifiIndex = 0;
-
-					// Wifi
-					int fd;
-					char buffer[10];
-					fd = open("/sys/class/net/wlan0/operstate", O_RDONLY);
-					if (fd > 0)
-					{
-						memset(buffer, 0, 10);
-						ssize_t count = read(fd, buffer, 10);
-						if( count > 0 )
-						{
-							if( strstr( buffer, "up") != NULL )
-								wifiIndex = 1;
-							else
-								wifiIndex = 0;
-						}
-						close(fd);
-					}
-					if( wifiIndex == 1 )
-					{
-						src += (wifiIndex* 16 * src_stride);
-						dst += (w - 100) * sizeof(short);
-
-						for (int y = 0; y < 16; ++y)
-						{
-							memcpy(dst, src, 32 * sizeof(short));
-
-							src += src_stride;
-							dst += dst_stride;
-						}
-
-					}
-					else
-					{
-						const uint8_t* src = blank_image.pixel_data;
-						src += (1 * 16 * src_stride);
-						dst += (w - 100) * sizeof(short);
-
-						for (int y = 0; y < 16; ++y)
-						{
-							memcpy(dst, src, 32 * sizeof(short));
-
-							src += src_stride;
-							dst += dst_stride;
-						}
-
-					}
-				}// WIFI ICONS END
-
-				{
-
-					// POWER ICON
-					const uint8_t* src = power_image.pixel_data;
-					int src_stride = 32 * sizeof(short);
-
-					uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
-					int dst_stride = go2_surface_stride_get(titlebarSurface);
-
-					int powerIndex = 0;
-
-					// Power
-					int fd;
-					char buffer[10];
-					fd = open("/sys/class/power_supply/ac/online", O_RDONLY);
-					if (fd > 0)
-					{
-						memset(buffer, 0, 10);
-						ssize_t count = read(fd, buffer, 10);
-						if( count > 0 )
-						{
-							if( strstr( buffer, "1") != 0 )
-								powerIndex = 1;
-							else
-								powerIndex = 0;
-						}
-						close(fd);
-					}
-					if( powerIndex == 1 )
-					{
-						src += (powerIndex * 16 * src_stride);
-						dst += (w - 65) * sizeof(short);
-
-						for (int y = 0; y < 16; ++y)
-						{
-							memcpy(dst, src, 32 * sizeof(short));
-
-							src += src_stride;
-							dst += dst_stride;
-						}
-
-					}
-					else
-					{
-						const uint8_t* src = blank_image.pixel_data;
-						src += (1 * 16 * src_stride);
-						dst += (w - 65) * sizeof(short);
-
-						for (int y = 0; y < 16; ++y)
-						{
-							memcpy(dst, src, 32 * sizeof(short));
-
-							src += src_stride;
-							dst += dst_stride;
-						}
-
-					}
-				} // POWER ICON - END
-
-			} // if (!Renderer::isFullScreenMode())
-
 			go2_context_swap_buffers(context);
 			go2_surface_t* surface = go2_context_surface_lock(context);
-
-			if (!Renderer::isFullScreenMode())
-				go2_surface_blit(titlebarSurface, 0, 0, w, 16,
-								 surface, 0, 0, w, 16,
-								 GO2_ROTATION_DEGREES_0);
 
 			go2_presenter_post(presenter,
 						surface,
@@ -840,7 +340,540 @@ namespace Renderer
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//printf("Frame %d\n", frame++);
-	} // swapBuffers
+	} // swapBuffersFullScreen
+
+	void swapBuffersHeader()
+	{
+		//SDL_GL_SwapWindow(getSDLWindow());
+
+		if (context)
+		{
+			go2_display_t* display = getDisplay();
+			int w = go2_display_height_get(display);
+			int h = go2_display_width_get(display);
+
+			{
+				// Battery level
+				const uint8_t* src = battery_image.pixel_data;
+				int src_stride = 32 * sizeof(short);
+
+				uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
+				int dst_stride = go2_surface_stride_get(titlebarSurface);
+
+				int batcapacity = 0;
+				int fd;
+				char buffer[10];
+				fd = open("/sys/class/power_supply/battery/capacity", O_RDONLY);
+				if (fd > 0)
+				{
+					memset(buffer, 0, 10);
+					ssize_t count = read(fd, buffer, 10);
+					if( count > 0 )
+					{
+						batcapacity = atoi(buffer);
+					}
+					close(fd);
+				}
+
+				int batteryIndex;
+				if (batcapacity == 1)
+				{
+					batteryIndex = 0;
+				}
+				else if (batcapacity <= 5)
+				{
+					batteryIndex = 1;
+				}
+				else if (batcapacity <= 10)
+				{
+					batteryIndex = 2;
+				}
+				else if (batcapacity <= 15)
+				{
+					batteryIndex = 3;
+				}
+				else if (batcapacity <= 20)
+				{
+					batteryIndex = 4;
+				}
+				else if (batcapacity <= 25)
+				{
+					batteryIndex = 5;
+				}
+				else if (batcapacity <= 30)
+				{
+					batteryIndex = 6;
+				}
+				else if (batcapacity <= 35)
+				{
+					batteryIndex = 7;
+				}
+				else if (batcapacity <= 40)
+				{
+					batteryIndex = 8;
+				}
+				else if (batcapacity <= 45)
+				{
+					batteryIndex = 9;
+				}
+				else if (batcapacity <= 50)
+				{
+					batteryIndex = 10;
+				}
+				else if (batcapacity <= 55)
+				{
+					batteryIndex = 11;
+				}
+					else if (batcapacity <= 60)
+				{
+					batteryIndex = 12;
+				}
+				else if (batcapacity <= 65)
+				{
+					batteryIndex = 13;
+				}
+				else if (batcapacity <= 70)
+				{
+					batteryIndex = 14;
+				}
+				else if (batcapacity <= 75)
+				{
+					batteryIndex = 15;
+				}
+				else if (batcapacity <= 80)
+				{
+					batteryIndex = 16;
+				}
+				else if (batcapacity <= 85)
+				{
+					batteryIndex = 17;
+				}
+				else if (batcapacity <= 90)
+				{
+					batteryIndex = 18;
+				}
+				else if (batcapacity <= 95)
+				{
+					batteryIndex = 19;
+				}
+				else if (batcapacity == 100)
+				{
+					batteryIndex = 20;
+				}
+				else
+				{
+					batteryIndex = 20;
+				}
+
+				src += (batteryIndex * 16 * src_stride);
+				dst += (w - 32) * sizeof(short);
+
+				for (int y = 0; y < 16; ++y)
+				{
+					memcpy(dst, src, 32 * sizeof(short));
+
+					src += src_stride;
+					dst += dst_stride;
+				}
+			} // Battery level END
+
+			{
+				// Volume level
+				const uint8_t* src = volume_image.pixel_data;
+				int src_stride = 32 * sizeof(short);
+
+				uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
+				int dst_stride = go2_surface_stride_get(titlebarSurface);
+
+#ifdef _DEBUG
+				uint32_t volume = getVolume();
+#else
+				uint32_t volume = go2_audio_volume_get(NULL);
+#endif
+				int volumeIndex;
+				if (volume == 0)
+				{
+					volumeIndex = 0;
+				}
+				else if (volume <= 5)
+				{
+					volumeIndex = 1;
+				}
+				else if (volume <= 10)
+				{
+					volumeIndex = 2;
+				}
+				else if (volume <= 15)
+				{
+					volumeIndex = 3;
+				}
+				else if (volume <= 20)
+				{
+					volumeIndex = 4;
+				}
+				else if (volume <= 25)
+				{
+					volumeIndex = 5;
+				}
+				else if (volume <= 30)
+				{
+					volumeIndex = 6;
+				}
+				else if (volume <= 35)
+				{
+					volumeIndex = 7;
+				}
+				else if (volume <= 40)
+				{
+					volumeIndex = 8;
+				}
+				else if (volume <= 45)
+				{
+					volumeIndex = 9;
+				}
+				else if (volume <= 50)
+				{
+					volumeIndex = 10;
+				}
+				else if (volume <= 55)
+				{
+					volumeIndex = 11;
+				}
+				else if (volume <= 60)
+				{
+					volumeIndex = 12;
+				}
+				else if (volume <= 65)
+				{
+					volumeIndex = 13;
+				}
+				else if (volume <= 70)
+				{
+					volumeIndex = 14;
+				}
+				else if (volume <= 75)
+				{
+					volumeIndex = 15;
+				}
+				else if (volume <= 80)
+				{
+					volumeIndex = 16;
+				}
+				else if (volume <= 85)
+				{
+					volumeIndex = 17;
+				}
+				else if (volume <= 90)
+				{
+					volumeIndex = 18;
+				}
+				else if (volume <= 95)
+				{
+					volumeIndex = 19;
+				}
+				else if (volume = 100)
+				{
+					volumeIndex = 20;
+				}
+				else
+				{
+					volumeIndex = 20;
+				}
+
+				src += (volumeIndex * 16 * src_stride);
+				//dst += (480 - 32) * sizeof(short);
+
+				for (int y = 0; y < 16; ++y)
+				{
+					memcpy(dst, src, 32 * sizeof(short));
+
+					src += src_stride;
+					dst += dst_stride;
+				}
+			} // Volume level END
+			{
+				// Title
+				const uint8_t* src = header.pixel_data;
+				int src_stride = header.width * sizeof(short);
+
+				uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
+				int dst_stride = go2_surface_stride_get(titlebarSurface);
+
+				dst += ((w / 2) - (header.width / 2)) * sizeof(short);
+
+				for (int y = 0; y < 16; ++y)
+				{
+					memcpy(dst, src, src_stride);
+
+					src += src_stride;
+					dst += dst_stride;
+				}
+			} // Title END
+			{
+				// Brightness level
+				const uint8_t* src = brightness_image.pixel_data;
+				int src_stride = 32 * sizeof(short);
+
+				uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
+				int dst_stride = go2_surface_stride_get(titlebarSurface);
+
+				int brightnessIndex = 0;
+				int brightness = 50;
+
+				try {
+					brightness = (int) go2_display_backlight_get(NULL);
+				} catch (...) {}
+
+				if (brightness == 0)
+				{
+					brightnessIndex = 0;
+				}
+				else if (brightness <= 5)
+				{
+					brightnessIndex = 1;
+				}
+				else if (brightness <= 10)
+				{
+					brightnessIndex = 2;
+				}
+				else if (brightness <= 15)
+				{
+					brightnessIndex = 3;
+				}
+				else if (brightness <= 20)
+				{
+					brightnessIndex = 4;
+				}
+				else if (brightness <= 25)
+				{
+					brightnessIndex = 5;
+				}
+				else if (brightness <= 30)
+				{
+					brightnessIndex = 6;
+				}
+				else if (brightness <= 35)
+				{
+					brightnessIndex = 7;
+				}
+				else if (brightness <= 40)
+				{
+					brightnessIndex = 8;
+				}
+				else if (brightness <= 45)
+				{
+					brightnessIndex = 9;
+				}
+				else if (brightness <= 50)
+				{
+					brightnessIndex = 10;
+				}
+				else if (brightness <= 55)
+				{
+					brightnessIndex = 11;
+				}
+				else if (brightness <= 60)
+				{
+					brightnessIndex = 12;
+				}
+				else if (brightness <= 65)
+				{
+					brightnessIndex = 13;
+				}
+				else if (brightness <= 70)
+				{
+					brightnessIndex = 14;
+				}
+				else if (brightness <= 75)
+				{
+					brightnessIndex = 15;
+				}
+				else if (brightness <= 80)
+				{
+					brightnessIndex = 16;
+				}
+				else if (brightness <= 85)
+				{
+					brightnessIndex = 17;
+				}
+				else if (brightness <= 90)
+				{
+					brightnessIndex = 18;
+				}
+				else if (brightness <= 95)
+				{
+					brightnessIndex = 19;
+				}
+				else if (brightness = 100)
+				{
+					brightnessIndex = 20;
+				}
+				else
+				{
+					brightnessIndex = 20;
+				}
+
+				src += (brightnessIndex * 16 * src_stride);
+				dst += (64) * sizeof(short);
+
+				for (int y = 0; y < 16; ++y)
+				{
+					memcpy(dst, src, 32 * sizeof(short));
+
+					src += src_stride;
+					dst += dst_stride;
+				}
+			} // Brightness level END
+
+			{
+				// WIFI ICONS
+				const uint8_t* src = wifi_image.pixel_data;
+				int src_stride = 32 * sizeof(short);
+
+				uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
+				int dst_stride = go2_surface_stride_get(titlebarSurface);
+
+				int wifiIndex = 0;
+
+				// Wifi
+				int fd;
+				char buffer[10];
+				fd = open("/sys/class/net/wlan0/operstate", O_RDONLY);
+				if (fd > 0)
+				{
+					memset(buffer, 0, 10);
+					ssize_t count = read(fd, buffer, 10);
+					if( count > 0 )
+					{
+						if( strstr( buffer, "up") != NULL )
+							wifiIndex = 1;
+						else
+							wifiIndex = 0;
+					}
+					close(fd);
+				}
+				if( wifiIndex == 1 )
+				{
+					src += (wifiIndex* 16 * src_stride);
+					dst += (w - 100) * sizeof(short);
+
+					for (int y = 0; y < 16; ++y)
+					{
+						memcpy(dst, src, 32 * sizeof(short));
+
+						src += src_stride;
+						dst += dst_stride;
+					}
+
+				}
+				else
+				{
+					const uint8_t* src = blank_image.pixel_data;
+					src += (1 * 16 * src_stride);
+					dst += (w - 100) * sizeof(short);
+
+					for (int y = 0; y < 16; ++y)
+					{
+						memcpy(dst, src, 32 * sizeof(short));
+
+						src += src_stride;
+						dst += dst_stride;
+					}
+
+				}
+			}// WIFI ICONS END
+
+			{
+
+				// POWER ICON
+				const uint8_t* src = power_image.pixel_data;
+				int src_stride = 32 * sizeof(short);
+
+				uint8_t* dst = (uint8_t*)go2_surface_map(titlebarSurface);
+				int dst_stride = go2_surface_stride_get(titlebarSurface);
+
+				int powerIndex = 0;
+
+				// Power
+				int fd;
+				char buffer[10];
+				fd = open("/sys/class/power_supply/ac/online", O_RDONLY);
+				if (fd > 0)
+				{
+					memset(buffer, 0, 10);
+					ssize_t count = read(fd, buffer, 10);
+					if( count > 0 )
+					{
+						if( strstr( buffer, "1") != 0 )
+							powerIndex = 1;
+						else
+							powerIndex = 0;
+					}
+					close(fd);
+				}
+				if( powerIndex == 1 )
+				{
+					src += (powerIndex * 16 * src_stride);
+					dst += (w - 65) * sizeof(short);
+
+					for (int y = 0; y < 16; ++y)
+					{
+						memcpy(dst, src, 32 * sizeof(short));
+
+						src += src_stride;
+						dst += dst_stride;
+					}
+
+				}
+				else
+				{
+					const uint8_t* src = blank_image.pixel_data;
+					src += (1 * 16 * src_stride);
+					dst += (w - 65) * sizeof(short);
+
+					for (int y = 0; y < 16; ++y)
+					{
+						memcpy(dst, src, 32 * sizeof(short));
+
+						src += src_stride;
+						dst += dst_stride;
+					}
+
+				}
+			} // POWER ICON - END
+
+			go2_context_swap_buffers(context);
+			go2_surface_t* surface = go2_context_surface_lock(context);
+
+			go2_surface_blit(titlebarSurface, 0, 0, w, 16,
+							 surface, 0, 0, w, 16,
+							 GO2_ROTATION_DEGREES_0);
+
+			go2_presenter_post(presenter,
+						surface,
+						0, 0, w, h,
+						0, 0, h, w,
+						GO2_ROTATION_DEGREES_270);
+			go2_context_surface_unlock(context, surface);
+		}
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//printf("Frame %d\n", frame++);
+	} // swapBuffersHeader
+
+	void swapBuffers()
+	{
+		if (Renderer::isFullScreenMode())
+		{
+			//LOG(LogDebug) << "Renderer_GLES10::swapBuffers() - Full Screen Mode";
+			swapBuffersFullScreen();
+		}
+		else
+		{
+			//LOG(LogDebug) << "Renderer_GLES10::swapBuffers() - Header Screen Mode";
+			swapBuffersHeader();
+		}
+	}
 
 #define ROUNDING_PIECES 8.0f
 

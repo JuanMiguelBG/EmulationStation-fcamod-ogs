@@ -163,7 +163,12 @@ namespace Renderer
 
 	void pushClipRect(const Vector2i& _pos, const Vector2i& _size)
 	{
-		Rect box(_pos.x(), _pos.y(), _size.x(), _size.y());
+		pushClipRect(_pos.x(), _pos.y(), _size.x(), _size.y());
+	}
+
+	void pushClipRect(int x, int y, int w, int h)
+	{
+		Rect box(x, y, w, h);
 
 		if(box.w == 0) box.w = screenWidth  - box.x;
 		if(box.h == 0) box.h = screenHeight - box.y;
@@ -190,7 +195,7 @@ namespace Renderer
 		if(box.h < 0) box.h = 0;
 
 		clipStack.push(box);
-		nativeClipStack.push(Rect(_pos.x(), _pos.y(), _size.x(), _size.y()));
+		nativeClipStack.push(Rect(x, y, w, h));
 
 		setScissor(box);
 
