@@ -14,21 +14,21 @@ std::map< std::pair<std::string, int>, std::weak_ptr<Font> > Font::sFontMap;
 Font::FontFace::FontFace(ResourceData&& d, int size) : data(d)
 {
 	int err = FT_New_Memory_Face(sLibrary, data.ptr.get(), (FT_Long)data.length, 0, &face);
-	assert(!err);
-	
-	if(!err)
+	if (!err)
 		FT_Set_Pixel_Sizes(face, 0, size);
 }
 
 Font::FontFace::~FontFace()
 {
-	if(face)
+	if (face)
 		FT_Done_Face(face);
 }
 
 void Font::initLibrary()
 {
-	assert(sLibrary == NULL);
+	if (sLibrary != nullptr)
+		return;
+
 	if(FT_Init_FreeType(&sLibrary))
 	{
 		sLibrary = NULL;
@@ -81,7 +81,8 @@ Font::Font(int size, const std::string& path) : mSize(size), mPath(path)
 			mSize = size * 1.5;
 	}
 
-	assert(mSize > 0);	
+	if (mSize == 0)
+		mSize = 2;
 
 	mLoaded = true;
 	mMaxGlyphHeight = 0;
@@ -201,8 +202,12 @@ bool Font::FontTexture::findEmpty(const Vector2i& size, Vector2i& cursor_out)
 
 void Font::FontTexture::initTexture()
 {
-	assert(textureId == 0);
-	textureId = Renderer::createTexture(Renderer::Texture::ALPHA, false, false, textureSize.x(), textureSize.y(), nullptr);
+	if (textureId == 0)
+	{
+		textureId = Renderer::createTexture(Renderer::Texture::ALPHA, false, false, textureSize.x(), textureSize.y(), nullptr);
+		if (textureId == 0)
+			LOG(LogError) << "FontTexture::initTexture() - failed to create texture " << textureSize.x() << "x" << textureSize.y();
+	}
 }
 
 void Font::FontTexture::deinitTexture()
@@ -231,7 +236,7 @@ void Font::getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_ou
 	mTextures.push_back(FontTexture());
 	tex_out = &mTextures.back();
 	tex_out->initTexture();
-	
+
 	bool ok = tex_out->findEmpty(glyphSize, cursor_out);
 	if(!ok)
 	{
@@ -242,23 +247,25 @@ void Font::getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_ou
 
 std::vector<std::string> getFallbackFontPaths()
 {
-	std::vector<std::string> fallbackFonts =
-	{
-		":/fontawesome-webfont.ttf",
-		":/DroidSansFallbackFull.ttf",// japanese, chinese, present on Debian
-		":/NanumMyeongjo.ttf", // korean font
-		":/Cairo.ttf", // arabic
-		":/Rubik-Regular.ttf" // hebrew (https://fontmeme.com/polices/police-rubik-hebrew public domain)
+	// Linux
+
+	const char* paths[] = {
+//		":/fontawesome-webfont.ttf",
+		":/DejaVuSans.ttf",
+		"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+		"/usr/share/fonts/truetype/freefont/FreeMono.ttf",
+		"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf" // japanese, chinese, present on Debian
 	};
 
-	std::vector<std::string> paths;
+	std::vector<std::string> fontPaths;
+	for(unsigned int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
+	{
+		if(ResourceManager::getInstance()->fileExists(paths[i]))
+			fontPaths.push_back(paths[i]);
+	}
 
-	for (auto font : fallbackFonts)
-		if (ResourceManager::getInstance()->fileExists(font))
-			paths.push_back(font);
-
-	paths.shrink_to_fit();
-	return paths;
+	fontPaths.shrink_to_fit();
+	return fontPaths;
 }
 
 FT_Face Font::getFaceForChar(unsigned int id)
@@ -400,7 +407,8 @@ void Font::renderTextCache(TextCache* cache)
 
 	for(auto it = cache->vertexLists.cbegin(); it != cache->vertexLists.cend(); it++)
 	{
-		assert(*it->textureIdPtr != 0);
+		if (*it->textureIdPtr == 0)
+			continue;
 
 		Renderer::bindTexture(*it->textureIdPtr);
 		Renderer::drawTriangleStrips(&it->verts[0], it->verts.size());
@@ -417,7 +425,8 @@ void Font::renderGradientTextCache(TextCache* cache, unsigned int colorTop, unsi
 
 	for (auto it = cache->vertexLists.cbegin(); it != cache->vertexLists.cend(); it++)
 	{
-		assert(*it->textureIdPtr != 0);
+		if (*it->textureIdPtr == 0)
+			continue;
 
 		std::vector<Renderer::Vertex> vxs;
 		vxs.resize(it->verts.size());
@@ -505,17 +514,20 @@ float Font::getHeight(float lineSpacing) const
 float Font::getLetterHeight()
 { // S character is heighter
 	Glyph* glyph = getGlyph('S');
-	assert(glyph);
-	return glyph->texSize.y() * glyph->texture->textureSize.y();
+	if (glyph != nullptr)
+		return glyph->texSize.y() * glyph->texture->textureSize.y();
+
+	return mSize;
 }
 
 float Font::getLetterWidth()
-{ // M character is widther
+{
 	Glyph* glyph = getGlyph('S');
-	assert(glyph);
-	return glyph->texSize.x() * glyph->texture->textureSize.x();
-}
+	if (glyph != nullptr)
+		return glyph->texSize.x() * glyph->texture->textureSize.x();
 
+	return mSize;
+}
 
 //the worst algorithm ever written
 //breaks up a normal string with newlines to make it fit xLen

@@ -56,8 +56,10 @@ private:
 	void openDisplayAutoDimSettings();
 
 	static std::string formatNetworkStatus(bool isConnected);
-	static std::string formatBatteryStatus(int  level, bool isCharging);
-	static std::string formatSoundStatus(int  level);
+	static std::string formatIconsBatteryStatus(int level, bool isCharging);
+	static std::string formatIconsSoundStatus(int level);
+	static std::string formatIconsBrightnessStatus(int level);
+	static std::string formatIconsNetworkStatus(bool status);
 
 	MenuComponent mMenu;
 	TextComponent mVersion;

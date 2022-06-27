@@ -713,7 +713,7 @@ std::string GuiSystemInformation::formatTemperature(float temp_raw, bool warning
 	char buffer [16];
 	sprintf (buffer, "%.2f° C", temp_raw);
 	std::string temperature(buffer);
-	return (warning ? _U("\uF2C7 ") : "  ") + temperature;
+	return (warning ? _U("\uF2C7  ") : "  ") + temperature;
 }
 
 std::string GuiSystemInformation::formatFrequency(int freq_raw)

@@ -73,6 +73,8 @@ public:
 	static const Vector4f UnitZ() { return { 0, 0, 1, 0 }; }
 	static const Vector4f UnitW() { return { 0, 0, 0, 1 }; }
 
+	bool empty() { return mX == 0 && mY == 0 && mZ == 0 && mW == 0; }
+
 private:
 
 	float mX;
