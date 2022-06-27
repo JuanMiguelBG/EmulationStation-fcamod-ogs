@@ -240,81 +240,20 @@ float MenuComponent::getButtonGridHeight() const
 
 void MenuComponent::setPosition(float x, float y, float z)
 {
-	float new_x = x,
-				new_y = y;
-
-	if (Settings::getInstance()->getBool("MenusAllWidth"))
-		new_x = 0.f;
-
-	if (Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight"))
-		new_y = 0.f;
-
-	GuiComponent::setPosition(new_x, new_y, z);
+	GuiComponent::setPosition(x, y, z);
 }
 
 void MenuComponent::updateSize()
 {
-	// GPI
-	if (Renderer::isSmallScreen())
-	{
-		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
-		return;
-	}
+	float height,
+				height_ratio = 1.0f;
 
-	float width, height;
+	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
+		height_ratio = 0.88f;
 
-	if (Settings::getInstance()->getBool("MenusAllHeight"))
-	{
-		bool change_height_ratio = Settings::getInstance()->getBool("ShowHelpPrompts");
-		float height_ratio = 1.0f;
-		if ( change_height_ratio )
-		{
-			height_ratio = 0.88f;
-			if ( Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight") )
-				height_ratio = 0.93f;
-		}
-		height = Renderer::getScreenHeight() * height_ratio;
-	}
-	else
-	{
-		const float maxHeight = mMaxHeight <= 0 ? Renderer::getScreenHeight() * 0.75f : mMaxHeight;
+	height = (float)Math::min((int)Renderer::getScreenHeight(), (int)(Renderer::getScreenHeight() * height_ratio));
 
-		height = TITLE_HEIGHT + mList->getTotalRowHeight() + getButtonGridHeight() + 2;
-		if(height > maxHeight)
-		{
-			height = TITLE_HEIGHT + getButtonGridHeight();
-			int i = 0;
-			while(i < mList->size())
-			{
-				float rowHeight = mList->getRowHeight(i);
-				if(height + rowHeight < maxHeight)
-					height += rowHeight;
-				else
-					break;
-				i++;
-			}
-		}
-	}
-
-	width = (float)Math::min((int)Renderer::getScreenHeight(), (int)(Renderer::getScreenWidth() * 0.90f));
-	if (Settings::getInstance()->getBool("MenusAllWidth"))
-		width = Renderer::getScreenWidth();
-	else if (Settings::getInstance()->getBool("AutoMenuWidth"))
-	{
-		float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
-					ratio = 1.2f;
-
-		if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
-			ratio = 1.4f;
-		else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
-			ratio = 1.7f;
-		else if ((font_size >= FONT_SIZE_LARGE))
-			ratio = 2.0f;
-
-		width = (float)Math::min((int)(width * ratio), Renderer::getScreenWidth());
-	}
-
-	setSize(width, height);
+	setSize(Renderer::getScreenWidth(), height);
 }
 
 void MenuComponent::onSizeChanged()

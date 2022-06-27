@@ -39,7 +39,6 @@ private:
 	void openUISettings();
 	void openSystemInformation();
 	void openQuitSettings();
-	void openMenusSettings();
 	void openAutoSuspendSettings();
 	void openSystemHotkeyEventsSettings();
 	void openRetroAchievementsSettings();
@@ -60,6 +59,7 @@ private:
 	static std::string formatIconsSoundStatus(int level);
 	static std::string formatIconsBrightnessStatus(int level);
 	static std::string formatIconsNetworkStatus(bool status);
+	static std::string formatIconsBluetoohStatus(std::string status);
 
 	MenuComponent mMenu;
 	TextComponent mVersion;

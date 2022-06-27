@@ -15,7 +15,6 @@
 #include "guis/UpdatableGuiSettings.h"
 #include "guis/GuiSystemInformation.h"
 #include "guis/GuiQuitOptions.h"
-#include "guis/GuiMenusOptions.h"
 #include "guis/GuiSystemHotkeyEventsOptions.h"
 #include "guis/GuiWifi.h"
 #include "guis/GuiAutoSuspendOptions.h"
@@ -110,8 +109,8 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 	std::string bluetoothInfo = ApiSystem::getInstance()->getBluetoothInformation();
 
-	// battery | Sound | Brightness | Network
-	addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " | " + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
+	// battery | Sound | Brightness | Bluetooh | Network
+	addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " | " + formatIconsBluetoohStatus(bluetoothInfo) + " | " + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
 
 	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 
@@ -127,19 +126,6 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 					y_start = Renderer::getScreenHeight() * 0.9,
 					y_end = (Renderer::getScreenHeight() - mSize.y()) / 2;
 
-		if (Settings::getInstance()->getBool("MenusOnDisplayTop"))
-		{
-			y_end = 0.f;
-		}
-		if (Settings::getInstance()->getBool("MenusAllHeight"))
-		{
-			y_end = 0.f;
-		}
-		if (Settings::getInstance()->getBool("MenusAllWidth"))
-		{
-			x_end = 0.f;
-		}
-
 		animateTo(
 			Vector2f(x_start, y_start),
 			Vector2f(x_end, y_end)
@@ -149,12 +135,6 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	{
 		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if (Settings::getInstance()->getBool("MenusAllWidth"))
-			new_x = 0.f;
-
-		if (Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight"))
-			new_y = 0.f;
 
 		setPosition(new_x, new_y);
 	}
@@ -1055,7 +1035,18 @@ void GuiMenu::openUISettings()
 	});
 
 	// menus configurations
-	s->addEntry(_("MENUS SETTINGS"), true, [this] { openMenusSettings(); });
+	// animated main menu
+	auto animated_main_menu = std::make_shared<SwitchComponent>(window);
+	animated_main_menu->setState(Settings::getInstance()->getBool("AnimatedMainMenu"));
+	s->addWithLabel(_("OPEN MAIN MENU WITH ANIMATION"), animated_main_menu);
+	s->addSaveFunc([animated_main_menu]
+		{
+			bool old_value = Settings::getInstance()->getBool("AnimatedMainMenu");
+			if (old_value != animated_main_menu->getState())
+			{
+				Settings::getInstance()->setBool("AnimatedMainMenu", animated_main_menu->getState());
+			}
+		});
 
 	// Hide system view
 	auto hideSystemView = std::make_shared<SwitchComponent>(mWindow);
@@ -1382,7 +1373,13 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 
 	// Hostname
 	s->addInputTextRow(_("HOSTNAME"), "system.hostname", false, false);
-
+/*
+	// Bluetooth enable
+	auto enable_bt = std::make_shared<SwitchComponent>(mWindow);
+	enable_bt->setState(baseWifiEnabled);
+	s->addWithLabel(_("ENABLE BLUETOOTH"), enable_bt);
+	s->addSaveFunc([networkIndicator] { Settings::getInstance()->setBool("ShowNetworkIndicator", networkIndicator->getState()); });
+*/
 	// Wifi enable
 	auto enable_wifi = std::make_shared<SwitchComponent>(mWindow);
 	enable_wifi->setState(baseWifiEnabled);
@@ -2086,11 +2083,6 @@ void GuiMenu::openRetroAchievementsSettings()
 	mWindow->pushGui(new GuiRetroachievementsOptions(mWindow));
 }
 
-void GuiMenu::openMenusSettings()
-{
-	mWindow->pushGui(new GuiMenusOptions(mWindow));
-}
-
 void GuiMenu::openSystemInformation()
 {
 	mWindow->pushGui(new GuiSystemInformation(mWindow));
@@ -2544,4 +2536,15 @@ std::string GuiMenu::formatIconsNetworkStatus(bool status)
 		networkInfo.append(_U("\uF05E  "));
 
 	return networkInfo;
+}
+
+std::string GuiMenu::formatIconsBluetoohStatus(std::string status)
+{
+	std::string bluetoothInfo("");
+	if (status == "On")
+		bluetoothInfo.append(_U("\uF293  "));
+	else
+		bluetoothInfo.append(_U("\uF294  "));
+
+	return bluetoothInfo;
 }

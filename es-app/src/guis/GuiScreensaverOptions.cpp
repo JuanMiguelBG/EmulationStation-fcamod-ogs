@@ -13,8 +13,18 @@ GuiScreensaverOptions::GuiScreensaverOptions(Window* window, std::string title) 
 
 	mMenu.addButton(_("BACK"), _("BACK"), [this] { delete this; });
 
-	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.6f);
-	mMenu.setPosition((mSize.x() - mMenu.getSize().x()) / 2, (mSize.y() - mMenu.getSize().y()) / 2);
+	// resize
+	float height_ratio = 1.0f;
+	if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
+		height_ratio = 0.88f;
+
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
+
+	// center
+	float new_x = (mSize.x() - mMenu.getSize().x()) / 2,
+				new_y = (mSize.y() - mMenu.getSize().y()) / 2;
+
+	mMenu.setPosition(new_x, new_y);
 }
 
 GuiScreensaverOptions::~GuiScreensaverOptions()

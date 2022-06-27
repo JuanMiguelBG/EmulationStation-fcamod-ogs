@@ -42,11 +42,10 @@ GuiTextEditPopup::GuiTextEditPopup(Window* window, const std::string& title, con
 	mText->setSize(0, textHeight);
 
 	setSize(Renderer::getScreenWidth() * 0.5f, mTitle->getFont()->getHeight() + textHeight + mButtonGrid->getSize().y() + 40);
-	float new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-	if (Settings::getInstance()->getBool("MenusOnDisplayTop"))
-		new_y = 0.f;
+	float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
+				new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
 
-	setPosition((Renderer::getScreenWidth() - mSize.x()) / 2, new_y);
+	setPosition(new_x, new_y);
 }
 
 void GuiTextEditPopup::onSizeChanged()

@@ -333,23 +333,17 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 	});
 
 	// resize
-	bool change_height_ratio = Settings::getInstance()->getBool("ShowHelpPrompts");
 	float height_ratio = 1.0f;
-	if ( change_height_ratio )
-	{
+	if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
 		height_ratio = 0.88f;
-		if ( Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight") )
-			height_ratio = 0.93f;
-	}
 
 	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
 
 	// center
-	float new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-	if ( Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight") )
-		new_y = 0.f;
+	float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
+				new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
 
-	setPosition(0.f, new_y);
+	setPosition(new_x, new_y);
 }
 
 void GuiMetaDataEd::onSizeChanged()

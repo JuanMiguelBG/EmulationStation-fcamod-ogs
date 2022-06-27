@@ -210,9 +210,6 @@ void Settings::setDefaults()
 	mStringMap["LogLevel"] = "default";
 	mBoolMap["LogWithMilliseconds"] = false;
 
-	mBoolMap["MenusOnDisplayTop"] = false;
-	mBoolMap["MenusAllWidth"] = false;
-	mBoolMap["MenusAllHeight"] = false;
 	mBoolMap["AnimatedMainMenu"] = true;
 
 	mBoolMap["ShowDetailedSystemInfo"] = false;

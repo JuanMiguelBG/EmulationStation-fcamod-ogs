@@ -75,11 +75,18 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 	mMenu.addButton(_("START"), _("START"), std::bind(&GuiScraperStart::pressedStart, this));
 	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
 
-	float new_y = (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2;
-	if (Settings::getInstance()->getBool("MenusOnDisplayTop"))
-		new_y = 0.f;
+	// resize
+	float height_ratio = 1.0f;
+	if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
+		height_ratio = 0.849f;
 
-	mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, new_y);
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
+
+	// center
+	float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
+				new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+
+	setPosition(new_x, new_y);
 }
 
 void GuiScraperStart::pressedStart()

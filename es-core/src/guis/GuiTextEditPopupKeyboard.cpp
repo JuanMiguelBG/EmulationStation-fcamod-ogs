@@ -269,53 +269,21 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 	// If multiline, set all diminsions back to default, else draw size for keyboard.
 	if (mMultiLine)
 	{
-		if (Renderer::isSmallScreen())
-			setSize(OSK_WIDTH, Renderer::getScreenHeight());
-		else
-		{
-			float width = OSK_WIDTH,
-						height = mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40;
+		float width = OSK_WIDTH,
+					height = mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40;
 
-			if (Settings::getInstance()->getBool("MenusAllHeight"))
-			{
-				bool change_height_ratio = Settings::getInstance()->getBool("ShowHelpPrompts");
-				float height_ratio = 1.0f;
-				if ( change_height_ratio )
-				{
-					height_ratio = 0.88f;
-					if ( Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight") )
-						height_ratio = 0.93f;
-				}
-				height = Renderer::getScreenHeight() * height_ratio;
-			}
+		float height_ratio = 1.0f;
+		if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
+			height_ratio = 0.88f;
 
-			if (Settings::getInstance()->getBool("MenusAllWidth"))
-				width = Renderer::getScreenWidth();
-			else if (Settings::getInstance()->getBool("AutoMenuWidth"))
-			{
-				float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
-							ratio = 1.2f;
+		height = Renderer::getScreenHeight() * height_ratio;
 
-				if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
-					ratio = 1.4f;
-				else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
-					ratio = 1.7f;
-				else if ((font_size >= FONT_SIZE_LARGE))
-					ratio = 2.0f;
+		width = (float)Math::min((int)width, Renderer::getScreenWidth());
 
-				width = (float)Math::min((int)(width * ratio), Renderer::getScreenWidth());
-			}
-
-			setSize(width, height);
-		}
+		setSize(width, height);
 
 		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if (Settings::getInstance()->getBool("MenusAllWidth"))
-			new_x = 0.f;
-		if (Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight"))
-			new_y = 0.f;
 
 		setPosition(new_x, new_y);
 	}
@@ -323,48 +291,21 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 	{
 		//setSize(OSK_WIDTH, mTitle->getFont()->getHeight() + textHeight + 40 + (Renderer::getScreenHeight() * 0.085f) * 6);
 
-			float width = OSK_WIDTH,
-						height = OSK_HEIGHT;
+		float width = OSK_WIDTH,
+					height = OSK_HEIGHT,
+					height_ratio = 1.0f;
 
-			if (Settings::getInstance()->getBool("MenusAllHeight"))
-			{
-				bool change_height_ratio = Settings::getInstance()->getBool("ShowHelpPrompts");
-				float height_ratio = 1.0f;
-				if ( change_height_ratio )
-				{
-					height_ratio = 0.88f;
-					if ( Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight") )
-						height_ratio = 0.93f;
-				}
-				height = Renderer::getScreenHeight() * height_ratio;
-			}
+		if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
+			height_ratio = 0.88f;
 
-			if (Settings::getInstance()->getBool("MenusAllWidth"))
-				width = Renderer::getScreenWidth();
-			else if (Settings::getInstance()->getBool("AutoMenuWidth"))
-			{
-				float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
-							ratio = 1.2f;
+		height = (float)Math::min((int) height, (int) (Renderer::getScreenHeight() * height_ratio));
 
-				if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
-					ratio = 1.4f;
-				else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
-					ratio = 1.7f;
-				else if ((font_size >= FONT_SIZE_LARGE))
-					ratio = 2.0f;
-
-				width = (float)Math::min((int)(width * ratio), Renderer::getScreenWidth());
-			}
+		width = (float)Math::min((int) width, Renderer::getScreenWidth());
 
 		setSize(width, height);
 
 		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if (Settings::getInstance()->getBool("MenusAllWidth"))
-			new_x = 0.f;
-		if (Settings::getInstance()->getBool("MenusOnDisplayTop") || Settings::getInstance()->getBool("MenusAllHeight"))
-			new_y = 0.f;
 
 		setPosition(new_x, new_y);
 		animateTo(Vector2f(new_x, new_y));
