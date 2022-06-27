@@ -18,7 +18,8 @@
 #define DRIVE_ICON			_U("\uF0A0 ")
 #define FOLDER_ICON			_U("\uF07C ")
 #define IMAGE_ICON			_U("\uF03E ")
-#define VIDEO_ICON			_U("\uF03D ")
+//#define VIDEO_ICON			_U("\uF03D ")
+#define VIDEO_ICON			_U("\uF008 ")
 #define DOCUMENT_ICON		_U("\uF02D ")
 
 GuiFileBrowser::GuiFileBrowser(Window* window, const std::string startPath, const std::string selectedFile, FileTypes types, const std::function<void(const std::string&)>& okCallback, const std::string& title)

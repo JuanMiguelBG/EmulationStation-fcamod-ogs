@@ -104,12 +104,9 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 
 		// battery | Sound | Brightness | Network
-//		addEntry(formatBatteryStatus(battery.level, battery.isCharging) + " | " + formatSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + _U("\uF185  ") + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% | " + _U("\uF0E8  ") + _U( (ApiSystem::getInstance()->isNetworkConnected() ? "\uF1EB  " : "\uF10C  ") ), false, [this] {  });
+		addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " | " + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
 
-		addEntry("BAT: " + std::to_string( battery.level ) + "%" + " | SND: " + std::to_string(ApiSystem::getInstance()->getVolume()) + "%" + " | BRT: " + std::to_string( ApiSystem::getInstance()->getBrightnessLevel() ) + "% |" + _("NETWORK")+ ": " + _( (ApiSystem::getInstance()->isNetworkConnected() ? "CONNECTED" : "NOT CONNECTED") ), false, [this] { });
-
-//		addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
-		addEntry("Distro Version: " + software.application_name + " " + software.version, false, [this] { });
+		addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 	}
 
 	addChild(&mMenu);
@@ -2523,7 +2520,7 @@ std::string GuiMenu::formatNetworkStatus(bool isConnected)
 	return (isConnected ? "    " + _("CONNECTED") + " " : _("NOT CONNECTED"));
 }
 
-std::string GuiMenu::formatBatteryStatus(int  level, bool isCharging)
+std::string GuiMenu::formatIconsBatteryStatus(int level, bool isCharging)
 {
 	std::string batteryInfo("");
 	if (level > 75)
@@ -2537,7 +2534,7 @@ std::string GuiMenu::formatBatteryStatus(int  level, bool isCharging)
 	else
 		batteryInfo.append(_U("\uF244  "));
 
-	batteryInfo.append(std::to_string( level ) ).append("% ");
+	batteryInfo.append(std::to_string( level )).append("% ");
 
 	if (isCharging)
 		batteryInfo.append(_U("\uF0E7  "));
@@ -2545,7 +2542,7 @@ std::string GuiMenu::formatBatteryStatus(int  level, bool isCharging)
 	return batteryInfo;
 }
 
-std::string GuiMenu::formatSoundStatus(int  level)
+std::string GuiMenu::formatIconsSoundStatus(int level)
 {
 	std::string soundInfo("");
 
@@ -2556,7 +2553,33 @@ std::string GuiMenu::formatSoundStatus(int  level)
 	else
 		soundInfo.append(_U("\uF026  "));
 
-	soundInfo.append(std::to_string( level ) ).append("% ");
+	soundInfo.append(std::to_string( level )).append("% ");
 
 	return soundInfo;
+}
+
+std::string GuiMenu::formatIconsBrightnessStatus(int level)
+{
+	std::string brightnessInfo("");
+
+	if (level > 10)
+		brightnessInfo.append(_U("\uF185  "));
+	else
+		brightnessInfo.append(_U("\uF0A3  "));
+
+	brightnessInfo.append(std::to_string( level )).append("% ");
+
+	return brightnessInfo;
+
+}
+
+std::string GuiMenu::formatIconsNetworkStatus(bool status)
+{
+	std::string networkInfo(_U("\uF0E8  "));
+	if (ApiSystem::getInstance()->isNetworkConnected())
+		networkInfo.append(_U("\uF1EB  "));
+	else
+		networkInfo.append(_U("\uF05E  "));
+
+	return networkInfo;
 }
