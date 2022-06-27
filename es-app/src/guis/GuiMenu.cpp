@@ -1494,7 +1494,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						_("OK"), [newSSID, newKey, window]
 							{
 								if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
-									window->pushGui(new GuiMsgBox(window, _U("\uF161  ") + newSSID + " - " + _("WIFI ENABLED")));
+									window->pushGui(new GuiMsgBox(window, _U("\uF25B  ") + newSSID + " - " + _("WIFI ENABLED")));
 								else
 									window->pushGui(new GuiMsgBox(window, _U("\uF071  ") + newSSID + " - " + _("WIFI CONFIGURATION ERROR")));
 							}));
@@ -1517,7 +1517,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				{
 					std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
 					if (ApiSystem::getInstance()->enableWifi(ssid, SystemConf::getInstance()->get("wifi.key")))
-						window->displayNotificationMessage(_U("\uF161  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
+						window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
 					else
 						window->displayNotificationMessage(_U("\uF071  ") + ssid + " - " + _("WIFI CONFIGURATION ERROR"), 10000);
 				}
