@@ -73,7 +73,7 @@ void GuiSystemInformation::showSummarySystemInfo()
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update temperture CPU";
 			float temp_cpu_value = ApiSystem::getInstance()->getTemperatureCpu();
-			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_cpu_value, warning );
+			bool warning = ApiSystem::getInstance()->isTemperatureLimit( temp_cpu_value );
 			temperatureCpu->setText(formatTemperature( temp_cpu_value, warning ));
 			temperatureCpu->setColor(warning ? 0xFF0000FF : color);
 		}, 5000);
@@ -684,7 +684,7 @@ std::string GuiSystemInformation::formatTemperature(float temp_raw, bool warning
 	char buffer [16];
 	sprintf (buffer, "%.2f° C", temp_raw);
 	std::string temperature(buffer);
-	return ( warning ? _U("\uF2C7 ") : "  ") + temperature;
+	return (warning ? _U("\uF2C7  ") : "  ") + temperature;
 }
 
 std::string GuiSystemInformation::formatFrequency(int freq_raw)

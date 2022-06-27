@@ -10,11 +10,9 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "GuiLoading.h"
 #include "Settings.h"
-#include "components/MenuComponent.h"
 
 GuiWifi::GuiWifi(Window* window, const std::string title, const std::string subtitle, std::string data, const std::function<bool(std::string)>& onsave)
 	: GuiComponent(window), mMenu(window, title.c_str())
-//	: GuiComponent(window), mMenu(window, title.c_str(), subtitle.c_str())
 {
 	mTitle = title;
 	mInitialData = data;

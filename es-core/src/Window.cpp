@@ -18,6 +18,7 @@
 #include "guis/GuiMsgBox.h"
 #include "AudioManager.h"
 #include <string>
+#include "utils/StringUtil.h"
 #include "utils/TimeUtil.h"
 #include "components/VolumeInfoComponent.h"
 #include "components/BrightnessInfoComponent.h"
@@ -86,7 +87,7 @@ GuiComponent* Window::peekGui()
 
 bool Window::init(bool initRenderer, bool forceFullScreen)
 {
-	LOG(LogInfo) << "Window::init() - initRenderer: " << (initRenderer ? "true" : "false") << ", forceFullScreen: " << (forceFullScreen ? "true" : "false");
+	LOG(LogInfo) << "Window::init() - initRenderer: " << (initRenderer ? "true" : "false") << ", forceFullScreen: " << Utils::String::boolToString(forceFullScreen);
 
 	if (initRenderer)
 	{
