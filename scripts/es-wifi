@@ -22,7 +22,6 @@ do_help() {
     echo "$0 disable_network_manager" >&2
     echo "$0 is_network_manager_active" >&2
     echo "$0 is_network_manager_enabled" >&2
-    echo "$0 test_network_manager" >&2
     echo "$0 is_network_exist <SSID>" >&2
     echo "$0 get_network_exist_flag" >&2
     echo "$0 test_network_manager" >&2
