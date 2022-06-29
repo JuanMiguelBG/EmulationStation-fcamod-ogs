@@ -1010,7 +1010,8 @@ uint32_t getVolume()
 }
 #endif
 
-std::string queryBluetoothInformation()
+std::string queryBluetoothEnabled()
 {
-	return getShOutput(R"(if [ -z $(pidof rtk_hciattach) ]; then echo "Off"; else echo "On"; fi)");
+	return getShOutput(R"(if [ -z $(pidof rtk_hciattach) ]; then echo "disabled"; else echo "enabled"; fi)");
 }
+

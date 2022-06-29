@@ -279,7 +279,7 @@ bool setCurrentTimezone(std::string timezone);
 uint32_t getVolume();
 #endif
 
-std::string queryBluetoothInformation();
+std::string queryBluetoothEnabled();
 
 std::string getShOutput(const std::string& mStr);
 

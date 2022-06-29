@@ -14,10 +14,16 @@ do_help() {
     echo "$0 is_enabled" >&2
     echo "$0 get_ssid" >&2
     echo "$0 get_ssid_psk <SSID>" >&2
+    echo "$0 get_dns1" >&2
+    echo "$0 get_dns2" >&2
     echo "$0 enable_manual_dns <SSID> <DNS1> <DNS2>" >&2
     echo "$0 disable_manual_dns <SSID>" >&2
     echo "$0 enable_network_manager" >&2
     echo "$0 disable_network_manager" >&2
+    echo "$0 is_network_manager_active" >&2
+    echo "$0 is_network_manager_enabled" >&2
+    echo "$0 is_network_exist <SSID>" >&2
+    echo "$0 get_network_exist_flag" >&2
     echo "$0 test_network_manager" >&2
 }
 
@@ -403,6 +409,9 @@ case "${ACTION}" in
     ;;
     "is_network_manager_active")
         is_network_manager_active || exit 1
+    ;;
+    "is_network_manager_enabled")
+        is_network_manager_enabled || exit 1
     ;;
     "test_network_manager")
         test_network_manager

@@ -212,21 +212,6 @@ remove_journal () {
 	#sudo systemctl start systemd-journald
 }
 
-
-#******************* ES Scripts logs functions ********************
-
-active_es_scripts_log_feature() {
-	sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/' $ES_SCRIPTS_PATH/es-commons
-}
-
-inactive_es_scripts_log_feature() {
-	sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/' $ES_SCRIPTS_PATH/es-commons
-}
-
-remove_es_scripts_log() {
-	sudo rm -f "$ES_SCRIPT_LOGS_DIR"/es-*.log*
-}
-
 #******************* global funtions ********************
 
 is_actived_scripts_log() {

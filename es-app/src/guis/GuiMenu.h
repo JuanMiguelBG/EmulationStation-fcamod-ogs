@@ -48,6 +48,9 @@ private:
 
 	static void openWifiSettings(Window* win, std::string title, std::string data, const std::function<bool(std::string)>& onsave);
 
+	void preloadBluetoothSettings();
+	void openBluetoothSettings(bool selectBtEnable = false);
+
 	void openUpdateSettings();
 	void openEmulatorSettings();
 	void openSystemEmulatorSettings(SystemData* system);
@@ -59,7 +62,7 @@ private:
 	static std::string formatIconsSoundStatus(int level);
 	static std::string formatIconsBrightnessStatus(int level);
 	static std::string formatIconsNetworkStatus(bool status);
-	static std::string formatIconsBluetoohStatus(std::string status);
+	static std::string formatIconsBluetoohStatus(bool status);
 
 	MenuComponent mMenu;
 	TextComponent mVersion;

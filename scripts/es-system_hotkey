@@ -2,10 +2,10 @@
 
 if [ ! "$1" ];then
 	printf "usage : es-system_hotkey [set key value|get key]\n"
-	printf "Valid keys: brightness, volume, wifi, performance and suspend\n"
+	printf "Valid keys: brightness, volume, wifi, bluetooth and suspend\n"
 	printf "Valid values: enabled and disabled\n"
 	printf "or\n"
-	printf "usage : es-system_hotkey set_all_values [brightness_value] [brightness_step_value] [volume_value] [volume_step_value] [wifi_value] [performance_value] [suspend_value]\n"
+	printf "usage : es-system_hotkey set_all_values [brightness_value] [brightness_step_value] [volume_value] [volume_step_value] [wifi_value] [bluetooth_value] [suspend_value]\n"
 	printf "Valid values: enabled and disabled\n"
 	exit 1
 fi
@@ -41,7 +41,7 @@ config_set_all_values () {
 }
 
 config_file () {
-	echo "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nperformance=$6\nsuspend=$7\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
+	echo "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nbluetooth=$6\nsuspend=$7\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
 }
 
 
@@ -53,7 +53,7 @@ config_file () {
 
 if [ ! -f "$configFile" ]; then
 	#echo "The system hotkey events configuration file '$configFile' doesn't exist, creating it."
-	# config with default values: brightness brightness_step volume volume_step wifi performance suspend
+	# config with default values: brightness brightness_step volume volume_step wifi bluetooth suspend
 	config_file "enabled" "1" "enabled" "1" "enabled" "enabled" "enabled"
 fi
 

@@ -58,7 +58,8 @@ public:
 		SHOW_FPS = 9,
 		OVERCLOCK = 10,
 		PRELOAD_VLC = 11,
-		SOUND = 12
+		SOUND = 12,
+		BLUETOOTH = 13
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -149,9 +150,9 @@ public:
 	bool isSystemHotkeyVolumeEvent();
 	int getSystemHotkeyVolumeStep();
 	bool isSystemHotkeyWifiEvent();
-	bool isSystemHotkeyPerformanceEvent();
+	bool isSystemHotkeyBluetoothEvent();
 	bool isSystemHotkeySuspendEvent();
-	bool setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool performance_state, bool suspend_state);
+	bool setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool bluetooth, bool suspend_state);
 
 	bool isDeviceAutoSuspend();
 	bool isDeviceAutoSuspendStayAwakeCharging();
@@ -236,9 +237,11 @@ public:
 	bool setOutputDevice(const std::string device);
 
 	virtual bool launchKodi(Window *window);
+	virtual bool launchBluetoothConfigurator(Window *window);
 
-	std::string getBluetoothInformation();
-
+	bool isBluetoothEnabled();
+	bool enableBluetooth();
+	bool disableBluetooth();
 };
 
 #endif

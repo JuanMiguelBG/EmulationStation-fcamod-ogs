@@ -1,0 +1,160 @@
+#!/bin/bash
+
+do_help() {
+    echo "$0 enable" >&2
+    echo "$0 disable" >&2
+    echo "$0 is_enabled" >&2
+    echo "$0 enable_bluetooth" >&2
+    echo "$0 disable_bluetooth" >&2
+    echo "$0 is_bluetooth_active" >&2
+    echo "$0 is_bluetooth_enabled" >&2
+    echo "$0 test_bluetooth" >&2
+}
+
+is_bluetooth_active() {
+    print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_active()'"
+
+    sudo systemctl is-active bluetooth --quiet
+    if [ $? -eq 0 ]; then
+      # active
+      print_log $LOG_FILE "INFO" "is_bluetooth_active() - Bluetooth is active"
+      return 0
+    fi
+    # inactive
+    print_log $LOG_FILE "INFO" "is_bluetooth_active() - Bluetooth is inactive"
+    return 1
+}
+
+is_bluetooth_enabled() {
+    print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_enabled()'"
+
+    sudo systemctl is-enabled bluetooth --quiet
+    if [ $? -eq 0 ]; then
+      # enabled
+      print_log $LOG_FILE "INFO" "is_bluetooth_enabled() - Bluetooth is enabled"
+      return 0
+    fi
+    # disabled
+    print_log $LOG_FILE "INFO" "is_bluetooth_enabled() - Bluetooth is disabled"
+    return 1
+}
+
+enable_bluetooth() {
+    print_log $LOG_FILE "INFO" "Executing 'enable_bluetooth()'"
+
+    is_network_manager_active
+    if [ $? -eq 1 ]; then
+      # inactive
+      print_log $LOG_FILE "INFO" "enable_bluetooth() - Bluetooth is inactive, activing..."
+      sudo systemctl start bluetooth
+      sudo systemctl enable bluetooth
+      sudo systemctl start enable_bluetooth
+      sudo systemctl enable enable_bluetooth
+      sudo systemctl daemon-reload --quiet &
+    fi
+}
+
+disable_bluetooth() {
+    print_log $LOG_FILE "INFO" "Executing 'disable_bluetooth()'"
+
+    is_network_manager_active
+    if [ $? -eq 0 ]; then
+      # active
+      print_log $LOG_FILE "INFO" "disable_bluetooth() - Bluetooth is active, inactiving..."
+      sudo systemctl stop bluetooth
+      sudo systemctl disable bluetooth
+      sudo systemctl stop enable_bluetooth
+      sudo systemctl disable enable_bluetooth
+      sudo systemctl daemon-reload --quiet &
+    fi
+}
+
+test_bluetooth() {
+    print_log $LOG_FILE "INFO" "Executing 'test_bluetooth()'"
+
+    is_network_manager_active
+    if [ $? -eq 1 ]; then
+      echo "inactive"
+    else
+      echo "active"
+    fi
+}
+
+do_enable() {
+    print_log $LOG_FILE "INFO" "Executing 'do_enable()'"
+
+    enable_bluetooth
+}
+
+do_disable() {
+    print_log $LOG_FILE "INFO" "Executing 'do_disable()'"
+
+    disable_bluetooth
+}
+
+is_enabled() {
+    print_log $LOG_FILE "INFO" "Executing 'is_enabled()'"
+
+    if [ -z $(pidof rtk_hciattach) ]; then
+      # disaled
+      print_log $LOG_FILE "INFO" "is_enabled() - Bluetooth is disabled"
+      return 1
+    fi
+
+    # enabled
+    print_log $LOG_FILE "INFO" "is_enabled() - Bluetooth is enabled"
+    return 0
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-commons
+
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-bluetooth.log"
+
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+shift
+
+print_log $LOG_FILE "INFO" "Executing operation: $ACTION"
+
+case "${ACTION}" in
+    "enable")
+        do_enable "$1" "$2" || exit 1
+    ;;
+    "disable")
+        do_disable || exit 1
+    ;;
+    "enable_bluetooth")
+        enable_bluetooth || exit 1
+    ;;
+    "disable_bluetooth")
+        disable_bluetooth || exit 1
+    ;;
+    "is_bluetooth_active")
+        is_bluetooth_active || exit 1
+    ;;
+    "is_bluetooth_enabled")
+        is_bluetooth_enabled || exit 1
+    ;;
+    "test_bluetooth")
+        test_bluetooth
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        print_log $LOG_FILE "ERROR" "Invalid command ${ACTION}"
+        exit 1
+esac
+exit 0

@@ -49,11 +49,11 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	wifi->setState(wifi_value);
 	addWithLabel(_("WIFI"), wifi);
 
-	// performance events
-	auto performance = std::make_shared<SwitchComponent>(window);
-	bool performance_value = ApiSystem::getInstance()->isSystemHotkeyPerformanceEvent();
-	performance->setState(performance_value);
-	addWithLabel(_("PERFORMANCE"), performance);
+	// bluetooth events
+	auto bluetooth = std::make_shared<SwitchComponent>(window);
+	bool bluetooth_value = ApiSystem::getInstance()->isSystemHotkeyBluetoothEvent();
+	bluetooth->setState(bluetooth_value);
+	addWithLabel(_("BLUETOOTH"), bluetooth);
 
 	// suspend events
 	auto suspend = std::make_shared<SwitchComponent>(window);
@@ -61,21 +61,21 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	suspend->setState(suspend_value);
 	addWithLabel(_("SUSPEND"), suspend);
 
-	addSaveFunc([brightness, brightness_value, brightness_step, brightness_step_value, volume, volume_value, volume_step, volume_step_value, wifi, wifi_value, performance, performance_value, suspend, suspend_value]
+	addSaveFunc([brightness, brightness_value, brightness_step, brightness_step_value, volume, volume_value, volume_step, volume_step_value, wifi, wifi_value, bluetooth, bluetooth_value, suspend, suspend_value]
 		{
 			bool brightness_new_value = brightness->getState();
 			int brightness_step_new_value = (int)Math::round( brightness_step->getValue() );
 			bool volume_new_value = volume->getState();
 			int volume_step_new_value = (int)Math::round( volume_step->getValue() );
 			bool wifi_new_value = wifi->getState();
-			bool performance_new_value = performance->getState();
+			bool bluetooth_new_value = bluetooth->getState();
 			bool suspend_new_value = suspend->getState();
 
 			if ( (brightness_value != brightness_new_value) || (brightness_step_value != brightness_step_new_value)
 				|| (volume_value != volume_new_value) || (volume_step_value != volume_step_new_value)
-				|| (wifi_value != wifi_new_value) || (performance_value != performance_new_value) || (suspend_value != suspend_new_value) )
+				|| (wifi_value != wifi_new_value) || (bluetooth_value != bluetooth_new_value) || (suspend_value != suspend_new_value) )
 			{
-				ApiSystem::getInstance()->setSystemHotkeysValues( brightness_new_value, brightness_step_new_value, volume_new_value, volume_step_new_value, wifi_new_value, performance_new_value, suspend_new_value );
+				ApiSystem::getInstance()->setSystemHotkeysValues( brightness_new_value, brightness_step_new_value, volume_new_value, volume_step_new_value, wifi_new_value, bluetooth_new_value, suspend_new_value );
 			}
 		});
 }

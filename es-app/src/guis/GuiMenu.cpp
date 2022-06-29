@@ -51,7 +51,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 			Window *window = mWindow;
 			delete this;
 			if (!ApiSystem::getInstance()->launchKodi(window))
-				LOG(LogWarning) << "Shutdown terminated with non-zero result!";
+				LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Kodi terminated with non-zero result!";
 
 		}, "iconKodi");
 
@@ -86,13 +86,15 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::WIFI))
 			addEntry(_("NETWORK SETTINGS").c_str(), true, [this] { preloadNetworkSettings(); openNetworkSettings(); }, "iconNetwork");
-		
+
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BLUETOOTH))
+			addEntry(_("BLUETOOTH SETTINGS").c_str(), true, [this] { preloadBluetoothSettings(); openBluetoothSettings(); }, "iconBluetooth");
+
 		addEntry(_("SCRAPER"), true, [this] { openScraperSettings(); }, "iconScraper");
 
 		addEntry(_("ADVANCED SETTINGS"), true, [this] { openAdvancedSettings(); }, "iconAdvanced");
 
 		addEntry(_("SYSTEM INFORMATION"), true, [this] { openSystemInformation(); }, "iconInformation");
-
 	}
 
 	std::string quit_menu_label = "QUIT";
@@ -107,10 +109,10 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 
 	BatteryInformation battery = ApiSystem::getInstance()->getBatteryInformation();
 	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
-	std::string bluetoothInfo = ApiSystem::getInstance()->getBluetoothInformation();
+	bool bluetoothEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
 
 	// battery | Sound | Brightness | Bluetooh | Network
-	addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " | " + formatIconsBluetoohStatus(bluetoothInfo) + " | " + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
+	addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " | " + ( ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BLUETOOTH) ? formatIconsBluetoohStatus(bluetoothEnabled) + " | " : "") + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
 
 	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 
@@ -1373,13 +1375,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 
 	// Hostname
 	s->addInputTextRow(_("HOSTNAME"), "system.hostname", false, false);
-/*
-	// Bluetooth enable
-	auto enable_bt = std::make_shared<SwitchComponent>(mWindow);
-	enable_bt->setState(baseWifiEnabled);
-	s->addWithLabel(_("ENABLE BLUETOOTH"), enable_bt);
-	s->addSaveFunc([networkIndicator] { Settings::getInstance()->setBool("ShowNetworkIndicator", networkIndicator->getState()); });
-*/
+
 	// Wifi enable
 	auto enable_wifi = std::make_shared<SwitchComponent>(mWindow);
 	enable_wifi->setState(baseWifiEnabled);
@@ -1546,6 +1542,57 @@ void GuiMenu::resetNetworkSettings(GuiSettings *gui)
 	window->removeGui(gui);
 	delete gui;
 	openNetworkSettings(true, false);
+}
+
+void GuiMenu::preloadBluetoothSettings()
+{
+	SystemConf::getInstance()->setBool("bluetooth.enabled", ApiSystem::getInstance()->isBluetoothEnabled());
+}
+
+void GuiMenu::openBluetoothSettings(bool selectBtEnable)
+{
+	const bool baseBtEnabled = SystemConf::getInstance()->getBool("bluetooth.enabled");
+
+	Window *window = mWindow;
+
+	auto s = new GuiSettings(mWindow, _("BLUETOOTH SETTINGS").c_str());
+
+	// Bluetooth enable
+	auto enable_bt = std::make_shared<SwitchComponent>(mWindow);
+	enable_bt->setState(baseBtEnabled);
+	s->addWithLabel(_("ENABLE BLUETOOTH"), enable_bt, selectBtEnable);
+	enable_bt->setOnChangedCallback([this, s, baseBtEnabled, enable_bt]()
+		{
+			bool bt_enabled = enable_bt->getState();
+			if (bt_enabled != baseBtEnabled)
+			{
+				SystemConf::getInstance()->setBool("bluetooth.enabled", bt_enabled);
+
+				if (bt_enabled)
+				{
+					ApiSystem::getInstance()->enableBluetooth();
+				}
+				else
+					ApiSystem::getInstance()->disableBluetooth();
+
+				delete s;
+				openBluetoothSettings(true);
+			}
+		});
+
+	if (baseBtEnabled)
+	{
+		s->addEntry(_("BLUETOOTH CONFIGURATOR").c_str(), false, [this]
+			{
+				Window *window = mWindow;
+				delete this;
+				if (!ApiSystem::getInstance()->launchBluetoothConfigurator(window))
+					LOG(LogWarning) << "GuiMenu::openBluetoothSettings() - Shutdown Bluetooth Configurator terminated with non-zero result!";
+
+			});
+	}
+
+	mWindow->pushGui(s);
 }
 
 void GuiMenu::openUpdateSettings()
@@ -2538,10 +2585,10 @@ std::string GuiMenu::formatIconsNetworkStatus(bool status)
 	return networkInfo;
 }
 
-std::string GuiMenu::formatIconsBluetoohStatus(std::string status)
+std::string GuiMenu::formatIconsBluetoohStatus(bool status)
 {
 	std::string bluetoothInfo("");
-	if (status == "On")
+	if (status)
 		bluetoothInfo.append(_U("\uF293  "));
 	else
 		bluetoothInfo.append(_U("\uF294  "));

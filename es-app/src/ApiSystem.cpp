@@ -190,6 +190,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 	case ApiSystem::SOUND:
 				executables.push_back("es-sound");
 				break;
+	case ApiSystem::BLUETOOTH:
+				executables.push_back("es-bluetooth");
+				break;
 /*
 	case ApiSystem::RETROACHIVEMENTS:
 #ifdef CHEEVOS_DEV_LOGIN
@@ -755,11 +758,11 @@ bool ApiSystem::isSystemHotkeyWifiEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get wifi)"));
 }
 
-bool ApiSystem::isSystemHotkeyPerformanceEvent()
+bool ApiSystem::isSystemHotkeyBluetoothEvent()
 {
-	LOG(LogInfo) << "ApiSystem::isSystemHotkeyPerformanceEvent()";
+	LOG(LogInfo) << "ApiSystem::isSystemHotkeyBluetoothEvent()";
 
-	return stringToState(getShOutput(R"(es-system_hotkey get performance)"));
+	return stringToState(getShOutput(R"(es-system_hotkey get bluetooth)"));
 }
 
 bool ApiSystem::isSystemHotkeySuspendEvent()
@@ -769,7 +772,7 @@ bool ApiSystem::isSystemHotkeySuspendEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get suspend)"));
 }
 
-bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool performance_state, bool suspend_state)
+bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool bluetooth_state, bool suspend_state)
 {
 	LOG(LogInfo) << "ApiSystem::setSystemHotkeysValues()";
 
@@ -783,7 +786,7 @@ bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_ste
 	else if (volume_step > 25)
 		volume_step = 25;
 
-	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + std::to_string(brightness_step) + " " + stateToString(volume_state) + " " + std::to_string(volume_step) + " " + stateToString(wifi_state) + " " + stateToString(performance_state) + " " + stateToString(suspend_state) + " &");
+	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + std::to_string(brightness_step) + " " + stateToString(volume_state) + " " + std::to_string(volume_step) + " " + stateToString(wifi_state) + " " + stateToString(bluetooth_state) + " " + stateToString(suspend_state) + " &");
 }
 
 bool ApiSystem::isDeviceAutoSuspendByTime()
@@ -1190,7 +1193,7 @@ bool ApiSystem::setEsScriptsLoggingActivated(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
 
-	return executeScript("es-optimize_system active_es_scripts_log " + Utils::String::boolToString(state));
+	return executeScript("es-optimize_system active_es_scripts_log " + Utils::String::boolToString(state) + " &");
 }
 
 bool ApiSystem::setShowRetroarchFps(bool state)
@@ -1492,9 +1495,43 @@ bool ApiSystem::launchKodi(Window *window)
 	return exitCode == 0;
 }
 
-std::string ApiSystem::getBluetoothInformation()
+bool ApiSystem::launchBluetoothConfigurator(Window *window)
 {
-	LOG(LogDebug) << "ApiSystem::getBluetoothInformation()";
+	LOG(LogDebug) << "ApiSystem::launchBluetoothConfigurator()";
 
-	return queryBluetoothInformation();
+	std::string command = "Bluetooth.sh";
+
+	ApiSystem::launchExternalWindow_before(window);
+
+	int exitCode = system(command.c_str());
+
+	// WIFEXITED returns a nonzero value if the child process terminated normally with exit or _exit.
+	// https://www.gnu.org/software/libc/manual/html_node/Process-Completion-Status.html
+	if (WIFEXITED(exitCode))
+		exitCode = WEXITSTATUS(exitCode);
+
+	ApiSystem::launchExternalWindow_after(window);
+
+	return exitCode == 0;
+}
+
+bool ApiSystem::isBluetoothEnabled()
+{
+	LOG(LogDebug) << "ApiSystem::isBluetoothEnabled()";
+
+	return stringToState(queryBluetoothEnabled());
+}
+
+bool ApiSystem::enableBluetooth()
+{
+	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
+
+	return executeScript("es-bluetooth enable");
+}
+
+bool ApiSystem::disableBluetooth()
+{
+	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
+
+	return executeScript("es-bluetooth disable");
 }
