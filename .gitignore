@@ -17,6 +17,7 @@
 
 # Compiled executable
 emulationstation
+emulationstation-no_strip
 
 # build directory
 build

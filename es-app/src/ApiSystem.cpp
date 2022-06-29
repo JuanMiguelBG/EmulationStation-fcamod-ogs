@@ -1233,7 +1233,7 @@ bool ApiSystem::setEsScriptsLoggingActivated(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
 
-	return executeScript("es-optimize_system active_es_scripts_log " + Utils::String::boolToString(state));
+	return executeScript("es-optimize_system active_es_scripts_log " + Utils::String::boolToString(state) + " &");
 }
 
 bool ApiSystem::setShowRetroarchFps(bool state)

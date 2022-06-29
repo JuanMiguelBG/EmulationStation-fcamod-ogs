@@ -212,21 +212,6 @@ remove_journal () {
 	#sudo systemctl start systemd-journald
 }
 
-
-#******************* ES Scripts logs functions ********************
-
-active_es_scripts_log_feature() {
-	sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/' $ES_SCRIPTS_PATH/es-commons
-}
-
-inactive_es_scripts_log_feature() {
-	sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/' $ES_SCRIPTS_PATH/es-commons
-}
-
-remove_es_scripts_log() {
-	sudo rm -f "$ES_SCRIPT_LOGS_DIR"/es-*.log*
-}
-
 #******************* global funtions ********************
 
 is_actived_scripts_log() {
@@ -304,7 +289,7 @@ ACTION=$1
 VALUE=$2
 shift
 
-print_log $LOG_FILE "INFO" "Executing operation: '$ACTION', value: $VALUE"
+#print_log $LOG_FILE "INFO" "Executing operation: '$ACTION', value: $VALUE"
 
 case "${ACTION}" in
     "active_optimize_system")
@@ -322,7 +307,7 @@ case "${ACTION}" in
     *)
         do_help
         >&2 echo "error: invalid command ${ACTION}"
-        print_log $LOG_FILE "ERROR" "Invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "Invalid command ${ACTION}"
         exit 1
 esac
 

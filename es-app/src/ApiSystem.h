@@ -185,7 +185,6 @@ public:
 	std::string getDnsTwo();
 	std::string getWifiNetworkExistFlag();
 
-
 	bool setLanguage(std::string language);
 
 	bool getRetroachievementsEnabled();
