@@ -33,12 +33,12 @@ print_log() {
 
 active_es_scripts_log_feature() {
 	sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/' $ES_SCRIPTS_PATH/es-commons
-	grep -l print_log es-* | grep -v es-commons | xargs sudo sed -i 's/#print_log/print_log/g'
+	grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-commons | xargs sudo sed -i 's/#print_log/print_log/g'
 }
 
 inactive_es_scripts_log_feature() {
 	sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/' $ES_SCRIPTS_PATH/es-commons
-	grep -l print_log es-* | grep -v es-commons | xargs sudo sed -i 's/print_log/#print_log/g'
+	grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-commons | xargs sudo sed -i 's/print_log/#print_log/g'
 }
 
 remove_es_scripts_log() {
