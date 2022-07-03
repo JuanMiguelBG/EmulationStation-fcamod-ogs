@@ -42,7 +42,7 @@ is_bluetooth_enabled() {
 enable_bluetooth() {
     print_log $LOG_FILE "INFO" "Executing 'enable_bluetooth()'"
 
-    is_network_manager_active
+    is_bluetooth_active
     if [ $? -eq 1 ]; then
       # inactive
       print_log $LOG_FILE "INFO" "enable_bluetooth() - Bluetooth is inactive, activing..."
@@ -57,7 +57,7 @@ enable_bluetooth() {
 disable_bluetooth() {
     print_log $LOG_FILE "INFO" "Executing 'disable_bluetooth()'"
 
-    is_network_manager_active
+    is_bluetooth_active
     if [ $? -eq 0 ]; then
       # active
       print_log $LOG_FILE "INFO" "disable_bluetooth() - Bluetooth is active, inactiving..."
@@ -72,7 +72,7 @@ disable_bluetooth() {
 test_bluetooth() {
     print_log $LOG_FILE "INFO" "Executing 'test_bluetooth()'"
 
-    is_network_manager_active
+    is_bluetooth_active
     if [ $? -eq 1 ]; then
       echo "inactive"
     else
