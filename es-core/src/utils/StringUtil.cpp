@@ -402,6 +402,48 @@ namespace Utils
 			return text;
 		}
 
+		std::string  startWithUpper(const std::string& _string)
+		{
+			if (_string.empty())
+				return _string;
+
+			std::string text = _string;
+
+			size_t i = 0;
+			if (i < text.length())
+			{
+				char c = text[i];
+				if ((c & 0x80) == 0)
+				{
+					if (c >= 'a' && c <= 'z')
+						text[i] = c - 0x20;
+
+					return text;
+				}
+
+				int pos = i;
+				wchar_t character = (wchar_t)chars2Unicode(text, i);
+				wchar_t unicode = toupperUnicode(character);
+				if (unicode != character)
+				{
+					int charSize = i - pos;
+					if (charSize == 2)
+					{
+						text[pos] = (char)(((unicode >> 6) & 0xFF) | 0xC0);
+						text[pos + 1] = (char)((unicode & 0x3F) | 0x80);
+					}
+					else if (charSize == 3)
+					{
+						text[pos] += (char)(((unicode >> 12) & 0xFF) | 0xE0);
+						text[pos + 1] += (char)(((unicode >> 6) & 0x3F) | 0x80);
+						text[pos + 2] += (char)((unicode & 0x3F) | 0x80);
+					}
+				}
+			}
+
+			return text;
+		}
+
 		std::string trim(const std::string& _string)
 		{
 			const size_t strBegin = _string.find_first_not_of(" \t\r\n");

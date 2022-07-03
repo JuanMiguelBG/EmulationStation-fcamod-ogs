@@ -99,7 +99,7 @@ public:
 	inline std::map<std::string, CollectionSystemData> getCustomCollectionSystems() { return mCustomCollectionSystemsData; };
 	inline SystemData* getCustomCollectionsBundle() { return mCustomCollectionsBundle; };
 	std::vector<std::string> getUnusedSystemsFromTheme();
-	SystemData* addNewCustomCollection(std::string name);
+	SystemData* addNewCustomCollection(std::string name, bool needSave = true);
 
 	bool isThemeGenericCollectionCompatible(bool genericCustomCollections);
 	bool isThemeCustomCollectionCompatible(std::vector<std::string> stringVector);
@@ -115,6 +115,8 @@ public:
 	void updateCollectionFolderMetadata(SystemData* sys);
 	void populateAutoCollection(CollectionSystemData* sysData);
 
+	SystemData* getArcadeCollection();
+
 private:
 	static CollectionSystemManager* sInstance;
 	SystemEnvironmentData* mCollectionEnvData;
@@ -129,7 +131,7 @@ private:
 	void initAutoCollectionSystems();
 	void initCustomCollectionSystems();
 	SystemData* getAllGamesCollection();
-	SystemData* createNewCollectionEntry(std::string name, CollectionSystemDecl sysDecl, bool index = true);
+	SystemData* createNewCollectionEntry(std::string name, CollectionSystemDecl sysDecl, bool index = true, bool needSave = true);
 	
 	void populateCustomCollection(CollectionSystemData* sysData, std::unordered_map<std::string, FileData*>* pMap = nullptr);
 

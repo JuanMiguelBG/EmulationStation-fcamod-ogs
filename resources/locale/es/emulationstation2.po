@@ -459,10 +459,6 @@ msgid "GROUP UNTHEMED CUSTOM COLLECTIONS"
 msgstr "AGRUPAR COLECCIONES SIN SISTEMA"
 
 #:
-msgid "SORT CUSTOM COLLECTIONS AND SYSTEMS"
-msgstr "ORGANIZAR COLECCIONES Y SISTEMAS PERSONALIZADOS"
-
-#:
 msgid "FINISH EDITING COLLECTION"
 msgstr "FINALIZAR EDICIÓN"
 
@@ -2804,6 +2800,74 @@ msgstr "COLECCIONES A MOSTRAR"
 #:
 msgid "SYSTEMS DISPLAYED"
 msgstr "SISTEMAS MOSTRADOS"
+
+#:
+msgid "SORT COLLECTIONS AND SYSTEMS"
+msgstr "ORGANIZAR COLECCIONES Y SISTEMAS"
+
+#:
+msgid "ALPHABETICALLY"
+msgstr "ALFABÉTICAMENTE"
+
+#:
+msgid "BY MANUFACTURER"
+msgstr "POR MARCA"
+
+#:
+msgid "BY HARDWARE TYPE"
+msgstr "POR HARDWARE"
+
+#:
+msgid "BY RELEASE YEAR"
+msgstr "POR AÑO DE LANZAMIENTO"
+
+#:
+msgid "CONSOLE"
+msgstr "CONSOLA"
+
+#:
+msgid "PORTABLE"
+msgstr "CONSOLA PORTATIL"
+
+#:
+msgid "COMPUTER"
+msgstr "COMPUTADORA"
+
+#:
+msgid "GAMEENGINE"
+msgstr "MOTOR DE JUEGOS"
+
+#:
+msgid "VARIOUS"
+msgstr "VARIOS"
+
+#:
+msgid "SORT SYSTEMS"
+msgstr "ORDENAR SISTEMAS"
+
+#:
+msgid "COLLECTIONS"
+msgstr "COLECCIONES"
+
+#:
+msgid "AUTO COLLECTION"
+msgstr "COL. AUTOMÁTICA"
+
+#:
+msgid "CUSTOM COLLECTION"
+msgstr "COL. PERSONALIZADA"
+
+msgid "GO TO LETTER"
+msgstr "IR A LETRA"
+
+msgid "GO TO MANUFACTURER"
+msgstr "IR A MARCA"
+
+msgid "GO TO HARDWARE"
+msgstr "IR A HARDWARE"
+
+msgid "GO TO DECADE"
+msgstr "IR A DÉCADA"
 
 #:
 msgid "VIEW MENU"

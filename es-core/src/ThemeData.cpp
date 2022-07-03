@@ -14,7 +14,7 @@
 #include "EsLocale.h"
 
 std::vector<std::string> ThemeData::sSupportedViews { { "system" }, { "basic" }, { "detailed" }, { "grid" }, { "video" }, { "menu" }, { "screen" } };
-std::vector<std::string> ThemeData::sSupportedFeatures { { "video" }, { "carousel" }, { "z-index" }, { "visible" } };
+std::vector<std::string> ThemeData::sSupportedFeatures { { "video" }, { "carousel" }, { "z-index" }, { "visible" }, { "manufacturer" } };
 
 std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> ThemeData::sElementMap {
 	{ "image", {
@@ -636,6 +636,13 @@ void ThemeData::parseFeature(const pugi::xml_node& node)
 		return;
 
 	const std::string supportedAttr = node.attribute("supported").as_string();
+
+	if (supportedAttr == "manufacturer")
+	{
+		auto it = mVariables.find("system.manufacturer");
+		if (it == mVariables.cend() || (*it).second.empty())
+			return;
+	}
 
 	if (std::find(sSupportedFeatures.cbegin(), sSupportedFeatures.cend(), supportedAttr) != sSupportedFeatures.cend())
 		parseViews(node);
