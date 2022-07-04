@@ -263,10 +263,7 @@ bool saveToGamelistRecoveryInternal(FileData* file)
 	pugi::xml_node root = doc.append_child("gameList");
 
 	const char* tag = file->getType() == GAME ? "game" : "folder";
-
 	SystemData* system = file->getSourceFileData()->getSystem();
-	if (!system->isVisible())
-		return false;
 
 	root.append_attribute("parentHash").set_value(system->getGamelistHash());
 
@@ -299,7 +296,7 @@ bool saveToGamelistRecoveryInternal(FileData* file)
 
 bool saveToGamelistRecovery(FileData* file)
 {
-	if (!Settings::getInstance()->getBool("SaveGamelistsOnExit"))
+	if (!Settings::getInstance()->getBool("SaveGamelistsOnExit") || !file->getSourceFileData()->getSystem()->isVisible())
 		return false;
 
 	if (Utils::Async::isCanRunAsync())
@@ -336,12 +333,10 @@ void updateGamelist(SystemData* system)
 	//We have the complete information for every game though, so we can simply remove a game
 	//we already have in the system from the XML, and then add it back from its GameData information...
 
-	if(system == nullptr || Settings::getInstance()->getBool("IgnoreGamelist"))
+	if(system == nullptr || Settings::getInstance()->getBool("IgnoreGamelist") || system->getName() == "imageviewer"
+			|| system->isCollection() || !system->isGameSystem() || !system->isVisible())
 		return;
 
-	if (system->getName() == "imageviewer" || system->isCollection() || !system->isGameSystem() || !system->isVisible())
-		return;
-	
 	FolderData* rootFolder = system->getRootFolder();
 	if (rootFolder == nullptr)
 	{

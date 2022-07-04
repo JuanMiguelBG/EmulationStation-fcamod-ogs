@@ -1459,7 +1459,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						_("OK"), [newSSID, newKey, window]
 							{
 								if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
-									window->pushGui(new GuiMsgBox(window, _U("\uF161  ") + newSSID + " - " + _("WIFI ENABLED")));
+									window->pushGui(new GuiMsgBox(window, _U("\uF25B  ") + newSSID + " - " + _("WIFI ENABLED")));
 								else
 									window->pushGui(new GuiMsgBox(window, _U("\uF071  ") + newSSID + " - " + _("WIFI CONFIGURATION ERROR")));
 							}));

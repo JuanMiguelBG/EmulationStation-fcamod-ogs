@@ -12,7 +12,10 @@
 #include "AudioManager.h"
 #include "components/VideoComponent.h"
 #include "components/VideoVlcComponent.h"
+#include "CollectionSystemManager.h"
 #include <random>
+#include "guis/GuiMsgBox.h"
+#include "guis/GuiSettings.h"
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiTextEditPopup.h"
 #include "guis/GuiMenu.h"
@@ -333,6 +336,110 @@ void SystemView::goToSystem(SystemData* system, bool animate)
 		finishAnimation(0);
 }
 
+static void _moveCursorInRange(int& value, int count, int sz)
+{
+	if (count >= sz)
+		return;
+
+	value += count;
+	if (value < 0) value += sz;
+	if (value >= sz) value -= sz;
+}
+
+int SystemView::moveCursorFast(bool forward)
+{
+	int cursor = mCursor;
+
+	if(SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "alpha" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		char alpha = Utils::String::toUpper(mEntries[mCursor].object->getFullName())[0];
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && Utils::String::toUpper(mEntries[cursor].object->getFullName())[0] == alpha)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			alpha = Utils::String::toUpper(mEntries[cursor].object->getFullName())[0];
+			while (cursor != mCursor && Utils::String::toUpper(mEntries[cursor].object->getFullName())[0] == alpha)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else if (SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "manufacturer" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		std::string man = mEntries[mCursor].object->getSystemMetadata().manufacturer;
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().manufacturer == man)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			man = mEntries[cursor].object->getSystemMetadata().manufacturer;
+			while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().manufacturer == man)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else if(SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "hardware" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		std::string hwt = mEntries[mCursor].object->getSystemMetadata().hardwareType;
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().hardwareType == hwt)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			hwt = mEntries[cursor].object->getSystemMetadata().hardwareType;
+			while (cursor != mCursor && mEntries[cursor].object->getSystemMetadata().hardwareType == hwt)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else if(SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "releaseDate" && mCursor >= 0 && mCursor < mEntries.size())
+	{
+		int year = (mEntries[mCursor].object->getSystemMetadata().releaseYear / 10) * 10;
+
+		int direction = forward ? 1 : -1;
+
+		_moveCursorInRange(cursor, direction, mEntries.size());
+
+		while (cursor != mCursor && ((mEntries[cursor].object->getSystemMetadata().releaseYear / 10) * 10) == year)
+			_moveCursorInRange(cursor, direction, mEntries.size());
+
+		if (!forward && cursor != mCursor)
+		{
+			// Find first item
+			year = (mEntries[cursor].object->getSystemMetadata().releaseYear / 10) * 10;
+			while (cursor != mCursor && ((mEntries[cursor].object->getSystemMetadata().releaseYear / 10) * 10) == year)
+				_moveCursorInRange(cursor, -1, mEntries.size());
+
+			_moveCursorInRange(cursor, 1, mEntries.size());
+		}
+	}
+	else
+		_moveCursorInRange(cursor, forward ? 10 : -10, mEntries.size());
+
+	return cursor;
+}
+
 void SystemView::showQuickSearch()
 {
 	SystemData* all = SystemData::getSystem("all");
@@ -389,37 +496,18 @@ bool SystemView::input(InputConfig* config, Input input)
 			}
 			if (config->isMappedTo(BUTTON_PD, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor + increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
+				int cursor = moveCursorFast(true);
 				auto sd = mEntries.at(cursor).object;
 				ViewController::get()->goToSystemView(sd, true);
-				//listInput(10);
+				//listInput(cursor - mCursor);
 				return true;
 			}
 			if (config->isMappedTo(BUTTON_PU, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor - increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
+				int cursor = moveCursorFast(false);
 				auto sd = mEntries.at(cursor).object;
 				ViewController::get()->goToSystemView(sd, true);
-				//listInput(-10);
+				//listInput(cursor - mCursor);
 				return true;
 			}
 
@@ -439,37 +527,18 @@ bool SystemView::input(InputConfig* config, Input input)
 			}
 			if (config->isMappedTo(BUTTON_PD, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor + increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
+				int cursor = moveCursorFast(true);
 				auto sd = mEntries.at(cursor).object;
 				ViewController::get()->goToSystemView(sd, true);
-				//listInput(10);
+				//listInput(cursor - mCursor);
 				return true;
 			}
 			if (config->isMappedTo(BUTTON_PU, input))
 			{
-				int increment = 10;
-				if ( (int)mEntries.size() < increment )
-					increment = ((int)mEntries.size()) -1;
-
-				int cursor = mCursor - increment;
-				if (cursor < 0)
-					cursor += (int)mEntries.size();
-				if (cursor >= (int)mEntries.size())
-					cursor -= (int)mEntries.size();
-
+				int cursor = moveCursorFast(false);
 				auto sd = mEntries.at(cursor).object;
 				ViewController::get()->goToSystemView(sd, true);
-				//listInput(-10);
+				//listInput(cursor - mCursor);
 				return true;
 			}
 
@@ -482,6 +551,32 @@ bool SystemView::input(InputConfig* config, Input input)
 			ViewController::get()->goToGameList(getSelected());
 			return true;
 		}
+
+		if (config->isMappedTo(BUTTON_BACK, input) && SystemData::isManufacturerSupported())
+		{
+			auto sortMode = Settings::getInstance()->getString("SortSystems");
+			if (sortMode == "alpha")
+			{
+				showNavigationBar(_("GO TO LETTER"), [](SystemData* meta) { if (meta->isCollection()) return _("COLLECTIONS"); return Utils::String::toUpper(meta->getSystemMetadata().fullName.substr(0, 1)); });
+				return true;
+			}
+			else if (sortMode == "manufacturer")
+			{
+				showNavigationBar(_("GO TO MANUFACTURER"), [](SystemData* meta) { return meta->getSystemMetadata().manufacturer; });
+				return true;
+			}
+			else if (sortMode == "hardware")
+			{
+				showNavigationBar(_("GO TO HARDWARE"), [](SystemData* meta) { return meta->getSystemMetadata().hardwareType; });
+				return true;
+			}
+			else if (sortMode == "releaseDate")
+			{
+				showNavigationBar(_("GO TO DECADE"), [](SystemData* meta) { if (meta->getSystemMetadata().releaseYear == 0) return _("UNKNOWN"); return std::to_string((meta->getSystemMetadata().releaseYear / 10) * 10) + "'s"; });
+				return true;
+			}
+		}
+
 		if (config->isMappedTo("x", input))
 		{
 			// get random system
@@ -521,6 +616,73 @@ bool SystemView::input(InputConfig* config, Input input)
 	}
 
 	return GuiComponent::input(config, input);
+}
+
+void SystemView::showNavigationBar(const std::string& title, const std::function<std::string(SystemData* system)>& selector)
+{
+	stopScrolling();
+
+	GuiSettings* gs = new GuiSettings(mWindow, title);
+
+	int idx = 0;
+	std::string sel = selector(getSelected());
+
+	std::string man = "*-*";
+	for (int i = 0; i < SystemData::sSystemVector.size(); i++)
+	{
+		auto system = SystemData::sSystemVector[i];
+		if (!system->isVisible())
+			continue;
+
+		auto mf = selector(system);
+		if (man != mf)
+		{
+			std::vector<std::string> names;
+			for (auto sy : SystemData::sSystemVector)
+				if (sy->isVisible() && selector(sy) == mf)
+				{
+					std::string name = sy->getFullName();
+					if (system->isCollection())
+						 name = Utils::String::startWithUpper( _(name) );
+
+					names.push_back(name);
+				}
+
+			gs->getMenu().addWithDescription(_(Utils::String::toUpper(mf)), Utils::String::join(names, ", "), nullptr, [this, gs, system, idx]
+			{
+				listInput(idx - mCursor);
+				listInput(0);
+
+				auto pthis = this;
+
+				delete gs;
+
+				pthis->mLastCursor = -1;
+				pthis->onCursorChanged(CURSOR_STOPPED);
+
+			}, "", sel == mf);
+
+			man = mf;
+		}
+
+		idx++;
+	}
+
+	float w = Math::min(Renderer::getScreenWidth() * 0.5, ThemeData::getMenuTheme()->Text.font->getLetterWidth() * 31.0f);
+	w = Math::max(w, Renderer::getScreenWidth() / 3.0f);
+
+	// resize
+	float height_ratio = 1.0f;
+	if ( Settings::getInstance()->getBool("ShowHelpPrompts") && !Renderer::isSmallScreen() )
+		height_ratio = 0.93f;
+
+	gs->getMenu().setSize(w, Renderer::getScreenHeight() * height_ratio);
+
+	gs->getMenu().animateTo(
+		Vector2f(-w, 0),
+		Vector2f(0, 0), AnimateFlags::OPACITY | AnimateFlags::POSITION);
+
+	mWindow->pushGui(gs);
 }
 
 void SystemView::update(int deltaTime)
@@ -656,18 +818,30 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 	// also change the text after we've fully faded out
 	setAnimation(infoFadeOut, 0, [this, gameCount]
 	{
-		std::stringstream ss;
-
 		if (!getSelected()->isGameSystem() && !getSelected()->isGroupSystem())
-			ss << _("CONFIGURATION");
+			mSystemInfo.setText(_("CONFIGURATION"));
+		else if (mCarousel.systemInfoCountOnly)
+			mSystemInfo.setText(std::to_string(gameCount));
 		else
 		{
-			char strbuf[128];
-			snprintf(strbuf, 128, EsLocale::nGetText("%i GAME AVAILABLE", "%i GAMES AVAILABLE", gameCount).c_str(), gameCount);
+			std::stringstream ss;
+			char strbuf[256];
+
+			if (getSelected() == CollectionSystemManager::get()->getCustomCollectionsBundle())
+			{
+				int collectionCount = getSelected()->getRootFolder()->getChildren().size();
+				snprintf(strbuf, 256, EsLocale::nGetText("%i COLLECTION", "%i COLLECTIONS", collectionCount).c_str(), collectionCount);
+			}
+			else if (getSelected()->hasPlatformId(PlatformIds::PLATFORM_IGNORE) && !getSelected()->isCollection())
+				snprintf(strbuf, 256, EsLocale::nGetText("%i ITEM", "%i ITEMS", gameCount).c_str(), gameCount);
+			else
+				snprintf(strbuf, 256, EsLocale::nGetText("%i GAME", "%i GAMES", gameCount).c_str(), gameCount);
+
 			ss << strbuf;
+			mSystemInfo.setText(ss.str());
 		}
 
-		mSystemInfo.setText(ss.str());
+		mSystemInfo.onShow();
 	}, false, 1);
 
 	Animation* infoFadeIn = new LambdaAnimation(
@@ -1278,6 +1452,7 @@ void  SystemView::getDefaultElements(void)
 	mCarousel.maxLogoCount = 3;
 	mCarousel.zIndex = 40;
 	mCarousel.systemInfoDelay = 2000;
+	mCarousel.systemInfoCountOnly = false;
 	mCarousel.scrollSound = "";
 	mCarousel.defaultTransition = "";
 
@@ -1362,6 +1537,9 @@ void SystemView::getCarouselFromTheme(const ThemeData::ThemeElement* elem)
 
 	if (elem->has("systemInfoDelay"))
 		mCarousel.systemInfoDelay = elem->get<float>("systemInfoDelay");
+
+	if (elem->has("systemInfoCountOnly"))
+		mCarousel.systemInfoCountOnly = elem->get<bool>("systemInfoCountOnly");
 
 	if (elem->has("scrollSound"))
 		mCarousel.scrollSound = elem->get<std::string>("scrollSound");

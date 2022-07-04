@@ -45,6 +45,7 @@ struct SystemViewCarousel
 	Vector2f logoPos;
 	float zIndex;
 	float systemInfoDelay;
+	bool  systemInfoCountOnly;
 
 	std::string		defaultTransition;
 	std::string		scrollSound;
@@ -79,6 +80,9 @@ private:
 	void	 clearEntries();
 	void	 updateExtraTextBinding();
 	void	 showQuickSearch();
+
+	int		 moveCursorFast(bool forward = true);
+	void	 showNavigationBar(const std::string& title, const std::function<std::string(SystemData* system)>& selector);
 
 	virtual void onScreenSaverActivate() override;
 	virtual void onScreenSaverDeactivate() override;

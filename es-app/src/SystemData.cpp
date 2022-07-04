@@ -26,8 +26,8 @@ using namespace Utils;
 
 std::vector<SystemData*> SystemData::sSystemVector;
 
-SystemData::SystemData(const std::string& name, const std::string& fullName, SystemEnvironmentData* envData, const std::string& themeFolder, bool CollectionSystem, bool groupedSystem) :
-	mName(name), mFullName(fullName), mEnvData(envData), mThemeFolder(themeFolder), mIsCollectionSystem(CollectionSystem), mIsGameSystem(true)
+SystemData::SystemData(const SystemMetadata& meta, SystemEnvironmentData* envData, bool CollectionSystem, bool groupedSystem, bool withTheme, bool loadThemeOnlyIfElements) :
+	mMetadata(meta), mEnvData(envData), mIsCollectionSystem(CollectionSystem), mIsGameSystem(true)
 {
 	mIsGroupSystem = groupedSystem;
 	mGameListHash = 0;
@@ -38,13 +38,13 @@ SystemData::SystemData(const std::string& name, const std::string& fullName, Sys
 	mFilterIndex = nullptr;// new FileFilterIndex();
 
 	auto hiddenSystems = Utils::String::split(Settings::getInstance()->getString("HiddenSystems"), ';');
-	mHidden = (mIsCollectionSystem ? !themeFolder.empty() : (std::find(hiddenSystems.cbegin(), hiddenSystems.cend(), getName()) != hiddenSystems.cend()));
+	mHidden = (mIsCollectionSystem ? withTheme : (std::find(hiddenSystems.cbegin(), hiddenSystems.cend(), getName()) != hiddenSystems.cend()));
 
 	// if it's an actual system, initialize it, if not, just create the data structure
 	if(!CollectionSystem && !mIsGroupSystem)
 	{
 		mRootFolder = new FolderData(mEnvData->mStartPath, this);
-		mRootFolder->setMetadata(MetaDataId::Name, mFullName);
+		mRootFolder->setMetadata(MetaDataId::Name, mMetadata.fullName);
 
 		std::unordered_map<std::string, FileData*> fileMap;
 		
@@ -58,22 +58,30 @@ SystemData::SystemData(const std::string& name, const std::string& fullName, Sys
 				return;
 		}
 
-		if (!Settings::getInstance()->getBool("IgnoreGamelist") && mName != "imageviewer")
+		if (!Settings::getInstance()->getBool("IgnoreGamelist") && (mMetadata.name != "imageviewer"))
 			parseGamelist(this, fileMap);
 
 	}
 	else
 	{
 		// virtual systems are updated afterwards, we're just creating the data structure
-		mRootFolder = new FolderData("" + name, this);
-	}
-	
-	auto defaultView = Settings::getInstance()->getString(getName() + ".defaultView");
-	auto gridSizeOverride = Vector2f::parseString(Settings::getInstance()->getString(getName() + ".gridSize"));
-	setSystemViewMode(defaultView, gridSizeOverride, false);
+		mRootFolder = new FolderData("" + mMetadata.name, this);
 
-	setIsGameSystemStatus();
-	loadTheme();
+//		mRootFolder = new FolderData(mMetadata.fullName, this);
+//		mRootFolder->getMetadata().set(MetaDataId::Name, mMetadata.fullName);
+	}
+
+	mRootFolder->getMetadata().resetChangedFlag();
+
+	if (withTheme && (!loadThemeOnlyIfElements || mRootFolder->mChildren.size() > 0))
+	{
+		loadTheme();
+		auto defaultView = Settings::getInstance()->getString(getName() + ".defaultView");
+		auto gridSizeOverride = Vector2f::parseString(Settings::getInstance()->getString(getName() + ".gridSize"));
+		setSystemViewMode(defaultView, gridSizeOverride, false);
+
+		setIsGameSystemStatus();
+	}
 }
 
 bool SystemData::setSystemViewMode(std::string newViewMode, Vector2f gridSizeOverride, bool setChanged)
@@ -107,6 +115,9 @@ SystemData::~SystemData()
 	if (mRootFolder)
 		delete mRootFolder;
 
+	if (!mIsCollectionSystem && mEnvData != nullptr)
+		delete mEnvData;
+
 	if (mGameCountInfo != nullptr)
 		delete mGameCountInfo;
 
@@ -119,7 +130,7 @@ void SystemData::setIsGameSystemStatus()
 	// we exclude non-game systems from specific operations (i.e. the "RetroPie" system, at least)
 	// if/when there are more in the future, maybe this can be a more complex method, with a proper list
 	// but for now a simple string comparison is more performant
-	mIsGameSystem = (mName != "retropie");
+	mIsGameSystem = (mMetadata.name != "retropie");
 }
 
 void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::string, FileData*>& fileMap)
@@ -210,6 +221,10 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 			if (fn == "media" || fn == "medias" || fn == "images" || fn == "manuals" || fn == "videos" || fn == "assets" || Utils::String::startsWith(fn, "downloaded_") || Utils::String::startsWith(fn, "."))
 				continue;
 
+			// Hardcoded optimisation : WiiU has so many files in content & meta directories
+			if (mMetadata.name == "wiiu" && (fn == "content" || fn == "meta"))
+				continue;
+
 			FolderData* newFolder = new FolderData(filePath, this);
 			populateFolder(newFolder, fileMap);
 
@@ -238,6 +253,15 @@ FileFilterIndex* SystemData::getIndex(bool createIndex)
 	}
 
 	return mFilterIndex; 
+}
+
+void SystemData::deleteIndex()
+{
+	if (mFilterIndex != nullptr)
+	{
+		delete mFilterIndex;
+		mFilterIndex = nullptr;
+	}
 }
 
 void SystemData::indexAllGameFilters(const FolderData* folder)
@@ -275,10 +299,15 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 {
 	std::vector<EmulatorData> emulatorList;
 
-	std::string name, fullname, path, cmd, themeFolder, defaultCore;
+	std::string path, cmd, defaultCore;
 
-	name = system.child("name").text().get();
-	fullname = system.child("fullname").text().get();
+	SystemMetadata md;
+	md.name = system.child("name").text().get();
+	md.fullName = system.child("fullname").text().get();
+	md.manufacturer = system.child("manufacturer").text().get();
+	md.releaseYear = atoi(system.child("release").text().get());
+	md.hardwareType = system.child("hardware").text().get();
+	md.themeFolder = system.child("theme").text().as_string(md.name.c_str());
 	path = system.child("path").text().get();
 	defaultCore = system.child("defaultCore").text().get();
 
@@ -315,15 +344,12 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 	currentSystem++;
 	*/
 	// convert extensions list from a string into a vector of strings
-
-	std::vector<std::string> list = readList(system.child("extension").text().get());
-	std::unordered_set<std::string> extensions;
-
-	for (auto extension = list.cbegin(); extension != list.cend(); extension++)
+	std::set<std::string> extensions;
+	for (auto ext : readList(system.child("extension").text().get()))
 	{
-		std::string xt = Utils::String::toLower(*extension);
-		if (std::find(extensions.begin(), extensions.end(), xt) == extensions.end())
-			extensions.insert(xt);
+		std::string extlow = Utils::String::toLower(ext);
+		if (extensions.find(extlow) == extensions.cend())
+			extensions.insert(extlow);
 	}
 
 	cmd = system.child("command").text().get();
@@ -349,17 +375,7 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 		if (platformId != PlatformIds::PLATFORM_UNKNOWN)
 			platformIds.push_back(platformId);
 		else if (str != NULL && str[0] != '\0' && platformId == PlatformIds::PLATFORM_UNKNOWN)
-			LOG(LogWarning) << "SystemData::loadSystem() - Unknown platform for system \"" << name << "\" (platform \"" << str << "\" from list \"" << platformList << "\")";
-	}
-
-	// theme folder
-	themeFolder = system.child("theme").text().as_string(name.c_str());
-
-	//validate
-	if (name.empty() || path.empty() || extensions.empty() || cmd.empty())
-	{
-		LOG(LogError) << "SystemData::loadSystem() - System \"" << name << "\" is missing name, path, extension, or command!";
-		return nullptr;
+			LOG(LogWarning) << "SystemData::loadSystem() - Unknown platform for system \"" << md.name << "\" (platform \"" << str << "\" from list \"" << platformList << "\")";
 	}
 
 	//convert path to generic directory seperators
@@ -373,9 +389,16 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 		path = Utils::FileSystem::getCanonicalPath(path);
 	}
 
+	//validate
+	if (md.name.empty() || path.empty() || extensions.empty() || cmd.empty() || !Utils::FileSystem::exists(path))
+	{
+		LOG(LogError) << "SystemData::loadSystem() - System \"" << md.name << "\" is missing name, path, extension, or command!";
+		return nullptr;
+	}
+
 	//create the system runtime environment data
 	SystemEnvironmentData* envData = new SystemEnvironmentData;
-	envData->mSystemName = name;
+	envData->mSystemName = md.name;
 	envData->mStartPath = path;
 	envData->mSearchExtensions = extensions;
 	envData->mLaunchCommand = cmd;
@@ -383,10 +406,10 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 	envData->mEmulators = emulatorList;
 	envData->mGroup = system.child("group").text().get();
 
-	SystemData* newSys = new SystemData(name, fullname, envData, themeFolder);
+	SystemData* newSys = new SystemData(md, envData, false, false, !md.themeFolder.empty(), true);
 	if (newSys->getRootFolder()->getChildren().size() == 0)
 	{
-		LOG(LogWarning) << "SystemData::loadSystem() - System \"" << name << "\" has no games! Ignoring it.";
+		LOG(LogWarning) << "SystemData::loadSystem() - System \"" << md.name << "\" has no games! Ignoring it.";
 		delete newSys;
 
 		return nullptr;
@@ -397,18 +420,27 @@ SystemData* SystemData::loadSystem(pugi::xml_node system)
 
 void SystemData::createGroupedSystems()
 {
+	auto hiddenSystems = Utils::String::split(Settings::getInstance()->getString("HiddenSystems"), ';');
+
 	std::map<std::string, std::vector<SystemData*>> map;
 
-	for (auto it = sSystemVector.cbegin(); it != sSystemVector.cend(); it++)
+	for (auto sys : sSystemVector)
 	{
-		SystemData* sys = *it;
-		if (!sys->isCollection() && !sys->getSystemEnvData()->mGroup.empty())
-		{
-			if (Settings::getInstance()->getBool(sys->getSystemEnvData()->mGroup + ".ungroup"))
-				continue;
+		if (sys->isCollection() || sys->getSystemEnvData()->mGroup.empty())
+			continue;
 
-			map[sys->getSystemEnvData()->mGroup].push_back(sys);
+		if (Settings::getInstance()->getBool(sys->getSystemEnvData()->mGroup + ".ungroup") || Settings::getInstance()->getBool(sys->getName() + ".ungroup"))
+			continue;
+
+		if (sys->getName() == sys->getSystemEnvData()->mGroup)
+		{
+			sys->getSystemEnvData()->mGroup = "";
+			continue;
 		}
+		else if (std::find(hiddenSystems.cbegin(), hiddenSystems.cend(), sys->getName()) != hiddenSystems.cend())
+			continue;
+
+		map[sys->getSystemEnvData()->mGroup].push_back(sys);
 	}
 
 	for (auto item : map)
@@ -417,7 +449,12 @@ void SystemData::createGroupedSystems()
 		envData->mStartPath = "";
 		envData->mLaunchCommand = "";
 
-		SystemData* system = new SystemData(item.first, item.first, envData, item.first, false, true);
+		SystemMetadata md;
+		md.name = item.first;
+		md.fullName = item.first;
+		md.themeFolder = item.first;
+
+		SystemData* system = new SystemData(md, envData, false, true);
 		system->mIsGroupSystem = true;
 		system->mIsGameSystem = false;
 
@@ -455,6 +492,8 @@ void SystemData::createGroupedSystems()
 			system->loadTheme();
 			sSystemVector.push_back(system);
 		}
+
+		root->getMetadata().resetChangedFlag();
 	}
 }
 
@@ -651,6 +690,21 @@ void SystemData::writeExampleConfig(const std::string& path)
 	Log::flush();
 }
 
+bool SystemData::isManufacturerSupported()
+{
+	for (auto sys : sSystemVector)
+	{
+		if (!sys->isGameSystem() || sys->isCollection())
+			continue;
+
+		if (!sys->getSystemMetadata().manufacturer.empty())
+			return true;
+	}
+
+	return false;
+}
+
+
 bool SystemData::hasDirtySystems()
 {
 	bool saveOnExit = !Settings::getInstance()->getBool("IgnoreGamelist") && Settings::getInstance()->getBool("SaveGamelistsOnExit");
@@ -703,7 +757,7 @@ bool SystemData::isVisible()
 	if (isGroupChildSystem())
 		return false;
 
-	if ((getGameCountInfo()->totalGames > 0 || (UIModeController::getInstance()->isUIModeFull() && mIsCollectionSystem) || (mIsCollectionSystem && mName == "favorites")))
+	if ((getGameCountInfo()->totalGames > 0 || (UIModeController::getInstance()->isUIModeFull() && mIsCollectionSystem) || (mIsCollectionSystem && mMetadata.name == "favorites")))
 	{
 		if (!mIsCollectionSystem)
 		{
@@ -750,7 +804,7 @@ std::string SystemData::getGamelistPath(bool forWrite) const
 	if(Utils::FileSystem::exists(fileRomPath))
 		return fileRomPath;
 
-	std::string filePath = Utils::FileSystem::getEsConfigPath() + "/gamelists/" + mName + "/gamelist.xml";
+	std::string filePath = Utils::FileSystem::getEsConfigPath() + "/gamelists/" + mMetadata.name + "/gamelist.xml";
 
 	// Default to system rom folder
 	if (forWrite && !Utils::FileSystem::exists(filePath) && Utils::FileSystem::isDirectory(mRootFolder->getPath()))
@@ -762,7 +816,7 @@ std::string SystemData::getGamelistPath(bool forWrite) const
 	if (forWrite || Utils::FileSystem::exists(filePath))
 		return filePath;
 
-	return "/etc/emulationstation/gamelists/" + mName + "/gamelist.xml";
+	return "/etc/emulationstation/gamelists/" + mMetadata.name + "/gamelist.xml";
 }
 
 std::string SystemData::getThemePath() const
@@ -778,7 +832,7 @@ std::string SystemData::getThemePath() const
 		return localThemePath;
 
 	// not in game folder, try system theme in theme sets
-	localThemePath = ThemeData::getThemeFromCurrentSet(mThemeFolder);
+	localThemePath = ThemeData::getThemeFromCurrentSet(mMetadata.themeFolder);
 
 	if (Utils::FileSystem::exists(localThemePath))
 		return localThemePath;
@@ -924,12 +978,29 @@ void SystemData::loadTheme()
 		sysData.insert(std::pair<std::string, std::string>("system.name", getName()));
 		sysData.insert(std::pair<std::string, std::string>("system.theme", getThemeFolder()));
 		sysData.insert(std::pair<std::string, std::string>("system.fullName", getFullName()));
-		
+		sysData.insert(std::pair<std::string, std::string>("system.fullName", Utils::String::proper(getFullName())));
+
+		sysData.insert(std::pair<std::string, std::string>("system.manufacturer", getSystemMetadata().manufacturer));
+		sysData.insert(std::pair<std::string, std::string>("system.hardwareType", Utils::String::proper(getSystemMetadata().hardwareType)));
+
+		if (Settings::getInstance()->getString("SortSystems") == "hardware")
+			sysData.insert(std::pair<std::string, std::string>("system.sortedBy", Utils::String::proper(getSystemMetadata().hardwareType)));
+		else
+			sysData.insert(std::pair<std::string, std::string>("system.sortedBy", getSystemMetadata().manufacturer));
+
+		if (getSystemMetadata().releaseYear > 0)
+		{
+			sysData.insert(std::pair<std::string, std::string>("system.releaseYearOrNull", std::to_string(getSystemMetadata().releaseYear)));
+			sysData.insert(std::pair<std::string, std::string>("system.releaseYear", std::to_string(getSystemMetadata().releaseYear)));
+		}
+		else
+			sysData.insert(std::pair<std::string, std::string>("system.releaseYear", _("Unknown")));
+
 		mTheme->loadFile(getThemeFolder(), sysData, path);
-	} 
+	}
 	catch(ThemeException& e)
 	{
-		LOG(LogError) << e.what();
+		LOG(LogError) << "SystemData::loadTheme() - Error: " << e.what();
 		mTheme = std::make_shared<ThemeData>(); // reset to empty
 	}
 }
@@ -940,33 +1011,31 @@ void SystemData::setSortId(const unsigned int sortId)
 	Settings::getInstance()->setInt(getName() + ".sort", mSortId);
 }
 
-void SystemData::deleteIndex()
-{
-	if (mFilterIndex != nullptr)
-	{
-		delete mFilterIndex;
-		mFilterIndex = nullptr;
-	}
-}
-
 bool SystemData::isGroupChildSystem()
 {
 	if (mEnvData != nullptr && !mEnvData->mGroup.empty())
-		return !Settings::getInstance()->getBool(mEnvData->mGroup + ".ungroup");
+		return !Settings::getInstance()->getBool(mEnvData->mGroup + ".ungroup") &&
+						!Settings::getInstance()->getBool(getName() + ".ungroup");
 
 	return false;
 }
 
 std::unordered_set<std::string> SystemData::getAllGroupNames()
 {
+	auto hiddenSystems = Utils::String::split(Settings::getInstance()->getString("HiddenSystems"), ';');
+
 	std::unordered_set<std::string> names;
 
 	for (auto sys : SystemData::sSystemVector)
 	{
+		std::string name;
 		if (sys->isGroupSystem())
-			names.insert(sys->getName());
+			name = sys->getName();
 		else if (sys->mEnvData != nullptr && !sys->mEnvData->mGroup.empty())
-			names.insert(sys->mEnvData->mGroup);
+			name = sys->mEnvData->mGroup;
+
+		if (!name.empty() && std::find(hiddenSystems.cbegin(), hiddenSystems.cend(), name) == hiddenSystems.cend())
+			names.insert(name);
 	}
 
 	return names;
