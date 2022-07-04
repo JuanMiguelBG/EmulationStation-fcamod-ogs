@@ -46,7 +46,7 @@ get_system_version() {
   fi
 
   version=$(cat "$file" | grep -iw "title" | awk '{gsub(/=/," ")}; {for (i=3; i<NF; i++) printf $i " "; print $NF}')
-  if [ -f "/opt/system/.arkosnoid/version"]; then
+  if [ -f "/opt/system/.arkosnoid/version" ]; then
     version_extra=$(cat /opt/system/.arkosnoid/version)
     version="$version $version_extra"
   fi
