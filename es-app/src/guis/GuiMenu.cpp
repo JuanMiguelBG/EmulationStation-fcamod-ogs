@@ -995,7 +995,7 @@ void GuiMenu::openUISettings()
 			msg += _("Do you want to proceed?");
 			window->pushGui(new GuiMsgBox(window, msg,
 				_("YES"), [selectedMode] {
-				LOG(LogDebug) << "GuiMenu::openUISettings() - Setting UI mode to " << selectedMode;
+				//LOG(LogDebug) << "GuiMenu::openUISettings() - Setting UI mode to " << selectedMode;
 				Settings::getInstance()->setString("UIMode", selectedMode);
 				Settings::getInstance()->saveFile();
 			}, _("NO"), nullptr));
@@ -1465,6 +1465,9 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				std::string newSSID = SystemConf::getInstance()->get("wifi.ssid"),
 										newKey = SystemConf::getInstance()->get("wifi.key");
 
+				if (newSSID.empty() || strcmp(newSSID.c_str(), "--") == 0)
+					return;
+
 				if (baseSSID != newSSID || baseKEY != newKey || !baseWifiEnabled)
 				{
 					window->pushGui(new GuiMsgBox(window,
@@ -1472,9 +1475,9 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						_("OK"), [newSSID, newKey, window]
 							{
 								if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
-									window->pushGui(new GuiMsgBox(window, _U("\uF25B  ") + newSSID + " - " + _("WIFI ENABLED")));
+									window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI ENABLED")));
 								else
-									window->pushGui(new GuiMsgBox(window, _U("\uF071  ") + newSSID + " - " + _("WIFI CONFIGURATION ERROR")));
+									window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 							}));
 				}
 			}
@@ -1494,6 +1497,13 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				if (wifienabled)
 				{
 					std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
+					if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
+					{
+						delete s;
+						openNetworkSettings(true, false);
+						return;
+					}
+
 					if (ApiSystem::getInstance()->enableWifi(ssid, SystemConf::getInstance()->get("wifi.key")))
 						window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
 					else

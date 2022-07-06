@@ -146,7 +146,9 @@ std::vector<std::string> executeSystemEnumerationScript(const std::string comman
 	while (fgets(line, 1024, pipe))
 	{
 		strtok(line, "\n");
-		res.push_back(std::string(line));
+		std::string linestr = Utils::String::replace( line, "\n", "" );
+		if (!linestr.empty())
+			res.push_back(linestr);
 	}
 
 	pclose(pipe);

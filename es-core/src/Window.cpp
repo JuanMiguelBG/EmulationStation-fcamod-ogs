@@ -197,27 +197,31 @@ void Window::input(InputConfig* config, Input input)
 		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 		if (screensaver_behavior != "suspend")
 		{
-			if (mScreenSaver->isScreenSaverActive() && Settings::getInstance()->getBool("ScreenSaverControls") &&
-				((screensaver_behavior == "slideshow") || (screensaver_behavior == "random video")))
+			if (mScreenSaver->isScreenSaverActive())
 			{
-				if((mScreenSaver->getCurrentGame() != NULL) && (config->isMappedLike("right", input) || config->isMappedTo("start", input) || config->isMappedTo("select", input)))
+				if (((screensaver_behavior == "slideshow") || (screensaver_behavior == "random video")) && Settings::getInstance()->getBool("ScreenSaverControls"))
 				{
-					if(config->isMappedLike("right", input) || config->isMappedTo("select", input))
+					if((mScreenSaver->getCurrentGame() != NULL) && (config->isMappedLike("right", input) || config->isMappedTo("start", input) || config->isMappedTo("select", input)))
 					{
-						if (input.value != 0) // handle screensaver control
-							mScreenSaver->nextVideo();
+						if(config->isMappedLike("right", input) || config->isMappedTo("select", input))
+						{
+							if (input.value != 0) // handle screensaver control
+								mScreenSaver->nextVideo();
 
-						return;
-					}
-					else if(config->isMappedTo("start", input) && input.value != 0)
-					{
-						// launch game!
-						cancelScreenSaver();
-						mScreenSaver->launchGame();
-						// to force handling the wake up process
-						mSleeping = true;
+							return;
+						}
+						else if(config->isMappedTo("start", input) && input.value != 0)
+						{
+							// launch game!
+							cancelScreenSaver();
+							mScreenSaver->launchGame();
+							// to force handling the wake up process
+							mSleeping = true;
+						}
 					}
 				}
+				else if ( ((screensaver_behavior == "black") || (screensaver_behavior == "dim")) && (config->isMappedTo("select", input) && input.value == 0))
+					return;
 			}
 		}
 	}
@@ -663,6 +667,7 @@ void Window::screensaverNeedsToGoToSleep()
 
 void Window::onSleep()
 {
+	Log::flush();
 	Scripting::fireEvent("sleep");
 }
 
@@ -700,7 +705,7 @@ bool Window::cancelScreenSaver()
 
 	if (mScreenSaver && mRenderScreenSaver)
 	{
-		LOG(LogInfo) << "Window::cancelScreenSaver()";
+		LOG(LogInfo) << "Window::cancelScreenSaver() - canceling ...";
 		mScreenSaver->stopScreenSaver();
 		mRenderScreenSaver = false;
 		mScreenSaver->resetCounts();
@@ -712,6 +717,7 @@ bool Window::cancelScreenSaver()
 		for (auto extra : mScreenExtras)
 			extra->onScreenSaverDeactivate();
 
+		LOG(LogInfo) << "Window::cancelScreenSaver() - canceled";
 		return true;
 	}
 

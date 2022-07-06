@@ -51,3 +51,21 @@ remove_es_scripts_log() {
 }
 
 #******************* END - ES Scripts logs functions ********************
+
+#******************* ES Scripts String functions ********************
+trim()
+{
+    local trimmed="$1"
+
+    # Strip leading spaces.
+    while [[ $trimmed == ' '* ]]; do
+       trimmed="${trimmed## }"
+    done
+    # Strip trailing spaces.
+    while [[ $trimmed == *' ' ]]; do
+        trimmed="${trimmed%% }"
+    done
+
+    echo "$trimmed"
+}
+#******************* END - ES Scripts String functions ********************
