@@ -9,6 +9,9 @@
 
 #define HORIZONTAL_PADDING_PX  (Renderer::getScreenWidth()*0.01)
 
+GuiMsgBox::GuiMsgBox(Window* window, const std::string& text, GuiMsgBoxIcon icon)
+	: GuiMsgBox(window, text, _("OK"), nullptr, "", nullptr, "", nullptr, icon) { }
+
 GuiMsgBox::GuiMsgBox(Window* window, const std::string& text, const std::string& name1, const std::function<void()>& func1, GuiMsgBoxIcon icon)
 	: GuiMsgBox(window, text, name1, func1, "", nullptr, "", nullptr, icon) { }
 

@@ -38,6 +38,9 @@ public:
 		const std::string& name1 = "OK", const std::function<void()>& func1 = nullptr,
 		GuiMsgBoxIcon icon = ICON_AUTOMATIC);
 
+	GuiMsgBox(Window* window, const std::string& text,
+		GuiMsgBoxIcon icon);
+
 	bool input(InputConfig* config, Input input) override;
 	void onSizeChanged() override;
 	std::vector<HelpPrompt> getHelpPrompts() override;
