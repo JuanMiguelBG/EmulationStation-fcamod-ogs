@@ -85,7 +85,6 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		addEntry(_("ADVANCED SETTINGS"), true, [this] { openAdvancedSettings(); }, "iconAdvanced");
 
 		addEntry(_("SYSTEM INFORMATION"), true, [this] { openSystemInformation(); }, "iconInformation");
-
 	}
 
 	std::string quit_menu_label = "QUIT";
