@@ -240,15 +240,22 @@ float MenuComponent::getButtonGridHeight() const
 
 void MenuComponent::setPosition(float x, float y, float z)
 {
-	GuiComponent::setPosition(x, y, z);
+	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts"),
+			 new_y = y;
+
+	if ( change_height )
+		new_y = 0.f;
+
+	GuiComponent::setPosition(x, new_y, z);
 }
 
 void MenuComponent::updateSize()
 {
+	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
 	float height,
 				height_ratio = 1.0f;
 
-	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
+	if (change_height)
 		height_ratio = 0.88f;
 
 	height = (float)Math::min((int)Renderer::getScreenHeight(), (int)(Renderer::getScreenHeight() * height_ratio));

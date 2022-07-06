@@ -266,15 +266,17 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 	});
 
 
+	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
+	float height_ratio = 1.0f;
+
+	if ( change_height )
+		height_ratio = 0.88f;
+
 	// If multiline, set all diminsions back to default, else draw size for keyboard.
 	if (mMultiLine)
 	{
 		float width = OSK_WIDTH,
 					height = mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40;
-
-		float height_ratio = 1.0f;
-		if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
-			height_ratio = 0.88f;
 
 		height = Renderer::getScreenHeight() * height_ratio;
 
@@ -285,6 +287,9 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
 
+		if ( change_height )
+			new_y = 0.f;
+
 		setPosition(new_x, new_y);
 	}
 	else
@@ -292,11 +297,7 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 		//setSize(OSK_WIDTH, mTitle->getFont()->getHeight() + textHeight + 40 + (Renderer::getScreenHeight() * 0.085f) * 6);
 
 		float width = OSK_WIDTH,
-					height = OSK_HEIGHT,
-					height_ratio = 1.0f;
-
-		if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
-			height_ratio = 0.88f;
+					height = OSK_HEIGHT;
 
 		height = (float)Math::min((int) height, (int) (Renderer::getScreenHeight() * height_ratio));
 
@@ -306,6 +307,9 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 
 		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+
+		if ( change_height )
+			new_y = 0.f;
 
 		setPosition(new_x, new_y);
 		animateTo(Vector2f(new_x, new_y));

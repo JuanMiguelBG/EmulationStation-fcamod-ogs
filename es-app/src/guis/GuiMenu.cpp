@@ -119,7 +119,14 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	addChild(&mMenu);
 	addVersionInfo();
 
-	setSize(mMenu.getSize());
+	// resize
+	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
+	float height_ratio = 1.0f;
+	if ( change_height )
+		height_ratio = 0.88f;
+
+	//setSize(mMenu.getSize());
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
 
 	if (animate)
 	{
@@ -127,6 +134,9 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 					x_end = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					y_start = Renderer::getScreenHeight() * 0.9,
 					y_end = (Renderer::getScreenHeight() - mSize.y()) / 2;
+
+		if ( change_height )
+			y_end = 0.f;
 
 		animateTo(
 			Vector2f(x_start, y_start),
@@ -137,6 +147,9 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	{
 		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+
+		if ( change_height )
+			new_y = 0.f;
 
 		setPosition(new_x, new_y);
 	}
@@ -2345,6 +2358,11 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 					fastShutdownDeviceFunction();
 			}, "iconFastShutdown");
 	}
+
+//	bool change_height_ratio = Settings::getInstance()->getBool("ShowHelpPrompts");
+//	float height_ratio = 1.0f;
+//	if ( change_height_ratio )
+//		height_ratio = 0.88f;
 
 	if (quickAccessMenu && animate)
 		s->getMenu().animateTo(Vector2f((Renderer::getScreenWidth() - s->getMenu().getSize().x()) / 2, (Renderer::getScreenHeight() - s->getMenu().getSize().y()) / 2));
