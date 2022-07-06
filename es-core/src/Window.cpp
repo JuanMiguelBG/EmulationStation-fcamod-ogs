@@ -672,6 +672,7 @@ void Window::screensaverNeedsToGoToSleep()
 
 void Window::onSleep()
 {
+	Log::flush();
 	Scripting::fireEvent("sleep");
 }
 
