@@ -100,19 +100,27 @@ do_list() {
     #print_log $LOG_FILE "INFO" "Executing 'do_list()'"
     #sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u
 
-    networks=$(sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u)
-    result=""
+    local networks=$(sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u)
+    local result=""
     while IFS= read -r line; do
       net_regexp=`echo "$line" | tr -s " "`
       net_regexp=${net_regexp=// /\s}
       exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
-      if [ ! -z "$exist" ]; then
-        result="$result\n$line$EXIST_CONNECTION_FLAG"
-      else
-        result="$result\n$line"
-      fi
+      # skip empty values
+      line_aux=$(trim $line)
+      if [ ! -z "$line_aux" ]; then
+        if [ ! -z "$exist" ]; then
+          result="$result\n$line_aux$EXIST_CONNECTION_FLAG"
+        else
+          result="$result\n$line_aux"
+        fi
+    fi
     done <<< "$networks"
-    echo -e "${result#\\n}"
+    if [ -z "$result" ]; then
+      echo ""
+    else
+      echo -e "${result#\\n}"
+    fi
 }
 
 do_scanlist() {
