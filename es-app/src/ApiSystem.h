@@ -59,7 +59,9 @@ public:
 		OVERCLOCK = 10,
 		PRELOAD_VLC = 11,
 		SOUND = 12,
-		BLUETOOTH = 13
+		BLUETOOTH = 13,
+		KODI = 14,
+		REMOTE_SERVICES = 15
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -183,6 +185,8 @@ public:
 	std::string getDnsOne();
 	std::string getDnsTwo();
 	std::string getWifiNetworkExistFlag();
+	bool isRemoteServicesEnabled();
+	bool setRemoteServicesEnabled(bool status);
 
 	bool setLanguage(std::string language);
 

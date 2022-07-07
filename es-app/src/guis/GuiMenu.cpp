@@ -46,14 +46,17 @@
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU")), mVersion(window)
 {
-	addEntry(_("KODI MEDIA CENTER").c_str(), false, [this]
-		{
-			Window *window = mWindow;
-			delete this;
-			if (!ApiSystem::getInstance()->launchKodi(window))
-				LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Kodi terminated with non-zero result!";
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
+	{
+		addEntry(_("KODI MEDIA CENTER").c_str(), false, [this]
+			{
+				Window *window = mWindow;
+				delete this;
+				if (!ApiSystem::getInstance()->launchKodi(window))
+					LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Kodi terminated with non-zero result!";
 
-		}, "iconKodi");
+			}, "iconKodi");
+	}
 
 	addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay");
 
@@ -1359,6 +1362,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 {
 	const bool baseWifiEnabled = SystemConf::getInstance()->getBool("wifi.enabled"),
 						 baseManualDns = SystemConf::getInstance()->getBool("wifi.manual_dns");
+
 	const std::string baseHostname = SystemConf::getInstance()->get("system.hostname"),
 										baseDnsOne = SystemConf::getInstance()->get("wifi.dns1"),
 										baseDnsTwo = SystemConf::getInstance()->get("wifi.dns2");
@@ -1415,6 +1419,19 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		{
 			s->addInputTextRow(_("DNS1"), "wifi.dns1", false, false, nullptr, &Utils::Network::validateIPv4);
 			s->addInputTextRow(_("DNS2"), "wifi.dns2", false, false, nullptr, &Utils::Network::validateIPv4);
+		}
+
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::REMOTE_SERVICES))
+		{
+			// remote services enable
+			auto enable_remote_services = std::make_shared<SwitchComponent>(mWindow);
+			enable_remote_services->setState(ApiSystem::getInstance()->isRemoteServicesEnabled());
+			s->addWithLabel(_("ENABLE REMOTE SERVICES"), enable_remote_services);
+
+			enable_remote_services->setOnChangedCallback([this, enable_remote_services]()
+				{
+					ApiSystem::getInstance()->setRemoteServicesEnabled(enable_remote_services->getState());
+				});
 		}
 	}
 
@@ -2038,19 +2055,14 @@ void GuiMenu::openAdvancedSettings()
 	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this] { openQuitSettings(); });
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::AUTO_SUSPEND))
-	{
 		s->addEntry(_("DEVICE AUTO SUSPEND SETTINGS"), true, [this] { openAutoSuspendSettings(); });
-	}
+
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SYSTEM_HOTKEY_EVENTS))
-	{
 		s->addEntry(_("SYSTEM HOTKEY EVENTS SETTINGS"), true, [this] { openSystemHotkeyEventsSettings(); });
-	}
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::RETROACHIVEMENTS))
-	{
 		s->addEntry(_("RETROACHIEVEMENTS SETTINGS"), true, [this] { openRetroAchievementsSettings(); });
-	}
 
 	s->addGroup(_("LOG INFO"));
 	// log level
