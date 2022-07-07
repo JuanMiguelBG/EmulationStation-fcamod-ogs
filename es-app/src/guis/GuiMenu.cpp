@@ -1437,6 +1437,19 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			s->addInputTextRow(_("DNS1"), "wifi.dns1", false, false, nullptr, &Utils::Network::validateIPv4);
 			s->addInputTextRow(_("DNS2"), "wifi.dns2", false, false, nullptr, &Utils::Network::validateIPv4);
 		}
+
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::REMOTE_SERVICES))
+		{
+			// remote services enable
+			auto enable_remote_services = std::make_shared<SwitchComponent>(mWindow);
+			enable_remote_services->setState(ApiSystem::getInstance()->isRemoteServicesEnabled());
+			s->addWithLabel(_("ENABLE REMOTE SERVICES"), enable_remote_services);
+
+			enable_remote_services->setOnChangedCallback([this, enable_remote_services]()
+				{
+					ApiSystem::getInstance()->setRemoteServicesEnabled(enable_remote_services->getState());
+				});
+		}
 	}
 
 	s->addSaveFunc([this, enable_wifi, manual_dns, baseManualDns, baseDnsOne, baseDnsTwo, window]
@@ -2008,24 +2021,16 @@ void GuiMenu::openAdvancedSettings()
 	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this] { openQuitSettings(); });
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::POWER_KEY))
-	{
 		s->addEntry(_("POWERKEY BUTTON SETTINGS"), true, [this] { openPowerkeySettings(); });
-	}
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::AUTO_SUSPEND))
-	{
 		s->addEntry(_("DEVICE AUTO SUSPEND SETTINGS"), true, [this] { openAutoSuspendSettings(); });
-	}
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SYSTEM_HOTKEY_EVENTS))
-	{
 		s->addEntry(_("SYSTEM HOTKEY EVENTS SETTINGS"), true, [this] { openSystemHotkeyEventsSettings(); });
-	}
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::RETROACHIVEMENTS))
-	{
 		s->addEntry(_("RETROACHIEVEMENTS SETTINGS"), true, [this] { openRetroAchievementsSettings(); });
-	}
 
 	s->addGroup(_("LOG INFO"));
 	// log level

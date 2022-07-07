@@ -163,33 +163,34 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 				executables.push_back("es-system_hotkey");
 				break;
 		case WIFI:
+		case ApiSystem::REMOTE_SERVICES:
 				executables.push_back("es-wifi");
 				break;
-	case ApiSystem::RETROACHIVEMENTS:
+		case ApiSystem::RETROACHIVEMENTS:
 				executables.push_back("es-cheevos");
 				break;
-	case ApiSystem::LANGUAGE:
+		case ApiSystem::LANGUAGE:
 				executables.push_back("es-language");
 				break;
-	case ApiSystem::SYSTEM_INFORMATION:
+		case ApiSystem::SYSTEM_INFORMATION:
 				executables.push_back("es-system_inf");
 				break;
-	case ApiSystem::AUTO_SUSPEND:
+		case ApiSystem::AUTO_SUSPEND:
 				executables.push_back("es-auto_suspend");
 				break;
-	case ApiSystem::OPTMIZE_SYSTEM:
+		case ApiSystem::OPTMIZE_SYSTEM:
 				executables.push_back("es-optimize_system");
 				break;
-	case ApiSystem::SHOW_FPS:
+		case ApiSystem::SHOW_FPS:
 				executables.push_back("es-show_fps");
 				break;
-	case ApiSystem::OVERCLOCK:
+		case ApiSystem::OVERCLOCK:
 				executables.push_back("es-overclock_system");
 				break;
-	case ApiSystem::PRELOAD_VLC:
+		case ApiSystem::PRELOAD_VLC:
 				executables.push_back("es-preload_vlc");
 				break;
-	case ApiSystem::SOUND:
+		case ApiSystem::SOUND:
 				executables.push_back("es-sound");
 				break;
 /*
@@ -1064,6 +1065,23 @@ std::string ApiSystem::getWifiNetworkExistFlag()
 	LOG(LogInfo) << "ApiSystem::getDnsTwo()";
 
 	return queryWifiNetworkExistFlag();
+}
+
+bool ApiSystem::isRemoteServicesEnabled()
+{
+	LOG(LogInfo) << "ApiSystem::isRemoteServicesEnabled()";
+
+	return executeScript("es-wifi is_remote_services_active");
+}
+
+bool ApiSystem::setRemoteServicesEnabled(bool status)
+{
+	LOG(LogInfo) << "ApiSystem::setRemoteServicesEnabled()";
+
+	if (status)
+		return executeScript("es-wifi do_remote_services_active");
+	else
+		return executeScript("es-wifi do_remote_services_inactive");
 }
 
 std::string ApiSystem::stateToString(bool state)

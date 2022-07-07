@@ -25,6 +25,8 @@ do_help() {
     echo "$0 is_network_exist <SSID>" >&2
     echo "$0 get_network_exist_flag" >&2
     echo "$0 test_network_manager" >&2
+    echo "$0 is_remote_services_active" >&2
+    echo "$0 is_remote_services_enabled" >&2
 }
 
 is_network_manager_active() {
@@ -294,7 +296,7 @@ enable_manual_dns() {
     sudo nmcli con mod "$SSID" ipv4.ignore-auto-dns yes || return 1
     sudo systemctl restart NetworkManager || return 1
 
-    sleep 2
+    sleep 1
     return 0
 }
 
@@ -305,7 +307,7 @@ disable_manual_dns() {
     sudo nmcli con mod "$SSID" ipv4.ignore-auto-dns no || return 1
     sudo systemctl restart NetworkManager || return 1
 
-    sleep 2
+    sleep 1
     return 0
 }
 
@@ -327,6 +329,94 @@ is_network_exist()
 get_network_exist_flag()
 {
     echo "$EXIST_CONNECTION_FLAG"
+}
+
+is_remote_services_active()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'is_remote_services_active()'"
+
+    sudo systemctl is-active ssh.service --quiet
+    if [ $? -eq 0 ]; then
+      # SSH active
+      #print_log $LOG_FILE "INFO" "is_remote_services_active() - SSH service is active"
+
+      sudo systemctl is-active smbd.service --quiet
+      if [ $? -eq 0 ]; then
+        # SAMBA active
+        #print_log $LOG_FILE "INFO" "is_remote_services_active() - SAMBA service is active"
+
+        sudo systemctl is-active nmbd.service --quiet
+        if [ $? -eq 0 ]; then
+          # NetBIOS active
+          #print_log $LOG_FILE "INFO" "is_remote_services_active() - NetBIOS  service is active"
+          return 0
+        fi
+
+      fi
+    fi
+    # inactive
+    #print_log $LOG_FILE "INFO" "is_remote_services_active() - One or more remote services are inactive"
+    return 1
+}
+
+is_remote_services_enabled()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'is_remote_services_enabled()'"
+
+    sudo systemctl is-enabled ssh.service --quiet
+    if [ $? -eq 0 ]; then
+      # SSH enabled
+      #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - SSH service is enabled"
+
+      sudo systemctl is-enabled smbd.service --quiet
+      if [ $? -eq 0 ]; then
+        # SAMBA enabled
+        #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - SAMBA service is enabled"
+
+        sudo systemctl is-enabled nmbd.service --quiet
+        if [ $? -eq 0 ]; then
+          # NetBIOS enabled
+          #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - NetBIOS  service is enabled"
+          return 0
+        fi
+
+      fi
+    fi
+    # inactive
+    #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - One or more remote services are disabled"
+    return 1
+}
+
+do_remote_services_active()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_active()'"
+
+    sudo timedatectl set-ntp 1 &
+    sudo systemctl start smbd.service --quiet
+    sudo systemctl start nmbd.service --quiet
+    sudo systemctl start ssh.service --quiet
+
+    if [ -f "/usr/local/bin/filebrowser" ]; then
+      sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
+    }
+
+    return 0
+}
+
+do_remote_services_inactive()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_inactive()'"
+
+    sudo timedatectl set-ntp 0
+    sudo systemctl stop smbd.service --quiet
+    sudo systemctl stop nmbd.service --quiet
+    sudo systemctl stop ssh.service --quiet
+
+    if [ -f "/usr/local/bin/filebrowser" ]; then
+      sudo pkill filebrowser
+    }
+
+    return 0
 }
 
 # ******************************************************************************************
@@ -425,6 +515,12 @@ case "${ACTION}" in
     ;;
     "get_network_exist_flag")
         get_network_exist_flag
+    ;;
+    "is_remote_services_active")
+        is_remote_services_active
+    ;;
+    "is_remote_services_enabled")
+        is_remote_services_enabled
     ;;
     *)
         do_help
