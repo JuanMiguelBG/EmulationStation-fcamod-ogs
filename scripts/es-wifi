@@ -32,8 +32,8 @@ do_help() {
 is_network_manager_active() {
     #print_log $LOG_FILE "INFO" "Executing 'is_network_manager_active()'"
 
-    sudo systemctl is-active NetworkManager --quiet
-    if [ $? -eq 0 ]; then
+    local status=`sudo systemctl is-active NetworkManager`
+    if [ "$status" == "active" ]; then
       # active
       #print_log $LOG_FILE "INFO" "is_network_manager_active() - NetworkManager is active"
       return 0
@@ -46,8 +46,8 @@ is_network_manager_active() {
 is_network_manager_enabled() {
     #print_log $LOG_FILE "INFO" "Executing 'is_network_manager_enabled()'"
 
-    sudo systemctl is-enabled NetworkManager --quiet
-    if [ $? -eq 0 ]; then
+    local status=`sudo systemctl is-enabled NetworkManager`
+    if [ "$status" == "enabled" ]; then
       # enabled
       #print_log $LOG_FILE "INFO" "is_network_manager_enabled() - NetworkManager is enabled"
       return 0
