@@ -47,7 +47,6 @@
 #include "SystemConf.h"
 #include "utils/NetworkUtil.h"
 #include "guis/GuiLoading.h"
-#include "utils/AsyncUtil.h"
 
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU")), mVersion(window)

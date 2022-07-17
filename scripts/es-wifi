@@ -259,7 +259,7 @@ is_enabled() {
 }
 
 get_ssid() {
-    #print_log $LOG_FILE "INFO" "Executing ' get_ssid()'"
+    #print_log $LOG_FILE "INFO" "Executing 'get_ssid()'"
     #sudo nmcli -f GENERAL.CONNECTION device show wlan0 | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}'
     iw dev wlan0 info | grep ssid | cut -c 7-30
 }

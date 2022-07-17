@@ -1,7 +1,6 @@
 #include "SwitchComponent.h"
 
 #include "resources/Font.h"
-#include "Window.h"
 
 
 SwitchComponent::SwitchComponent(Window* window, bool state) : GuiComponent(window), mImage(window), mState(state)
@@ -10,7 +9,6 @@ SwitchComponent::SwitchComponent(Window* window, bool state) : GuiComponent(wind
 
 	float height = Font::get(FONT_SIZE_MEDIUM)->getLetterHeight();	
 
-//	mImage.setImage(menuTheme->Icons.off);
 	mImage.setImage(state ? menuTheme->Icons.on : menuTheme->Icons.off);
 	mImage.setResize(0, height);
 	mImage.setColorShift(menuTheme->Text.color);
