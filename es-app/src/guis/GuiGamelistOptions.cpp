@@ -224,9 +224,8 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 	}
 
 	// Show favorites first in gamelists
-	auto favoritesFirstSwitch = std::make_shared<SwitchComponent>(mWindow);
-	favoritesFirstSwitch->setState(Settings::getInstance()->getBool("FavoritesFirst"));
-	mMenu.addWithLabel(_("SHOW FAVORITES ON TOP"), favoritesFirstSwitch);	
+	auto favoritesFirstSwitch = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("FavoritesFirst"));
+	mMenu.addWithLabel(_("SHOW FAVORITES ON TOP"), favoritesFirstSwitch);
 	addSaveFunc([favoritesFirstSwitch, this]
 	{
 		if (Settings::getInstance()->setBool("FavoritesFirst", favoritesFirstSwitch->getState()))
@@ -234,8 +233,7 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 	});
 
 	// hidden files
-	auto hidden_files = std::make_shared<SwitchComponent>(mWindow);
-	hidden_files->setState(Settings::getInstance()->getBool("ShowHiddenFiles"));
+	auto hidden_files = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowHiddenFiles"));
 	mMenu.addWithLabel(_("SHOW HIDDEN FILES"), hidden_files);
 	addSaveFunc([hidden_files, this]
 	{

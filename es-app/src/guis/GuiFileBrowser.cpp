@@ -8,7 +8,6 @@
 #include "SystemData.h"
 #include "EsLocale.h"
 #include "components/MultiLineMenuEntry.h"
-#include "GuiLoading.h"
 #include "guis/GuiMsgBox.h"
 #include <cstring>
 #include "SystemConf.h"

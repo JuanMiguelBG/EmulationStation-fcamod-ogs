@@ -8,6 +8,8 @@ namespace Utils
 	namespace Async
 	{
 		bool isCanRunAsync();
+
+		void sleep(int milliseconds);
 	} // Async::
 
 } // Utils::

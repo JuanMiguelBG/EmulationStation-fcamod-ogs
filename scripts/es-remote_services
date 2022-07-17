@@ -1,0 +1,439 @@
+#!/bin/bash
+
+do_help() {
+    echo "$0 enable <SERVICE>" >&2
+    echo "$0 disable <SERVICE>" >&2
+    echo "$0 active <SERVICE>" >&2
+    echo "$0 inactive <SERVICE>" >&2
+    echo "$0 is_enabled <SERVICE>" >&2
+    echo "$0 is_actived <SERVICE>" >&2
+    echo "$0 get_status <SERVICE>" >&2
+    echo "$0 set_status <SERVICE> <ENABLED_STATUS> <ACTIVE_STATUS>" >&2
+    echo "$0 get_status_detail <SERVICE>" >&2
+}
+
+is_systemd_actived()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'is_systemd_actived()' of '$1'"
+
+    local status=`sudo systemctl is-active "$1"`
+    if [ "$status" == "active" ]; then
+      # active
+      #print_log $LOG_FILE "INFO" "is_systemd_actived() - '$1' is active"
+      return 0
+    fi
+    # inactive
+    #print_log $LOG_FILE "INFO" "is_systemd_actived() - '$1' is inactive"
+    return 1
+}
+
+is_systemd_enabled()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'is_systemd_enabled()' of '$1'"
+
+    local status=`sudo systemctl is-enabled "$1"`
+    if [ "$status" == "enabled" ]; then
+      # enabled
+      #print_log $LOG_FILE "INFO" "is_systemd_enabled() - '$1' is enabled"
+      return 0
+    fi
+    # disabled
+    #print_log $LOG_FILE "INFO" "is_systemd_enabled() - '$1' is disabled"
+    return 1
+}
+
+do_systemd_enable()
+{
+    local SERVICE=$1
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_systemd_enable()' - Enabling service '$SERVICE'"
+    sudo systemctl enable "$SERVICE" --quiet
+
+    is_enabled "$1"
+    if [ $? -eq 0 ]; then
+      # enabled
+      #print_log $LOG_FILE "INFO" "Executing 'do_systemd_enable()' - Successfully enabled service '$SERVICE'"
+      return 0
+    fi
+
+    # error continue disabled
+    #print_log $LOG_FILE "ERROR" "Executing 'do_systemd_enable()' - Problem to enable service '$SERVICE', continue disabled"
+    return 1
+}
+
+do_systemd_disable()
+{
+    local SERVICE=$1
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_systemd_disable()' - Disabling service '$SERVICE'"
+    sudo systemctl disable "$SERVICE" --quiet
+
+    is_enabled "$1"
+    if [ $? -eq 1 ]; then
+      # disabled
+      #print_log $LOG_FILE "INFO" "Executing 'do_systemd_disable()' - Successfully disabled service '$SERVICE'"
+      return 0
+    fi
+
+    # error continue enabled
+    #print_log $LOG_FILE "ERROR" "Executing 'do_systemd_disable()' - Problem to disable service '$SERVICE', continue enabled"
+    return 1
+}
+
+is_ntp_actived()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'is_ntp_actived()'"
+
+    local actived=`sudo timedatectl | grep NTP | grep active`
+    if [ -z "$actived" ]; then
+      # inactive
+      #print_log $LOG_FILE "INFO" "is_ntp_actived() - 'NTP service' is inactive"
+      return 1
+    fi
+
+    # active
+    #print_log $LOG_FILE "INFO" "is_ntp_actived() - 'NTP service' is active"
+    return 0
+}
+
+is_actived()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'is_actived()' of '$SERVICE'"
+
+    if [ "$SERVICE" == "ntp" ]; then
+      is_ntp_actived && return 0 || return 1
+    fi
+
+    is_systemd_actived "$SERVICE" && return 0 || return 1
+}
+
+is_enabled()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'is_enabled()' of '$SERVICE'"
+
+    if [ "$SERVICE" == "ntp" ]; then
+      SERVICE="systemd-timesyncd.service"
+    fi
+
+    is_systemd_enabled "$SERVICE" && return 0 || return 1
+}
+
+do_systemd_active()
+{
+    local SERVICE=$1
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_systemd_active()' - Activing service '$SERVICE'"
+    sudo systemctl start "$SERVICE" --quiet
+
+    is_actived "$1"
+    if [ $? -eq 0 ]; then
+      # active
+      #print_log $LOG_FILE "INFO" "Executing 'do_systemd_active()' - Successfully actived service '$SERVICE'"
+      return 0
+    fi
+
+    # error continue inactive
+    #print_log $LOG_FILE "ERROR" "Executing 'do_systemd_active()' - Problem to active service '$SERVICE', continue inactive"
+    return 1
+}
+
+do_systemd_inactive()
+{
+    local SERVICE=$1
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_systemd_inactive()' - Inactiving service '$SERVICE'"
+    sudo systemctl stop "$SERVICE" --quiet
+
+    is_actived "$1"
+    if [ $? -eq 1 ]; then
+      # inactive
+      #print_log $LOG_FILE "INFO" "Executing 'do_systemd_inactive()' - Successfully inactived service '$SERVICE'"
+      return 0
+    fi
+
+    # error continue active
+    #print_log $LOG_FILE "ERROR" "Executing 'do_systemd_inactive()' - Problem to inactive service '$SERVICE', continue active"
+    return 1
+}
+
+do_ntp_active()
+{
+    local SERVICE=$1
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_ntp_active()' - Activing service 'NTP'"
+    sudo timedatectl set-ntp 1
+
+    is_ntp_active "$1"
+    if [ $? -eq 0 ]; then
+      # active
+      #print_log $LOG_FILE "INFO" "Executing 'do_ntp_active()' - Successfully actived service 'NTP'"
+      return 0
+    fi
+
+    # error continue inactive
+    #print_log $LOG_FILE "ERROR" "Executing 'do_ntp_active()' - Problem to active service 'NTP', continue inactive"
+    return 1
+}
+
+do_active()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_active()' of '$SERVICE'"
+
+    is_actived "$1"
+    if [ $? -eq 0 ]; then
+      # if active exit
+      return 0
+    fi
+
+    if [ "$SERVICE" == "ntp" ]; then
+      do_ntp_active || return 1
+    else
+    do_systemd_active $SERVICE || return 1
+    fi
+
+    return 0
+}
+
+do_ntp_inactive()
+{
+    local SERVICE=$1
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_ntp_inactive()' - Inactiving service 'NTP'"
+    sudo timedatectl set-ntp 0
+
+    is_ntp_active "$1"
+    if [ $? -eq 1 ]; then
+      # inactive
+      #print_log $LOG_FILE "INFO" "Executing 'do_ntp_inactive()' - Successfully inactived service 'NTP'"
+      return 0
+    fi
+
+    # error continue active
+    #print_log $LOG_FILE "ERROR" "Executing 'do_ntp_inactive()' - Problem to inactive service 'NTP', continue active"
+    return 1
+}
+
+do_inactive()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_inactive()' of '$SERVICE'"
+
+    is_actived "$1"
+    if [ $? -eq 1 ]; then
+      # if inactive exit
+      return 0
+    fi
+
+    if [ "$SERVICE" == "ntp" ]; then
+      do_ntp_inactive || return 1
+    else
+      do_systemd_inactive $SERVICE || return 1
+    fi
+
+    return 0
+}
+
+do_get_status()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_status()' of '$SERVICE'"
+
+    local result=""
+
+    is_enabled "$SERVICE"
+    if [ $? -eq 0 ]; then
+      result="enabled"
+    else
+      result="disabled"
+    fi
+
+    is_actived "$SERVICE"
+    if [ $? -eq 0 ]; then
+      result="$result;active"
+    else
+      result="$result;inactive"
+    fi
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_status()' - $result"
+    echo "$result"
+}
+
+do_get_status_detail()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_status_detail()' of '$SERVICE'"
+
+    local result="Status of service '$SERVICE'"
+
+    is_enabled "$SERVICE"
+    if [ $? -eq 0 ]; then
+      result="$result [enabled,"
+    else
+      result="$result [disabled,"
+    fi
+
+    is_actived "$SERVICE"
+    if [ $? -eq 0 ]; then
+      result="$result active]"
+    else
+      result="$result inactive]"
+    fi
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_status_detail()' - $result"
+    echo "$result"
+}
+
+do_enable()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_enable()' of '$SERVICE'"
+
+    is_enabled "$1"
+    if [ $? -eq 0 ]; then
+      # if enabled exit
+      return 0
+    fi
+
+    if [ "$SERVICE" == "ntp" ]; then
+      SERVICE="systemd-timesyncd.service"
+    fi
+
+    do_systemd_enable $SERVICE && return 0 || return 1
+}
+
+do_disable()
+{
+    local SERVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_disable()' of '$SERVICE'"
+
+    is_enabled "$1"
+    if [ $? -eq 1 ]; then
+      # if disabled exit
+      return 0
+    fi
+
+    if [ "$SERVICE" == "ntp" ]; then
+      SERVICE="systemd-timesyncd.service"
+    fi
+
+    do_systemd_disable $SERVICE && return 0 || return 1
+}
+
+do_remote_services_active()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_active()'"
+
+    sudo timedatectl set-ntp 1 &
+    sudo systemctl start smbd.service --quiet
+    sudo systemctl start nmbd.service --quiet
+    sudo systemctl start ssh.service --quiet
+
+    if [ -f "/usr/local/bin/filebrowser" ]; then
+      sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
+    fi
+
+    return 0
+}
+
+do_remote_services_inactive()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_inactive()'"
+
+    sudo timedatectl set-ntp 0
+    sudo systemctl stop smbd.service --quiet
+    sudo systemctl stop nmbd.service --quiet
+    sudo systemctl stop ssh.service --quiet
+
+    if [ -f "/usr/local/bin/filebrowser" ]; then
+      sudo pkill filebrowser
+    fi
+
+    return 0
+}
+
+do_set_status()
+{
+    local SERVICE=$1
+    local IS_ENABLED=$2
+    local IS_ACTIVE=$3
+    #print_log $LOG_FILE "INFO" "Executing 'do_set_status()': '$SERVICE' - '$IS_ENABLED' - '$IS_ACTIVE'"
+
+    if [ "$IS_ENABLED" == "enabled" ]; then
+      do_enable $SERVICE || return 1
+    else
+      do_disable $SERVICE || return 1
+    fi
+
+    if [ "$IS_ACTIVE" == "active" ]; then
+      do_active $SERVICE || return 1
+    else
+      do_inactive $SERVICE || return 1
+    fi
+
+    return 0
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-commons
+
+EXIST_CONNECTION_FLAG=" (**)"
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-remote_services.log"
+
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+shift
+
+#print_log $LOG_FILE "INFO" "##### Executing operation: $ACTION #####"
+
+case "${ACTION}" in
+    "enable")
+        do_enable "$1" || exit 1
+    ;;
+    "disable")
+        do_disable "$1" || exit 1
+    ;;
+    "active")
+        do_active "$1" || exit 1
+    ;;
+    "inactive")
+        do_inactive "$1" || exit 1
+    ;;
+    "is_enabled")
+        is_enabled "$1" || exit 1
+    ;;
+    "is_actived")
+        is_actived "$1" || exit 1
+    ;;
+    "get_status")
+        do_get_status "$1"
+    ;;
+    "get_status_detail")
+        do_get_status_detail "$1"
+    ;;
+    "set_status")
+        do_set_status "$1" "$2" "$3" || exit 1
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
+
+#print_log $LOG_FILE "INFO" "##### Exit executing operation: $ACTION #####"
+exit 0

@@ -22,24 +22,20 @@ GuiSlideshowScreensaverOptions::GuiSlideshowScreensaverOptions(Window* window, c
 	});
 	
 	// SHOW GAME NAME
-	auto ss_controls = std::make_shared<SwitchComponent>(mWindow);
-	ss_controls->setState(Settings::getInstance()->getBool("SlideshowScreenSaverGameName"));
+	auto ss_controls = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("SlideshowScreenSaverGameName"));
 	addWithLabel(row, _("SHOW GAME INFO"), ss_controls);
 	addSaveFunc([ss_controls] { Settings::getInstance()->setBool("SlideshowScreenSaverGameName", ss_controls->getState()); });
 
-	auto marquee_screensaver = std::make_shared<SwitchComponent>(mWindow);
-	marquee_screensaver->setState(Settings::getInstance()->getBool("ScreenSaverMarquee"));
+	auto marquee_screensaver = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScreenSaverMarquee"));
 	addWithLabel(row, _("USE MARQUEE AS GAME INFO"), marquee_screensaver);
 	addSaveFunc([marquee_screensaver] { Settings::getInstance()->setBool("ScreenSaverMarquee", marquee_screensaver->getState()); });
 	/*
-	auto decoration_screensaver = std::make_shared<SwitchComponent>(mWindow);
-	decoration_screensaver->setState(Settings::getInstance()->getBool("ScreenSaverDecoration"));
+	auto decoration_screensaver = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScreenSaverDecoration"));
 	addWithLabel(row, _("USE RANDOM DECORATION"), decoration_screensaver);
 	addSaveFunc([decoration_screensaver] { Settings::getInstance()->setBool("ScreenSaverDecoration", decoration_screensaver->getState()); });
 	*/
 	// stretch
-	auto sss_stretch = std::make_shared<SwitchComponent>(mWindow);
-	sss_stretch->setState(Settings::getInstance()->getBool("SlideshowScreenSaverStretch"));
+	auto sss_stretch = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("SlideshowScreenSaverStretch"));
 	addWithLabel(row, _("STRETCH IMAGES"), sss_stretch);
 	addSaveFunc([sss_stretch] {
 		Settings::getInstance()->setBool("SlideshowScreenSaverStretch", sss_stretch->getState());
@@ -54,8 +50,7 @@ GuiSlideshowScreensaverOptions::GuiSlideshowScreensaverOptions(Window* window, c
 	});
 	*/
 	// image source
-	auto sss_custom_source = std::make_shared<SwitchComponent>(mWindow);
-	sss_custom_source->setState(Settings::getInstance()->getBool("SlideshowScreenSaverCustomImageSource"));
+	auto sss_custom_source = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("SlideshowScreenSaverCustomImageSource"));
 	addWithLabel(row, _("USE CUSTOM IMAGES"), sss_custom_source);
 	addSaveFunc([sss_custom_source] { Settings::getInstance()->setBool("SlideshowScreenSaverCustomImageSource", sss_custom_source->getState()); });
 
@@ -70,8 +65,7 @@ GuiSlideshowScreensaverOptions::GuiSlideshowScreensaverOptions(Window* window, c
 	addSaveFunc([sss_image_dir] { Settings::getInstance()->setString("SlideshowScreenSaverImageDir", sss_image_dir->getValue()); });
 
 	// recurse custom image directory
-	auto sss_recurse = std::make_shared<SwitchComponent>(mWindow);
-	sss_recurse->setState(Settings::getInstance()->getBool("SlideshowScreenSaverRecurse"));
+	auto sss_recurse = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("SlideshowScreenSaverRecurse"));
 	addWithLabel(row, _("CUSTOM IMAGE DIR RECURSIVE"), sss_recurse);
 	addSaveFunc([sss_recurse] {
 		Settings::getInstance()->setBool("SlideshowScreenSaverRecurse", sss_recurse->getState());

@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <vector>
+#include <map>
 
 int runShutdownCommand()
 {
@@ -149,6 +150,33 @@ std::vector<std::string> executeSystemEnumerationScript(const std::string comman
 		std::string linestr = Utils::String::replace( line, "\n", "" );
 		if (!linestr.empty())
 			res.push_back(linestr);
+	}
+
+	pclose(pipe);
+	return res;
+}
+
+std::map<std::string,std::string> executeSystemMapScript(const std::string command, const char separator)
+{
+	LOG(LogDebug) << "Platform::executeSystemMapScript -> " << command;
+
+	std::map<std::string,std::string> res;
+
+	FILE *pipe = popen(command.c_str(), "r");
+
+	if (pipe == NULL)
+		return res;
+
+	char line[1024];
+	while (fgets(line, 1024, pipe))
+	{
+		strtok(line, "\n");
+		std::string linestr = Utils::String::replace( line, "\n", "" );
+		std::vector<std::string> data = Utils::String::split(linestr, separator);
+		if (data.size() == 1)
+			res[data[0]] = "";
+		else if (data.size() > 1)
+			res[data[0]] = data[1];
 	}
 
 	pclose(pipe);
@@ -998,6 +1026,46 @@ bool setCurrentTimezone(std::string timezone)
 		return executeSystemScript("/usr/bin/sudo timedatectl set-timezone \"" + timezone + "\" &");
 
 	return executeSystemScript("sudo ln -sf \"/usr/share/zoneinfo/" + timezone +"\" /etc/localtime &");
+}
+
+RemoteServiceInformation queryRemoteServiceStatus(const std::string &name)
+{
+	RemoteServiceInformation rsi;
+	rsi.name = name;
+	if (name == "SAMBA")
+		rsi.platformName = "smbd.service";
+	else if (name == "NETBIOS")
+		rsi.platformName = "nmbd.service";
+	else if (name == "NTP")
+		rsi.platformName = "ntp";
+	else
+		rsi.platformName =  Utils::String::toLower(name) + ".service";
+
+	std::string result = getShOutput("es-remote_services get_status \"" + rsi.platformName + '"');
+	std::vector<std::string> data = Utils::String::split(result, ';');
+
+	if (data.size() == 2)
+	{
+		rsi.isStartOnBoot = stringToState(data[0]);
+		rsi.isActive = stringToState(data[1], "active");
+	}
+
+	return rsi;
+}
+
+bool setRemoteServiceStatus(RemoteServiceInformation service)
+{
+	return executeSystemScript("es-remote_services set_status \"" + service.platformName + "\" " + stateToString(service.isStartOnBoot ) + ' ' + stateToString(service.isActive, "active", "inactive"));
+}
+
+std::string stateToString(bool state, const std::string &active_value, const std::string &not_active_value)
+{
+	return state ? active_value : not_active_value;
+}
+
+bool stringToState(const std::string state, const std::string &active_value)
+{
+	return ( Utils::String::replace(state, "\n", "") == active_value );
 }
 
 #ifdef _DEBUG

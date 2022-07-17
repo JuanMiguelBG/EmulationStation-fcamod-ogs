@@ -161,7 +161,6 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 				executables.push_back("es-system_hotkey");
 				break;
 		case WIFI:
-		case ApiSystem::REMOTE_SERVICES:
 				executables.push_back("es-wifi");
 				break;
 		case ApiSystem::RETROACHIVEMENTS:
@@ -191,6 +190,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case ApiSystem::SOUND:
 				executables.push_back("es-sound");
 				break;
+		case ApiSystem::REMOTE_SERVICES:
+				executables.push_back("es-remote_services");
+				break;
 		case ApiSystem::BLUETOOTH:
 				executables.push_back("es-bluetooth");
 				break;
@@ -205,7 +207,7 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 #endif
 		break;
 	case ApiSystem::KODI:
- 		executables.push_back("kodi");
+		executables.push_back("kodi");
 		break;
 	case ApiSystem::WIFI:
 		executables.push_back("batocera-wifi");
@@ -1048,16 +1050,6 @@ bool ApiSystem::setRemoteServicesEnabled(bool status)
 		return executeScript("es-wifi do_remote_services_inactive");
 }
 
-std::string ApiSystem::stateToString(bool state)
-{
-	return state ? std::string("enabled") : std::string("disabled");
-}
-
-bool ApiSystem::stringToState(const std::string state)
-{
-	return ( Utils::String::replace(state, "\n", "") == "enabled" );
-}
-
 bool ApiSystem::setLanguage(std::string language)
 {
 	LOG(LogInfo) << "ApiSystem::setLanguage()";
@@ -1457,6 +1449,41 @@ bool ApiSystem::setOutputDevice(const std::string device)
 	LOG(LogInfo) << "ApiSystem::setOutputDevice()";
 
 	return executeScript("es-sound set output_device \"" + device + '"');
+}
+
+RemoteServiceInformation ApiSystem::getNtpStatus()
+{
+	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+
+	return queryRemoteServiceStatus("NTP");
+}
+
+RemoteServiceInformation ApiSystem::getSambaStatus()
+{
+	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+
+	return queryRemoteServiceStatus("SAMBA");
+}
+
+RemoteServiceInformation ApiSystem::getNetBiosStatus()
+{
+	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+
+	return queryRemoteServiceStatus("NETBIOS");
+}
+
+RemoteServiceInformation ApiSystem::getSshStatus()
+{
+	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+
+	return queryRemoteServiceStatus("SSH");
+}
+
+bool ApiSystem::configRemoteService(RemoteServiceInformation service)
+{
+	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+
+	return setRemoteServiceStatus(service);
 }
 
 void ApiSystem::launchExternalWindow_before(Window *window)

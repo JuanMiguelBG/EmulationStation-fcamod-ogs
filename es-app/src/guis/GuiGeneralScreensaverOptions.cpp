@@ -72,8 +72,7 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, std::
 	// Screensaver stops music
 	if (Settings::getInstance()->getBool("audio.bgmusic"))
 	{
-		auto ctlStopMusic = std::make_shared<SwitchComponent>(mWindow);
-		ctlStopMusic->setState(Settings::getInstance()->getBool("StopMusicOnScreenSaver"));
+		auto ctlStopMusic = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("StopMusicOnScreenSaver"));
 		addWithLabel(_("STOP MUSIC ON SCREENSAVER"), ctlStopMusic);
 		addSaveFunc([ctlStopMusic] { Settings::getInstance()->setBool("StopMusicOnScreenSaver", ctlStopMusic->getState()); });
 	}
@@ -94,8 +93,7 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, std::
 	addRow(row);
 
 	// Allow ScreenSaver Controls - ScreenSaverControls
-	auto ss_controls = std::make_shared<SwitchComponent>(mWindow);
-	ss_controls->setState(Settings::getInstance()->getBool("ScreenSaverControls"));
+	auto ss_controls = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScreenSaverControls"));
 	addWithLabel(_("SCREENSAVER CONTROLS"), ss_controls);
 	addSaveFunc([ss_controls] { Settings::getInstance()->setBool("ScreenSaverControls", ss_controls->getState()); });
 }

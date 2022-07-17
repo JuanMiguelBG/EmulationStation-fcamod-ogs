@@ -55,7 +55,7 @@ public:
 
 	bool input(InputConfig *config, Input input) override
 	{
-		return false;	
+		return false;
 	}
 
 	void update(int deltaTime) override
@@ -87,12 +87,12 @@ private:
 		mRunning = false;
 	}
 
-    BusyComponent mBusyAnim;
-    std::thread *mHandle;
-    bool mRunning;
-    const std::function<T()> mFunc;
-    const std::function<void(T)> mFunc2;
-    T result;
+		BusyComponent mBusyAnim;
+		std::thread *mHandle;
+		bool mRunning;
+		const std::function<T()> mFunc;
+		const std::function<void(T)> mFunc2;
+		T result;
 };
 
 #endif //EMULATIONSTATION_ALL_GUILOADING_H

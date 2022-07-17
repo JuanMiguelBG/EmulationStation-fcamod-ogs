@@ -45,6 +45,7 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiAutoSuspendOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiRetroachievementsOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiDisplayAutoDimOptions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiRemoteServicesOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiMenu.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiScraperMulti.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiScraperStart.h
@@ -117,6 +118,7 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiAutoSuspendOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiRetroachievementsOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiDisplayAutoDimOptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiRemoteServicesOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiMenu.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiScraperMulti.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiScraperStart.cpp

@@ -2,13 +2,14 @@
 
 #include "resources/Font.h"
 
+
 SwitchComponent::SwitchComponent(Window* window, bool state) : GuiComponent(window), mImage(window), mState(state)
 {
 	auto menuTheme = ThemeData::getMenuTheme();
 
 	float height = Font::get(FONT_SIZE_MEDIUM)->getLetterHeight();	
 
-	mImage.setImage(ThemeData::getMenuTheme()->Icons.off);
+	mImage.setImage(state ? menuTheme->Icons.on : menuTheme->Icons.off);
 	mImage.setResize(0, height);
 	mImage.setColorShift(menuTheme->Text.color);
 
@@ -63,13 +64,8 @@ std::string SwitchComponent::getValue() const
 
 void SwitchComponent::setValue(const std::string& statestring)
 {
-	if (statestring == "true")
-	{
-		mState = true;
-	}else
-	{
-		mState = false;
-	}
+	mState = (statestring == "true" ? true : false);
+
 	onStateChanged();
 }
 

@@ -13,8 +13,6 @@ public:
 
 private:
 	void initializeMenu(Window* window);
-
-	bool mPopupDisplayed;
 };
 
 #endif // ES_APP_GUIS_SYSTEM_HOTKEY_EVENTS_OPTIONS_H

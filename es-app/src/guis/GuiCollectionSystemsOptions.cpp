@@ -187,13 +187,11 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	});
 
 	// Open gamelist at start
-	auto bootOnGamelist = std::make_shared<SwitchComponent>(mWindow);
-	bootOnGamelist->setState(Settings::getInstance()->getBool("StartupOnGameList"));
+	auto bootOnGamelist = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("StartupOnGameList"));
 	addWithLabel(_("START ON GAMELIST"), bootOnGamelist);
 	addSaveFunc([bootOnGamelist] { Settings::getInstance()->setBool("StartupOnGameList", bootOnGamelist->getState()); });
 
-	std::shared_ptr<SwitchComponent> bundleCustomCollections = std::make_shared<SwitchComponent>(mWindow);
-	bundleCustomCollections->setState(Settings::getInstance()->getBool("UseCustomCollectionsSystem"));
+	std::shared_ptr<SwitchComponent> bundleCustomCollections = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("UseCustomCollectionsSystem"));
 	addWithLabel(_("GROUP UNTHEMED CUSTOM COLLECTIONS"), bundleCustomCollections);
 	addSaveFunc([this, bundleCustomCollections]
 	{
@@ -201,8 +199,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 			setVariable("reloadAll", true);
 	});
 
-	std::shared_ptr<SwitchComponent> toggleSystemNameInCollections = std::make_shared<SwitchComponent>(mWindow);
-	toggleSystemNameInCollections->setState(Settings::getInstance()->getBool("CollectionShowSystemInfo"));
+	std::shared_ptr<SwitchComponent> toggleSystemNameInCollections = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("CollectionShowSystemInfo"));
 	addWithLabel(_("SHOW SYSTEM NAME IN COLLECTIONS"), toggleSystemNameInCollections);
 	addSaveFunc([this, toggleSystemNameInCollections]
 	{
@@ -211,8 +208,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	});
 
 /*
-	std::shared_ptr<SwitchComponent> alsoHideGames = std::make_shared<SwitchComponent>(mWindow);
-	alsoHideGames->setState(Settings::HiddenSystemsShowGames());
+	std::shared_ptr<SwitchComponent> alsoHideGames = std::make_shared<SwitchComponent>(mWindow, Settings::HiddenSystemsShowGames());
 	addWithLabel(_("SHOW GAMES OF HIDDEN SYSTEMS IN COLLECTIONS"), alsoHideGames);
 	addSaveFunc([this, alsoHideGames]
 	{
@@ -224,8 +220,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	});
 */
 
-	std::shared_ptr<SwitchComponent> favoritesFirstSwitch = std::make_shared<SwitchComponent>(mWindow);
-	favoritesFirstSwitch->setState(Settings::getInstance()->getBool("FavoritesFirst"));
+	std::shared_ptr<SwitchComponent> favoritesFirstSwitch = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("FavoritesFirst"));
 	addWithLabel(_("SHOW FAVORITES ON TOP"), favoritesFirstSwitch);
 	addSaveFunc([this, favoritesFirstSwitch]
 	{

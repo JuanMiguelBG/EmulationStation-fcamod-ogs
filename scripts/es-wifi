@@ -9,7 +9,7 @@ do_help() {
     echo "$0 remove <SSID>" >&2
     echo "$0 disable" >&2
     echo "$0 internet_status" >&2
-    echo "$0 disconnect" >&2
+    echo "$0 disconnect <SSID>" >&2
     echo "$0 is_connected" >&2
     echo "$0 is_enabled" >&2
     echo "$0 get_ssid" >&2
@@ -25,15 +25,13 @@ do_help() {
     echo "$0 is_network_exist <SSID>" >&2
     echo "$0 get_network_exist_flag" >&2
     echo "$0 test_network_manager" >&2
-    echo "$0 is_remote_services_active" >&2
-    echo "$0 is_remote_services_enabled" >&2
 }
 
 is_network_manager_active() {
     #print_log $LOG_FILE "INFO" "Executing 'is_network_manager_active()'"
 
-    sudo systemctl is-active NetworkManager --quiet
-    if [ $? -eq 0 ]; then
+    local status=`sudo systemctl is-active NetworkManager`
+    if [ "$status" == "active" ]; then
       # active
       #print_log $LOG_FILE "INFO" "is_network_manager_active() - NetworkManager is active"
       return 0
@@ -46,8 +44,8 @@ is_network_manager_active() {
 is_network_manager_enabled() {
     #print_log $LOG_FILE "INFO" "Executing 'is_network_manager_enabled()'"
 
-    sudo systemctl is-enabled NetworkManager --quiet
-    if [ $? -eq 0 ]; then
+    local status=`sudo systemctl is-enabled NetworkManager`
+    if [ "$status" == "enabled" ]; then
       # enabled
       #print_log $LOG_FILE "INFO" "is_network_manager_enabled() - NetworkManager is enabled"
       return 0
@@ -132,9 +130,7 @@ do_list() {
 do_scanlist() {
     #print_log $LOG_FILE "INFO" "Executing 'do_scanlist()'"
 
-    enable_network_manager
-
-    sudo nmcli device wifi rescan
+    do_start
     do_list
 }
 
@@ -144,11 +140,9 @@ do_enable() {
 
     #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - New connection to '$SSID'"
 
-    enable_network_manager
+    do_start
 
-    sudo nmcli device wifi rescan || return 1
-
-    output=""
+    local output=""
     actual_network=`iw dev wlan0 info | grep ssid | cut -c 7-30`
     if [ ! -z "$actual_network" ]; then
       #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Disconnecting of '$actual_network'"
@@ -185,7 +179,7 @@ do_enable() {
 do_remove() {
     local SSID=$1
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_remove()': $SSID"
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove()': '$SSID'"
     #fnmcli connection delete id "$SSID" || return 1
     sudo nmcli con delete "$SSID" || return 1
 }
@@ -199,13 +193,14 @@ do_disable() {
 do_reset() {
     local SSID=$1
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_reset()': $SSID"
+    #print_log $LOG_FILE "INFO" "Executing 'do_reset()': '$SSID'"
     do_remove $SSID
     do_disable || return 1
 }
 
 do_start() {
     #print_log $LOG_FILE "INFO" "Executing 'do_start()'"
+
     enable_network_manager
 
     sudo nmcli device wifi rescan || return 1
@@ -227,7 +222,7 @@ do_test_internet() {
 do_disconnect() {
     local SSID=$1
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect()': $SSID"
+    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect()': '$SSID'"
     sudo nmcli con down id "$SSID" || return 1
 }
 
@@ -276,7 +271,7 @@ get_ssid() {
 get_ssid_psk() {
     local SSID=$1
 
-    #print_log $LOG_FILE "INFO" "Executing 'get_ssid_psk()': $SSID"
+    #print_log $LOG_FILE "INFO" "Executing 'get_ssid_psk()': '$SSID'"
     sudo nmcli -s -g 802-11-wireless-security.psk connection show "$SSID"
 }
 
@@ -295,7 +290,7 @@ enable_manual_dns() {
     local DNS1=$2
     local DNS2=$3
 
-    #print_log $LOG_FILE "INFO" "Executing 'enable_manual_dns()': SSID=$SSID, DNS1=$DNS1, DNS2=$DNS2"
+    #print_log $LOG_FILE "INFO" "Executing 'enable_manual_dns()': SSID='$SSID', DNS1='$DNS1', DNS2='$DNS2'"
     sudo nmcli con mod "$SSID" ipv4.dns "$DNS1 $DNS2" || return 1
     sudo nmcli con mod "$SSID" ipv4.ignore-auto-dns yes || return 1
     sudo systemctl restart NetworkManager || return 1
@@ -307,7 +302,7 @@ enable_manual_dns() {
 disable_manual_dns() {
     local SSID=$1
 
-    #print_log $LOG_FILE "INFO" "Executing 'disable_manual_dns()': SSID=$SSID"
+    #print_log $LOG_FILE "INFO" "Executing 'disable_manual_dns()': SSID='$SSID'"
     sudo nmcli con mod "$SSID" ipv4.ignore-auto-dns no || return 1
     sudo systemctl restart NetworkManager || return 1
 
@@ -335,94 +330,6 @@ get_network_exist_flag()
     echo "$EXIST_CONNECTION_FLAG"
 }
 
-is_remote_services_active()
-{
-    #print_log $LOG_FILE "INFO" "Executing 'is_remote_services_active()'"
-
-    sudo systemctl is-active ssh.service --quiet
-    if [ $? -eq 0 ]; then
-      # SSH active
-      #print_log $LOG_FILE "INFO" "is_remote_services_active() - SSH service is active"
-
-      sudo systemctl is-active smbd.service --quiet
-      if [ $? -eq 0 ]; then
-        # SAMBA active
-        #print_log $LOG_FILE "INFO" "is_remote_services_active() - SAMBA service is active"
-
-        sudo systemctl is-active nmbd.service --quiet
-        if [ $? -eq 0 ]; then
-          # NetBIOS active
-          #print_log $LOG_FILE "INFO" "is_remote_services_active() - NetBIOS  service is active"
-          return 0
-        fi
-
-      fi
-    fi
-    # inactive
-    #print_log $LOG_FILE "INFO" "is_remote_services_active() - One or more remote services are inactive"
-    return 1
-}
-
-is_remote_services_enabled()
-{
-    #print_log $LOG_FILE "INFO" "Executing 'is_remote_services_enabled()'"
-
-    sudo systemctl is-enabled ssh.service --quiet
-    if [ $? -eq 0 ]; then
-      # SSH enabled
-      #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - SSH service is enabled"
-
-      sudo systemctl is-enabled smbd.service --quiet
-      if [ $? -eq 0 ]; then
-        # SAMBA enabled
-        #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - SAMBA service is enabled"
-
-        sudo systemctl is-enabled nmbd.service --quiet
-        if [ $? -eq 0 ]; then
-          # NetBIOS enabled
-          #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - NetBIOS  service is enabled"
-          return 0
-        fi
-
-      fi
-    fi
-    # inactive
-    #print_log $LOG_FILE "INFO" "is_remote_services_enabled() - One or more remote services are disabled"
-    return 1
-}
-
-do_remote_services_active()
-{
-    #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_active()'"
-
-    sudo timedatectl set-ntp 1 &
-    sudo systemctl start smbd.service --quiet
-    sudo systemctl start nmbd.service --quiet
-    sudo systemctl start ssh.service --quiet
-
-    if [ -f "/usr/local/bin/filebrowser" ]; then
-      sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
-    }
-
-    return 0
-}
-
-do_remote_services_inactive()
-{
-    #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_inactive()'"
-
-    sudo timedatectl set-ntp 0
-    sudo systemctl stop smbd.service --quiet
-    sudo systemctl stop nmbd.service --quiet
-    sudo systemctl stop ssh.service --quiet
-
-    if [ -f "/usr/local/bin/filebrowser" ]; then
-      sudo pkill filebrowser
-    }
-
-    return 0
-}
-
 # ******************************************************************************************
 
 # Configure ES commons variables
@@ -445,7 +352,7 @@ fi
 ACTION=$1
 shift
 
-#print_log $LOG_FILE "INFO" "Executing operation: $ACTION"
+#print_log $LOG_FILE "INFO" "##### Executing operation: $ACTION #####"
 
 case "${ACTION}" in
     "list")
@@ -473,7 +380,7 @@ case "${ACTION}" in
         do_test_internet || exit 1
     ;;
     "disconnect")
-        do_disconnect || exit 1
+        do_disconnect "$1" || exit 1
     ;;
     "is_connected")
         is_connected || exit 1
@@ -485,7 +392,7 @@ case "${ACTION}" in
         get_ssid
     ;;
     "get_ssid_psk")
-        get_ssid_psk
+        get_ssid_psk "$1"
     ;;
     "get_dns1")
         get_dns1
@@ -497,7 +404,7 @@ case "${ACTION}" in
         enable_manual_dns "$1" "$2" "$3" || exit 1
     ;;
     "disable_manual_dns")
-        disable_manual_dns || exit 1
+        disable_manual_dns "$1" || exit 1
     ;;
     "enable_network_manager")
         enable_network_manager || exit 1
@@ -520,16 +427,12 @@ case "${ACTION}" in
     "get_network_exist_flag")
         get_network_exist_flag
     ;;
-    "is_remote_services_active")
-        is_remote_services_active
-    ;;
-    "is_remote_services_enabled")
-        is_remote_services_enabled
-    ;;
     *)
         do_help
         >&2 echo "error: invalid command ${ACTION}"
-        #print_log $LOG_FILE "ERROR" "Invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
         exit 1
 esac
+
+#print_log $LOG_FILE "INFO" "##### Exit executing operation: $ACTION #####"
 exit 0

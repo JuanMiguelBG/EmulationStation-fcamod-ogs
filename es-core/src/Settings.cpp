@@ -38,7 +38,8 @@ std::vector<const char*> settings_dont_save {
 	{ "wifi.key" },
 	{ "wifi.ssid" },
 	{ "wifi.dns1" },
-	{ "wifi.dns2" }
+	{ "wifi.dns2" },
+	{ "wait.process.loading" }
 };
 
 Settings::Settings()
@@ -215,6 +216,8 @@ void Settings::setDefaults()
 	mBoolMap["ShowDetailedSystemInfo"] = false;
 
 	mBoolMap["GuiEditMetadataCloseAllWindows"] = false;
+
+	mBoolMap["wait.process.loading"] = false;
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

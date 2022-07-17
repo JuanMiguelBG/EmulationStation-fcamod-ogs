@@ -7,7 +7,7 @@
 #include "ApiSystem.h"
 
 
-GuiSystemHotkeyEventsOptions::GuiSystemHotkeyEventsOptions(Window* window) : GuiSettings(window, _("SYSTEM HOTKEY EVENTS SETTINGS").c_str()), mPopupDisplayed(false)
+GuiSystemHotkeyEventsOptions::GuiSystemHotkeyEventsOptions(Window* window) : GuiSettings(window, _("SYSTEM HOTKEY EVENTS SETTINGS").c_str())
 {
 	initializeMenu(window);
 }
@@ -20,9 +20,8 @@ GuiSystemHotkeyEventsOptions::~GuiSystemHotkeyEventsOptions()
 void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 {
 	// brightness events
-	auto brightness = std::make_shared<SwitchComponent>(window);
 	bool brightness_value = ApiSystem::getInstance()->isSystemHotkeyBrightnessEvent();
-	brightness->setState(brightness_value);
+	auto brightness = std::make_shared<SwitchComponent>(window, brightness_value);
 	addWithLabel(_("BRIGHTNESS"), brightness);
 
 	// Brightness step
@@ -32,9 +31,8 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	addWithLabel(_("BRIGHTNESS STEP"), brightness_step);
 
 	// volume events
-	auto volume = std::make_shared<SwitchComponent>(window);
 	bool volume_value = ApiSystem::getInstance()->isSystemHotkeyVolumeEvent();
-	volume->setState(volume_value);
+	auto volume = std::make_shared<SwitchComponent>(window, volume_value);
 	addWithLabel(_("VOLUME"), volume);
 
 	// Brightness step
@@ -44,21 +42,18 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	addWithLabel(_("VOLUME STEP"), volume_step);
 
 	// wifi events
-	auto wifi = std::make_shared<SwitchComponent>(window);
 	bool wifi_value = ApiSystem::getInstance()->isSystemHotkeyWifiEvent();
-	wifi->setState(wifi_value);
+	auto wifi = std::make_shared<SwitchComponent>(window, wifi_value);
 	addWithLabel(_("WIFI"), wifi);
 
 	// bluetooth events
-	auto bluetooth = std::make_shared<SwitchComponent>(window);
 	bool bluetooth_value = ApiSystem::getInstance()->isSystemHotkeyBluetoothEvent();
-	bluetooth->setState(bluetooth_value);
+	auto bluetooth = std::make_shared<SwitchComponent>(window, bluetooth_value);
 	addWithLabel(_("BLUETOOTH"), bluetooth);
 
 	// suspend events
-	auto suspend = std::make_shared<SwitchComponent>(window);
 	bool suspend_value = ApiSystem::getInstance()->isSystemHotkeySuspendEvent();
-	suspend->setState(suspend_value);
+	auto suspend = std::make_shared<SwitchComponent>(window, suspend_value);
 	addWithLabel(_("SUSPEND"), suspend);
 
 	addSaveFunc([brightness, brightness_value, brightness_step, brightness_step_value, volume, volume_value, volume_step, volume_step_value, wifi, wifi_value, bluetooth, bluetooth_value, suspend, suspend_value]

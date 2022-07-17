@@ -56,6 +56,7 @@ private:
 	void openSystemEmulatorSettings(SystemData* system);
 	void openDisplaySettings();
 	void openDisplayAutoDimSettings();
+	void openRemoteServicesSettings();
 
 	static std::string formatNetworkStatus(bool isConnected);
 	static std::string formatIconsBatteryStatus(int level, bool isCharging);
