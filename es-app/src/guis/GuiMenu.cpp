@@ -2619,10 +2619,22 @@ std::string GuiMenu::formatIconsBrightnessStatus(int level)
 {
 	std::string brightnessInfo("");
 
-	if (level > 10)
+	if (level > 89)
+		brightnessInfo.append(_U("\uF18B  "));
+	else if (level > 74) // 78%
+		brightnessInfo.append(_U("\uF18A  "));
+	else if (level > 60) // 65%
+		brightnessInfo.append(_U("\uF189  "));
+	else if (level > 45) // 50%
+		brightnessInfo.append(_U("\uF188  "));
+	else if (level > 35) // 38%
+		brightnessInfo.append(_U("\uF187  "));
+	else if (level > 22) // 25%
+		brightnessInfo.append(_U("\uF186  "));
+	else if (level > 10) // 13%
 		brightnessInfo.append(_U("\uF185  "));
-	else
-		brightnessInfo.append(_U("\uF0A3  "));
+	else // <= 10%
+		brightnessInfo.append(_U("\uF184  "));
 
 	brightnessInfo.append(std::to_string( level )).append("% ");
 
