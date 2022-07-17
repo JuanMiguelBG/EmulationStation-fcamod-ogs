@@ -2639,7 +2639,6 @@ std::string GuiMenu::formatIconsBrightnessStatus(int level)
 	brightnessInfo.append(std::to_string( level )).append("% ");
 
 	return brightnessInfo;
-
 }
 
 std::string GuiMenu::formatIconsNetworkStatus(bool status)
