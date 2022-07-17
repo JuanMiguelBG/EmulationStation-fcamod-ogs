@@ -74,15 +74,20 @@ bool GuiSettings::input(InputConfig* config, Input input)
 	{
 		if (config->isMappedTo(BUTTON_BACK, input))
 		{
-			close();
+			if (!Settings::getInstance()->getBool("wait.process.loading"))
+				close();
+
 			return true;
 		}
 		else if (config->isMappedTo(mCloseButton, input))
 		{
-			// close everything
-			Window* window = mWindow;
-			while (window->peekGui() && window->peekGui() != ViewController::get())
-				delete window->peekGui();
+			if (!Settings::getInstance()->getBool("wait.process.loading"))
+			{
+				// close everything
+				Window* window = mWindow;
+				while (window->peekGui() && window->peekGui() != ViewController::get())
+					delete window->peekGui();
+			}
 			return true;
 		}
 	}
@@ -210,8 +215,7 @@ std::shared_ptr<SwitchComponent> GuiSettings::addSwitch(const std::string& title
 
 	bool value = storeInSettings ? Settings::getInstance()->getBool(settingsID) : SystemConf::getInstance()->getBool(settingsID);
 
-	auto comp = std::make_shared<SwitchComponent>(mWindow);
-	comp->setState(value);
+	auto comp = std::make_shared<SwitchComponent>(mWindow, value);
 
 	if (!description.empty())
 		addWithDescription(title, description, comp);

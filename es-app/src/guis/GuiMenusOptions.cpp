@@ -18,8 +18,7 @@ GuiMenusOptions::~GuiMenusOptions()
 void GuiMenusOptions::initializeMenu(Window* window)
 {
 	// menus on top
-	auto menusOnTop = std::make_shared<SwitchComponent>(window);
-	menusOnTop->setState(Settings::getInstance()->getBool("MenusOnDisplayTop"));
+	auto menusOnTop = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("MenusOnDisplayTop"));
 	addWithLabel(_("ON THE TOP OF THE DISPLAY"), menusOnTop);
 	addSaveFunc([this, menusOnTop, window]
 		{
@@ -38,8 +37,7 @@ void GuiMenusOptions::initializeMenu(Window* window)
 		});
 
 	// Auto adjust menu with by font size
-	auto menu_auto_width = std::make_shared<SwitchComponent>(window);
-	menu_auto_width->setState(Settings::getInstance()->getBool("AutoMenuWidth"));
+	auto menu_auto_width = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("AutoMenuWidth"));
 	addWithLabel(_("AUTO SIZE WIDTH BASED ON FONT SIZE"), menu_auto_width);
 	addSaveFunc([this, menu_auto_width, window]
 		{
@@ -57,8 +55,7 @@ void GuiMenusOptions::initializeMenu(Window* window)
 		});
 
 	// menus all height
-	auto menusAllHeight = std::make_shared<SwitchComponent>(window);
-	menusAllHeight->setState(Settings::getInstance()->getBool("MenusAllHeight"));
+	auto menusAllHeight = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("MenusAllHeight"));
 	addWithLabel(_("FILLS THE ALL HEIGHT"), menusAllHeight);
 	addSaveFunc([this, menusAllHeight, window]
 		{
@@ -76,8 +73,7 @@ void GuiMenusOptions::initializeMenu(Window* window)
 		});
 
 	// menus all width
-	auto menusAllWith = std::make_shared<SwitchComponent>(window);
-	menusAllWith->setState(Settings::getInstance()->getBool("MenusAllWidth"));
+	auto menusAllWith = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("MenusAllWidth"));
 	addWithLabel(_("FILLS THE ALL WIDTH"), menusAllWith);
 	addSaveFunc([this, menusAllWith, window]
 		{
@@ -96,8 +92,7 @@ void GuiMenusOptions::initializeMenu(Window* window)
 		});
 
 	// animated main menu
-	auto animated_main_menu = std::make_shared<SwitchComponent>(window);
-	animated_main_menu->setState(Settings::getInstance()->getBool("AnimatedMainMenu"));
+	auto animated_main_menu = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("AnimatedMainMenu"));
 	addWithLabel(_("OPEN MAIN MENU WITH ANIMATION"), animated_main_menu);
 	addSaveFunc([animated_main_menu]
 		{

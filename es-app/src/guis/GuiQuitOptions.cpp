@@ -19,8 +19,7 @@ GuiQuitOptions::~GuiQuitOptions()
 void GuiQuitOptions::initializeMenu()
 {
 	// full exit
-	auto fullExitMenu = std::make_shared<SwitchComponent>(mWindow);
-	fullExitMenu->setState(!Settings::getInstance()->getBool("ShowOnlyExit"));
+	auto fullExitMenu = std::make_shared<SwitchComponent>(mWindow, !Settings::getInstance()->getBool("ShowOnlyExit"));
 	addWithLabel(_("VIEW MENU"), fullExitMenu);
 	addSaveFunc([this, fullExitMenu]
 		{
@@ -33,8 +32,7 @@ void GuiQuitOptions::initializeMenu()
 		});
 
 	// confirm to exit
-	auto confirmToExit = std::make_shared<SwitchComponent>(mWindow);
-	confirmToExit->setState(Settings::getInstance()->getBool("ConfirmToExit"));
+	auto confirmToExit = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ConfirmToExit"));
 	addWithLabel(_("CONFIRM TO \"QUIT\""), confirmToExit);
 	addSaveFunc([this, confirmToExit]
 		{
@@ -47,8 +45,7 @@ void GuiQuitOptions::initializeMenu()
 		});
 
 	// show quit menu with select
-	auto showQuitMenu = std::make_shared<SwitchComponent>(mWindow);
-	showQuitMenu->setState(Settings::getInstance()->getBool("ShowQuitMenuWithSelect"));
+	auto showQuitMenu = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowQuitMenuWithSelect"));
 	addWithLabel(_("SHOW QUIT MENU WITH SELECT"), showQuitMenu);
 	addSaveFunc([showQuitMenu]
 		{
@@ -56,8 +53,7 @@ void GuiQuitOptions::initializeMenu()
 		});
 
 	// show fast actions
-	auto showFastActions = std::make_shared<SwitchComponent>(mWindow);
-	showFastActions->setState(Settings::getInstance()->getBool("ShowFastQuitActions"));
+	auto showFastActions = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowFastQuitActions"));
 	addWithLabel(_("SHOW FAST QUIT ACTIONS"), showFastActions);
 	addSaveFunc([this, showFastActions]
 		{
@@ -97,8 +93,7 @@ void GuiQuitOptions::initializeMenu()
 	}
 
 	// confirm to exit
-	auto show_action_menu = std::make_shared<SwitchComponent>(mWindow);
-	show_action_menu->setState(Settings::getInstance()->getBool("ShowOnlyExitActionAsMenu"));
+	auto show_action_menu = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowOnlyExitActionAsMenu"));
 	addWithLabel(_("SHOW ACTION NAME AS MENU OPTION"), show_action_menu);
 	addSaveFunc([this, show_action_menu]
 		{

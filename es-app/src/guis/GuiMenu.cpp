@@ -22,6 +22,7 @@
 #include "guis/GuiAutoSuspendOptions.h"
 #include "guis/GuiRetroachievementsOptions.h"
 #include "guis/GuiDisplayAutoDimOptions.h"
+#include "guis/GuiRemoteServicesOptions.h"
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
@@ -45,6 +46,9 @@
 #include "views/gamelist/IGameListView.h"
 #include "SystemConf.h"
 #include "utils/NetworkUtil.h"
+#include "guis/GuiLoading.h"
+#include "utils/AsyncUtil.h"
+
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU")), mVersion(window)
 {
@@ -174,8 +178,7 @@ void GuiMenu::openDisplaySettings()
 		});
 
 		// brightness
-		auto brightnessPopup = std::make_shared<SwitchComponent>(mWindow);
-		brightnessPopup->setState(Settings::getInstance()->getBool("BrightnessPopup"));
+		auto brightnessPopup = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("BrightnessPopup"));
 		s->addWithLabel(_("SHOW OVERLAY WHEN BRIGHTNESS CHANGES"), brightnessPopup);
 		s->addSaveFunc([brightnessPopup]
 			{
@@ -186,8 +189,7 @@ void GuiMenu::openDisplaySettings()
 		);
 
 	// Select Full Screen Mode
-	auto fullScreenMode = std::make_shared<SwitchComponent>(mWindow);
-	fullScreenMode->setState(Settings::getInstance()->getBool("FullScreenMode"));
+	auto fullScreenMode = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("FullScreenMode"));
 	s->addWithLabel(_("FULL SCREEN MODE"), fullScreenMode);
 	s->addSaveFunc([window, fullScreenMode]
 		{
@@ -212,9 +214,8 @@ void GuiMenu::openDisplaySettings()
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
 		{
 			// blink with low battery
-			auto blink_low_battery = std::make_shared<SwitchComponent>(mWindow);
 			bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
-			blink_low_battery->setState(blink_low_battery_value);
+			auto blink_low_battery = std::make_shared<SwitchComponent>(mWindow, blink_low_battery_value);
 			s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
 			s->addSaveFunc([blink_low_battery, blink_low_battery_value]
 				{
@@ -257,8 +258,7 @@ void GuiMenu::openControllersSettings()
 
 	Window *window = mWindow;
 
-	auto invert_AB_buttons = std::make_shared<SwitchComponent>(mWindow);
-	invert_AB_buttons->setState(Settings::getInstance()->getBool("InvertButtonsAB"));
+	auto invert_AB_buttons = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("InvertButtonsAB"));
 	s->addWithLabel(_("SWITCH A/B BUTTONS IN EMULATIONSTATION"), invert_AB_buttons);
 	s->addSaveFunc([this, s, invert_AB_buttons]
 		{
@@ -269,8 +269,7 @@ void GuiMenu::openControllersSettings()
 			}
 		});
 
-	auto invert_pu_buttons = std::make_shared<SwitchComponent>(mWindow);
-	invert_pu_buttons->setState(Settings::getInstance()->getBool("InvertButtonsPU"));
+	auto invert_pu_buttons = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("InvertButtonsPU"));
 	s->addWithLabel(_("SWITCH \"PAGE UP\" TO L1 IN EMULATIONSTATION"), invert_pu_buttons);
 	s->addSaveFunc([this, s, invert_pu_buttons]
 		{
@@ -281,8 +280,7 @@ void GuiMenu::openControllersSettings()
 			}
 		});
 
-	auto invert_pd_buttons = std::make_shared<SwitchComponent>(mWindow);
-	invert_pd_buttons->setState(Settings::getInstance()->getBool("InvertButtonsPD"));
+	auto invert_pd_buttons = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("InvertButtonsPD"));
 	s->addWithLabel(_("SWITCH \"PAGE DOWN\" TO R1 IN EMULATIONSTATION"), invert_pd_buttons);
 	s->addSaveFunc([this, s, invert_pd_buttons]
 		{
@@ -378,14 +376,12 @@ void GuiMenu::openScraperSettings()
 		s->addSaveFunc([logoSource] { Settings::getInstance()->setString("ScrapperLogoSrc", logoSource->getSelected()); });
 
 		// scrape ratings
-		auto scrape_ratings = std::make_shared<SwitchComponent>(mWindow);
-		scrape_ratings->setState(Settings::getInstance()->getBool("ScrapeRatings"));
+		auto scrape_ratings = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScrapeRatings"));
 		s->addWithLabel(_("SCRAPE RATINGS"), scrape_ratings);
 		s->addSaveFunc([scrape_ratings] { Settings::getInstance()->setBool("ScrapeRatings", scrape_ratings->getState()); });
 
 		// scrape video
-		auto scrape_video = std::make_shared<SwitchComponent>(mWindow);
-		scrape_video->setState(Settings::getInstance()->getBool("ScrapeVideos"));
+		auto scrape_video = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScrapeVideos"));
 		s->addWithLabel(_("SCRAPE VIDEOS"), scrape_video);
 		s->addSaveFunc([scrape_video] { Settings::getInstance()->setBool("ScrapeVideos", scrape_video->getState()); });
 
@@ -396,8 +392,7 @@ void GuiMenu::openScraperSettings()
 	else
 	{
 		// scrape ratings
-		auto scrape_ratings = std::make_shared<SwitchComponent>(mWindow);
-		scrape_ratings->setState(Settings::getInstance()->getBool("ScrapeRatings"));
+		auto scrape_ratings = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScrapeRatings"));
 		s->addWithLabel(_("SCRAPE RATINGS"), scrape_ratings); // batocera
 		s->addSaveFunc([scrape_ratings] { Settings::getInstance()->setBool("ScrapeRatings", scrape_ratings->getState()); });
 	}
@@ -883,7 +878,7 @@ void GuiMenu::openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shar
 }
 
 void GuiMenu::openUISettings()
-{	
+{
 	auto pthis = this;
 	Window* window = mWindow;
 
@@ -901,8 +896,7 @@ void GuiMenu::openUISettings()
 			selectedSet = themeSets.cbegin();
 
 			// Load theme randomly
-		auto themeRandom = std::make_shared<SwitchComponent>(mWindow);
-		themeRandom->setState(Settings::getInstance()->getBool("ThemeRandom"));
+		auto themeRandom = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ThemeRandom"));
 
 		auto theme_set = std::make_shared< OptionListComponent<std::string> >(mWindow, _("THEMES"), false);
 		for (auto it = themeSets.cbegin(); it != themeSets.cend(); it++)
@@ -940,8 +934,7 @@ void GuiMenu::openUISettings()
 					// if theme is manual set, disable random theme selection
 				if (Settings::getInstance()->getBool("ThemeRandom"))
 				{
-					Settings::getInstance()->setBool("ThemeRandom", false);
-					themeRandom->setState(Settings::getInstance()->getBool("ThemeRandom"));
+					Settings::getInstance()->setBool("ThemeRandom", Settings::getInstance()->getBool("ThemeRandom"));
 					window->pushGui(new GuiMsgBox(window, _("YOU SELECTED A THEME MANUALLY, THE RANDOM THEME SELECTION HAS BEEN DISABLED"), _("OK")));
 				}
 
@@ -1085,8 +1078,7 @@ void GuiMenu::openUISettings()
 	s->addEntry(_("MENUS SETTINGS"), true, [this] { openMenusSettings(); });
 
 	// Hide system view
-	auto hideSystemView = std::make_shared<SwitchComponent>(mWindow);
-	hideSystemView->setState(Settings::getInstance()->getBool("HideSystemView"));
+	auto hideSystemView = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("HideSystemView"));
 	s->addWithLabel(_("HIDE SYSTEM VIEW"), hideSystemView);
 	s->addSaveFunc([hideSystemView] 
 	{ 
@@ -1098,14 +1090,12 @@ void GuiMenu::openUISettings()
 	});
 
 	// quick system select (left/right in game list view)
-	auto quick_sys_select = std::make_shared<SwitchComponent>(mWindow);
-	quick_sys_select->setState(Settings::getInstance()->getBool("QuickSystemSelect"));
+	auto quick_sys_select = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("QuickSystemSelect"));
 	s->addWithLabel(_("QUICK SYSTEM SELECT"), quick_sys_select);
 	s->addSaveFunc([quick_sys_select] { Settings::getInstance()->setBool("QuickSystemSelect", quick_sys_select->getState()); });
 
 	// carousel transition option
-	auto move_carousel = std::make_shared<SwitchComponent>(mWindow);
-	move_carousel->setState(Settings::getInstance()->getBool("MoveCarousel"));
+	auto move_carousel = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("MoveCarousel"));
 	s->addWithLabel(_("CAROUSEL TRANSITIONS"), move_carousel);
 	s->addSaveFunc([move_carousel] {
 		if (move_carousel->getState()
@@ -1119,23 +1109,20 @@ void GuiMenu::openUISettings()
 	});
 
 	// clock
-	auto clock = std::make_shared<SwitchComponent>(mWindow);
-	clock->setState(Settings::getInstance()->getBool("DrawClock"));
+	auto clock = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("DrawClock"));
 	s->addWithLabel(_("SHOW CLOCK"), clock);
 	s->addSaveFunc(
 		[clock] { Settings::getInstance()->setBool("DrawClock", clock->getState()); });
 
 	// Clock time format (14:42 or 2:42 pm)
-	auto tmFormat = std::make_shared<SwitchComponent>(mWindow);
-	tmFormat->setState(Settings::getInstance()->getBool("ClockMode12"));
+	auto tmFormat = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ClockMode12"));
 	s->addWithLabel(_("SHOW CLOCK IN 12-HOUR FORMAT"), tmFormat);
 	s->addSaveFunc([tmFormat] {
 			Settings::getInstance()->setBool("ClockMode12", tmFormat->getState());
 	});
 
 	// show help
-	auto show_help = std::make_shared<SwitchComponent>(mWindow);
-	show_help->setState(Settings::getInstance()->getBool("ShowHelpPrompts"));
+	auto show_help = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowHelpPrompts"));
 	s->addWithLabel(_("ON-SCREEN HELP"), show_help);
 	s->addSaveFunc([s, show_help]
 	{
@@ -1158,8 +1145,7 @@ void GuiMenu::openUISettings()
 	}
 
 	// filenames
-	auto hidden_files = std::make_shared<SwitchComponent>(mWindow);
-	hidden_files->setState(Settings::getInstance()->getBool("ShowFilenames"));
+	auto hidden_files = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowFilenames"));
 	s->addWithLabel(_("SHOW FILENAMES IN LISTS"), hidden_files);
 	s->addSaveFunc([hidden_files, s] 
 	{ 
@@ -1172,8 +1158,7 @@ void GuiMenu::openUISettings()
 	});
 
 	// enable filters (ForceDisableFilters)
-	auto enable_filter = std::make_shared<SwitchComponent>(mWindow);
-	enable_filter->setState(!Settings::getInstance()->getBool("ForceDisableFilters"));
+	auto enable_filter = std::make_shared<SwitchComponent>(mWindow, !Settings::getInstance()->getBool("ForceDisableFilters"));
 	s->addWithLabel(_("ENABLE FILTERS"), enable_filter);
 	s->addSaveFunc([enable_filter, s] { 
 		bool filter_is_enabled = !Settings::getInstance()->getBool("ForceDisableFilters");
@@ -1182,8 +1167,7 @@ void GuiMenu::openUISettings()
 	});
 
 	// ignore articles when sorting
-	auto ignoreArticles = std::make_shared<SwitchComponent>(mWindow);
-	ignoreArticles->setState(Settings::getInstance()->getBool("IgnoreLeadingArticles"));
+	auto ignoreArticles = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("IgnoreLeadingArticles"));
 	s->addWithLabel(_("IGNORE LEADING ARTICLES WHEN SORTING"), ignoreArticles);
 	s->addSaveFunc([s, ignoreArticles]
 	{
@@ -1315,7 +1299,7 @@ void GuiMenu::openSystemEmulatorSettings(SystemData* system)
 
 void GuiMenu::openEmulatorSettings()
 {
-	GuiSettings* configuration = new GuiSettings(mWindow, _("EMULATOR SETTINGS").c_str());	
+	GuiSettings* configuration = new GuiSettings(mWindow, _("EMULATOR SETTINGS").c_str());
 
 	Window* window = mWindow;
 	
@@ -1366,6 +1350,11 @@ void GuiMenu::openWifiSettings(Window* win, std::string title, std::string data,
 	win->pushGui(new GuiWifi(win, title, _("\"(**)\" WIFI ALREADY CONFIGURED, NOT NEED ENTER PASSWORD TO CONNECT"), data, onsave));
 }
 
+void GuiMenu::openRemoteServicesSettings()
+{
+	mWindow->pushGui(new GuiRemoteServicesOptions(mWindow));
+}
+
 void GuiMenu::preloadNetworkSettings()
 {
 	SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
@@ -1400,8 +1389,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	s->addWithLabel(_("INTERNET STATUS"), status);
 
 	// Network Indicator
-	auto networkIndicator = std::make_shared<SwitchComponent>(mWindow);
-	networkIndicator->setState(Settings::getInstance()->getBool("ShowNetworkIndicator"));
+	auto networkIndicator = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowNetworkIndicator"));
 	s->addWithLabel(_("SHOW NETWORK INDICATOR"), networkIndicator);
 	s->addSaveFunc([networkIndicator] { Settings::getInstance()->setBool("ShowNetworkIndicator", networkIndicator->getState()); });
 
@@ -1410,9 +1398,11 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	// Hostname
 	s->addInputTextRow(_("HOSTNAME"), "system.hostname", false, false);
 
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::REMOTE_SERVICES))
+		s->addEntry(_("REMOTE SERVICES SETTINGS"), true, [this] { openRemoteServicesSettings(); });
+
 	// Wifi enable
-	auto enable_wifi = std::make_shared<SwitchComponent>(mWindow);
-	enable_wifi->setState(baseWifiEnabled);
+	auto enable_wifi = std::make_shared<SwitchComponent>(mWindow, baseWifiEnabled);
 	s->addWithLabel(_("ENABLE WIFI"), enable_wifi, selectWifiEnable);
 
 	// window, title, settingstring,
@@ -1420,8 +1410,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 										baseKEY = SystemConf::getInstance()->get("wifi.key");
 
 	// manual dns enable
-	auto manual_dns = std::make_shared<SwitchComponent>(mWindow);
-	manual_dns->setState(baseManualDns);
+	auto manual_dns = std::make_shared<SwitchComponent>(mWindow, baseManualDns);
 
 	if (baseWifiEnabled)
 	{
@@ -1437,19 +1426,6 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			s->addInputTextRow(_("DNS1"), "wifi.dns1", false, false, nullptr, &Utils::Network::validateIPv4);
 			s->addInputTextRow(_("DNS2"), "wifi.dns2", false, false, nullptr, &Utils::Network::validateIPv4);
 		}
-
-		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::REMOTE_SERVICES))
-		{
-			// remote services enable
-			auto enable_remote_services = std::make_shared<SwitchComponent>(mWindow);
-			enable_remote_services->setState(ApiSystem::getInstance()->isRemoteServicesEnabled());
-			s->addWithLabel(_("ENABLE REMOTE SERVICES"), enable_remote_services);
-
-			enable_remote_services->setOnChangedCallback([this, enable_remote_services]()
-				{
-					ApiSystem::getInstance()->setRemoteServicesEnabled(enable_remote_services->getState());
-				});
-		}
 	}
 
 	s->addSaveFunc([this, enable_wifi, manual_dns, baseManualDns, baseDnsOne, baseDnsTwo, window]
@@ -1459,33 +1435,50 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				bool manualDns = manual_dns->getState();
 				std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
 
+				if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
+					return;
+
 				if (manualDns)
 				{
+					Settings::getInstance()->setBool("wait.process.loading", true);
 					std::string dnsOne = SystemConf::getInstance()->get("wifi.dns1"),
 											dnsTwo = SystemConf::getInstance()->get("wifi.dns2");
 					if (baseDnsOne != dnsOne || baseDnsTwo != dnsTwo || !baseManualDns)
 					{
-						mWindow->pushGui(new GuiMsgBox(mWindow,
-							_("THE PROCESS MAY DURE SOME SECONDS.\nPLEASE WAIT."),
-							_("OK"), [ssid, dnsOne, dnsTwo]
-								{
-									ApiSystem::getInstance()->enableManualWifiDns(ssid, dnsOne, dnsTwo);
-								}));
+						window->pushGui(new GuiLoading<bool>(window, _("CONFIGURING MANUAL DNS"),
+							[ssid, dnsOne, dnsTwo]
+							{
+								return ApiSystem::getInstance()->enableManualWifiDns(ssid, dnsOne, dnsTwo);
+							},
+							[window](bool success)
+							{
+								Settings::getInstance()->setBool("wait.process.loading", false);
+								if (success)
+									window->pushGui(new GuiMsgBox(window, _("MANUAL DNS ENABLED")));
+								else
+									window->pushGui(new GuiMsgBox(window, _("DNS CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
+							}));
 					}
 				}
 				else if (baseManualDns)
 				{
-					mWindow->pushGui(new GuiMsgBox(mWindow,
-						_("THE PROCESS MAY DURE SOME SECONDS.\nPLEASE WAIT."),
-						_("OK"), [ssid]
-							{
-								ApiSystem::getInstance()->disableManualWifiDns(ssid);
-							}));
+					Settings::getInstance()->setBool("wait.process.loading", true);
+					window->pushGui(new GuiLoading<bool>(window, _("RESETING DNS CONFIGURATION"),
+						[this, window, ssid]
+						{
+							return ApiSystem::getInstance()->disableManualWifiDns(ssid);
+						},
+						[this, window](bool success)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+							if (!success)
+								window->pushGui(new GuiMsgBox(window, _("DNS CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
+						}));
 				}
 			}
 		});
 
-	s->addSaveFunc([baseWifiEnabled, baseSSID, baseKEY, baseHostname, enable_wifi, baseManualDns, baseDnsOne, baseDnsTwo, window]
+	s->addSaveFunc([this, baseWifiEnabled, baseSSID, baseKEY, baseHostname, enable_wifi, baseManualDns, baseDnsOne, baseDnsTwo, window]
 		{
 			bool wifienabled = enable_wifi->getState();
 
@@ -1504,20 +1497,36 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 
 				if (baseSSID != newSSID || baseKEY != newKey || !baseWifiEnabled)
 				{
-					window->pushGui(new GuiMsgBox(window,
-						_("THE PROCESS MAY DURE SOME SECONDS.\nPLEASE WAIT."),
-						_("OK"), [newSSID, newKey, window]
-							{
-								if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
-									window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI ENABLED")));
-								else
-									window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
-							}));
+					Settings::getInstance()->setBool("wait.process.loading", true);
+					window->pushGui(new GuiLoading<bool>(window, _("CONNETING TO WIFI") + " '" + newSSID + "'",
+						[newSSID, newKey]
+						{
+							return ApiSystem::getInstance()->enableWifi(newSSID, newKey);
+						},
+						[window, newSSID](bool success)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+							if (success)
+								window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI ENABLED")));
+							else
+								window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
+						}));
 				}
 			}
 			else if (baseWifiEnabled)
 			{
-				ApiSystem::getInstance()->disableWifi();
+				Settings::getInstance()->setBool("wait.process.loading", true);
+				window->pushGui(new GuiLoading<bool>(window, _("DISCONNETING TO WIFI") + " '" + baseSSID + "'",
+					[]
+					{
+						return ApiSystem::getInstance()->disableWifi();
+					},
+					[window, baseSSID](bool success)
+					{
+						Settings::getInstance()->setBool("wait.process.loading", false);
+						if (!success)
+							window->pushGui(new GuiMsgBox(window, "'" + baseSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
+					}));
 			}
 		});
 
@@ -1528,30 +1537,57 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			{
 				SystemConf::getInstance()->setBool("wifi.enabled", wifienabled);
 
+				std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
+
+				if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
+				{
+					delete s;
+					openNetworkSettings(true, false);
+					return;
+				}
+
+				Settings::getInstance()->setBool("wait.process.loading", true);
 				if (wifienabled)
 				{
-					std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
-					if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
-					{
-						delete s;
-						openNetworkSettings(true, false);
-						return;
-					}
+					window->pushGui(new GuiLoading<bool>(window, _("CONNETING TO WIFI") + " '" + ssid + "'",
+						[s, ssid]
+						{
+							return ApiSystem::getInstance()->enableWifi(ssid, SystemConf::getInstance()->get("wifi.key"));
+						},
+						[this, s, window, ssid](bool success)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+							if (success)
+								window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
+							else
+								window->pushGui(new GuiMsgBox(window, "'" + ssid + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 
-					if (ApiSystem::getInstance()->enableWifi(ssid, SystemConf::getInstance()->get("wifi.key")))
-						window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
-					else
-						window->displayNotificationMessage(_U("\uF071  ") + ssid + " - " + _("WIFI CONFIGURATION ERROR"), 10000);
+							delete s;
+							openNetworkSettings(true, false);
+
+						}));
 				}
 				else
-					ApiSystem::getInstance()->disableWifi();
+				{
+					window->pushGui(new GuiLoading<bool>(window, _("DISCONNETING TO WIFI") + " '" + ssid + "'",
+						[s, ssid]
+						{
+							return ApiSystem::getInstance()->disableWifi();
+						},
+						[this, s, window, ssid](bool success)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+							if (!success)
+								window->pushGui(new GuiMsgBox(window, "'" + ssid + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 
-				delete s;
-				openNetworkSettings(true, false);
+							delete s;
+							openNetworkSettings(true, false);
+						}));
+				}
 			}
 		});
 
-	manual_dns->setOnChangedCallback([this, s, baseManualDns, manual_dns]()
+	manual_dns->setOnChangedCallback([this, s, window, baseManualDns, manual_dns]()
 		{
 			bool manualDns = manual_dns->getState();
 
@@ -1560,13 +1596,50 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				SystemConf::getInstance()->setBool("wifi.manual_dns", manualDns);
 				std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
 
-				if (manualDns)
-					ApiSystem::getInstance()->enableManualWifiDns(ssid, SystemConf::getInstance()->get("wifi.dns1"), SystemConf::getInstance()->get("wifi.dns2"));
-				else
-					ApiSystem::getInstance()->disableManualWifiDns(ssid);
+				if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
+				{
+					delete s;
+					openNetworkSettings(false, true);
+					return;
+				}
 
-				delete s;
-				openNetworkSettings(false, true);
+				Settings::getInstance()->setBool("wait.process.loading", true);
+				if (manualDns)
+				{
+					window->pushGui(new GuiLoading<bool>(window, _("CONFIGURING MANUAL DNS"),
+						[ssid]
+						{
+							return ApiSystem::getInstance()->enableManualWifiDns(ssid, SystemConf::getInstance()->get("wifi.dns1"), SystemConf::getInstance()->get("wifi.dns2"));
+						},
+						[this, window, s](bool success)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+							if (success)
+								window->displayNotificationMessage(_U("\uF25B  ") + _("DNS CONFIGURATION SUCCESFULLY"), 10000);
+							else
+								window->displayNotificationMessage(_U("\uF071  ") + _("DNS CONFIGURATION ERROR"), 10000);
+
+							delete s;
+							openNetworkSettings(false, true);
+						}));
+				}
+				else
+				{
+					window->pushGui(new GuiLoading<bool>(window, _("RESETING DNS CONFIGURATION"),
+						[ssid]
+						{
+							return ApiSystem::getInstance()->disableManualWifiDns(ssid);
+						},
+						[this, s, window](bool success)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+							if (!success)
+								window->displayNotificationMessage(_U("\uF071  ") + _("DNS CONFIGURATION ERROR"), 10000);
+
+							delete s;
+							openNetworkSettings(false, true);
+						}));
+				}
 			}
 		});
 
@@ -1613,8 +1686,7 @@ void GuiMenu::openUpdateSettings()
 	});
 
 	// Enable updates
-	auto updates_enabled = std::make_shared<SwitchComponent>(mWindow);
-	updates_enabled->setState(Settings::getInstance()->getBool("updates.enabled"));
+	auto updates_enabled = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("updates.enabled"));
 	s->addWithLabel(_("AUTO UPDATES"), updates_enabled);
 	s->addSaveFunc([updates_enabled]
 	{
@@ -1802,18 +1874,15 @@ void GuiMenu::openAdvancedSettings()
 	s->addGroup(_("GAME LIST"));
 
 	// gamelists
-	auto save_gamelists = std::make_shared<SwitchComponent>(mWindow);
-	save_gamelists->setState(Settings::getInstance()->getBool("SaveGamelistsOnExit"));
+	auto save_gamelists = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("SaveGamelistsOnExit"));
 	s->addWithLabel(_("SAVE METADATA ON EXIT"), save_gamelists);
 	s->addSaveFunc([save_gamelists] { Settings::getInstance()->setBool("SaveGamelistsOnExit", save_gamelists->getState()); });
 
-	auto parse_gamelists = std::make_shared<SwitchComponent>(mWindow);
-	parse_gamelists->setState(Settings::getInstance()->getBool("ParseGamelistOnly"));
+	auto parse_gamelists = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ParseGamelistOnly"));
 	s->addWithLabel(_("PARSE GAMESLISTS ONLY"), parse_gamelists);
 	s->addSaveFunc([parse_gamelists] { Settings::getInstance()->setBool("ParseGamelistOnly", parse_gamelists->getState()); });
 
-	auto local_art = std::make_shared<SwitchComponent>(mWindow);
-	local_art->setState(Settings::getInstance()->getBool("LocalArt"));
+	auto local_art = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("LocalArt"));
 	s->addWithLabel(_("SEARCH FOR LOCAL ART"), local_art);
 	s->addSaveFunc([local_art] { Settings::getInstance()->setBool("LocalArt", local_art->getState()); });
 
@@ -1827,14 +1896,12 @@ void GuiMenu::openAdvancedSettings()
 	s->addSaveFunc([max_vram] { Settings::getInstance()->setInt("MaxVRAM", (int)Math::round(max_vram->getValue())); });
 
 	// preload UI
-	auto preloadUI = std::make_shared<SwitchComponent>(mWindow);
-	preloadUI->setState(Settings::getInstance()->getBool("PreloadUI"));
+	auto preloadUI = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("PreloadUI"));
 	s->addWithLabel(_("PRELOAD UI"), preloadUI);
 	s->addSaveFunc([preloadUI] { Settings::getInstance()->setBool("PreloadUI", preloadUI->getState()); });
 	
 	// optimize VRAM
-	auto optimizeVram = std::make_shared<SwitchComponent>(mWindow);
-	optimizeVram->setState(Settings::getInstance()->getBool("OptimizeVRAM"));
+	auto optimizeVram = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("OptimizeVRAM"));
 	s->addWithLabel(_("OPTIMIZE IMAGES VRAM USE"), optimizeVram);
 	s->addSaveFunc([optimizeVram]
 	{
@@ -1843,23 +1910,20 @@ void GuiMenu::openAdvancedSettings()
 	});
 
 	// preload Medias
-	auto preloadMedias = std::make_shared<SwitchComponent>(mWindow);
-	preloadMedias->setState(Settings::getInstance()->getBool("PreloadMedias"));
+	auto preloadMedias = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("PreloadMedias"));
 	s->addWithDescription(_("PRELOAD METADATA MEDIA ON BOOT"), _("Reduces lag when scrolling through a fully scraped gamelist, increases boot time."), preloadMedias);
 	s->addSaveFunc([preloadMedias] { Settings::getInstance()->setBool("PreloadMedias", preloadMedias->getState()); });
 
 	// threaded loading
-	auto threadedLoading = std::make_shared<SwitchComponent>(mWindow);
-	threadedLoading->setState(Settings::getInstance()->getBool("ThreadedLoading"));
+	auto threadedLoading = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ThreadedLoading"));
 	s->addWithLabel(_("THREADED LOADING"), threadedLoading);
 	s->addSaveFunc([threadedLoading] { Settings::getInstance()->setBool("ThreadedLoading", threadedLoading->getState()); });
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OPTMIZE_SYSTEM))
 	{
 		// optimize system
-		auto optimize_system = std::make_shared<SwitchComponent>(mWindow);
 		bool optimize_system_old_value = Settings::getInstance()->getBool("OptimizeSystem");
-		optimize_system->setState(optimize_system_old_value);
+		auto optimize_system = std::make_shared<SwitchComponent>(mWindow, optimize_system_old_value);
 		s->addWithLabel(_("OPTIMIZE SYSTEM"), optimize_system);
 		s->addSaveFunc([window, optimize_system, optimize_system_old_value]
 			{
@@ -1887,9 +1951,8 @@ void GuiMenu::openAdvancedSettings()
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OVERCLOCK))
 	{
 		// overclock
-		auto overclock_system = std::make_shared<SwitchComponent>(mWindow);
 		bool overclock_system_old_value = ApiSystem::getInstance()->isOverclockSystem();
-		overclock_system->setState(overclock_system_old_value);
+		auto overclock_system = std::make_shared<SwitchComponent>(mWindow, overclock_system_old_value);
 		s->addWithLabel(_("OVERCLOCK SYSTEM"), overclock_system);
 		s->addSaveFunc([window, overclock_system, overclock_system_old_value]
 			{
@@ -1916,8 +1979,7 @@ void GuiMenu::openAdvancedSettings()
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC))
 	{
 		// preloa VLC - workaround for the freeze of the first video play
-		auto preloa_VLC = std::make_shared<SwitchComponent>(mWindow);
-		preloa_VLC->setState(Settings::getInstance()->getBool("PreloadVLC"));
+		auto preloa_VLC = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("PreloadVLC"));
 		s->addWithLabel(_("PRELOAD VLC"), preloa_VLC);
 		s->addSaveFunc([preloa_VLC]
 			{
@@ -1929,17 +1991,15 @@ void GuiMenu::openAdvancedSettings()
 	s->addGroup(_("USER INTERFACE"));
 
 	// framerate
-	auto framerate = std::make_shared<SwitchComponent>(mWindow);
-	framerate->setState(Settings::getInstance()->getBool("DrawFramerate"));
+	auto framerate = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("DrawFramerate"));
 	s->addWithLabel(_("SHOW FRAMERATE"), framerate);
 	s->addSaveFunc([framerate] { Settings::getInstance()->setBool("DrawFramerate", framerate->getState()); });
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SHOW_FPS))
 	{
 	// retroarch framerate
-		auto retroarch_fps = std::make_shared<SwitchComponent>(mWindow);
 		bool retroarch_fps_value = ApiSystem::getInstance()->isShowRetroarchFps();
-		retroarch_fps->setState(retroarch_fps_value);
+		auto retroarch_fps = std::make_shared<SwitchComponent>(mWindow, retroarch_fps_value);
 		s->addWithLabel(_("SHOW RETROARCH FPS"), retroarch_fps);
 		s->addSaveFunc([retroarch_fps, retroarch_fps_value]
 			{
@@ -1952,8 +2012,7 @@ void GuiMenu::openAdvancedSettings()
 	}
 
 	// show detailed system information
-	auto detailedSystemInfo = std::make_shared<SwitchComponent>(mWindow);
-	detailedSystemInfo->setState(Settings::getInstance()->getBool("ShowDetailedSystemInfo"));
+	auto detailedSystemInfo = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowDetailedSystemInfo"));
 	s->addWithLabel(_("SHOW DETAILED SYSTEM INFO"), detailedSystemInfo);
 	s->addSaveFunc([s, detailedSystemInfo]{
 		bool old_value = Settings::getInstance()->getBool("ShowDetailedSystemInfo");
@@ -1965,16 +2024,14 @@ void GuiMenu::openAdvancedSettings()
 	});
 
 	// show file browser
-	auto show_file_browser = std::make_shared<SwitchComponent>(mWindow);
-	show_file_browser->setState(Settings::getInstance()->getBool("ShowFileBrowser"));
+	auto show_file_browser = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowFileBrowser"));
 	s->addWithLabel(_("SHOW FILE BROWSER"), show_file_browser);
 	s->addSaveFunc([show_file_browser] { Settings::getInstance()->setBool("ShowFileBrowser", show_file_browser->getState()); });
 
 
 	// CONTROLLER ACTIVITY
 /*
-	auto activity = std::make_shared<SwitchComponent>(mWindow);
-	activity->setState(Settings::getInstance()->getBool("ShowControllerActivity"));
+	auto activity = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowControllerActivity"));
 	s->addWithLabel(_("SHOW CONTROLLER ACTIVITY"), activity);
 	s->addSaveFunc([activity]
 	{
@@ -1986,29 +2043,16 @@ void GuiMenu::openAdvancedSettings()
 	});
 */
 	// Battery Indicator
-	auto battery = std::make_shared<SwitchComponent>(mWindow);
-	battery->setState(Settings::getInstance()->getBool("ShowBatteryIndicator"));
+	auto battery = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowBatteryIndicator"));
 	s->addWithLabel(_("SHOW BATTERY LEVEL"), battery);
 	s->addSaveFunc([s, battery]
 	{
 		Settings::getInstance()->setBool("ShowBatteryIndicator", battery->getState());
 		//s->setVariable("reloadAll", true);
 	});
-/*
-	// Network Indicator
-	auto networkIndicator = std::make_shared<SwitchComponent>(mWindow);
-	networkIndicator->setState(Settings::getInstance()->getBool("ShowNetworkIndicator"));
-	s->addWithLabel(_("SHOW NETWORK INDICATOR"), networkIndicator);
-	s->addSaveFunc([s, networkIndicator]
-	{
-		Settings::getInstance()->setBool("ShowNetworkIndicator", networkIndicator->getState());
-		//s->setVariable("reloadAll", true);
-	});
-*/
 
 	// Battery Indicator
-	auto gui_metadata_select = std::make_shared<SwitchComponent>(mWindow);
-	gui_metadata_select->setState(Settings::getInstance()->getBool("GuiEditMetadataCloseAllWindows"));
+	auto gui_metadata_select = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("GuiEditMetadataCloseAllWindows"));
 	s->addWithLabel(_("GAME METADATA EDIT - \"SELECT\" CLOSE MENU"), gui_metadata_select);
 	s->addSaveFunc([s, gui_metadata_select]
 	{
@@ -2059,8 +2103,7 @@ void GuiMenu::openAdvancedSettings()
 		}
 	});
 
-	auto logWithMilliseconds = std::make_shared<SwitchComponent>(mWindow);
-	logWithMilliseconds->setState(Settings::getInstance()->getBool("LogWithMilliseconds"));
+	auto logWithMilliseconds = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("LogWithMilliseconds"));
 	s->addWithLabel(_("LOG WITH MILLISECONDS"), logWithMilliseconds);
 	s->addSaveFunc([logWithMilliseconds] {
 		bool old_value = Settings::getInstance()->getBool("LogWithMilliseconds");
@@ -2074,9 +2117,8 @@ void GuiMenu::openAdvancedSettings()
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OPTMIZE_SYSTEM))
 	{
-		auto scripts_log_activated = std::make_shared<SwitchComponent>(mWindow);
 		bool scripts_log_activated_value = ApiSystem::getInstance()->isEsScriptsLoggingActivated();
-		scripts_log_activated->setState(scripts_log_activated_value);
+		auto scripts_log_activated = std::make_shared<SwitchComponent>(mWindow, scripts_log_activated_value);
 		s->addWithLabel(_("ACTIVATE ES SCRIPTS LOGGING"), scripts_log_activated);
 		s->addSaveFunc([scripts_log_activated_value, scripts_log_activated] {
 			if (scripts_log_activated_value != scripts_log_activated->getState())
@@ -2493,13 +2535,15 @@ void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<voi
 
 bool GuiMenu::input(InputConfig* config, Input input)
 {
-	if(GuiComponent::input(config, input))
+	if (GuiComponent::input(config, input))
 		return true;
 
-	if((config->isMappedTo("b", input) || config->isMappedTo("start", input)) && input.value != 0)
+	if ((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("start", input)) && input.value != 0)
 	{
-		delete this;
-		return true;
+		if (!Settings::getInstance()->getBool("wait.process.loading"))
+			delete this;
+
+			return true;
 	}
 
 	return false;

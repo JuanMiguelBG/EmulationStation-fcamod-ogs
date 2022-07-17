@@ -289,7 +289,7 @@ ACTION=$1
 VALUE=$2
 shift
 
-#print_log $LOG_FILE "INFO" "Executing operation: '$ACTION', value: $VALUE"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION', value: $VALUE #####"
 
 case "${ACTION}" in
     "active_optimize_system")
@@ -307,8 +307,9 @@ case "${ACTION}" in
     *)
         do_help
         >&2 echo "error: invalid command ${ACTION}"
-        #print_log $LOG_FILE "ERROR" "Invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
         exit 1
 esac
 
+#print_log $LOG_FILE "INFO" "##### Exit executing operation: $ACTION #####"
 exit 0

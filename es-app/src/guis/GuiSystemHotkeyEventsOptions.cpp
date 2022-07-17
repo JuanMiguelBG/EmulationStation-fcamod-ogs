@@ -20,9 +20,8 @@ GuiSystemHotkeyEventsOptions::~GuiSystemHotkeyEventsOptions()
 void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 {
 	// brightness events
-	auto brightness = std::make_shared<SwitchComponent>(window);
 	bool brightness_value = ApiSystem::getInstance()->isSystemHotkeyBrightnessEvent();
-	brightness->setState(brightness_value);
+	auto brightness = std::make_shared<SwitchComponent>(window, brightness_value);
 	addWithLabel(_("BRIGHTNESS"), brightness);
 
 	// Brightness step
@@ -32,9 +31,8 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	addWithLabel(_("BRIGHTNESS STEP"), brightness_step);
 
 	// volume events
-	auto volume = std::make_shared<SwitchComponent>(window);
 	bool volume_value = ApiSystem::getInstance()->isSystemHotkeyVolumeEvent();
-	volume->setState(volume_value);
+	auto volume = std::make_shared<SwitchComponent>(window, volume_value);
 	addWithLabel(_("VOLUME"), volume);
 
 	// Brightness step
@@ -44,21 +42,18 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	addWithLabel(_("VOLUME STEP"), volume_step);
 
 	// wifi events
-	auto wifi = std::make_shared<SwitchComponent>(window);
 	bool wifi_value = ApiSystem::getInstance()->isSystemHotkeyWifiEvent();
-	wifi->setState(wifi_value);
+	auto wifi = std::make_shared<SwitchComponent>(window, wifi_value);
 	addWithLabel(_("WIFI"), wifi);
 
 	// performance events
-	auto performance = std::make_shared<SwitchComponent>(window);
 	bool performance_value = ApiSystem::getInstance()->isSystemHotkeyPerformanceEvent();
-	performance->setState(performance_value);
+	auto performance = std::make_shared<SwitchComponent>(window, performance_value);
 	addWithLabel(_("PERFORMANCE"), performance);
 
 	// suspend events
-	auto suspend = std::make_shared<SwitchComponent>(window);
 	bool suspend_value = ApiSystem::getInstance()->isSystemHotkeySuspendEvent();
-	suspend->setState(suspend_value);
+	auto suspend = std::make_shared<SwitchComponent>(window, suspend_value);
 	addWithLabel(_("SUSPEND"), suspend);
 
 	addSaveFunc([brightness, brightness_value, brightness_step, brightness_step_value, volume, volume_value, volume_step, volume_step_value, wifi, wifi_value, performance, performance_value, suspend, suspend_value]

@@ -27,10 +27,6 @@ struct ThemeDownloadInfo
 
 class ApiSystem 
 {
-private:
-	std::string stateToString(bool state);
-	bool stringToState(const std::string state);
-
 protected:
 	ApiSystem();
 
@@ -239,6 +235,13 @@ public:
 	std::vector<std::string> getOutputDevices();
 	std::string getOutputDevice();
 	bool setOutputDevice(const std::string device);
+
+	RemoteServiceInformation getNtpStatus();
+	RemoteServiceInformation getSambaStatus();
+	RemoteServiceInformation getNetBiosStatus();
+	RemoteServiceInformation getSshStatus();
+	bool configRemoteService(RemoteServiceInformation service);
+
 };
 
 #endif

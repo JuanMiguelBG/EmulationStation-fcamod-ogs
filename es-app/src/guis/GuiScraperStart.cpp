@@ -69,7 +69,6 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 	mMenu.addWithLabel(_("SYSTEMS"), mSystems);
 
 	mApproveResults = std::make_shared<SwitchComponent>(mWindow);
-	mApproveResults->setState(false);
 	mMenu.addWithLabel(_("USER DECIDES ON CONFLICTS"), mApproveResults);
 
 	mMenu.addButton(_("START"), _("START"), std::bind(&GuiScraperStart::pressedStart, this));

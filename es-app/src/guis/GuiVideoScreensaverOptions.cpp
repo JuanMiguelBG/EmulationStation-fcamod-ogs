@@ -29,19 +29,16 @@ GuiVideoScreensaverOptions::GuiVideoScreensaverOptions(Window* window, const cha
 	addWithLabel(_("SHOW GAME INFO ON SCREENSAVER"), ss_info);
 	addSaveFunc([ss_info, this] { Settings::getInstance()->setString("ScreenSaverGameInfo", ss_info->getSelected()); });
 
-	auto marquee_screensaver = std::make_shared<SwitchComponent>(mWindow);
-	marquee_screensaver->setState(Settings::getInstance()->getBool("ScreenSaverMarquee"));
+	auto marquee_screensaver = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScreenSaverMarquee"));
 	addWithLabel(_("USE MARQUEE AS GAME INFO"), marquee_screensaver);
 	addSaveFunc([marquee_screensaver] { Settings::getInstance()->setBool("ScreenSaverMarquee", marquee_screensaver->getState()); });
 /*
-	auto decoration_screensaver = std::make_shared<SwitchComponent>(mWindow);
-	decoration_screensaver->setState(Settings::getInstance()->getBool("ScreenSaverDecoration"));
+	auto decoration_screensaver = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ScreenSaverDecoration"));
 	addWithLabel(_("USE RANDOM DECORATION"), decoration_screensaver);
 	addSaveFunc([decoration_screensaver] { Settings::getInstance()->setBool("ScreenSaverDecoration", decoration_screensaver->getState()); });
 */
 
-	auto stretch_screensaver = std::make_shared<SwitchComponent>(mWindow);
-	stretch_screensaver->setState(Settings::getInstance()->getBool("StretchVideoOnScreenSaver"));
+	auto stretch_screensaver = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("StretchVideoOnScreenSaver"));
 	addWithLabel(_("STRETCH VIDEO ON SCREENSAVER"), stretch_screensaver);
 	addSaveFunc([stretch_screensaver] { Settings::getInstance()->setBool("StretchVideoOnScreenSaver", stretch_screensaver->getState()); });
 }

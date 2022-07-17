@@ -34,9 +34,8 @@ void GuiPowerkeyOptions::initializeMenu()
 	}
 
 	// push powerkey double to shutdown
-	auto double_push = std::make_shared<SwitchComponent>(mWindow);
 	bool double_push_value = ApiSystem::getInstance()->isPowerkeyState();
-	double_push->setState( double_push_value );
+	auto double_push = std::make_shared<SwitchComponent>(mWindow, double_push_value );
 	addWithLabel(_("PUSH TWO TIMES TO EXECUTE ACTION"), double_push);
 
 	// max interval time

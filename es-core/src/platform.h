@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 class Window;
 
@@ -21,6 +22,7 @@ enum QuitMode
 int runSystemCommand(const std::string& cmd_utf8, const std::string& name, Window* window); // run a utf-8 encoded in the shell (requires wstring conversion on Windows)
 bool executeSystemScript(const std::string command);
 std::vector<std::string> executeSystemEnumerationScript(const std::string command);
+std::map<std::string,std::string> executeSystemMapScript(const std::string command, const char separator = ';');
 int quitES(QuitMode mode = QuitMode::QUIT);
 bool isFastShutdown();
 void processQuitMode();
@@ -272,10 +274,32 @@ std::string queryTimezones();
 std::string queryCurrentTimezone();
 bool setCurrentTimezone(std::string timezone);
 
+struct RemoteServiceInformation
+{
+	RemoteServiceInformation()
+	{
+		name = "N/A";
+		platformName = "N/A";
+		isActive = false;
+		isStartOnBoot = false;
+	}
+
+	std::string name;
+	std::string platformName;
+	bool isActive;
+	bool isStartOnBoot;
+};
+
+RemoteServiceInformation queryRemoteServiceStatus(const std::string &name);
+bool setRemoteServiceStatus(RemoteServiceInformation service);
+
 #ifdef _DEBUG
 uint32_t getVolume();
 #endif
 
 std::string getShOutput(const std::string& mStr);
+
+std::string stateToString(bool state, const std::string &active_value = "enabled", const std::string &not_active_value = "disabled");
+bool stringToState(const std::string state, const std::string &active_value = "enabled");
 
 #endif // ES_CORE_PLATFORM_H

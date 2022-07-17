@@ -8,7 +8,7 @@
 #include "EsLocale.h"
 #include "guis/GuiTextEditPopup.h"
 #include "guis/GuiTextEditPopupKeyboard.h"
-#include "GuiLoading.h"
+#include "guis/GuiLoading.h"
 #include "Settings.h"
 
 GuiWifi::GuiWifi(Window* window, const std::string title, const std::string subtitle, std::string data, const std::function<bool(std::string)>& onsave)

@@ -23,15 +23,13 @@ void GuiDisplayAutoDimOptions::initializeMenu()
 	Window *window = mWindow;
 
 	// enable display auto dim stay awake while charging
-	auto stay_awake_charging = std::make_shared<SwitchComponent>(mWindow);
 	bool stay_awake_charging_value = ApiSystem::getInstance()->isDisplayAutoDimStayAwakeCharging();
-	stay_awake_charging->setState( stay_awake_charging_value );
+	auto stay_awake_charging = std::make_shared<SwitchComponent>(mWindow, stay_awake_charging_value);
 	addWithLabel(_("STAY AWAKE WHILE CHARGING"), stay_awake_charging);
 
 	// enable display auto dim by time
-	auto auto_dim_time = std::make_shared<SwitchComponent>(mWindow);
 	bool auto_dim_time_value = ApiSystem::getInstance()->isDisplayAutoDimByTime();
-	auto_dim_time->setState( auto_dim_time_value );
+	auto auto_dim_time = std::make_shared<SwitchComponent>(mWindow, auto_dim_time_value);
 	addWithLabel(_("ENABLE"), auto_dim_time);
 
 	// auto dim timeout

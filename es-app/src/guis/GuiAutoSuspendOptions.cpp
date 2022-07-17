@@ -23,18 +23,16 @@ void GuiAutoSuspendOptions::initializeMenu()
 	Window *window = mWindow;
 
 	// enable device auto suspend stay awake while charging
-	auto stay_awake_charging = std::make_shared<SwitchComponent>(mWindow);
 	bool stay_awake_charging_value = ApiSystem::getInstance()->isDeviceAutoSuspendStayAwakeCharging();
-	stay_awake_charging->setState( stay_awake_charging_value );
+	auto stay_awake_charging = std::make_shared<SwitchComponent>(mWindow, stay_awake_charging_value);
 	addWithLabel(_("STAY AWAKE WHILE CHARGING"), stay_awake_charging);
 
 
 	addGroup(_("BY TIME"));
 
 	// enable device auto suspend by time
-	auto auto_suspend_time = std::make_shared<SwitchComponent>(mWindow);
 	bool auto_suspend_time_value = ApiSystem::getInstance()->isDeviceAutoSuspendByTime();
-	auto_suspend_time->setState( auto_suspend_time_value );
+	auto auto_suspend_time = std::make_shared<SwitchComponent>(mWindow, auto_suspend_time_value);
 	addWithLabel(_("ENABLE"), auto_suspend_time);
 
 	// auto suspend timeout
@@ -47,9 +45,8 @@ void GuiAutoSuspendOptions::initializeMenu()
 	addGroup(_("BY BATTERY LEVEL"));
 
 	// enable device auto suspend by battery level
-	auto auto_suspend_battery = std::make_shared<SwitchComponent>(mWindow);
 	bool auto_suspend_battery_value = ApiSystem::getInstance()->isDeviceAutoSuspendByBatteryLevel();
-	auto_suspend_battery->setState( auto_suspend_battery_value );
+	auto auto_suspend_battery = std::make_shared<SwitchComponent>(mWindow, auto_suspend_battery_value);
 	addWithLabel(_("ENABLE"), auto_suspend_battery);
 
 	// auto suspend battery level
