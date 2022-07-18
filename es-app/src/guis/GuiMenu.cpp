@@ -2099,6 +2099,8 @@ void GuiMenu::openAdvancedSettings()
 		{
 			Log::setupReportingLevel();
 			Log::init();
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::LOG_SCRIPTS) && ApiSystem::getInstance()->isEsScriptsLoggingActivated())
+				ApiSystem::getInstance()->setEsScriptsLoggingLevel(logLevel->getSelected());
 		}
 	});
 
@@ -2114,14 +2116,14 @@ void GuiMenu::openAdvancedSettings()
 		}
 	});
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OPTMIZE_SYSTEM))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::LOG_SCRIPTS))
 	{
 		bool scripts_log_activated_value = ApiSystem::getInstance()->isEsScriptsLoggingActivated();
 		auto scripts_log_activated = std::make_shared<SwitchComponent>(mWindow, scripts_log_activated_value);
 		s->addWithLabel(_("ACTIVATE ES SCRIPTS LOGGING"), scripts_log_activated);
 		s->addSaveFunc([scripts_log_activated_value, scripts_log_activated] {
 			if (scripts_log_activated_value != scripts_log_activated->getState())
-				ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState());
+				ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState(), Settings::getInstance()->getString("LogLevel"));
 		});
 	}
 

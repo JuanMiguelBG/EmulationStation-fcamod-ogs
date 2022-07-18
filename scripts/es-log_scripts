@@ -1,0 +1,163 @@
+#!/bin/sh
+
+aceptable_level()
+{
+  local log_level=$ES_DEFAULT_LOGGING_LEVEL
+
+  case "$1" in
+     "ERROR")
+         log_level=$LOG_LEVEL_ERROR
+       ;;
+     "WARNING")
+         log_level=$LOG_LEVEL_WARNING
+        ;;
+      "INFO")
+          log_level=$LOG_LEVEL_INFO
+        ;;
+      "DEBUG")
+          log_level=$LOG_LEVEL_DEBUG
+        ;;
+      *)
+          log_level=$ES_DEFAULT_LOGGING_LEVEL
+  esac
+
+  if [ $log_level -gt $ES_LOGGING_LEVEL ]; then
+    # not aceptable
+    return 0
+  fi
+  # aceptable
+  return 1
+}
+
+print_log()
+{
+  local log_file="$1"
+  local log_level="$2"
+  local log_mesage="$3"
+  local mdate=""
+
+  if [ $ES_LOGGING_ENABLED -eq 1 ]; then
+    `aceptable_level $log_level`
+    if [ $? -eq 1 ]; then
+      mdate=$(date '+%d/%m/%Y %H:%M:%S:%N')
+      echo "$mdate $log_level $log_mesage" >> $log_file
+    fi
+  fi
+}
+
+get_compatible_es_log_level()
+{
+  local log_level=$1
+
+  if [ -z "$log_level" ]; then
+    log_level=$ES_DEFAULT_LOGGING_LEVEL
+  fi
+
+  case "$1" in
+     "error")
+         log_level=$LOG_LEVEL_ERROR
+       ;;
+     "warning")
+         log_level=$LOG_LEVEL_WARNING
+        ;;
+      "default")
+          log_level=$LOG_LEVEL_INFO
+        ;;
+      "debug")
+          log_level=$LOG_LEVEL_DEBUG
+        ;;
+      "disabled")
+          log_level=$LOG_LEVEL_DISABLED
+        ;;
+      *)
+          log_level=$ES_DEFAULT_LOGGING_LEVEL
+        ;;
+  esac
+
+  echo "$log_level"
+}
+
+active_es_scripts_log_feature()
+{
+  local log_level=$1
+
+  log_level="$(get_compatible_es_log_level $log_level)"
+
+  sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$log_level"'/' $ES_SCRIPTS_PATH/es-log_scripts
+  grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/#print_log/print_log/g'
+}
+
+inactive_es_scripts_log_feature()
+{
+  sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$LOG_LEVEL_DISABLED"'/' $ES_SCRIPTS_PATH/es-log_scripts
+  grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/print_log/#print_log/g'
+}
+
+remove_es_scripts_log()
+{
+  sudo rm -f "$ES_SCRIPT_LOGS_DIR"/es-*.log*
+}
+
+do_active_es_scripts_log() {
+	local log_status="$1"
+	local log_level="$2"
+
+	if [ "$log_status" = "true" ]; then
+		active_es_scripts_log_feature "$log_level"
+	else
+		inactive_es_scripts_log_feature
+	fi
+}
+
+set_es_scripts_log_level()
+{
+  local log_level=$1
+
+  log_level="$(get_compatible_es_log_level $log_level)"
+  sudo sed -i '/ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$log_level"'/' $ES_SCRIPTS_PATH/es-log_scripts
+}
+
+is_actived_scripts_log() {
+  if [ $ES_LOGGING_ENABLED -eq 0 ]; then
+    echo "false"
+  else
+    echo "true"
+  fi
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-commons
+
+
+#export ES_SCRIPT_LOGS_DIR="$ES_HOME_PATH"
+export ES_SCRIPT_LOGS_DIR="$ROMS_DIR/logs"
+if [ ! -d "$ES_SCRIPT_LOGS_DIR" ]; then
+  sudo mkdir "$ES_SCRIPT_LOGS_DIR"
+fi
+
+# LOG Levels:
+LOG_LEVEL_ERROR=0
+LOG_LEVEL_WARNING=1
+LOG_LEVEL_INFO=2
+LOG_LEVEL_DEBUG=3
+LOG_LEVEL_DISABLED=4
+
+ES_LOGGING_ENABLED=0
+ES_DEFAULT_LOGGING_LEVEL=$LOG_LEVEL_INFO
+ES_LOGGING_LEVEL=4
+
+
+case "${1}" in
+    "active_es_scripts_log")
+        do_active_es_scripts_log "$2" "$3"
+        remove_es_scripts_log
+    ;;
+    "set_es_scripts_log_level")
+        set_es_scripts_log_level "$2"
+    ;;
+    "is_actived_scripts_log")
+        is_actived_scripts_log
+    ;;
+esac

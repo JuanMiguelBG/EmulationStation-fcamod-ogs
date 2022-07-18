@@ -98,16 +98,19 @@ test_network_manager() {
 
 do_list() {
     #print_log $LOG_FILE "INFO" "Executing 'do_list()'"
-    #sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u
 
     local networks=$(sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u)
     local result=""
     while IFS= read -r line; do
-      net_regexp=`echo "$line" | tr -s " "`
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - line: '$line'"
+      local net_regexp=`echo "$line" | tr -s " "`
       net_regexp=${net_regexp=// /\s}
-      exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - net_regexp: '$net_regexp'"
+      local exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - exist: '$exist'"
       # skip empty values
-      line_aux=$(trim $line)
+      local line_aux=$(trim "$line")
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - line_aux: '$line_aux'"
       if [ ! -z "$line_aux" ]; then
         if [ ! -z "$exist" ]; then
           result="$result\n$line_aux$EXIST_CONNECTION_FLAG"
@@ -121,6 +124,8 @@ do_list() {
     else
       echo -e "${result#\\n}"
     fi
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - result: '$result'"
 }
 
 do_scanlist() {
@@ -199,7 +204,7 @@ do_start() {
 
     enable_network_manager
 
-    sudo nmcli device wifi rescan || return 1
+    sudo nmcli device wifi rescan 2> /dev/null|| return 1
 }
 
 do_test_internet() {
@@ -329,7 +334,7 @@ get_network_exist_flag()
 # ******************************************************************************************
 
 # Configure ES commons variables
-. es-commons
+. es-log_scripts
 
 EXIST_CONNECTION_FLAG=" (**)"
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-wifi.log"

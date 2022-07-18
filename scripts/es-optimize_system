@@ -2,8 +2,6 @@
 
 do_help() {
 	echo "$0 usage : active_optimize_system [true/false]" >&2
-	echo "$0 usage : active_es_scripts_log [true/false]" >&2
-	echo "$0 usage : is_actived_scripts_log" >&2
 	exit 1
 }
 
@@ -214,17 +212,6 @@ remove_journal () {
 
 #******************* global funtions ********************
 
-is_actived_scripts_log() {
-  cat "$ES_SCRIPTS_PATH/es-commons" | grep -iw "ES_LOGGING_ENABLED=1" > /dev/null
-  valPresent=$?
-
-  if [ "$valPresent" != "0" ]; then
-    echo "false"
-  else
-    echo "true"
-  fi
-}
-
 optimize_system () {
 	rsyslog_config
 	sysctl_config
@@ -256,21 +243,10 @@ do_active_optimize_system() {
 	fi
 }
 
-do_active_es_scripts_log() {
-	local pvalue="$1"
-
-	if [ "$pvalue" = "true" ]; then
-		active_es_scripts_log_feature
-	else
-		inactive_es_scripts_log_feature
-	fi
-}
-
-
 # ******************************************************************************************
 
 # Configure ES commons variables
-. es-commons
+. es-log_scripts
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-optimize_system.log"
 
@@ -285,24 +261,19 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
+
 ACTION=$1
 VALUE=$2
+VALUE2=$3
 shift
 
-#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION', value: $VALUE #####"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION', value: $VALUE, value2: $VALUE2 #####"
 
 case "${ACTION}" in
     "active_optimize_system")
-        do_active_optimize_system $VALUE
+        do_active_optimize_system "$VALUE"
         remove_log
         remove_journal
-    ;;
-    "active_es_scripts_log")
-        do_active_es_scripts_log $VALUE
-        remove_es_scripts_log
-    ;;
-    "is_actived_scripts_log")
-        is_actived_scripts_log
     ;;
     *)
         do_help

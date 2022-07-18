@@ -53,7 +53,8 @@ public:
 		OVERCLOCK = 11,
 		PRELOAD_VLC = 12,
 		SOUND = 13,
-		REMOTE_SERVICES = 14
+		REMOTE_SERVICES = 14,
+		LOG_SCRIPTS = 15
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -181,8 +182,6 @@ public:
 	std::string getDnsOne();
 	std::string getDnsTwo();
 	std::string getWifiNetworkExistFlag();
-	bool isRemoteServicesEnabled();
-	bool setRemoteServicesEnabled(bool status);
 
 	bool setLanguage(std::string language);
 
@@ -204,7 +203,8 @@ public:
 
 	bool setOptimizeSystem(bool state);
 	bool isEsScriptsLoggingActivated();
-	bool setEsScriptsLoggingActivated(bool state);
+	bool setEsScriptsLoggingActivated(bool state, const std::string level = "default");
+	bool setEsScriptsLoggingLevel(const std::string level = "default");
 
 	bool setShowRetroarchFps(bool state);
 	bool isShowRetroarchFps();

@@ -10,57 +10,20 @@ export RA32_CONFIG_FOLDER="$USER_HOME_PATH/.config/retroarch32"
 export ES_SCRIPTS_PATH="/usr/local/bin"
 export ROMS_DIR="/roms"
 
-#******************* ES Scripts logs functions ********************
-
-#export ES_SCRIPT_LOGS_DIR="$ES_HOME_PATH"
-export ES_SCRIPT_LOGS_DIR="$ROMS_DIR/logs"
-if [ ! -d "$ES_SCRIPT_LOGS_DIR" ]; then
-  sudo mkdir "$ES_SCRIPT_LOGS_DIR"
-fi
-
-ES_LOGGING_ENABLED=0
-
-print_log() {
-  local LOG_FILE="$1"
-  local LEVEL="$2"
-  local MESSAGE="$3"
-
-  if [ $ES_LOGGING_ENABLED -eq 1 ]; then
-    mdate=$( date '+%d/%m/%Y %H:%M:%S:%N')
-    echo "$mdate $LEVEL $MESSAGE" >> $LOG_FILE
-  fi
-}
-
-active_es_scripts_log_feature() {
-	sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/' $ES_SCRIPTS_PATH/es-commons
-	grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-commons | xargs sudo sed -i 's/#print_log/print_log/g'
-}
-
-inactive_es_scripts_log_feature() {
-	sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/' $ES_SCRIPTS_PATH/es-commons
-	grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-commons | xargs sudo sed -i 's/print_log/#print_log/g'
-}
-
-remove_es_scripts_log() {
-	sudo rm -f "$ES_SCRIPT_LOGS_DIR"/es-*.log*
-}
-
-#******************* END - ES Scripts logs functions ********************
-
 #******************* ES Scripts String functions ********************
 trim()
 {
-    local trimmed="$1"
+  local trimmed="$1"
 
-    # Strip leading spaces.
-    while [[ $trimmed == ' '* ]]; do
-       trimmed="${trimmed## }"
-    done
-    # Strip trailing spaces.
-    while [[ $trimmed == *' ' ]]; do
-        trimmed="${trimmed%% }"
-    done
+  # Strip leading spaces.
+  while [[ $trimmed == ' '* ]]; do
+     trimmed="${trimmed## }"
+  done
+  # Strip trailing spaces.
+  while [[ $trimmed == *' ' ]]; do
+      trimmed="${trimmed%% }"
+  done
 
-    echo "$trimmed"
+  echo "$trimmed"
 }
 #******************* END - ES Scripts String functions ********************

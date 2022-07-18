@@ -195,6 +195,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case ApiSystem::REMOTE_SERVICES:
 				executables.push_back("es-remote_services");
 				break;
+		case ApiSystem::LOG_SCRIPTS:
+				executables.push_back("es-log_scripts");
+				break;
 /*
 	case ApiSystem::RETROACHIVEMENTS:
 #ifdef CHEEVOS_DEV_LOGIN
@@ -1069,23 +1072,6 @@ std::string ApiSystem::getWifiNetworkExistFlag()
 	return queryWifiNetworkExistFlag();
 }
 
-bool ApiSystem::isRemoteServicesEnabled()
-{
-	LOG(LogInfo) << "ApiSystem::isRemoteServicesEnabled()";
-
-	return executeScript("es-wifi is_remote_services_active");
-}
-
-bool ApiSystem::setRemoteServicesEnabled(bool status)
-{
-	LOG(LogInfo) << "ApiSystem::setRemoteServicesEnabled()";
-
-	if (status)
-		return executeScript("es-wifi do_remote_services_active");
-	else
-		return executeScript("es-wifi do_remote_services_inactive");
-}
-
 bool ApiSystem::setLanguage(std::string language)
 {
 	LOG(LogInfo) << "ApiSystem::setLanguage()";
@@ -1236,14 +1222,21 @@ bool ApiSystem::isEsScriptsLoggingActivated()
 {
 	LOG(LogInfo) << "ApiSystem::isEsScriptsLoggingActivated()";
 
-	return Utils::String::toBool( getShOutput(R"(es-optimize_system is_actived_scripts_log)") );
+	return Utils::String::toBool( getShOutput(R"(es-log_scripts is_actived_scripts_log)") );
 }
 
-bool ApiSystem::setEsScriptsLoggingActivated(bool state)
+bool ApiSystem::setEsScriptsLoggingActivated(bool state, const std::string level)
 {
-	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
+	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingActivated()";
 
-	return executeScript("es-optimize_system active_es_scripts_log " + Utils::String::boolToString(state) + " &");
+	return executeScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " &");
+}
+
+bool ApiSystem::setEsScriptsLoggingLevel(const std::string level)
+{
+	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingLevel()";
+
+	return executeScript("es-log_scripts set_es_scripts_log_level " + level + " &");
 }
 
 bool ApiSystem::setShowRetroarchFps(bool state)
