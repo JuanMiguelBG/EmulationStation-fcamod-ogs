@@ -82,7 +82,7 @@ do_systemd_disable()
 
 is_filebrowser_actived()
 {
-    if [ -z $(pidof filebrowser) ]; then
+    if [ -z "$(pidof filebrowser)" ]; then
       # inactive
       return 1
     fi
