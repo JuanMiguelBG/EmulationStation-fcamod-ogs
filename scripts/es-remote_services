@@ -96,6 +96,17 @@ is_ntp_actived()
     return 0
 }
 
+is_filebrowser_actived()
+{
+    if [ -z $(pidof filebrowser) ]; then
+      # inactive
+      return 1
+    fi
+
+    # active
+    return 0
+}
+
 is_actived()
 {
     local SERVICE=$1
@@ -103,6 +114,8 @@ is_actived()
 
     if [ "$SERVICE" == "ntp" ]; then
       is_ntp_actived && return 0 || return 1
+    elif  [ "$SERVICE" == "filebrowser" ]; then
+      is_filebrowser_actived && return 0 || return 1
     fi
 
     is_systemd_actived "$SERVICE" && return 0 || return 1
@@ -115,6 +128,8 @@ is_enabled()
 
     if [ "$SERVICE" == "ntp" ]; then
       SERVICE="systemd-timesyncd.service"
+    elif  [ "$SERVICE" == "filebrowser" ]; then
+      return 1
     fi
 
     is_systemd_enabled "$SERVICE" && return 0 || return 1
@@ -177,6 +192,20 @@ do_ntp_active()
     return 1
 }
 
+do_filebrowser_active()
+{
+    sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db
+
+    is_filebrowser_active
+    if [ $? -eq 0 ]; then
+      # active
+      return 0
+    fi
+
+    # inactive
+    return 1
+}
+
 do_active()
 {
     local SERVICE=$1
@@ -190,8 +219,10 @@ do_active()
 
     if [ "$SERVICE" == "ntp" ]; then
       do_ntp_active || return 1
+    elif  [ "$SERVICE" == "filebrowser" ]; then
+      do_filebrowser_active || return 1
     else
-    do_systemd_active $SERVICE || return 1
+      do_systemd_active $SERVICE || return 1
     fi
 
     return 0
@@ -216,6 +247,20 @@ do_ntp_inactive()
     return 1
 }
 
+do_filebrowser_inactive()
+{
+    sudo pkill filebrowser
+
+    is_filebrowser_active
+    if [ $? -eq 1 ]; then
+      # inactive
+      return 0
+    fi
+
+    # active
+    return 1
+}
+
 do_inactive()
 {
     local SERVICE=$1
@@ -229,6 +274,8 @@ do_inactive()
 
     if [ "$SERVICE" == "ntp" ]; then
       do_ntp_inactive || return 1
+    elif  [ "$SERVICE" == "filebrowser" ]; then
+      do_filebrowser_inactive || return 1
     else
       do_systemd_inactive $SERVICE || return 1
     fi
@@ -299,6 +346,8 @@ do_enable()
 
     if [ "$SERVICE" == "ntp" ]; then
       SERVICE="systemd-timesyncd.service"
+    elif  [ "$SERVICE" == "filebrowser" ]; then
+      return 0
     fi
 
     do_systemd_enable $SERVICE && return 0 || return 1
@@ -317,6 +366,8 @@ do_disable()
 
     if [ "$SERVICE" == "ntp" ]; then
       SERVICE="systemd-timesyncd.service"
+    elif  [ "$SERVICE" == "filebrowser" ]; then
+      return 0
     fi
 
     do_systemd_disable $SERVICE && return 0 || return 1

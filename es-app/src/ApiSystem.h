@@ -240,6 +240,7 @@ public:
 	RemoteServiceInformation getSambaStatus();
 	RemoteServiceInformation getNetBiosStatus();
 	RemoteServiceInformation getSshStatus();
+	RemoteServiceInformation getFileBrowserStatus();
 	bool configRemoteService(RemoteServiceInformation service);
 
 	virtual bool launchKodi(Window *window);

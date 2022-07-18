@@ -111,4 +111,19 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 	{
 		configRemoteService(window, ssh, ssh_active->getState(), ssh_boot->getState());
 	});
+
+	// File-Browser
+	addGroup(_("File-Browser"));
+	RemoteServiceInformation fileBrowser = ApiSystem::getInstance()->getFileBrowserStatus();
+
+	auto file_browser_active = std::make_shared<SwitchComponent>(window, fileBrowser.isActive);
+	addWithLabel(_("ACTIVATE"), file_browser_active);
+/*
+	auto file_browser_boot = std::make_shared<SwitchComponent>(window, fileBrowser.isStartOnBoot);
+	addWithLabel(_("BOOT WITH SYSTEM"), file_browser_boot);
+*/
+	addSaveFunc([this, window, fileBrowser, file_browser_active]//, file_browser_boot]
+	{
+		configRemoteService(window, fileBrowser, file_browser_active->getState(), false);//ssh_boot->getState());
+	});
 }

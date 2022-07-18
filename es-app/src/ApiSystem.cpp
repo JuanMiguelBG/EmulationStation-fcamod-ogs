@@ -1453,35 +1453,42 @@ bool ApiSystem::setOutputDevice(const std::string device)
 
 RemoteServiceInformation ApiSystem::getNtpStatus()
 {
-	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+	LOG(LogInfo) << "ApiSystem::getNtpStatus()";
 
 	return queryRemoteServiceStatus("NTP");
 }
 
 RemoteServiceInformation ApiSystem::getSambaStatus()
 {
-	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+	LOG(LogInfo) << "ApiSystem::getSambaStatus()";
 
 	return queryRemoteServiceStatus("SAMBA");
 }
 
 RemoteServiceInformation ApiSystem::getNetBiosStatus()
 {
-	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+	LOG(LogInfo) << "ApiSystem::getNetBiosStatus()";
 
 	return queryRemoteServiceStatus("NETBIOS");
 }
 
 RemoteServiceInformation ApiSystem::getSshStatus()
 {
-	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+	LOG(LogInfo) << "ApiSystem::getSshStatus()";
 
 	return queryRemoteServiceStatus("SSH");
 }
 
+RemoteServiceInformation ApiSystem::getFileBrowserStatus()
+{
+	LOG(LogInfo) << "ApiSystem::getFileBrowserStatus()";
+
+	return queryRemoteServiceStatus("FILE-BROWSER");
+}
+
 bool ApiSystem::configRemoteService(RemoteServiceInformation service)
 {
-	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus()";
+	LOG(LogInfo) << "ApiSystem::configRemoteService()";
 
 	return setRemoteServiceStatus(service);
 }

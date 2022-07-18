@@ -1031,6 +1031,7 @@ bool setCurrentTimezone(std::string timezone)
 RemoteServiceInformation queryRemoteServiceStatus(const std::string &name)
 {
 	RemoteServiceInformation rsi;
+
 	rsi.name = name;
 	if (name == "SAMBA")
 		rsi.platformName = "smbd.service";
@@ -1038,6 +1039,8 @@ RemoteServiceInformation queryRemoteServiceStatus(const std::string &name)
 		rsi.platformName = "nmbd.service";
 	else if (name == "NTP")
 		rsi.platformName = "ntp";
+	else if (name == "FILE-BROWSER")
+		rsi.platformName = "filebrowser";
 	else
 		rsi.platformName =  Utils::String::toLower(name) + ".service";
 
