@@ -110,7 +110,7 @@ do_list() {
       local net_regexp=`echo "$line" | tr -s " "`
       net_regexp=${net_regexp=// /\s}
       #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - net_regexp: '$net_regexp'"
-      local exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
+      local exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
       #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - exist: '$exist'"
       # skip empty values
       local line_aux=$(trim "$line")
