@@ -161,7 +161,7 @@ do_filebrowser_active()
 {
     sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
 
-    is_filebrowser_active
+    is_filebrowser_actived
     if [ $? -eq 0 ]; then
       # active
       return 0
@@ -195,7 +195,7 @@ do_filebrowser_inactive()
 {
     sudo pkill filebrowser
 
-    is_filebrowser_active
+    is_filebrowser_actived
     if [ $? -eq 1 ]; then
       # inactive
       return 0
