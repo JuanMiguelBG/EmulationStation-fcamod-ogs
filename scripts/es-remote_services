@@ -80,22 +80,6 @@ do_systemd_disable()
     return 1
 }
 
-is_ntp_actived()
-{
-    #print_log $LOG_FILE "INFO" "Executing 'is_ntp_actived()'"
-
-    local actived=`sudo timedatectl | grep NTP | grep active`
-    if [ -z "$actived" ]; then
-      # inactive
-      #print_log $LOG_FILE "INFO" "is_ntp_actived() - 'NTP service' is inactive"
-      return 1
-    fi
-
-    # active
-    #print_log $LOG_FILE "INFO" "is_ntp_actived() - 'NTP service' is active"
-    return 0
-}
-
 is_filebrowser_actived()
 {
     if [ -z $(pidof filebrowser) ]; then
@@ -113,7 +97,7 @@ is_actived()
     #print_log $LOG_FILE "INFO" "Executing 'is_actived()' of '$SERVICE'"
 
     if [ "$SERVICE" == "ntp" ]; then
-      is_ntp_actived && return 0 || return 1
+      SERVICE="systemd-timesyncd.service"
     elif  [ "$SERVICE" == "filebrowser" ]; then
       is_filebrowser_actived && return 0 || return 1
     fi
@@ -173,28 +157,9 @@ do_systemd_inactive()
     return 1
 }
 
-do_ntp_active()
-{
-    local SERVICE=$1
-
-    #print_log $LOG_FILE "INFO" "Executing 'do_ntp_active()' - Activing service 'NTP'"
-    sudo timedatectl set-ntp 1
-
-    is_ntp_active "$1"
-    if [ $? -eq 0 ]; then
-      # active
-      #print_log $LOG_FILE "INFO" "Executing 'do_ntp_active()' - Successfully actived service 'NTP'"
-      return 0
-    fi
-
-    # error continue inactive
-    #print_log $LOG_FILE "ERROR" "Executing 'do_ntp_active()' - Problem to active service 'NTP', continue inactive"
-    return 1
-}
-
 do_filebrowser_active()
 {
-    sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db
+    sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
 
     is_filebrowser_active
     if [ $? -eq 0 ]; then
@@ -218,33 +183,12 @@ do_active()
     fi
 
     if [ "$SERVICE" == "ntp" ]; then
-      do_ntp_active || return 1
+      SERVICE="systemd-timesyncd.service"
     elif  [ "$SERVICE" == "filebrowser" ]; then
-      do_filebrowser_active || return 1
-    else
-      do_systemd_active $SERVICE || return 1
+      do_filebrowser_active && return 0 || return 1
     fi
 
-    return 0
-}
-
-do_ntp_inactive()
-{
-    local SERVICE=$1
-
-    #print_log $LOG_FILE "INFO" "Executing 'do_ntp_inactive()' - Inactiving service 'NTP'"
-    sudo timedatectl set-ntp 0
-
-    is_ntp_active "$1"
-    if [ $? -eq 1 ]; then
-      # inactive
-      #print_log $LOG_FILE "INFO" "Executing 'do_ntp_inactive()' - Successfully inactived service 'NTP'"
-      return 0
-    fi
-
-    # error continue active
-    #print_log $LOG_FILE "ERROR" "Executing 'do_ntp_inactive()' - Problem to inactive service 'NTP', continue active"
-    return 1
+    do_systemd_active $SERVICE && return 0 || return 1
 }
 
 do_filebrowser_inactive()
@@ -273,14 +217,12 @@ do_inactive()
     fi
 
     if [ "$SERVICE" == "ntp" ]; then
-      do_ntp_inactive || return 1
+      SERVICE="systemd-timesyncd.service"
     elif  [ "$SERVICE" == "filebrowser" ]; then
-      do_filebrowser_inactive || return 1
-    else
-      do_systemd_inactive $SERVICE || return 1
+      do_filebrowser_inactive && return 0 || return 1
     fi
 
-    return 0
+    do_systemd_inactive $SERVICE && return 0 || return 1
 }
 
 do_get_status()
@@ -377,7 +319,7 @@ do_remote_services_active()
 {
     #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_active()'"
 
-    sudo timedatectl set-ntp 1 &
+    sudo systemctl start systemd-timesyncd.service --quiet
     sudo systemctl start smbd.service --quiet
     sudo systemctl start nmbd.service --quiet
     sudo systemctl start ssh.service --quiet
@@ -393,7 +335,7 @@ do_remote_services_inactive()
 {
     #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_inactive()'"
 
-    sudo timedatectl set-ntp 0
+    sudo systemctl stop systemd-timesyncd.service --quiet
     sudo systemctl stop smbd.service --quiet
     sudo systemctl stop nmbd.service --quiet
     sudo systemctl stop ssh.service --quiet
@@ -430,7 +372,7 @@ do_set_status()
 # ******************************************************************************************
 
 # Configure ES commons variables
-. es-commons
+. es-log_scripts
 
 EXIST_CONNECTION_FLAG=" (**)"
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-remote_services.log"

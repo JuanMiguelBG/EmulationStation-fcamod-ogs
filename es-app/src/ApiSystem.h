@@ -57,7 +57,8 @@ public:
 		SOUND = 12,
 		BLUETOOTH = 13,
 		KODI = 14,
-		REMOTE_SERVICES = 15
+		REMOTE_SERVICES = 15,
+		LOG_SCRIPTS = 16
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -181,8 +182,6 @@ public:
 	std::string getDnsOne();
 	std::string getDnsTwo();
 	std::string getWifiNetworkExistFlag();
-	bool isRemoteServicesEnabled();
-	bool setRemoteServicesEnabled(bool status);
 
 	bool setLanguage(std::string language);
 
@@ -204,7 +203,8 @@ public:
 
 	bool setOptimizeSystem(bool state);
 	bool isEsScriptsLoggingActivated();
-	bool setEsScriptsLoggingActivated(bool state);
+	bool setEsScriptsLoggingActivated(bool state, const std::string level = "default");
+	bool setEsScriptsLoggingLevel(const std::string level = "default");
 
 	bool setShowRetroarchFps(bool state);
 	bool isShowRetroarchFps();
