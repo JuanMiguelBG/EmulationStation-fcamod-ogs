@@ -161,6 +161,8 @@ do_filebrowser_active()
 {
     sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
 
+    sleep 1
+
     is_filebrowser_actived
     if [ $? -eq 0 ]; then
       # active
