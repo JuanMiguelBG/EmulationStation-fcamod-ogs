@@ -173,7 +173,7 @@ public:
 	inline bool isCollection() { return mIsCollectionSystem; };
 	inline bool isGameSystem() { return mIsGameSystem; };
 
-	inline bool isGroupSystem() { return mIsGroupSystem; };	
+	inline bool isGroupSystem() { return mIsGroupSystem; };
 	bool isGroupChildSystem();
 
 	bool isVisible();
