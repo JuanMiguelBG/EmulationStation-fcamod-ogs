@@ -167,8 +167,23 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	addSaveFunc([this, sortType]
 	{
 		if (Settings::getInstance()->setString("SortSystems", sortType->getSelected()))
+		if (sortType->getSelected() == "") // force default es_system.cfg order
+			setVariable("reloadSystems", true);
+		else
 			setVariable("reloadAll", true);
 	});
+
+	// force full-name on sort systems
+	auto forceFullName = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ForceFullNameSortSystems"));
+	addWithLabel(_("USE FULL SYSTEM NAME IN SORT"), forceFullName);
+	addSaveFunc([this, forceFullName, sortType]
+		{
+			if (Settings::getInstance()->setBool("ForceFullNameSortSystems", forceFullName->getState()))
+			{
+				if ((sortType->getSelected() != "") && (sortType->getSelected() != "alpha"))
+					setVariable("reloadAll", true);
+			}
+		});
 
 	// Optionally start in selected system
 	auto systemfocus_list = std::make_shared< OptionListComponent<std::string> >(mWindow, _("START ON SYSTEM"), false);
