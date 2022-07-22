@@ -172,6 +172,7 @@ public:
 	inline std::vector<SystemData*>::const_reverse_iterator getRevIterator() const { return std::find(sSystemVector.crbegin(), sSystemVector.crend(), this); };
 	inline bool isCollection() { return mIsCollectionSystem; };
 	inline bool isGameSystem() { return mIsGameSystem; };
+	inline bool hasTheme() { return mHasTheme; };
 
 	inline bool isGroupSystem() { return mIsGroupSystem; };
 	bool isGroupChildSystem();
@@ -231,6 +232,7 @@ private:
 	bool mIsCollectionSystem;
 	bool mIsGameSystem;
 	bool mIsGroupSystem;
+	bool mHasTheme;
 
 	SystemMetadata mMetadata;
 

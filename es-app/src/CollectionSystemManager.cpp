@@ -175,24 +175,6 @@ bool systemByManufacurerSort(SystemData* sys1, SystemData* sys2)
 	return name1.compare(name2) < 0;
 }
 
-bool systemByReleaseDate(SystemData* sys1, SystemData* sys2)
-{
-	// Order by hardware
-	int mf1 = sys1->getSystemMetadata().releaseYear;
-	int mf2 = sys2->getSystemMetadata().releaseYear;
-	if (mf1 != mf2)
-		return mf1 < mf2;
-
-	// Move collection at Begin
-	if (sys1->isCollection() != sys2->isCollection())
-		return !sys2->isCollection();
-
-	// Then by name
-	std::string name1 = Utils::String::toUpper(sys1->getName());
-	std::string name2 = Utils::String::toUpper(sys2->getName());
-	return name1.compare(name2) < 0;
-}
-
 bool systemByHardwareSort(SystemData* sys1, SystemData* sys2)
 {
 	// Move collection at End
@@ -204,6 +186,24 @@ bool systemByHardwareSort(SystemData* sys1, SystemData* sys2)
 	std::string mf2 = Utils::String::toUpper(sys2->getSystemMetadata().hardwareType);
 	if (mf1 != mf2)
 		return mf1.compare(mf2) < 0;
+
+	// Then by name
+	std::string name1 = Utils::String::toUpper(sys1->getName());
+	std::string name2 = Utils::String::toUpper(sys2->getName());
+	return name1.compare(name2) < 0;
+}
+
+bool systemByReleaseDate(SystemData* sys1, SystemData* sys2)
+{
+	// Order by hardware
+	int mf1 = sys1->getSystemMetadata().releaseYear;
+	int mf2 = sys2->getSystemMetadata().releaseYear;
+	if (mf1 != mf2)
+		return mf1 < mf2;
+
+	// Move collection at Begin
+	if (sys1->isCollection() != sys2->isCollection())
+		return !sys2->isCollection();
 
 	// Then by name
 	std::string name1 = Utils::String::toUpper(sys1->getName());
@@ -1356,13 +1356,9 @@ std::vector<std::string> CollectionSystemManager::getUnusedSystemsFromTheme()
 	for(auto sysIt = themeSys.cbegin(); sysIt != themeSys.cend(); )
 	{
 		if (std::find(systemsInUse.cbegin(), systemsInUse.cend(), *sysIt) != systemsInUse.cend())
-		{
 			sysIt = themeSys.erase(sysIt);
-		}
 		else
-		{
 			sysIt++;
-		}
 	}
 	return themeSys;
 }
@@ -1449,11 +1445,4 @@ std::string getCustomCollectionConfigPath(std::string collectionName)
 std::string getCollectionsFolder()
 {
 	return Utils::FileSystem::getGenericPath(Utils::FileSystem::getEsConfigPath() + "/collections");
-}
-
-bool systemSort(SystemData* sys1, SystemData* sys2)
-{
-	std::string name1 = Utils::String::toUpper(sys1->getName());
-	std::string name2 = Utils::String::toUpper(sys2->getName());
-	return name1.compare(name2) < 0;
 }
