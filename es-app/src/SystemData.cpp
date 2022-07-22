@@ -27,7 +27,7 @@ using namespace Utils;
 std::vector<SystemData*> SystemData::sSystemVector;
 
 SystemData::SystemData(const SystemMetadata& meta, SystemEnvironmentData* envData, bool CollectionSystem, bool groupedSystem, bool withTheme, bool loadThemeOnlyIfElements) :
-	mMetadata(meta), mEnvData(envData), mIsCollectionSystem(CollectionSystem), mIsGameSystem(true)
+	mMetadata(meta), mEnvData(envData), mIsCollectionSystem(CollectionSystem), mIsGameSystem(true), mHasTheme(withTheme)
 {
 	mIsGroupSystem = groupedSystem;
 	mGameListHash = 0;
@@ -455,7 +455,6 @@ void SystemData::createGroupedSystems()
 		md.themeFolder = item.first;
 
 		SystemData* system = new SystemData(md, envData, false, true);
-		system->mIsGroupSystem = true;
 		system->mIsGameSystem = false;
 
 		FolderData* root = system->getRootFolder();
@@ -977,7 +976,6 @@ void SystemData::loadTheme()
 		std::map<std::string, std::string> sysData;
 		sysData.insert(std::pair<std::string, std::string>("system.name", getName()));
 		sysData.insert(std::pair<std::string, std::string>("system.theme", getThemeFolder()));
-		sysData.insert(std::pair<std::string, std::string>("system.fullName", getFullName()));
 		sysData.insert(std::pair<std::string, std::string>("system.fullName", Utils::String::proper(getFullName())));
 
 		sysData.insert(std::pair<std::string, std::string>("system.manufacturer", getSystemMetadata().manufacturer));

@@ -119,7 +119,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 				auto themeFolder = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(name), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
 				row.addElement(themeFolder, true);
-				addRow(row);
+				s->addRow(row);
 			}
 			mWindow->pushGui(s);
 		});

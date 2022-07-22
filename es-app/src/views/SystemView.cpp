@@ -557,22 +557,48 @@ bool SystemView::input(InputConfig* config, Input input)
 			auto sortMode = Settings::getInstance()->getString("SortSystems");
 			if (sortMode == "alpha")
 			{
-				showNavigationBar(_("GO TO LETTER"), [](SystemData* meta) { if (meta->isCollection()) return _("COLLECTIONS"); return Utils::String::toUpper(meta->getSystemMetadata().fullName.substr(0, 1)); });
+				showNavigationBar(_("GO TO LETTER"),
+					[](SystemData* meta)
+						{
+							if (meta->isCollection() && (!meta->hasTheme() || (meta->getSystemMetadata().hardwareType == "auto collection") || (meta->getSystemMetadata().name == "collections")))
+								return _("COLLECTIONS");
+
+							return Utils::String::toUpper(meta->getSystemMetadata().fullName.substr(0, 1));
+						});
+
 				return true;
 			}
 			else if (sortMode == "manufacturer")
 			{
-				showNavigationBar(_("GO TO MANUFACTURER"), [](SystemData* meta) { return meta->getSystemMetadata().manufacturer; });
+				showNavigationBar(_("GO TO MANUFACTURER"),
+					[](SystemData* meta)
+						{
+							return meta->getSystemMetadata().manufacturer;
+						});
+
 				return true;
 			}
 			else if (sortMode == "hardware")
 			{
-				showNavigationBar(_("GO TO HARDWARE"), [](SystemData* meta) { return meta->getSystemMetadata().hardwareType; });
+				showNavigationBar(_("GO TO HARDWARE"),
+					[](SystemData* meta)
+						{
+							return meta->getSystemMetadata().hardwareType;
+						});
+
 				return true;
 			}
 			else if (sortMode == "releaseDate")
 			{
-				showNavigationBar(_("GO TO DECADE"), [](SystemData* meta) { if (meta->getSystemMetadata().releaseYear == 0) return _("UNKNOWN"); return std::to_string((meta->getSystemMetadata().releaseYear / 10) * 10) + "'s"; });
+				showNavigationBar(_("GO TO DECADE"),
+					[](SystemData* meta)
+						{
+							if (meta->getSystemMetadata().releaseYear == 0)
+								return _("UNKNOWN");
+
+							return std::to_string((meta->getSystemMetadata().releaseYear / 10) * 10) + "'s";
+						});
+
 				return true;
 			}
 		}
@@ -627,26 +653,42 @@ void SystemView::showNavigationBar(const std::string& title, const std::function
 	int idx = 0;
 	std::string sel = selector(getSelected());
 
+// TO DELETE
+//	LOG(LogDebug) << "SystemView::showNavigationBar() - Ordered Systems:";
+//	int i=0;
+//	for (auto sy : SystemData::sSystemVector)
+//	{
+//		LOG(LogDebug) << "SystemView::showNavigationBar() -     position: " << std::to_string(i) << ", system: " << sy->getName() << ", full name: " << sy->getFullName();
+//		i++;
+//	}
+//	LOG(LogDebug) << "SystemView::showNavigationBar() - END Ordered Systems.";
+// END - TO DELETE
+
 	std::string man = "*-*";
 	for (int i = 0; i < SystemData::sSystemVector.size(); i++)
 	{
+//		LOG(LogDebug) << "SystemView::showNavigationBar() - actual man: " << man;
 		auto system = SystemData::sSystemVector[i];
 		if (!system->isVisible())
 			continue;
 
 		auto mf = selector(system);
+//		LOG(LogDebug) << "SystemView::showNavigationBar() - sel: " << sel << ", i: " << std::to_string(i) << ", system: " << system->getName() << ", mf: " << mf << ", man: " << man;
 		if (man != mf)
 		{
 			std::vector<std::string> names;
 			for (auto sy : SystemData::sSystemVector)
+			{
 				if (sy->isVisible() && selector(sy) == mf)
 				{
 					std::string name = sy->getFullName();
 					if (system->isCollection())
-						 name = Utils::String::startWithUpper( _(name) );
+						name = Utils::String::startWithUpper( _(name) );
 
 					names.push_back(name);
 				}
+			}
+//				LOG(LogDebug) << "SystemView::showNavigationBar() - ordenation ==> mf: " << mf << ", position: " << std::to_string(idx) << ", system: " << system->getName() << ", names: " << Utils::String::join(names, ", ");
 
 			gs->getMenu().addWithDescription(_(Utils::String::toUpper(mf)), Utils::String::join(names, ", "), nullptr, [this, gs, system, idx]
 			{
@@ -663,6 +705,7 @@ void SystemView::showNavigationBar(const std::string& title, const std::function
 			}, "", sel == mf);
 
 			man = mf;
+//			LOG(LogDebug) << "SystemView::showNavigationBar() - new man: " << man;
 		}
 
 		idx++;
