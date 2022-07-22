@@ -76,7 +76,7 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
 	float height_ratio = 1.0f;
 	if ( change_height )
-		height_ratio = 0.849f;
+		height_ratio = 0.90f;
 
 	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
 

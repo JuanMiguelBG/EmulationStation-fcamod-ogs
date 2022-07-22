@@ -75,9 +75,10 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
 
 	// resize
+	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
 	float height_ratio = 1.0f;
-	if ( Settings::getInstance()->getBool("ShowHelpPrompts") )
-		height_ratio = 0.849f;
+	if ( change_height )
+		height_ratio = 0.90f;
 
 	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
 

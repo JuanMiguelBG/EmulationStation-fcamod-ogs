@@ -715,9 +715,14 @@ void SystemView::showNavigationBar(const std::string& title, const std::function
 	w = Math::max(w, Renderer::getScreenWidth() / 3.0f);
 
 	// resize
+	bool change_height = Settings::getInstance()->getBool("ShowHelpPrompts"); //&& Renderer::isSmallScreen();
 	float height_ratio = 1.0f;
-	if ( Settings::getInstance()->getBool("ShowHelpPrompts") && !Renderer::isSmallScreen() )
-		height_ratio = 0.93f;
+	if ( change_height )
+		height_ratio = 0.90f;
+
+//	float height_ratio = 1.0f;
+//	if ( Settings::getInstance()->getBool("ShowHelpPrompts") && !Renderer::isSmallScreen() )
+//		height_ratio = 0.93f;
 
 	gs->getMenu().setSize(w, Renderer::getScreenHeight() * height_ratio);
 
