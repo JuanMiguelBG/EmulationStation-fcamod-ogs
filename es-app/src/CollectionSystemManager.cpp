@@ -169,9 +169,14 @@ bool systemByManufacurerSort(SystemData* sys1, SystemData* sys2)
 	else if (sys1->getSystemMetadata().releaseYear > sys2->getSystemMetadata().releaseYear)
 		return false;
 
-	// Then by name
+		// Then by name
 	std::string name1 = Utils::String::toUpper(sys1->getName());
 	std::string name2 = Utils::String::toUpper(sys2->getName());
+	if (Settings::getInstance()->getBool("ForceFullNameSortSystems"))
+	{
+		name1 = Utils::String::toUpper(sys1->getFullName());
+		name2 = Utils::String::toUpper(sys2->getFullName());
+	}
 	return name1.compare(name2) < 0;
 }
 
@@ -188,8 +193,15 @@ bool systemByHardwareSort(SystemData* sys1, SystemData* sys2)
 		return mf1.compare(mf2) < 0;
 
 	// Then by name
+
+		// Then by name
 	std::string name1 = Utils::String::toUpper(sys1->getName());
 	std::string name2 = Utils::String::toUpper(sys2->getName());
+	if (Settings::getInstance()->getBool("ForceFullNameSortSystems"))
+	{
+		name1 = Utils::String::toUpper(sys1->getFullName());
+		name2 = Utils::String::toUpper(sys2->getFullName());
+	}
 	return name1.compare(name2) < 0;
 }
 
@@ -206,8 +218,15 @@ bool systemByReleaseDate(SystemData* sys1, SystemData* sys2)
 		return !sys2->isCollection();
 
 	// Then by name
+
+		// Then by name
 	std::string name1 = Utils::String::toUpper(sys1->getName());
 	std::string name2 = Utils::String::toUpper(sys2->getName());
+	if (Settings::getInstance()->getBool("ForceFullNameSortSystems"))
+	{
+		name1 = Utils::String::toUpper(sys1->getFullName());
+		name2 = Utils::String::toUpper(sys2->getFullName());
+	}
 	return name1.compare(name2) < 0;
 }
 

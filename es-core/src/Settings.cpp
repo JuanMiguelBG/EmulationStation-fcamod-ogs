@@ -170,6 +170,7 @@ void Settings::setDefaults()
 	mStringMap["CollectionSystemsCustom"] = "";
 	mStringMap["HiddenSystems"] = "";
 	mStringMap["SortSystems"] = ""; // "manufacturer" backward compatibility
+	mStringMap["ForceFullNameSortSystems"] = false;
 	mBoolMap["UseCustomCollectionsSystem"] = true;
 	mBoolMap["CollectionShowSystemInfo"] = true;
 	mBoolMap["HiddenSystemsShowGames"] = true;
