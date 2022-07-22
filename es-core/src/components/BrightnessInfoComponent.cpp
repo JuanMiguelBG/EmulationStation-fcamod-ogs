@@ -23,7 +23,7 @@ BrightnessInfoComponent::BrightnessInfoComponent(Window* window, bool actionLine
 	mBrightness = -1;
 	mCheckTime = 0;
 
-	auto theme = ThemeData::getMenuTheme();	
+	auto theme = ThemeData::getMenuTheme();
 
 	auto font = theme->TextSmall.font;
 	if (Renderer::isSmallScreen())
