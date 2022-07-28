@@ -73,7 +73,7 @@ std::vector<std::string> GuiGamelistOptions::gridSizes {
 };
 
 GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool showGridFeatures) : GuiComponent(window),
-	mSystem(system), mMenu(window, _("OPTIONS")), fromPlaceholder(false), mFiltersChanged(false), mReloadAll(false)
+	mSystem(system), mMenu(window, _("OPTIONS")), fromPlaceholder(false), mFiltersChanged(false), mReloadAll(false), mReloadSystems(false)
 {	
 	auto theme = ThemeData::getMenuTheme();
 
@@ -220,7 +220,7 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 		row.addElement(std::make_shared<TextComponent>(mWindow, _("APPLY FILTER"), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color), true);
 		row.addElement(makeArrow(mWindow), false);
 		row.makeAcceptInputHandler(std::bind(&GuiGamelistOptions::openGamelistFilter, this));
-		mMenu.addRow(row);		
+		mMenu.addRow(row);
 	}
 
 	// Show favorites first in gamelists
@@ -258,10 +258,14 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 			mReloadAll = true;
 	});
 
-	std::map<std::string, CollectionSystemData> customCollections = CollectionSystemManager::get()->getCustomCollectionSystems();
+	// update game lists
+	mMenu.addEntry(_("UPDATE GAMES LISTS"), false, [this] { GuiMenu::updateGameLists(mWindow); }); // Game List Update
 
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
+		std::map<std::string, CollectionSystemData> customCollections = CollectionSystemManager::get()->getCustomCollectionSystems();
+
+		mMenu.addGroup(_("EDITING COLLECTION"));
 		if ((customCollections.find(system->getName()) != customCollections.cend() && CollectionSystemManager::get()->getEditingCollection() != system->getName()) ||
 			CollectionSystemManager::get()->getCustomCollectionsBundle()->getName() == system->getName())
 		{
@@ -270,13 +274,17 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 
 		if (CollectionSystemManager::get()->isEditing())
 		{
+			std::string collectionName = CollectionSystemManager::get()->getEditingCollection();
+			addCustomCollectionLongName(collectionName);
+
 			char fecstrbuf[64];
-			snprintf(fecstrbuf, 64, _("FINISH EDITING '%s' COLLECTION").c_str(), Utils::String::toUpper(CollectionSystemManager::get()->getEditingCollection()).c_str());
+			snprintf(fecstrbuf, 64, _("FINISH EDITING '%s' COLLECTION").c_str(), Utils::String::toUpper(collectionName).c_str());
 			mMenu.addEntry(fecstrbuf, false, [this] { exitEditMode(); });
 		}
 
 		if (!fromPlaceholder && !(mSystem->isCollection() && file->getType() == FOLDER))
 		{
+			mMenu.addGroup(_("GAME OPTIONS"));
 			// edit game metadata
 			mMenu.addEntry(_("EDIT THIS GAME'S METADATA"), true, [this] { openMetaDataEd(); });
 
@@ -292,9 +300,6 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 					_("NO"), nullptr));
 			});
 		}
-
-		// update game lists
-		mMenu.addEntry(_("UPDATE GAMES LISTS"), false, [this] { GuiMenu::updateGameLists(mWindow); }); // Game List Update
 	}
 
 	// center the menu
@@ -361,9 +366,71 @@ GuiGamelistOptions::~GuiGamelistOptions()
 		// only reload full view if we came from a placeholder
 		// as we need to re-display the remaining elements for whatever new
 		// game is selected
-		mSystem->loadTheme();		
+		mSystem->loadTheme();
 		ViewController::get()->reloadGameListView(mSystem);
 	}
+	else if (mReloadSystems)
+	{
+		CollectionSystemManager::get()->loadEnabledListFromSettings();
+		CollectionSystemManager::get()->updateSystemsList();
+		ViewController::get()->goToStart();
+		ViewController::get()->reloadAll(mWindow);
+		mWindow->endRenderLoadingScreen();
+	}
+}
+
+void GuiGamelistOptions::addCustomCollectionLongName(const std::string& collectionName)
+{
+	if (collectionName.empty())
+		return;
+
+	auto theme = ThemeData::getMenuTheme();
+	std::shared_ptr<Font> font = theme->Text.font;
+	unsigned int color = theme->Text.color;
+
+	ComponentListRow row;
+
+	std::string title(_("COLLECTION FULL NAME"));
+
+	auto lbl = std::make_shared<TextComponent>(mWindow, title, font, color);
+	row.addElement(lbl, true); // label
+
+
+	std::string setting("custom-");
+	setting.append(collectionName).append(".fullname");
+
+	std::string fullNameText = Settings::getInstance()->getString(setting);
+	auto fullName = std::make_shared<TextComponent>(mWindow, fullNameText, font, color, ALIGN_RIGHT);
+	row.addElement(fullName, true);
+
+	auto spacer = std::make_shared<GuiComponent>(mWindow);
+	spacer->setSize(Renderer::getScreenWidth() * 0.005f, 0);
+	row.addElement(spacer, false);
+
+	auto bracket = std::make_shared<ImageComponent>(mWindow);
+	bracket->setImage(theme->Icons.arrow);
+	bracket->setResize(Vector2f(0, lbl->getFont()->getLetterHeight()));
+
+	if (EsLocale::isRTL())
+		bracket->setFlipX(true);
+
+	row.addElement(bracket, false);
+
+	auto updateVal = [this, fullName, collectionName, setting](const std::string& newVal)
+	{
+		fullName->setValue(newVal);
+		Settings::getInstance()->setString(setting, newVal);
+		mSystem->setFullName(newVal);
+		mReloadSystems = true;
+		return true;
+	};
+
+	row.makeAcceptInputHandler([this, title, fullName, updateVal]
+	{
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, fullName->getValue(), updateVal, false));
+	});
+
+	mMenu.addRow(row);
 }
 
 void GuiGamelistOptions::addTextFilterToMenu()

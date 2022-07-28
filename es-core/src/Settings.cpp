@@ -36,7 +36,7 @@ std::vector<const char*> settings_dont_save {
 	{ "system.hostname" },
 	{ "wifi.enabled" },
 	{ "wifi.key" },
-	{ "wifi.ssid" },
+//	{ "wifi.ssid" },
 	{ "wifi.dns1" },
 	{ "wifi.dns2" },
 	{ "wait.process.loading" }
@@ -198,13 +198,14 @@ void Settings::setDefaults()
 	mBoolMap["audio.bgmusic"] = true;
 	mBoolMap["audio.persystem"] = false;
 	mBoolMap["audio.display_titles"] = true;
-	mBoolMap["audio.thememusics"] = true;;
+	mBoolMap["audio.thememusics"] = true;
 	mIntMap["audio.display_titles_time"] = 10;
 
 	mStringMap["MusicDirectory"] = "/roms/bgmusic";
 	mStringMap["UserMusicDirectory"] = "";
 
 	mBoolMap["updates.enabled"] = false;
+	mStringMap["wifi.ssid"] = "";
 	mBoolMap["wifi.manual_dns"] = false;
 	mStringMap["wifi.already.connection.exist.flag"] = " (**)";
 

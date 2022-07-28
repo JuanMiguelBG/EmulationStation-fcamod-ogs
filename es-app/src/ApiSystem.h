@@ -170,9 +170,10 @@ public:
 	virtual bool ping();
 	bool getInternetStatus();
 	std::vector<std::string> getWifiNetworks(bool scan = false);
-	bool enableWifi(const std::string ssid, const std::string pwd);
+	bool connectWifi(const std::string ssid, const std::string pwd);
 	bool disconnectWifi(const std::string ssid);
-	bool disableWifi();
+	bool enableWifi(bool background = true);
+	bool disableWifi(bool background = true);
 	bool resetWifi(const std::string ssid);
 	bool isWifiEnabled();
 	bool enableManualWifiDns(const std::string ssid, const std::string dnsOne, const std::string dnsTwo);

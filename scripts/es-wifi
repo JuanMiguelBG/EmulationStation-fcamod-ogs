@@ -4,12 +4,13 @@ do_help() {
     echo "$0 scanlist" >&2
     echo "$0 list" >&2
     echo "$0 start" >&2
-    echo "$0 enable <SSID> <PWD>" >&2
+    echo "$0 connect <SSID> <PWD>" >&2
+    echo "$0 disconnect <SSID>" >&2
     echo "$0 reset <SSID>" >&2
     echo "$0 remove <SSID>" >&2
+    echo "$0 enable" >&2
     echo "$0 disable" >&2
     echo "$0 internet_status" >&2
-    echo "$0 disconnect <SSID>" >&2
     echo "$0 is_connected" >&2
     echo "$0 is_enabled" >&2
     echo "$0 get_ssid" >&2
@@ -139,18 +140,18 @@ do_scanlist() {
     do_list
 }
 
-do_enable() {
+do_connect() {
     local SSID=$1
     local PSK=$2
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - New connection to '$SSID'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - New connection to '$SSID'"
 
     do_start
 
     local output=""
     actual_network=`iw dev wlan0 info | grep ssid | cut -c 7-30`
     if [ ! -z "$actual_network" ]; then
-      #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Disconnecting of '$actual_network'"
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Disconnecting of '$actual_network'"
       sudo nmcli con down "$actual_network" > /dev/null 2>&1
     fi
     net_regexp=`echo "$SSID" | tr -s " "`
@@ -158,7 +159,7 @@ do_enable() {
     exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
 
     if [ ! -z "$exist" ]; then
-      #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Connection '$SSID' already exist"
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Connection '$SSID' already exist"
       output=`sudo nmcli con up "$SSID"`
     else
       # try to connect
@@ -168,16 +169,16 @@ do_enable() {
     success=`echo "$output" | grep successfully`
     if [ -z "$success" ]; then
       # NOT connected
-      #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - NOT connected, reason:'$output'"
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - NOT connected, reason:'$output'"
       if [ ! -z "$actual_network" ]; then
-        #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Re-connecting to '$actual_network'"
+        #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Re-connecting to '$actual_network'"
         sudo nmcli con up "$actual_network" > /dev/null 2>&1
       fi
       return 1
     fi
 
     # connected
-    #print_log $LOG_FILE "INFO" "Executing 'do_enable()' - Successfully connected to '$SSID'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Successfully connected to '$SSID'"
     return 0
 }
 
@@ -203,12 +204,45 @@ do_reset() {
     do_disable || return 1
 }
 
+do_rescan()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_rescan()'"
+
+    for run in {1..5}; do
+
+      #print_log $LOG_FILE "DEBUG" "do_rescan() - i: $run"
+      local output=$((sudo nmcli device wifi rescan > /dev/null)  2>&1)
+      local error=`echo "$output" | grep "Error:"`
+
+      if [ -z "$error" ]; then
+        # NOT error
+        #print_log $LOG_FILE "INFO" "do_rescan() - successfully rescan"
+        return 0
+      fi
+
+      sleep 1
+
+    done
+
+    # error
+    #print_log $LOG_FILE "INFO" "do_rescan() - error rescan"
+    return 1
+}
+
+do_enable()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_enable()'"
+
+    enable_network_manager
+}
+
 do_start() {
     #print_log $LOG_FILE "INFO" "Executing 'do_start()'"
 
     enable_network_manager
 
-    sudo nmcli device wifi rescan 2> /dev/null|| return 1
+    #sudo nmcli device wifi rescan 2> /dev/null|| return 1
+    do_rescan || return 1
 }
 
 do_test_internet() {
@@ -234,9 +268,9 @@ do_disconnect() {
 is_connected() {
     #print_log $LOG_FILE "INFO" "Executing 'is_connected()'"
 
-    output=`sudo nmcli dev status`
+    local output=`sudo nmcli dev status`
 
-    connected=`echo "$output" | grep -e "wifi[ ]*connected"`
+    local connected=`echo "$output" | grep -e "wifi[ ]*connected"`
 
     if [ -z "$connected" ]; then
       # NOT connected
@@ -252,9 +286,9 @@ is_connected() {
 is_enabled() {
     #print_log $LOG_FILE "INFO" "Executing 'is_enabled()'"
 
-    output=`sudo nmcli radio wifi`
+    local output=`sudo nmcli radio wifi`
 
-    enabled=`echo "$output" | grep enabled`
+    local enabled=`echo "$output" | grep enabled`
 
     if [ -z "$enabled" ]; then
       # disaled
@@ -369,8 +403,11 @@ case "${ACTION}" in
     "start")
         do_start
     ;;
-    "enable")
-        do_enable "$1" "$2" || exit 1
+    "connect")
+        do_connect "$1" "$2" || exit 1
+    ;;
+    "disconnect")
+        do_disconnect "$1" || exit 1
     ;;
     "remove")
         do_remove "$1" || exit 1
@@ -378,14 +415,14 @@ case "${ACTION}" in
     "reset")
         do_reset "$1" || exit 1
     ;;
+    "enable")
+        do_enable || exit 1
+    ;;
     "disable")
         do_disable || exit 1
     ;;
     "internet_status")
         do_test_internet || exit 1
-    ;;
-    "disconnect")
-        do_disconnect "$1" || exit 1
     ;;
     "is_connected")
         is_connected || exit 1

@@ -883,7 +883,7 @@ void CollectionSystemManager::updateCollectionFolderMetadata(SystemData* sys)
 void CollectionSystemManager::initCustomCollectionSystems()
 {
 	for (auto name : getCollectionsFromConfigFolder())
-		addNewCustomCollection(name, false);
+		addNewCustomCollection(name, Settings::getInstance()->getString("custom-" + name + ".fullname"), false);
 }
 
 SystemData* CollectionSystemManager::getArcadeCollection()
@@ -905,12 +905,15 @@ SystemData* CollectionSystemManager::getAllGamesCollection()
 	return allSysData->system;
 }
 
-SystemData* CollectionSystemManager::addNewCustomCollection(std::string name, bool needSave)
+SystemData* CollectionSystemManager::addNewCustomCollection(std::string name, std::string longName, bool needSave)
 {
 	CollectionSystemDecl decl = mCollectionSystemDeclsIndex[myCollectionsName];
 	decl.themeFolder = name;
 	decl.name = name;
 	decl.longName = name;
+	if (!longName.empty())
+		decl.longName = longName;
+
 	return createNewCollectionEntry(name, decl, true, needSave);
 }
 

@@ -99,7 +99,7 @@ public:
 	inline std::map<std::string, CollectionSystemData> getCustomCollectionSystems() { return mCustomCollectionSystemsData; };
 	inline SystemData* getCustomCollectionsBundle() { return mCustomCollectionsBundle; };
 	std::vector<std::string> getUnusedSystemsFromTheme();
-	SystemData* addNewCustomCollection(std::string name, bool needSave = true);
+	SystemData* addNewCustomCollection(std::string name, std::string longName = "", bool needSave = true);
 
 	bool isThemeGenericCollectionCompatible(bool genericCustomCollections);
 	bool isThemeCustomCollectionCompatible(std::vector<std::string> stringVector);

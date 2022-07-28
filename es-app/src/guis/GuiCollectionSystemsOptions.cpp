@@ -56,8 +56,8 @@ void GuiCollectionSystemsOptions::initializeMenu()
 			LOG(LogDebug) << "GuiMenu::openUISettings() - hiddenSystems changed, new value: " << hiddenSystems;
 			Settings::getInstance()->setString("HiddenSystems", hiddenSystems);
 			Settings::getInstance()->saveFile();
-			setVariable("reloadAll", true);
-			setVariable("forceReloadGames", true);
+
+			setVariable("reloadSystems", true);
 		}
 	});
 
