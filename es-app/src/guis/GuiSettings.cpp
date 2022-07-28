@@ -132,7 +132,8 @@ void GuiSettings::addSubMenu(const std::string& label, const std::function<void(
 };
 
 void GuiSettings::addInputTextRow(std::string title, const char *settingsID, bool password, bool storeInSettings,
-		const std::function<void(Window*, std::string/*title*/, std::string /*value*/, const std::function<bool(std::string)>& onsave)>& customEditor,
+		const std::function<void(Window*, std::string/*title*/, std::string /*value*/,
+		const std::function<bool(std::string)>& onsave)>& customEditor,
 		const std::function<bool(std::string /*value*/)>& onValidateValue)
 {
 	auto theme = ThemeData::getMenuTheme();

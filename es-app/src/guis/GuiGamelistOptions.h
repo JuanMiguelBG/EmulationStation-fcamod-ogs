@@ -36,6 +36,7 @@ private:
 	void startEditMode();
 	void exitEditMode();
 	void jumpToLetter();
+	void addCustomCollectionLongName(const std::string& collectionName);
 
 	MenuComponent mMenu;
 
@@ -56,6 +57,7 @@ private:
 
 	std::vector< std::function<void()> > mSaveFuncs;
 	bool mReloadAll;
+	bool mReloadSystems;
 };
 
 #endif // ES_APP_GUIS_GUI_GAME_LIST_OPTIONS_H

@@ -202,8 +202,6 @@ void GuiMenu::openDisplaySettings()
 					Settings::getInstance()->setBool("ShowBatteryIndicator", fullScreenMode->getState());
 					Settings::getInstance()->setBool("ShowNetworkIndicator", fullScreenMode->getState());
 					Settings::getInstance()->saveFile();
-					Scripting::fireEvent("quit");
-					//quitES();
 					if(quitES(QuitMode::RESTART) != 0)
 						LOG(LogWarning) << "GuiMenu::openDisplaySettings() - Restart terminated with non-zero result!";
 				}, _("NO"), nullptr));

@@ -134,6 +134,7 @@ public:
 	inline FolderData* getRootFolder() const { return mRootFolder; };
 	inline const std::string& getName() const { return mMetadata.name; }
 	inline const std::string& getFullName() const { return mMetadata.fullName; }
+	inline void setFullName(const std::string& fullName) { mMetadata.fullName = fullName; };
 	inline const std::string& getStartPath() const { return mEnvData->mStartPath; }
 	//inline const std::vector<std::string>& getExtensions() const { return mEnvData->mSearchExtensions; }
 	inline const std::string& getThemeFolder() const { return mMetadata.themeFolder; }
