@@ -988,30 +988,43 @@ std::vector<std::string> ApiSystem::getWifiNetworks(bool scan)
 	return executeEnumerationScript(scan ? "es-wifi scanlist" : "es-wifi list");
 }
 
-bool ApiSystem::enableWifi(const std::string ssid, const std::string key)
+bool ApiSystem::connectWifi(const std::string ssid, const std::string key)
 {
-	LOG(LogInfo) << "ApiSystem::enableWifi()";
+	LOG(LogInfo) << "ApiSystem::connectWifi() - SSID: '" << ssid << "'";
 
-	return executeScript("es-wifi enable \"" + ssid + "\" \"" + key + '"');
+	return executeScript("es-wifi connect \"" + ssid + "\" \"" + key + '"');
 }
 
 bool ApiSystem::disconnectWifi(const std::string ssid)
 {
-	LOG(LogInfo) << "ApiSystem::disconnectWifi() - SSID: " << ssid;
+	LOG(LogInfo) << "ApiSystem::disconnectWifi() - SSID: '" << ssid << "'";
 
 	return executeScript("es-wifi disconnect \"" + ssid + '"');
 }
 
-bool ApiSystem::disableWifi()
+bool ApiSystem::enableWifi(bool background)
+{
+	LOG(LogInfo) << "ApiSystem::enableWifi()";
+
+	std::string commnad("es-wifi enable");
+	commnad.append(background ? " &" : "");
+
+	return executeScript(commnad);
+}
+
+bool ApiSystem::disableWifi(bool background)
 {
 	LOG(LogInfo) << "ApiSystem::disableWifi()";
 
-	return executeScript("es-wifi disable");
+	std::string commnad("es-wifi disable");
+	commnad.append(background ? " &" : "");
+
+	return executeScript(commnad);
 }
 
 bool ApiSystem::resetWifi(const std::string ssid)
 {
-	LOG(LogInfo) << "ApiSystem::resetWifi()";
+	LOG(LogInfo) << "ApiSystem::resetWifi() - SSID: '" << ssid << "'";
 
 	return executeScript("es-wifi reset \"" + ssid + '"');
 }
@@ -1025,14 +1038,14 @@ bool ApiSystem::isWifiEnabled()
 
 bool ApiSystem::enableManualWifiDns(const std::string ssid, const std::string dnsOne, const std::string dnsTwo)
 {
-	LOG(LogInfo) << "ApiSystem::enableManualWifiDns()";
+	LOG(LogInfo) << "ApiSystem::enableManualWifiDns() - SSID: '" << ssid << "', DNS1: " << dnsOne << ", DNS2: " << dnsTwo;
 
 	return executeScript("es-wifi enable_manual_dns \"" + ssid + "\" \"" + dnsOne + "\" \"" + dnsTwo + '"');
 }
 
 bool ApiSystem::disableManualWifiDns(const std::string ssid)
 {
-	LOG(LogInfo) << "ApiSystem::disableManualWifiDns()";
+	LOG(LogInfo) << "ApiSystem::disableManualWifiDns() - SSID: '" << ssid << "'";
 
 	return executeScript("es-wifi disable_manual_dns \"" + ssid + '"');
 }
@@ -1046,7 +1059,7 @@ std::string ApiSystem::getWifiSsid()
 
 std::string ApiSystem::getWifiPsk(const std::string ssid)
 {
-	LOG(LogInfo) << "ApiSystem::getWifiPsk() - ssid: " << ssid;
+	LOG(LogInfo) << "ApiSystem::getWifiPsk() - SSID: '" << ssid << "'";
 
 	return queryWifiPsk(ssid);
 }

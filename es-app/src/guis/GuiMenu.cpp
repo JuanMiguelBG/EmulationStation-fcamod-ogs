@@ -1358,7 +1358,10 @@ void GuiMenu::preloadNetworkSettings()
 {
 	SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
 	SystemConf::getInstance()->set("system.hostname", ApiSystem::getInstance()->getHostname());
-	SystemConf::getInstance()->set("wifi.ssid", ApiSystem::getInstance()->getWifiSsid());
+
+	if (SystemConf::getInstance()->get("wifi.ssid").empty())
+		SystemConf::getInstance()->set("wifi.ssid", ApiSystem::getInstance()->getWifiSsid());
+
 	SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(SystemConf::getInstance()->get("wifi.ssid")));
 	SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
 	SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
@@ -1434,7 +1437,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				bool manualDns = manual_dns->getState();
 				std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
 
-				if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
+				if (ssid.empty())
 					return;
 
 				if (manualDns)
@@ -1491,8 +1494,11 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				std::string newSSID = SystemConf::getInstance()->get("wifi.ssid"),
 										newKey = SystemConf::getInstance()->get("wifi.key");
 
-				if (newSSID.empty() || strcmp(newSSID.c_str(), "--") == 0)
+				if (newSSID.empty())
+				{
+					ApiSystem::getInstance()->enableWifi();
 					return;
+				}
 
 				if (baseSSID != newSSID || baseKEY != newKey || !baseWifiEnabled)
 				{
@@ -1500,7 +1506,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 					window->pushGui(new GuiLoading<bool>(window, _("CONNETING TO WIFI") + " '" + newSSID + "'",
 						[newSSID, newKey]
 						{
-							return ApiSystem::getInstance()->enableWifi(newSSID, newKey);
+							return ApiSystem::getInstance()->connectWifi(newSSID, newKey);
 						},
 						[window, newSSID](bool success)
 						{
@@ -1518,7 +1524,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				window->pushGui(new GuiLoading<bool>(window, _("DISCONNETING TO WIFI") + " '" + baseSSID + "'",
 					[]
 					{
-						return ApiSystem::getInstance()->disableWifi();
+						return ApiSystem::getInstance()->disableWifi(false);
 					},
 					[window, baseSSID](bool success)
 					{
@@ -1538,20 +1544,21 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 
 				std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
 
-				if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
-				{
-					delete s;
-					openNetworkSettings(true, false);
-					return;
-				}
-
 				Settings::getInstance()->setBool("wait.process.loading", true);
 				if (wifienabled)
 				{
+					if (ssid.empty())
+					{
+						ApiSystem::getInstance()->enableWifi();
+						delete s;
+						openNetworkSettings(true, false);
+						return;
+					}
+
 					window->pushGui(new GuiLoading<bool>(window, _("CONNETING TO WIFI") + " '" + ssid + "'",
 						[s, ssid]
 						{
-							return ApiSystem::getInstance()->enableWifi(ssid, SystemConf::getInstance()->get("wifi.key"));
+							return ApiSystem::getInstance()->connectWifi(ssid, SystemConf::getInstance()->get("wifi.key"));
 						},
 						[this, s, window, ssid](bool success)
 						{
@@ -1563,15 +1570,21 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 
 							delete s;
 							openNetworkSettings(true, false);
-
 						}));
 				}
 				else
 				{
+					if (ssid.empty())
+					{
+						ApiSystem::getInstance()->disableWifi();
+						delete s;
+						openNetworkSettings(true, false);
+						return;
+					}
 					window->pushGui(new GuiLoading<bool>(window, _("DISCONNETING TO WIFI") + " '" + ssid + "'",
 						[s, ssid]
 						{
-							return ApiSystem::getInstance()->disableWifi();
+							return ApiSystem::getInstance()->disableWifi(false);
 						},
 						[this, s, window, ssid](bool success)
 						{
@@ -1595,7 +1608,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				SystemConf::getInstance()->setBool("wifi.manual_dns", manualDns);
 				std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
 
-				if (ssid.empty() || strcmp(ssid.c_str(), "--") == 0)
+				if (ssid.empty())
 				{
 					delete s;
 					openNetworkSettings(false, true);
@@ -1660,7 +1673,7 @@ void GuiMenu::resetNetworkSettings(GuiSettings *gui)
 {
 	ApiSystem::getInstance()->resetWifi(SystemConf::getInstance()->get("wifi.ssid"));
 	SystemConf::getInstance()->setBool("wifi.enabled", false);
-	SystemConf::getInstance()->set("wifi.ssid", "--");
+	SystemConf::getInstance()->set("wifi.ssid", "");
 	SystemConf::getInstance()->set("wifi.key", "");
 	SystemConf::getInstance()->setBool("wifi.manual_dns", false);
 	SystemConf::getInstance()->set("wifi.dns1", "");
