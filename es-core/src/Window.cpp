@@ -367,7 +367,7 @@ void Window::render()
 	mRenderedHelpPrompts = false;
 
 	// draw only bottom and top of GuiStack (if they are different)
-	if(mGuiStack.size())
+	if (mGuiStack.size())
 	{
 		auto& bottom = mGuiStack.front();
 		auto& top = mGuiStack.back();
@@ -387,13 +387,10 @@ void Window::render()
 		}
 	}
 
-	
-	// GPI skip
-	if (mGuiStack.size() < 2 || !Renderer::isSmallScreen())
-		if(!mRenderedHelpPrompts)
-			mHelp->render(transform);
+	if (!mRenderedHelpPrompts)
+		mHelp->render(transform);
 
-	if(Settings::getInstance()->getBool("DrawFramerate") && mFrameDataText)
+	if (Settings::getInstance()->getBool("DrawFramerate") && mFrameDataText)
 	{
 		Renderer::setMatrix(Transform4x4f::Identity());
 		mDefaultFonts.at(1)->renderTextCache(mFrameDataText.get());
@@ -415,10 +412,10 @@ void Window::render()
 	Renderer::setMatrix(Transform4x4f::Identity());
 
 	unsigned int screensaverTime = (unsigned int)Settings::getInstance()->getInt("ScreenSaverTime");
-	if(isScreenSaverEnabled() && (mTimeSinceLastInput >= screensaverTime) )
+	if (isScreenSaverEnabled() && (mTimeSinceLastInput >= screensaverTime) )
 		startScreenSaver();
 
-	if(!mRenderScreenSaver && mInfoPopup)
+	if (!mRenderScreenSaver && mInfoPopup)
 		mInfoPopup->render(transform);
 
 	renderRegisteredNotificationComponents(transform);
