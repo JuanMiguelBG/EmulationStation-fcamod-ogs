@@ -417,10 +417,20 @@ std::string ApiSystem::getFreeSpaceUserInfo() {
 	return getFreeSpaceInfo("/roms");
 }
 
+std::string ApiSystem::getFreeSpaceUser2Info()
+{
+	return getFreeSpaceInfo("/roms2");
+}
+
+bool ApiSystem::isUser2Mounted()
+{
+	return isDriveMounted("/roms2");
+}
+
 std::string ApiSystem::getFreeSpaceUsbDriveInfo(const std::string mountpoint)
 {
 	LOG(LogDebug) << "ApiSystem::getFreeSpaceUsbDriveInfo() - mount point: " << mountpoint;
-	if ( isUsbDriveMounted(mountpoint) )
+	if ( isDriveMounted(mountpoint) )
 		return getFreeSpaceInfo(mountpoint);
 
 	return "";
@@ -470,8 +480,12 @@ bool ApiSystem::isFreeSpaceUserLimit() {
 	return isFreeSpaceLimit("/roms", 2);
 }
 
+bool ApiSystem::isFreeSpaceUser2Limit() {
+	return isFreeSpaceLimit("/roms2", 2);
+}
+
 bool ApiSystem::isFreeSpaceUsbDriveLimit(const std::string mountpoint) {
-	if ( isUsbDriveMounted(mountpoint) )
+	if ( isDriveMounted(mountpoint) )
 		return isFreeSpaceLimit(mountpoint, 2);
 
 	return false;

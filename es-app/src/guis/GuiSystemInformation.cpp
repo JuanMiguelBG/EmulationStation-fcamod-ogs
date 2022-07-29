@@ -138,6 +138,22 @@ void GuiSystemInformation::showSummarySystemInfo()
 	addUpdatableComponent(userSpace.get());
 	addWithLabel(_("ROMS DISK USAGE"), userSpace);
 
+	// roms2
+	if (ApiSystem::getInstance()->isUser2Mounted())
+	{
+		warning = ApiSystem::getInstance()->isFreeSpaceUser2Limit();
+		auto userSpace2 = std::make_shared<UpdatableTextComponent>(mWindow, ApiSystem::getInstance()->getFreeSpaceUser2Info(), font, warning ? 0xFF0000FF : color);
+		userSpace2->setUpdatableFunction([userSpace2, color]
+			{
+				LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update user space 2";
+				bool warning = ApiSystem::getInstance()->isFreeSpaceUser2Limit();
+				userSpace2->setText(ApiSystem::getInstance()->getFreeSpaceUser2Info());
+				userSpace2->setColor(warning ? 0xFF0000FF : color);
+			}, 30000);
+		addUpdatableComponent(userSpace2.get());
+		addWithLabel(_("ROMS2 DISK USAGE"), userSpace2);
+	}
+
 	// usbdrive
 	configUsbDriveDevices(pthis, font, color);
 
@@ -462,6 +478,7 @@ void GuiSystemInformation::openStorage()
 	// roms
 	warning = ApiSystem::getInstance()->isFreeSpaceUserLimit();
 	auto userSpace = std::make_shared<UpdatableTextComponent>(window, ApiSystem::getInstance()->getFreeSpaceUserInfo(), font, warning ? 0xFF0000FF : color);
+
 	userSpace->setUpdatableFunction([bootSpace, systemSpace, userSpace, color]//usbdrive, color]
 		{
 			LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update storage";
@@ -481,6 +498,22 @@ void GuiSystemInformation::openStorage()
 	s->addWithLabel(_("BOOT DISK USAGE"), bootSpace);
 	s->addWithLabel(_("SYSTEM DISK USAGE"), systemSpace);
 	s->addWithLabel(_("ROMS DISK USAGE"), userSpace);
+
+	// roms2
+	if (ApiSystem::getInstance()->isUser2Mounted())
+	{
+		warning = ApiSystem::getInstance()->isFreeSpaceUser2Limit();
+		auto userSpace2 = std::make_shared<UpdatableTextComponent>(mWindow, ApiSystem::getInstance()->getFreeSpaceUser2Info(), font, warning ? 0xFF0000FF : color);
+		userSpace2->setUpdatableFunction([userSpace2, color]
+			{
+				LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update user space 2";
+				bool warning = ApiSystem::getInstance()->isFreeSpaceUser2Limit();
+				userSpace2->setText(ApiSystem::getInstance()->getFreeSpaceUser2Info());
+				userSpace2->setColor(warning ? 0xFF0000FF : color);
+			}, 30000);
+		addUpdatableComponent(userSpace2.get());
+		s->addWithLabel(_("ROMS2 DISK USAGE"), userSpace2);
+	}
 
 	// usbdrive
 	configUsbDriveDevices(s, font, color);

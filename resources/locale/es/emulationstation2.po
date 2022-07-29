@@ -2601,6 +2601,10 @@ msgid "ROMS DISK USAGE"
 msgstr "USO DISCO ROMS"
 
 #:
+msgid "ROMS2 DISK USAGE"
+msgstr "USO DISCO ROMS2"
+
+#:
 msgid "USB DISK USAGE"
 msgstr "USO DISCO USB"
 

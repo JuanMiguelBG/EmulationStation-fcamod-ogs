@@ -90,6 +90,8 @@ public:
 	std::string getFreeSpaceBootInfo();
 	std::string getFreeSpaceSystemInfo();
 	std::string getFreeSpaceUserInfo();
+	std::string getFreeSpaceUser2Info();
+	bool isUser2Mounted();
 	std::string getFreeSpaceUsbDriveInfo(const std::string mountpoint);
 	std::string getFreeSpaceInfo(const std::string mountpoint);
 
@@ -98,6 +100,7 @@ public:
 	bool isFreeSpaceBootLimit();
 	bool isFreeSpaceSystemLimit();
 	bool isFreeSpaceUserLimit();
+	bool isFreeSpaceUser2Limit();
 	bool isFreeSpaceUsbDriveLimit(const std::string mountpoint);
 
 	bool isFreeSpaceLimit(const std::string mountpoint, int limit = 1); // GB

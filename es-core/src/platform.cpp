@@ -472,11 +472,11 @@ NetworkInformation queryNetworkInformation(bool summary)
 				{
 					nmcli_command.append("nmcli dev wifi | grep %s | awk '{print %s}'");
 					field.clear();
-					field.append( "$8" ) // wifi signal
-							 .append( " \" \" $5" ) // wifi channel
-							 .append( " \" \"  $6" ) // rate
-							 .append( " \" \"  $7" ) // rate unit
-							 .append( " \" \"  $10 \" \"  $11 " ); // wifi security
+					field.append( "$7" ) // wifi signal
+							 .append( " \" \" $4" ) // wifi channel
+							 .append( " \" \"  $5" ) // rate
+							 .append( " \" \"  $6" ) // rate unit
+							 .append( " \" \"  $9 \" \"  $10 " ); // wifi security
 					snprintf(result_buffer, 256, nmcli_command.c_str(), network.ssid.c_str(), field.c_str());
 					std::vector<std::string> results = Utils::String::split(getShOutput( result_buffer ), ' ');
 					network.signal = std::atoi( results.at(0).c_str() ); // wifi signal
@@ -484,7 +484,7 @@ NetworkInformation queryNetworkInformation(bool summary)
 					network.rate = std::atoi( results.at(2).c_str() ); // rate
 					network.rate_unit = results.at(3);
 					network.security = results.at(4); // wifi security
-					if (results.size() == 6)
+					if ((results.size() == 6) && !results.at(5).empty())
 						network.security.append(" - ").append(results.at(5));
 				}
 				else
@@ -962,13 +962,13 @@ std::string getShOutput(const std::string& mStr)
 	return result;
 }
 
-bool isUsbDriveMounted(std::string device)
+bool isDriveMounted(std::string device)
 {
 	return ( Utils::FileSystem::exists(device) && Utils::FileSystem::exists("/bin/findmnt")
 		&& !getShOutput("findmnt -rno SOURCE,TARGET \"" + device + '"').empty() );
 }
 
-std::string queryUsbDriveMountPoint(std::string device)
+std::string queryDriveMountPoint(std::string device)
 {
 	std::string dev = "/dev/" + device;
 	if ( Utils::FileSystem::exists(dev) && Utils::FileSystem::exists("/bin/lsblk") )
@@ -983,7 +983,7 @@ std::vector<std::string> queryUsbDriveMountPoints()
 													 mount_points;
 	for (auto partition = begin (partitions); partition != end (partitions); ++partition)
 	{
-		std::string mp = queryUsbDriveMountPoint(*partition);
+		std::string mp = queryDriveMountPoint(*partition);
 		if (!mp.empty())
 			mount_points.push_back(mp);
 	}

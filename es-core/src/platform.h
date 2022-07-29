@@ -269,8 +269,8 @@ struct DeviceInformation
 std::string queryDeviceName();
 DeviceInformation queryDeviceInformation(bool summary);
 
-bool isUsbDriveMounted(std::string device);
-std::string queryUsbDriveMountPoint(std::string device);
+bool isDriveMounted(std::string device);
+std::string queryDriveMountPoint(std::string device);
 std::vector<std::string> queryUsbDriveMountPoints();
 
 std::string queryTimezones();
