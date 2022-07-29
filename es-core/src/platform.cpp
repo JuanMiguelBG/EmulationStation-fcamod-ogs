@@ -468,7 +468,7 @@ NetworkInformation queryNetworkInformation(bool summary)
 					network.rate = std::atoi( results.at(2).c_str() ); // rate
 					network.rate_unit = results.at(3);
 					network.security = results.at(4); // wifi security
-					if (results.size() == 6)
+					if ((results.size() == 6) && !results.at(5).empty())
 						network.security.append(" - ").append(results.at(5));
 				}
 				else
