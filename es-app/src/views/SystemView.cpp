@@ -557,48 +557,22 @@ bool SystemView::input(InputConfig* config, Input input)
 			auto sortMode = Settings::getInstance()->getString("SortSystems");
 			if (sortMode == "alpha")
 			{
-				showNavigationBar(_("GO TO LETTER"),
-					[](SystemData* meta)
-						{
-							if (meta->isCollection() && (!meta->hasTheme() || (meta->getSystemMetadata().hardwareType == "auto collection") || (meta->getSystemMetadata().name == "collections")))
-								return _("COLLECTIONS");
-
-							return Utils::String::toUpper(meta->getSystemMetadata().fullName.substr(0, 1));
-						});
-
+				showNavigationBar(_("GO TO LETTER"), [](SystemData* meta) { if (meta->isCollection()) return _("COLLECTIONS"); if (Settings::getInstance()->getBool("SpecialAlphaSort") && (meta->getSystemMetadata().hardwareType == "system")) return _("SYSTEM TOOL"); return Utils::String::toUpper(meta->getSystemMetadata().fullName.substr(0, 1)); });
 				return true;
 			}
 			else if (sortMode == "manufacturer")
 			{
-				showNavigationBar(_("GO TO MANUFACTURER"),
-					[](SystemData* meta)
-						{
-							return meta->getSystemMetadata().manufacturer;
-						});
-
+				showNavigationBar(_("GO TO MANUFACTURER"), [](SystemData* meta) { return meta->getSystemMetadata().manufacturer; });
 				return true;
 			}
 			else if (sortMode == "hardware")
 			{
-				showNavigationBar(_("GO TO HARDWARE"),
-					[](SystemData* meta)
-						{
-							return meta->getSystemMetadata().hardwareType;
-						});
-
+				showNavigationBar(_("GO TO HARDWARE"), [](SystemData* meta) { return meta->getSystemMetadata().hardwareType; });
 				return true;
 			}
 			else if (sortMode == "releaseDate")
 			{
-				showNavigationBar(_("GO TO DECADE"),
-					[](SystemData* meta)
-						{
-							if (meta->getSystemMetadata().releaseYear == 0)
-								return _("UNKNOWN");
-
-							return std::to_string((meta->getSystemMetadata().releaseYear / 10) * 10) + "'s";
-						});
-
+				showNavigationBar(_("GO TO DECADE"), [](SystemData* meta) { if (meta->getSystemMetadata().releaseYear == 0) return _("UNKNOWN"); return std::to_string((meta->getSystemMetadata().releaseYear / 10) * 10) + "'s"; });
 				return true;
 			}
 		}

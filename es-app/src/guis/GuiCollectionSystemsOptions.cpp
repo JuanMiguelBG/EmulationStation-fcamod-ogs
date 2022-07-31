@@ -144,8 +144,8 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	});
 
 
-	addGroup(_("OPTIONS"));
 
+	addGroup(_("SORT OPTIONS"));
 	// SORT COLLECTIONS AND SYSTEMS
 	std::string sortMode = Settings::getInstance()->getString("SortSystems");
 
@@ -185,6 +185,19 @@ void GuiCollectionSystemsOptions::initializeMenu()
 			}
 		});
 
+	// alpha sort system hardware to bottom
+	auto specialAlphaSort = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("SpecialAlphaSort"));
+	addWithLabel(_("SPECIAL ALPAH SORT"), specialAlphaSort);
+	addSaveFunc([this, specialAlphaSort, sortType]
+		{
+			if (Settings::getInstance()->setBool("SpecialAlphaSort", specialAlphaSort->getState()))
+			{
+				if (sortType->getSelected() == "alpha")
+					setVariable("reloadAll", true);
+			}
+		});
+
+	addGroup(_("OTHER OPTIONS"));
 	// Optionally start in selected system
 	auto systemfocus_list = std::make_shared< OptionListComponent<std::string> >(mWindow, _("START ON SYSTEM"), false);
 	systemfocus_list->add(_("NONE"), "", Settings::getInstance()->getString("StartupSystem") == "");

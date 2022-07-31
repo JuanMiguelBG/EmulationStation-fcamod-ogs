@@ -2910,12 +2910,24 @@ msgid "VARIOUS"
 msgstr "VARIOS"
 
 #:
+msgid "SORT OPTIONS"
+msgstr "OPCIONES DE ORDENACION"
+
+#:
 msgid "SORT SYSTEMS"
 msgstr "ORDENAR SISTEMAS"
 
 #:
 msgid "USE FULL SYSTEM NAME IN SORT"
 msgstr "USAR EL NOMBRE COMPLETO DEL SISTEMA EN LA ORDENACIÓN"
+
+#:
+msgid "SPECIAL ALPAH SORT"
+msgstr "ORDENACIÓN ALFABÉTICA ESPECIAL"
+
+#:
+msgid "OTHER OPTIONS"
+msgstr "OTRAS OPCIONES"
 
 #:
 msgid "COLLECTIONS"
@@ -2929,17 +2941,25 @@ msgstr "COL. AUTOMÁTICA"
 msgid "CUSTOM COLLECTION"
 msgstr "COL. PERSONALIZADA"
 
+#:
 msgid "GO TO LETTER"
 msgstr "IR A LETRA"
 
+#:
 msgid "GO TO MANUFACTURER"
 msgstr "IR A MARCA"
 
+#:
 msgid "GO TO HARDWARE"
 msgstr "IR A HARDWARE"
 
+#:
 msgid "GO TO DECADE"
 msgstr "IR A DÉCADA"
+
+#:
+msgid "SYSTEM TOOL"
+msgstr "HERR. SISTEMA"
 
 #:
 msgid "VIEW MENU"
