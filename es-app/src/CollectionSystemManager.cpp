@@ -140,6 +140,48 @@ bool systemByAlphaSort(SystemData* sys1, SystemData* sys2)
 	return name1.compare(name2) < 0;
 }
 
+bool systemBySpecialAlphaSort(SystemData* sys1, SystemData* sys2)
+{
+	// Move system hardware at End
+	std::string hw1 = sys1->getSystemMetadata().hardwareType;
+	std::string hw2 = sys2->getSystemMetadata().hardwareType;
+
+	if (hw1 != hw2)
+	{
+		if (hw1 == "system")
+			return false;
+		else if (hw2 == "system")
+			return true;
+	}
+
+	// Move collection at End
+	if (sys1->isCollection() != sys2->isCollection())
+		return sys2->isCollection();
+
+	// Then by name
+	std::string name1 = sys1->getFullName();
+	std::string name2 = sys2->getFullName();
+
+	// Move collections bundle at first collection
+	if (sys1->isCollection() && sys2->isCollection())
+	{
+		if (name1 == "collections")
+			return true;
+		else if (name2 == "collections")
+			return false;
+	}
+
+	if (hw1 == "auto collection")
+		name1 = _(name1);
+	if (hw2 == "auto collection")
+		name2 = _(name2);
+
+	name1 = Utils::String::toUpper(name1);
+	name2 = Utils::String::toUpper(name2);
+
+	return name1.compare(name2) < 0;
+}
+
 bool systemByManufacurerSort(SystemData* sys1, SystemData* sys2)
 {
 	// Move collection at End
@@ -169,7 +211,7 @@ bool systemByManufacurerSort(SystemData* sys1, SystemData* sys2)
 	else if (sys1->getSystemMetadata().releaseYear > sys2->getSystemMetadata().releaseYear)
 		return false;
 
-		// Then by name
+	// Then by name
 	std::string name1 = Utils::String::toUpper(sys1->getName());
 	std::string name2 = Utils::String::toUpper(sys2->getName());
 	if (Settings::getInstance()->getBool("ForceFullNameSortSystems"))
@@ -193,8 +235,6 @@ bool systemByHardwareSort(SystemData* sys1, SystemData* sys2)
 		return mf1.compare(mf2) < 0;
 
 	// Then by name
-
-		// Then by name
 	std::string name1 = Utils::String::toUpper(sys1->getName());
 	std::string name2 = Utils::String::toUpper(sys2->getName());
 	if (Settings::getInstance()->getBool("ForceFullNameSortSystems"))
@@ -218,8 +258,6 @@ bool systemByReleaseDate(SystemData* sys1, SystemData* sys2)
 		return !sys2->isCollection();
 
 	// Then by name
-
-		// Then by name
 	std::string name1 = Utils::String::toUpper(sys1->getName());
 	std::string name2 = Utils::String::toUpper(sys2->getName());
 	if (Settings::getInstance()->getBool("ForceFullNameSortSystems"))
@@ -330,6 +368,7 @@ void CollectionSystemManager::loadEnabledListFromSettings()
 void CollectionSystemManager::updateSystemsList()
 {
 	auto sortMode = Settings::getInstance()->getString("SortSystems");
+	bool sortByAlpha = SystemData::isManufacturerSupported() && sortMode == "alpha";
 	bool sortByManufacturer = SystemData::isManufacturerSupported() && sortMode == "manufacturer";
 	bool sortByHardware = SystemData::isManufacturerSupported() && sortMode == "hardware";
 	bool sortByReleaseDate = SystemData::isManufacturerSupported() && sortMode == "releaseDate";
@@ -340,10 +379,12 @@ void CollectionSystemManager::updateSystemsList()
 	std::unordered_map<std::string, FileData*> map;
 	getAllGamesCollection()->getRootFolder()->createChildrenByFilenameMap(map);
 
+	bool specailAlphSort = Settings::getInstance()->getBool("SpecialAlphaSort") && sortByAlpha;
+
 	// add custom enabled ones
 	addEnabledCollectionsToDisplayedSystems(&mCustomCollectionSystemsData, &map);
 
-	if (!sortMode.empty() && !sortByManufacturer && !sortByHardware && !sortByReleaseDate)
+	if (sortByAlpha && !specailAlphSort)
 		std::sort(SystemData::sSystemVector.begin(), SystemData::sSystemVector.end(), systemByAlphaSort);
 
 	if (mCustomCollectionsBundle->getRootFolder()->getChildren().size() > 0)
@@ -354,7 +395,9 @@ void CollectionSystemManager::updateSystemsList()
 
 	if (!sortMode.empty())
 	{
-		if (sortByManufacturer)
+		if (specailAlphSort)
+			std::sort(SystemData::sSystemVector.begin(), SystemData::sSystemVector.end(), systemBySpecialAlphaSort);
+		else if (sortByManufacturer)
 			std::sort(SystemData::sSystemVector.begin(), SystemData::sSystemVector.end(), systemByManufacurerSort);
 		else if (sortByHardware)
 			std::sort(SystemData::sSystemVector.begin(), SystemData::sSystemVector.end(), systemByHardwareSort);
@@ -376,6 +419,7 @@ void CollectionSystemManager::updateSystemsList()
 				sysIt++;
 			}
 		}
+
 	}
 
 	// if we were editing a custom collection, and it's no longer enabled, exit edit mode

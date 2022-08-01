@@ -171,6 +171,7 @@ void Settings::setDefaults()
 	mStringMap["HiddenSystems"] = "";
 	mStringMap["SortSystems"] = ""; // "manufacturer" backward compatibility
 	mStringMap["ForceFullNameSortSystems"] = false;
+	mStringMap["SpecialAlphaSort"] = false;
 	mBoolMap["UseCustomCollectionsSystem"] = true;
 	mBoolMap["CollectionShowSystemInfo"] = true;
 	mBoolMap["HiddenSystemsShowGames"] = true;
