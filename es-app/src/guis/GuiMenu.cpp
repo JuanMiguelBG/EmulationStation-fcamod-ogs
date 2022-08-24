@@ -118,7 +118,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	bool bluetoothEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
 
 	// battery | Sound | Brightness | Bluetooh | Network
-	addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " | " + ( ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BLUETOOTH) ? formatIconsBluetoohStatus(bluetoothEnabled) + " | " : "") + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
+	addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " |  " + ( ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BLUETOOTH) ? formatIconsBluetoohStatus(bluetoothEnabled) + " | " : "") + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
 
 	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 
@@ -860,15 +860,27 @@ void GuiMenu::openUISettings()
 	auto themeSets = ThemeData::getThemeSets();
 	auto system = ViewController::get()->getState().getSystem();
 
+	LOG(LogDebug) << "GuiMenu::openUISettings() - themeSets.empty(): " << Utils::String::boolToString(themeSets.empty());
+	Log::flush();
 	if (!themeSets.empty())
 	{
+		LOG(LogDebug) << "GuiMenu::openUISettings() - if (!themeSets.empty()) ==> true";
+		Log::flush();
+
+		LOG(LogDebug) << "GuiMenu::openUISettings() - Settings::getInstance()->getString(\"ThemeSet\"): " << Utils::String::boolToString(Settings::getInstance()->getString("ThemeSet").empty());
+		Log::flush();
+
 		std::map<std::string, ThemeSet>::const_iterator selectedSet = themeSets.find(Settings::getInstance()->getString("ThemeSet"));
 		if (selectedSet == themeSets.cend())
 			selectedSet = themeSets.cbegin();
 
-			// Load theme randomly
+		LOG(LogDebug) << "GuiMenu::openUISettings() - Load theme randomly";
+		Log::flush();
+		// Load theme randomly
 		auto themeRandom = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ThemeRandom"));
 
+		LOG(LogDebug) << "GuiMenu::openUISettings() - Load themes list";
+		Log::flush();
 		auto theme_set = std::make_shared< OptionListComponent<std::string> >(mWindow, _("THEMES"), false);
 		for (auto it = themeSets.cbegin(); it != themeSets.cend(); it++)
 			theme_set->add(it->first, it->first, it == selectedSet);
@@ -912,10 +924,16 @@ void GuiMenu::openUISettings()
 				Scripting::fireEvent("theme-changed", theme_set->getSelected(), oldTheme);
 			}
 		});
-	
+
+		LOG(LogDebug) << "GuiMenu::openUISettings() - system->getTheme(): " << system->getTheme() << ", system->getTheme()->hasSubsets(): " << Utils::String::boolToString(system->getTheme()->hasSubsets()) << ", system->getTheme()->hasView(\"grid\"): " << Utils::String::boolToString(system->getTheme()->hasView("grid"));
+	Log::flush();
 		bool showThemeConfiguration = (system->getTheme() != nullptr) && ( system->getTheme()->hasSubsets() || system->getTheme()->hasView("grid") );
+		LOG(LogDebug) << "GuiMenu::openUISettings() - showThemeConfiguration: " << Utils::String::boolToString(showThemeConfiguration);
+	Log::flush();
 		if (showThemeConfiguration)
 		{
+			LOG(LogDebug) << "GuiMenu::openUISettings() - if (showThemeConfiguration) ==> true, adding 'Theme Configuration Menu'";
+	Log::flush();
 			s->addSubMenu(_("THEME CONFIGURATION"), [this, s, theme_set]() { openThemeConfiguration(mWindow, s, theme_set); });
 		}
 		else // GameList view style only, acts like Retropie for simple themes
@@ -2690,9 +2708,9 @@ std::string GuiMenu::formatIconsBluetoohStatus(bool status)
 {
 	std::string bluetoothInfo("");
 	if (status)
-		bluetoothInfo.append(_U("\uF293  "));
+		bluetoothInfo.append(_U("\uF293 "));
 	else
-		bluetoothInfo.append(_U("\uF294  "));
+		bluetoothInfo.append(_U("\uF294 "));
 
 	return bluetoothInfo;
 }
