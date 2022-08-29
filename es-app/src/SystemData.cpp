@@ -619,19 +619,12 @@ bool SystemData::loadConfig(Window* window)
 
 		if (window != NULL)
 			window->renderLoadingScreen(_("Collections"), systemCount == 0 ? 0 : currentSystem / systemCount);
-//			window->renderLoadingScreen(_("Favorites"), systemCount == 0 ? 0 : currentSystem / systemCount);
-
-
-//		createGroupedSystems();
-//		CollectionSystemManager::get()->updateSystemsList();
 	}
 	else
 	{
 		if (window != NULL)
 			window->renderLoadingScreen(_("Collections"), systemCount == 0 ? 0 : currentSystem / systemCount);
-//			window->renderLoadingScreen(_("Favorites"), systemCount == 0 ? 0 : currentSystem / systemCount);
 
-//		createGroupedSystems();
 		CollectionSystemManager::get()->loadCollectionSystems();
 	}
 
@@ -643,10 +636,6 @@ bool SystemData::loadConfig(Window* window)
 		//loadFeatures();
 
 		CollectionSystemManager::get()->updateSystemsList();
-
-//		auto theme = SystemData::sSystemVector.at(0)->getTheme();
-//		if (theme != nullptr)
-//			ViewController::get()->onThemeChanged(theme);
 
 		for (auto sys : SystemData::sSystemVector)
 		{
