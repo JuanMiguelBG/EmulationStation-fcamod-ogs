@@ -454,14 +454,14 @@ NetworkInformation queryNetworkInformation(bool summary)
 				nmcli_command.clear();
 				if (network.isWifi)
 				{
-					nmcli_command.append("nmcli dev wifi | grep %s | awk '{print %s}'");
+					nmcli_command.append("nmcli dev wifi | grep '%s' | sed -e 's/^.*%s//' | awk '{print %s}'");
 					field.clear();
-					field.append( "$8" ) // wifi signal
-							 .append( " \" \" $5" ) // wifi channel
-							 .append( " \" \"  $6" ) // rate
-							 .append( " \" \"  $7" ) // rate unit
-							 .append( " \" \"  $10 \" \"  $11 " ); // wifi security
-					snprintf(result_buffer, 256, nmcli_command.c_str(), network.ssid.c_str(), field.c_str());
+					field.append( "$5" ) // wifi signal
+							 .append( " \" \" $2" ) // wifi channel
+							 .append( " \" \"  $3" ) // rate
+							 .append( " \" \"  $4" ) // rate unit
+							 .append( " \" \"  $7 \" \"  $8 " ); // wifi security
+					snprintf(result_buffer, 256, nmcli_command.c_str(), network.ssid.c_str(), network.ssid.c_str(), field.c_str());
 					std::vector<std::string> results = Utils::String::split(getShOutput( result_buffer ), ' ');
 					network.signal = std::atoi( results.at(0).c_str() ); // wifi signal
 					network.channel = std::atoi( results.at(1).c_str() ); // wifi channel
