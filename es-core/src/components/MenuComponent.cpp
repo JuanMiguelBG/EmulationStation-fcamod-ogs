@@ -256,7 +256,7 @@ void MenuComponent::updateSize()
 				height_ratio = 1.0f;
 
 	if (change_height)
-		height_ratio = 0.90f;
+		height_ratio = 0.95f;
 
 	height = (float)Math::min((int)Renderer::getScreenHeight(), (int)(Renderer::getScreenHeight() * height_ratio));
 

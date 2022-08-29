@@ -269,7 +269,7 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
 	float height_ratio = 1.0f;
 	if ( change_height )
-		height_ratio = 0.90f;
+		height_ratio = 0.95f;
 
 	// If multiline, set all diminsions back to default, else draw size for keyboard.
 	if (mMultiLine)

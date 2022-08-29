@@ -336,7 +336,7 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
 	float height_ratio = 1.0f;
 	if ( change_height )
-		height_ratio = 0.90f;
+		height_ratio = 0.95f;
 
 	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
 

@@ -18,7 +18,7 @@ GuiScreensaverOptions::GuiScreensaverOptions(Window* window, std::string title) 
 	float height_ratio = 1.0f;
 
 	if ( change_height )
-		height_ratio = 0.88f;
+		height_ratio = 0.95f;
 
 	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
 

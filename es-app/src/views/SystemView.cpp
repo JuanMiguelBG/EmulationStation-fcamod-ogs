@@ -692,7 +692,7 @@ void SystemView::showNavigationBar(const std::string& title, const std::function
 	bool change_height = Settings::getInstance()->getBool("ShowHelpPrompts"); //&& Renderer::isSmallScreen();
 	float height_ratio = 1.0f;
 	if ( change_height )
-		height_ratio = 0.90f;
+		height_ratio = 0.95f;
 
 //	float height_ratio = 1.0f;
 //	if ( Settings::getInstance()->getBool("ShowHelpPrompts") && !Renderer::isSmallScreen() )

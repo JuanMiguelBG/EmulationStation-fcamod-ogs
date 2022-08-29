@@ -129,7 +129,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
 	float height_ratio = 1.0f;
 	if ( change_height )
-		height_ratio = 0.90f;
+		height_ratio = 0.95f;
 
 	//setSize(mMenu.getSize());
 	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
@@ -138,7 +138,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	{
 		float x_start = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					x_end = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					y_start = Renderer::getScreenHeight() * 0.9f,
+					y_start = Renderer::getScreenHeight() * 0.95f,
 					y_end = (Renderer::getScreenHeight() - mSize.y()) / 2;
 
 		if ( change_height )
