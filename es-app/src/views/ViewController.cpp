@@ -29,12 +29,42 @@ ViewController* ViewController::get()
 	return sInstance;
 }
 
+void ViewController::deinit()
+{
+	if (sInstance != nullptr)
+		delete sInstance;
+
+	sInstance = nullptr;
+}
+
 void ViewController::init(Window* window)
 {
 	if (sInstance != nullptr)
 		delete sInstance;
 
 	sInstance = new ViewController(window);
+}
+
+void ViewController::saveState()
+{
+	if (sInstance == nullptr)
+		return;
+
+	if (Settings::getInstance()->getString("StartupSystem") != "lastsystem")
+		return;
+
+	SystemData* activeSystem = nullptr;
+
+	if (sInstance->mState.viewing == GAME_LIST)
+		activeSystem = sInstance->mState.getSystem();
+	else if (sInstance->mState.viewing == SYSTEM_SELECT)
+		activeSystem = sInstance->mSystemListView->getActiveSystem();
+
+	if (activeSystem != nullptr)
+	{
+		if (Settings::getInstance()->setString("LastSystem", activeSystem->getName()))
+			Settings::getInstance()->saveFile();
+	}
 }
 
 ViewController::ViewController(Window* window)
@@ -61,28 +91,27 @@ void ViewController::goToStart(bool forceImmediate)
 
 	// If specific system is requested, go directly to the game list
 	auto requestedSystem = Settings::getInstance()->getString("StartupSystem");
+	if (requestedSystem == "lastsystem")
+		requestedSystem = Settings::getInstance()->getString("LastSystem");
+
 	if("" != requestedSystem && "retropie" != requestedSystem)
 	{
-		for(auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++){
-			if ((*it)->getName() == requestedSystem && !(*it)->isGroupChildSystem())
-			{
-				if (hideSystemView || startOnGamelist)
-					goToGameList(*it, forceImmediate);
-				else
-					goToSystemView(*it, forceImmediate);
+		auto system = SystemData::getSystem(requestedSystem);
+		if (system != nullptr && !system->isGroupChildSystem())
+		{
+			if (hideSystemView || startOnGamelist)
+				goToGameList(system, forceImmediate);
+			else
+				goToSystemView(system, forceImmediate);
 
-				return;
-			}
+			return;
 		}
-
-		// Requested system doesn't exist
-		Settings::getInstance()->setString("StartupSystem", "");
 	}
 
 	if (hideSystemView || startOnGamelist)
-		goToGameList(SystemData::sSystemVector.at(0), forceImmediate);
+		goToGameList(SystemData::getFirstVisibleSystem(), forceImmediate);
 	else
-		goToSystemView(SystemData::sSystemVector.at(0), forceImmediate);
+		goToSystemView(SystemData::getFirstVisibleSystem());
 }
 
 void ViewController::reloadAndGoToStart()
@@ -911,6 +940,8 @@ void ViewController::reloadAllGames(Window* window, bool deleteCurrentGui)
 		if (gui != sInstance)
 			delete gui;
 	}
+
+	ViewController::deinit();
 
 	ViewController::init(window);
 	CollectionSystemManager::init(window);

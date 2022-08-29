@@ -71,6 +71,8 @@ public:
 	std::vector<HelpPrompt> getHelpPrompts() override;
 	virtual HelpStyle getHelpStyle() override;
 
+	SystemData* getActiveSystem();
+
 protected:
 	void onCursorChanged(const CursorState& state) override;
 
