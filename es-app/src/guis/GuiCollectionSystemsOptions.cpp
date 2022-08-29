@@ -187,7 +187,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 	// alpha sort system hardware to bottom
 	auto specialAlphaSort = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("SpecialAlphaSort"));
-	addWithLabel(_("SPECIAL ALPAH SORT"), specialAlphaSort);
+	addWithLabel(_("SPECIAL ALPHA SORT"), specialAlphaSort);
 	addSaveFunc([this, specialAlphaSort, sortType]
 		{
 			if (Settings::getInstance()->setBool("SpecialAlphaSort", specialAlphaSort->getState()))
