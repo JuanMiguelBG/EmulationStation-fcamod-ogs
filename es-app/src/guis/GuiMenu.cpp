@@ -860,27 +860,15 @@ void GuiMenu::openUISettings()
 	auto themeSets = ThemeData::getThemeSets();
 	auto system = ViewController::get()->getState().getSystem();
 
-	LOG(LogDebug) << "GuiMenu::openUISettings() - themeSets.empty(): " << Utils::String::boolToString(themeSets.empty());
-	Log::flush();
 	if (!themeSets.empty())
 	{
-		LOG(LogDebug) << "GuiMenu::openUISettings() - if (!themeSets.empty()) ==> true";
-		Log::flush();
-
-		LOG(LogDebug) << "GuiMenu::openUISettings() - Settings::getInstance()->getString(\"ThemeSet\"): " << Utils::String::boolToString(Settings::getInstance()->getString("ThemeSet").empty());
-		Log::flush();
-
 		std::map<std::string, ThemeSet>::const_iterator selectedSet = themeSets.find(Settings::getInstance()->getString("ThemeSet"));
 		if (selectedSet == themeSets.cend())
 			selectedSet = themeSets.cbegin();
 
-		LOG(LogDebug) << "GuiMenu::openUISettings() - Load theme randomly";
-		Log::flush();
 		// Load theme randomly
 		auto themeRandom = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ThemeRandom"));
 
-		LOG(LogDebug) << "GuiMenu::openUISettings() - Load themes list";
-		Log::flush();
 		auto theme_set = std::make_shared< OptionListComponent<std::string> >(mWindow, _("THEMES"), false);
 		for (auto it = themeSets.cbegin(); it != themeSets.cend(); it++)
 			theme_set->add(it->first, it->first, it == selectedSet);
@@ -925,15 +913,9 @@ void GuiMenu::openUISettings()
 			}
 		});
 
-		LOG(LogDebug) << "GuiMenu::openUISettings() - system->getTheme(): " << system->getTheme() << ", system->getTheme()->hasSubsets(): " << Utils::String::boolToString(system->getTheme()->hasSubsets()) << ", system->getTheme()->hasView(\"grid\"): " << Utils::String::boolToString(system->getTheme()->hasView("grid"));
-	Log::flush();
 		bool showThemeConfiguration = (system->getTheme() != nullptr) && ( system->getTheme()->hasSubsets() || system->getTheme()->hasView("grid") );
-		LOG(LogDebug) << "GuiMenu::openUISettings() - showThemeConfiguration: " << Utils::String::boolToString(showThemeConfiguration);
-	Log::flush();
 		if (showThemeConfiguration)
 		{
-			LOG(LogDebug) << "GuiMenu::openUISettings() - if (showThemeConfiguration) ==> true, adding 'Theme Configuration Menu'";
-	Log::flush();
 			s->addSubMenu(_("THEME CONFIGURATION"), [this, s, theme_set]() { openThemeConfiguration(mWindow, s, theme_set); });
 		}
 		else // GameList view style only, acts like Retropie for simple themes

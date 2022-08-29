@@ -3112,6 +3112,10 @@ msgid "collections"
 msgstr "colecciones"
 
 #:
+msgid "Collections"
+msgstr "Colecciones"
+
+#:
 msgid "vertical arcade"
 msgstr "arcade vertical"
 
