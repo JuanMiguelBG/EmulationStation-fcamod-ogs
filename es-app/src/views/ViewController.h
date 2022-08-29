@@ -25,6 +25,12 @@ public:
 	};
 
 	static void init(Window* window);
+	static void deinit();
+
+	static bool hasInstance() { return sInstance != nullptr; }
+
+	static void saveState();
+
 	static ViewController* get();
 
 	virtual ~ViewController();

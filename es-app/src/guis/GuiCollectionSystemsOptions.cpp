@@ -198,13 +198,51 @@ void GuiCollectionSystemsOptions::initializeMenu()
 		});
 
 	addGroup(_("OTHER OPTIONS"));
-	// Optionally start in selected system
-	auto systemfocus_list = std::make_shared< OptionListComponent<std::string> >(mWindow, _("START ON SYSTEM"), false);
-	systemfocus_list->add(_("NONE"), "", Settings::getInstance()->getString("StartupSystem") == "");
 
-	for (auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
-		if ("retropie" != (*it)->getName() && (*it)->isVisible())
-			systemfocus_list->add((*it)->getName(), (*it)->getName(), Settings::getInstance()->getString("StartupSystem") == (*it)->getName());
+	// START ON SYSTEM
+	std::string startupSystem = Settings::getInstance()->getString("StartupSystem");
+
+	auto systemfocus_list = std::make_shared< OptionListComponent<std::string> >(mWindow, _("START ON SYSTEM"), false);
+	systemfocus_list->add(_("NONE"), "", startupSystem == "");
+	systemfocus_list->add(_("RESTORE LAST SELECTED"), "lastsystem", startupSystem == "lastsystem");
+
+	if (SystemData::isManufacturerSupported() && Settings::getInstance()->getString("SortSystems") == "manufacturer")
+	{
+		std::string man, sname;
+		for (auto system : SystemData::sSystemVector)
+		{
+			if (!system->isVisible())
+				continue;
+
+			if (man != system->getSystemMetadata().manufacturer)
+			{
+				man = system->getSystemMetadata().manufacturer;
+				systemfocus_list->addGroup(man == "Collections" ? _(man) : man);
+				
+			}
+
+			sname = system->getFullName();
+			if (system->getSystemMetadata().hardwareType == "auto collection" || system->getName() == "collections")
+				sname = _(system->getFullName());
+
+			systemfocus_list->add(sname, system->getName(), startupSystem == system->getName());
+		}
+	}
+	else
+	{
+		std::string sname;
+		for (auto system : SystemData::sSystemVector)
+		{
+			if (!system->isVisible())
+				continue;
+
+			sname = system->getFullName();
+			if (system->getSystemMetadata().hardwareType == "auto collection" || system->getName() == "collections")
+				sname = _(system->getFullName());
+
+			systemfocus_list->add(sname, system->getName(), startupSystem == system->getName());
+		}
+	}
 
 	if (!systemfocus_list->hasSelection())
 		systemfocus_list->selectFirstItem();
@@ -212,6 +250,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	addWithLabel(_("START ON SYSTEM"), systemfocus_list);
 	addSaveFunc([systemfocus_list] {
 		Settings::getInstance()->setString("StartupSystem", systemfocus_list->getSelected());
+		Settings::getInstance()->setString("LastSystem", "");
 	});
 
 	// Open gamelist at start

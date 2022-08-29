@@ -90,7 +90,7 @@ void Settings::setDefaults()
 	mBoolMap["BrightnessPopup"] = true;
 	mBoolMap["DisplayBlinkLowBattery"] = false;
 
-	mStringMap["StartupSystem"] = "";
+	mStringMap["StartupSystem"] = "lastsystem";
 
 	mStringMap["FolderViewMode"] = "never";
 
