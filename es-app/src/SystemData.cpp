@@ -618,25 +618,45 @@ bool SystemData::loadConfig(Window* window)
 		delete pThreadPool;
 
 		if (window != NULL)
-			window->renderLoadingScreen(_("Favorites"), systemCount == 0 ? 0 : currentSystem / systemCount);
+			window->renderLoadingScreen(_("Collections"), systemCount == 0 ? 0 : currentSystem / systemCount);
+//			window->renderLoadingScreen(_("Favorites"), systemCount == 0 ? 0 : currentSystem / systemCount);
 
-		createGroupedSystems();
-		CollectionSystemManager::get()->updateSystemsList();
+
+//		createGroupedSystems();
+//		CollectionSystemManager::get()->updateSystemsList();
 	}
 	else
 	{
 		if (window != NULL)
-			window->renderLoadingScreen(_("Favorites"), systemCount == 0 ? 0 : currentSystem / systemCount);
+			window->renderLoadingScreen(_("Collections"), systemCount == 0 ? 0 : currentSystem / systemCount);
+//			window->renderLoadingScreen(_("Favorites"), systemCount == 0 ? 0 : currentSystem / systemCount);
 
-		createGroupedSystems();
+//		createGroupedSystems();
 		CollectionSystemManager::get()->loadCollectionSystems();
 	}
 
 	if (SystemData::sSystemVector.size() > 0)
 	{
-		auto theme = SystemData::sSystemVector.at(0)->getTheme();
-		if (theme != nullptr)
-			ViewController::get()->onThemeChanged(theme);
+		createGroupedSystems();
+
+		// Load features before creating collections
+		//loadFeatures();
+
+		CollectionSystemManager::get()->updateSystemsList();
+
+//		auto theme = SystemData::sSystemVector.at(0)->getTheme();
+//		if (theme != nullptr)
+//			ViewController::get()->onThemeChanged(theme);
+
+		for (auto sys : SystemData::sSystemVector)
+		{
+			auto theme = sys->getTheme();
+			if (theme != nullptr)
+			{
+				ViewController::get()->onThemeChanged(theme);
+				break;
+			}
+		}
 	}
 
 	return true;
