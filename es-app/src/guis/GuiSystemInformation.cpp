@@ -639,7 +639,7 @@ void GuiSystemInformation::openSoftware()
 	s->addWithLabel(_("SO BASE"), std::make_shared<TextComponent>(window, si.so_base, font, color));
 
 	// kernel
-	s->addWithLabel(_("KERNEL"), std::make_shared<TextComponent>(window, si.linux, font, color));
+	s->addWithLabel(_("KERNEL"), std::make_shared<TextComponent>(window, si.vlinux, font, color));
 
 	window->pushGui(s);
 }

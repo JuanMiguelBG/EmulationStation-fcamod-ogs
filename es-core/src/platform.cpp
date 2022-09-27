@@ -897,7 +897,7 @@ SoftwareInformation querySoftwareInformation(bool summary)
 	if (!summary)
 	{
 		si.so_base = getShOutput("es-system_inf get_base_os_info");
-		si.linux = getShOutput("es-system_inf get_kernel_info");
+		si.vlinux = getShOutput("es-system_inf get_kernel_info");
 	}
 	return si;
 }
