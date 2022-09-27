@@ -232,14 +232,14 @@ struct SoftwareInformation
 		application_name = "N/A";
 		version = "N/A";
 		so_base = "N/A";
-		linux = "N/A";
+		vlinux = "N/A";
 	}
 
 	std::string hostname;
 	std::string application_name;
 	std::string version;
 	std::string so_base;
-	std::string linux;
+	std::string vlinux;
 };
 
 std::string queryHostname();
