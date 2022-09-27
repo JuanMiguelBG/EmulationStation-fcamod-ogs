@@ -265,15 +265,16 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 	{
 		std::map<std::string, CollectionSystemData> customCollections = CollectionSystemManager::get()->getCustomCollectionSystems();
 
-		mMenu.addGroup(_("EDITING COLLECTION"));
 		if ((customCollections.find(system->getName()) != customCollections.cend() && CollectionSystemManager::get()->getEditingCollection() != system->getName()) ||
 			CollectionSystemManager::get()->getCustomCollectionsBundle()->getName() == system->getName())
 		{
+			mMenu.addGroup(_("EDITING COLLECTION"));
 			mMenu.addEntry(_("ADD/REMOVE GAMES TO THIS GAME COLLECTION"), false, [this] { startEditMode(); });
 		}
 
 		if (CollectionSystemManager::get()->isEditing())
 		{
+			mMenu.addGroup(_("EDITING COLLECTION"));
 			std::string collectionName = CollectionSystemManager::get()->getEditingCollection();
 			addCustomCollectionLongName(collectionName);
 
