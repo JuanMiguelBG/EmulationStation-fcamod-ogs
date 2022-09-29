@@ -834,11 +834,15 @@ EmulationStation borrows the concept of "nine patches" from Android (or "9-Slice
 * `displayRelative` - type: BOOLEAN.  Renders the datetime as a a relative string (ex: 'x days ago')
 * `format` - type: STRING. Specifies format for rendering datetime.
 	- %Y: The year, including the century (1900)
+	- %y: The year as a decimal number without a century
 	- %m: The month number [01,12]
 	- %d: The day of the month [01,31]
 	- %H: The hour (24-hour clock) [00,23]
 	- %M: The minute [00,59]
 	- %S: The second [00,59]
+	- %R: The time in 24-hour notation
+	- %B: The full month name
+	- %b: Abbreviated month name
 
 #### sound
 
