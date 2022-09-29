@@ -32,6 +32,7 @@ public:
 
 	virtual void setThemeName(std::string name);
 	virtual void onShow() override;
+	void onFocusLost() override;
 
 protected:
 	virtual std::vector<FileData*> getFileDataEntries() override;

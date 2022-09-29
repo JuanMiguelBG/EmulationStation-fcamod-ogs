@@ -255,3 +255,7 @@ std::vector<FileData*> BasicGameListView::getFileDataEntries()
 {
 	return mList.getObjects();
 }
+
+void BasicGameListView::onFocusLost() {
+	mList.stopScrolling(true);
+}

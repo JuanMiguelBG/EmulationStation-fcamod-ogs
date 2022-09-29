@@ -799,3 +799,7 @@ std::vector<FileData*> GridGameListView::getFileDataEntries()
 {
 	return mGrid.getObjects();
 }
+
+void GridGameListView::onFocusLost() {
+	mDescContainer.reset();
+}
