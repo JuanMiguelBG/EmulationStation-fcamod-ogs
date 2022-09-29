@@ -30,7 +30,7 @@ public:
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 	virtual void launch(FileData* game) override;
 
-	virtual void	setThemeName(std::string name);
+	virtual void setThemeName(std::string name);
 	virtual void onShow() override;
 
 protected:
