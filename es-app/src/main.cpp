@@ -531,9 +531,6 @@ int main(int argc, char* argv[])
 	// this makes for no delays when accessing content, but a longer startup time
 	ViewController::get()->preload();
 
-	// Initialize input
-	InputConfig::AssignActionButtons();
-
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
 	{
 		LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock'";
@@ -563,6 +560,10 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// Initialize input
+	InputConfig::AssignActionButtons();
+	InputManager::getInstance()->init();
+
 	//choose which GUI to open depending on if an input configuration already exists
 	if (errorMsg == NULL)
 	{
@@ -579,16 +580,6 @@ int main(int argc, char* argv[])
 		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
 	else
 		AudioManager::getInstance()->playRandomMusic();
-
-	// flush any queued events before showing the UI and starting the input handling loop
-	const Uint32 event_list[] = {
-			SDL_JOYAXISMOTION, SDL_JOYBALLMOTION, SDL_JOYHATMOTION, SDL_JOYBUTTONDOWN, SDL_JOYBUTTONUP,
-			SDL_KEYDOWN, SDL_KEYUP
-		};
-	SDL_PumpEvents();
-	for(Uint32 ev_type: event_list) {
-		SDL_FlushEvent(ev_type);
-	}
 
 	unsigned int lastTime = SDL_GetTicks(),
 							 ps_time = lastTime;
@@ -680,6 +671,7 @@ int main(int argc, char* argv[])
 	FreeImage_DeInitialise();
 #endif
 
+	InputManager::getInstance()->deinit();
 	window.deinit(true);
 
 	// remove special lock files
