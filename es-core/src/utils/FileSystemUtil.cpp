@@ -1213,6 +1213,23 @@ namespace Utils
 			return hex;
 		} // getFileMd5
 
+		bool isExecutable(const std::string& _path)
+		{
+			const std::string path = getGenericPath(_path);
+
+			// regular files and executables, but not setuid, setgid, shared text
+			const mode_t mask = S_IFREG;
+			const mode_t mask_exec = S_IXUSR | S_IXGRP | S_IXOTH;
+			struct stat64 info;
+
+			// check if stat64 succeeded
+			if(stat64(path.c_str(), &info) != 0)
+				return false;
+
+			// check for mask attributes
+			return (info.st_mode & mask) == mask && (info.st_mode & mask_exec) != 0;
+		} // isExecutable
+
 	} // FileSystem::
 
 } // Utils::

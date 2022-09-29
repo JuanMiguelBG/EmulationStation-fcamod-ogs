@@ -29,6 +29,11 @@ namespace Scripting
 			std::list<std::string> scripts = Utils::FileSystem::getDirContent(*dirIt);
 			for (std::list<std::string>::const_iterator it = scripts.cbegin(); it != scripts.cend(); ++it)
 			{
+				if (!Utils::FileSystem::isExecutable(*it)) {
+					LOG(LogWarning) << "Scripting::fireEvent() - executing: '" << *it << "' is not executable. Review file permissions.";
+					continue;
+				}
+
 				std::string script = *it;
 				if (arg1.length() > 0)
 				{

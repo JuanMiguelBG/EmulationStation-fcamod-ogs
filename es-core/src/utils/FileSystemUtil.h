@@ -50,6 +50,7 @@ namespace Utils
 		bool        isDirectory        (const std::string& _path);
 		bool        isSymlink          (const std::string& _path);
 		bool        isHidden           (const std::string& _path);
+		bool        isExecutable       (const std::string& _path);
 		std::string megaBytesToString  (unsigned long size);
 
 		void		deleteDirectoryFiles(const std::string path, bool deleteDirectory = false);
