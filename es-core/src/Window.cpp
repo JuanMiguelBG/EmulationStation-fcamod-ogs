@@ -684,6 +684,7 @@ void Window::startScreenSaver()
 {
 	if (isScreenSaverEnabled() && !mRenderScreenSaver)
 	{
+		Scripting::fireEvent("screensaver-start");
 		for (auto extra : mScreenExtras)
 			extra->onScreenSaverActivate();
 
@@ -708,6 +709,7 @@ bool Window::cancelScreenSaver()
 		mScreenSaver->stopScreenSaver();
 		mRenderScreenSaver = false;
 		mScreenSaver->resetCounts();
+		Scripting::fireEvent("screensaver-stop");
 
 		// Tell the GUI components the screensaver has stopped
 		for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)
