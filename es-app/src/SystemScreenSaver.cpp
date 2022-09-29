@@ -53,6 +53,8 @@ SystemScreenSaver::~SystemScreenSaver()
 	// Delete subtitle file, if existing
 	remove(getTitlePath().c_str());
 	mCurrentGame = NULL;
+	delete mVideoScreensaver;
+	delete mImageScreensaver;
 }
 
 bool SystemScreenSaver::allowSleep()

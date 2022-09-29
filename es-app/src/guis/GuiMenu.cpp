@@ -1118,6 +1118,13 @@ void GuiMenu::openUISettings()
 			Settings::getInstance()->setBool("ClockMode12", tmFormat->getState());
 	});
 
+	// lb/rb uses full screen size paging instead of -10/+10 steps
+	auto use_fullscreen_paging = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("UseFullscreenPaging"));
+	s->addWithLabel("USE FULL SCREEN PAGING FOR PU/PD", use_fullscreen_paging);
+	s->addSaveFunc([use_fullscreen_paging] {
+		Settings::getInstance()->setBool("UseFullscreenPaging", use_fullscreen_paging->getState());
+	});
+
 	// show help
 	auto show_help = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowHelpPrompts"));
 	s->addWithLabel(_("ON-SCREEN HELP"), show_help);
