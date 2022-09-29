@@ -368,7 +368,7 @@ void FileData::launchGame(Window* window)
 		command = Utils::String::replace(command, "%SYSTEM%", getSystemName());
 		command = Utils::String::replace(command, "%HOME%", Utils::FileSystem::getHomePath());
 
-		Scripting::fireEvent("game-start", rom, basename);
+		Scripting::fireEvent("game-start", rom, basename, getName());
 
 		tstart = time(NULL);
 

@@ -130,7 +130,7 @@ void SystemScreenSaver::startScreenSaver()
 			LOG(LogInfo) << "VideoScreenSaver::startScreenSaver() - video path: " << path.c_str();
 
 			mVideoScreensaver = std::make_shared<VideoScreenSaver>(mWindow);
-			mVideoScreensaver->setGame(mCurrentGame);
+			mVideoScreensaver->setGame(mCurrentGame, "randomvideo");
 			mVideoScreensaver->setVideo(path);
 
 			PowerSaver::runningScreenSaver(true);
@@ -172,7 +172,7 @@ void SystemScreenSaver::startScreenSaver()
 			LOG(LogInfo) << "ImageScreenSaver::startScreenSaver " << path.c_str();
 
 			mImageScreensaver = std::make_shared<ImageScreenSaver>(mWindow);
-			mImageScreensaver->setGame(mCurrentGame);
+			mImageScreensaver->setGame(mCurrentGame, "slideshow");
 			mImageScreensaver->setImage(path);
 
 			PowerSaver::runningScreenSaver(true);
@@ -606,7 +606,7 @@ GameScreenSaverBase::~GameScreenSaverBase()
 #include <rapidjson/error/en.h>
 #include <rapidjson/filereadstream.h>
 
-void GameScreenSaverBase::setGame(FileData* game)
+void GameScreenSaverBase::setGame(FileData* game, const std::string& event)
 {	
 	if (mLabelGame != nullptr)
 	{
@@ -634,6 +634,10 @@ void GameScreenSaverBase::setGame(FileData* game)
 
 	if (game == nullptr)
 		return;
+
+	if (game != NULL) {
+		Scripting::fireEvent("screensaver-game-select", game->getSystem()->getName(), game->getPath(), game->getName(), event);
+	}
 
 	mViewport = Renderer::Rect(0, 0, Renderer::getScreenWidth(), Renderer::getScreenHeight());
 

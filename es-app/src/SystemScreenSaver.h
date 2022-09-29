@@ -17,7 +17,7 @@ public:
 	GameScreenSaverBase(Window* window);
 	~GameScreenSaverBase();
 
-	virtual void setGame(FileData* mCurrentGame);
+	virtual void setGame(FileData* mCurrentGame, const std::string& event = "");
 
 	void render(const Transform4x4f& transform) override;
 
