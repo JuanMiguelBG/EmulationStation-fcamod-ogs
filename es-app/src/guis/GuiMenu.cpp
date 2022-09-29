@@ -1181,6 +1181,15 @@ void GuiMenu::openUISettings()
 		}
 	});
 
+	// description auto-scroll delay
+	auto desc_autoscroll_delay = std::make_shared<SliderComponent>(mWindow, 1.0f, 10.f, 1.0f, "s");
+	desc_autoscroll_delay->setValue((float) Settings::getInstance()->getInt("DescriptionAutoScrollDelay"));
+	s->addWithLabel(_("AUTO SCROLL DELAY OF DESCRIPTION TEXT"), desc_autoscroll_delay);
+	s->addSaveFunc([desc_autoscroll_delay]
+	{
+		Settings::getInstance()->setInt("DescriptionAutoScrollDelay", (int)Math::round( desc_autoscroll_delay->getValue() ));
+	});
+
 	s->onFinalize([s, pthis, window]
 	{
 		if (s->getVariable("reloadCollections"))
