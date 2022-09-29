@@ -106,7 +106,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 
 		// battery | Sound | Brightness | Network
-		addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + " | " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + " | " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + " | " + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
+		addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + "  |  " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + "  |  " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + "  |  " + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
 
 		addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 	}
@@ -1120,7 +1120,7 @@ void GuiMenu::openUISettings()
 
 	// lb/rb uses full screen size paging instead of -10/+10 steps
 	auto use_fullscreen_paging = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("UseFullscreenPaging"));
-	s->addWithLabel("USE FULL SCREEN PAGING FOR PU/PD", use_fullscreen_paging);
+	s->addWithLabel(_("USE FULL SCREEN PAGING FOR PU/PD"), use_fullscreen_paging);
 	s->addSaveFunc([use_fullscreen_paging] {
 		Settings::getInstance()->setBool("UseFullscreenPaging", use_fullscreen_paging->getState());
 	});
@@ -2601,20 +2601,20 @@ std::string GuiMenu::formatIconsBatteryStatus(int level, bool isCharging)
 {
 	std::string batteryInfo("");
 	if (level > 75)
-		batteryInfo.append(_U("\uF240  "));
+		batteryInfo.append(_U("\uF240 "));
 	else if (level > 50)
-		batteryInfo.append(_U("\uF241  "));
+		batteryInfo.append(_U("\uF241 "));
 	else if (level > 25)
-		batteryInfo.append(_U("\uF242  "));
+		batteryInfo.append(_U("\uF242 "));
 	else if (level > 5)
-		batteryInfo.append(_U("\uF243  "));
+		batteryInfo.append(_U("\uF243 "));
 	else
-		batteryInfo.append(_U("\uF244  "));
+		batteryInfo.append(_U("\uF244 "));
 
 	batteryInfo.append(std::to_string( level )).append("% ");
 
 	if (isCharging)
-		batteryInfo.append(_U("\uF0E7  "));
+		batteryInfo.append(_U("\uF0E7 "));
 
 	return batteryInfo;
 }
@@ -2624,11 +2624,11 @@ std::string GuiMenu::formatIconsSoundStatus(int level)
 	std::string soundInfo("");
 
 	if (level > 70)
-		soundInfo.append(_U("\uF028  "));
+		soundInfo.append(_U("\uF028 "));
 	else if (level > 20)
-		soundInfo.append(_U("\uF027  "));
+		soundInfo.append(_U("\uF027 "));
 	else
-		soundInfo.append(_U("\uF026  "));
+		soundInfo.append(_U("\uF026 "));
 
 	soundInfo.append(std::to_string( level )).append("% ");
 
@@ -2640,21 +2640,21 @@ std::string GuiMenu::formatIconsBrightnessStatus(int level)
 	std::string brightnessInfo("");
 
 	if (level > 89)
-		brightnessInfo.append(_U("\uF18B  "));
+		brightnessInfo.append(_U("\uF18B "));
 	else if (level > 74) // 78%
-		brightnessInfo.append(_U("\uF18A  "));
+		brightnessInfo.append(_U("\uF18A "));
 	else if (level > 60) // 65%
-		brightnessInfo.append(_U("\uF189  "));
+		brightnessInfo.append(_U("\uF189 "));
 	else if (level > 45) // 50%
-		brightnessInfo.append(_U("\uF188  "));
+		brightnessInfo.append(_U("\uF188 "));
 	else if (level > 35) // 38%
-		brightnessInfo.append(_U("\uF187  "));
+		brightnessInfo.append(_U("\uF187 "));
 	else if (level > 22) // 25%
-		brightnessInfo.append(_U("\uF186  "));
+		brightnessInfo.append(_U("\uF186 "));
 	else if (level > 10) // 13%
-		brightnessInfo.append(_U("\uF185  "));
+		brightnessInfo.append(_U("\uF185 "));
 	else // <= 10%
-		brightnessInfo.append(_U("\uF184  "));
+		brightnessInfo.append(_U("\uF184 "));
 
 	brightnessInfo.append(std::to_string( level )).append("% ");
 
@@ -2663,11 +2663,11 @@ std::string GuiMenu::formatIconsBrightnessStatus(int level)
 
 std::string GuiMenu::formatIconsNetworkStatus(bool status)
 {
-	std::string networkInfo(_U("\uF0E8  "));
+	std::string networkInfo(_U("\uF0E8 "));
 	if (ApiSystem::getInstance()->isNetworkConnected())
-		networkInfo.append(_U("\uF1EB  "));
+		networkInfo.append(_U("\uF1EB "));
 	else
-		networkInfo.append(_U("\uF05E  "));
+		networkInfo.append(_U("\uF05E "));
 
 	return networkInfo;
 }
