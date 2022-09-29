@@ -25,7 +25,7 @@ IF (WIN32)
   ELSE (CYGWIN)
 
     IF(MSVC)
-      #The user hast to provide this atm. GLES can be emulated via Desktop OpenGL
+      #The user has to provide this atm. GLES can be emulated via Desktop OpenGL
       #using the ANGLE project found at: http://code.google.com/p/angleproject/
       SET (OPENGLES_gl_LIBRARY import32 CACHE STRING "OpenGL ES 1.x library for win32")
     ENDIF(MSVC)

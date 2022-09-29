@@ -190,6 +190,8 @@ void Settings::setDefaults()
 	mBoolMap["ForceKid"] = false;
 	mBoolMap["ForceDisableFilters"] = false;
 
+	mBoolMap["UseFullscreenPaging"] = false;
+
 	mStringMap["Scraper"] = "ScreenScraper";
 	mStringMap["ScrapperImageSrc"] = "ss";
 	mStringMap["ScrapperThumbSrc"] = "box-2D";
