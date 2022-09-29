@@ -6,7 +6,7 @@
 // Do this version number update as the very last commit for the new release version.
 #define PROGRAM_VERSION_MAJOR					2
 #define PROGRAM_VERSION_MINOR					10
-#define PROGRAM_VERSION_MAINTENANCE		17
+#define PROGRAM_VERSION_MAINTENANCE				17
 #define PROGRAM_VERSION_BUILD					0
 
 #define PROGRAM_VERSION_STRING "2.10.17.0 FCAMOD"
