@@ -305,7 +305,7 @@ bool parseArgs(int argc, char* argv[])
 	return true;
 }
 
-void	loadOtherSettings()
+void loadOtherSettings()
 {
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::WIFI))
 		Settings::getInstance()->setString("wifi.already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
@@ -527,9 +527,6 @@ int main(int argc, char* argv[])
 	if (scrape_cmdline)
 		return run_scraper_cmdline();
 
-	//dont generate joystick events while we're loading (hopefully fixes "automatically started emulator" bug)
-	SDL_JoystickEventState(SDL_DISABLE);
-
 	// preload what we can right away instead of waiting for the user to select it
 	// this makes for no delays when accessing content, but a longer startup time
 	ViewController::get()->preload();
@@ -575,9 +572,6 @@ int main(int argc, char* argv[])
 //			window.pushGui(new GuiDetectDevice(&window, true, [] { ViewController::get()->goToStart(true); }));
 	}
 
-	//generate joystick events since we're done loading
-	SDL_JoystickEventState(SDL_ENABLE);
-
 	window.endRenderLoadingScreen();
 
 	// Play music
@@ -585,6 +579,16 @@ int main(int argc, char* argv[])
 		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
 	else
 		AudioManager::getInstance()->playRandomMusic();
+
+	// flush any queued events before showing the UI and starting the input handling loop
+	const Uint32 event_list[] = {
+			SDL_JOYAXISMOTION, SDL_JOYBALLMOTION, SDL_JOYHATMOTION, SDL_JOYBUTTONDOWN, SDL_JOYBUTTONUP,
+			SDL_KEYDOWN, SDL_KEYUP
+		};
+	SDL_PumpEvents();
+	for(Uint32 ev_type: event_list) {
+		SDL_FlushEvent(ev_type);
+	}
 
 	unsigned int lastTime = SDL_GetTicks(),
 							 ps_time = lastTime;
