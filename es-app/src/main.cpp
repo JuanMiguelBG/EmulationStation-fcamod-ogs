@@ -4,6 +4,11 @@
 #include "guis/GuiDetectDevice.h"
 #include "guis/GuiMsgBox.h"
 #include "utils/FileSystemUtil.h"
+
+#if defined(USE_PROFILING)
+#include "utils/ProfilingUtil.h"
+#endif // USE_PROFILING
+
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
 #include "EmulationStation.h"
@@ -678,6 +683,10 @@ int main(int argc, char* argv[])
 	removeLockFiles();
 
 	processQuitMode();
+
+#if defined(USE_PROFILING)
+	ProfileDump();
+#endif // USE_PROFILING
 
 	LOG(LogInfo) << "MAIN::main() - EmulationStation cleanly shutting down.";
 	Log::flush();

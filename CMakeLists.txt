@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 option(GLES "Set to ON if targeting Embedded OpenGL" ${GLES})
 option(GL "Set to ON if targeting Desktop OpenGL" ${GL})
-option(RPI "Set to ON to enable the Raspberry PI video player (omxplayer)" ${RPI})
 option(CEC "Set to ON to enable CEC" ${CEC})
+option(PROFILING "Set to ON to enable profiling" ${PROFILING})
 
 project(emulationstation-all)
 
@@ -20,18 +20,6 @@ if(GLES)
     set(GLSystem "Embedded OpenGL" CACHE STRING "The OpenGL system to be used")
 elseif(GL)
     set(GLSystem "Desktop OpenGL" CACHE STRING "The OpenGL system to be used")
-#-------------------------------------------------------------------------------
-#check if we're running on Raspberry Pi
-elseif(EXISTS "${CMAKE_FIND_ROOT_PATH}/opt/vc/include/bcm_host.h")
-    MESSAGE("bcm_host.h found")
-    set(BCMHOST found)
-    set(GLSystem "Embedded OpenGL" CACHE STRING "The OpenGL system to be used")
-#-------------------------------------------------------------------------------
-#check if we're running on OSMC Vero4K
-elseif(EXISTS "${CMAKE_FIND_ROOT_PATH}/opt/vero3/lib/libMali.so")
-    MESSAGE("libMali.so found")
-    set(VERO4K found)
-    set(GLSystem "Embedded OpenGL" CACHE STRING "The OpenGL system to be used")
 #-------------------------------------------------------------------------------
 #check if we're running on olinuxino / odroid / etc
 elseif(EXISTS "${CMAKE_FIND_ROOT_PATH}/usr/lib/libMali.so" OR
@@ -80,18 +68,13 @@ endif()
 
 #-------------------------------------------------------------------------------
 #set up compiler flags and excutable names
-if(DEFINED BCMHOST OR RPI)
-    add_definitions(-D_RPI_)
-endif()
-
-if(DEFINED VERO4K)
-    add_definitions(-D_VERO4K_)
-endif()
-
 if(DEFINED libCEC_FOUND)
     add_definitions(-DHAVE_LIBCEC)
 endif()
 
+if(PROFILING)
+    add_definitions(-DUSE_PROFILING)
+endif()
 #-------------------------------------------------------------------------------
 
 if(MSVC)
@@ -174,42 +157,18 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     )
 endif()
 
-if(DEFINED BCMHOST)
+if(${GLSystem} MATCHES "Desktop OpenGL")
     LIST(APPEND COMMON_INCLUDE_DIRS
-        "${CMAKE_FIND_ROOT_PATH}/opt/vc/include"
-        "${CMAKE_FIND_ROOT_PATH}/opt/vc/include/interface/vcos"
-        "${CMAKE_FIND_ROOT_PATH}/opt/vc/include/interface/vmcs_host/linux"
-        "${CMAKE_FIND_ROOT_PATH}/opt/vc/include/interface/vcos/pthreads"
-    )
-#add include directory for Vero4K
-elseif(DEFINED VERO4K)
-    LIST(APPEND COMMON_INCLUDE_DIRS
-        "${CMAKE_FIND_ROOT_PATH}/opt/vero3/include"
+        ${OPENGL_INCLUDE_DIR}
     )
 else()
-    if(${GLSystem} MATCHES "Desktop OpenGL")
-        LIST(APPEND COMMON_INCLUDE_DIRS
-            ${OPENGL_INCLUDE_DIR}
-        )
-    else()
-        LIST(APPEND COMMON_INCLUDE_DIRS
-            ${OPENGLES_INCLUDE_DIR}
-        )
-    endif()
+    LIST(APPEND COMMON_INCLUDE_DIRS
+        ${OPENGLES_INCLUDE_DIR}
+    )
 endif()
 
 #-------------------------------------------------------------------------------
 #define libraries and directories
-if(DEFINED BCMHOST)
-    link_directories(
-        "${CMAKE_FIND_ROOT_PATH}/opt/vc/lib"
-    )
-elseif(DEFINED VERO4K)
-    link_directories(
-        "${CMAKE_FIND_ROOT_PATH}/opt/vero3/lib"
-    )
-endif()
-
 set(COMMON_LIBRARIES
     ${FREETYPE_LIBRARIES}
     ${FreeImage_LIBRARIES}	
@@ -230,11 +189,6 @@ set(COMMON_LIBRARIES
 
 #add libCEC_LIBRARIES
 if(DEFINED libCEC_FOUND)
-if(DEFINED BCMHOST)
-    LIST(APPEND COMMON_LIBRARIES
-        vchiq_arm
-    )
-endif()
     LIST(APPEND COMMON_LIBRARIES
         dl
         ${libCEC_LIBRARIES}
@@ -248,33 +202,21 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     )
 endif()
 
-if(DEFINED BCMHOST)
+if(MSVC)
     LIST(APPEND COMMON_LIBRARIES
-        bcm_host
-        brcmEGL
-        ${OPENGLES_LIBRARIES}
+        winmm
     )
-elseif(DEFINED VERO4K)
+endif()
+
+if(${GLSystem} MATCHES "Desktop OpenGL")
+    LIST(APPEND COMMON_LIBRARIES
+        ${OPENGL_LIBRARIES}
+    )
+else()
     LIST(APPEND COMMON_LIBRARIES
         EGL
         ${OPENGLES_LIBRARIES}
     )
-else()
-    if(MSVC)
-        LIST(APPEND COMMON_LIBRARIES
-            winmm
-        )
-    endif()
-    if(${GLSystem} MATCHES "Desktop OpenGL")
-        LIST(APPEND COMMON_LIBRARIES
-            ${OPENGL_LIBRARIES}
-        )
-    else()
-        LIST(APPEND COMMON_LIBRARIES
-            EGL
-            ${OPENGLES_LIBRARIES}
-        )
-    endif()
 endif()
 
 #-------------------------------------------------------------------------------

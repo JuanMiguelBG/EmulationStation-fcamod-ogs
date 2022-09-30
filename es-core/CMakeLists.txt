@@ -85,6 +85,7 @@ set(CORE_HEADERS
 	# Utils
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Randomizer.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/FileSystemUtil.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ProfilingUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/md5.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/NetworkUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/StringUtil.h
@@ -177,6 +178,7 @@ set(CORE_SOURCES
 	# Utils
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Randomizer.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/FileSystemUtil.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ProfilingUtil.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/md5.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/NetworkUtil.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/StringUtil.cpp
