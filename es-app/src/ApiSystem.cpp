@@ -1085,6 +1085,21 @@ std::string ApiSystem::getWifiNetworkExistFlag()
 	return queryWifiNetworkExistFlag();
 }
 
+bool ApiSystem::isWifiPowerSafeEnabled()
+{
+	LOG(LogInfo) << "ApiSystem::isWifiPowerSafeEnabled()";
+
+	return executeSystemScript("es-wifi is_wifi_power_safe_enabled");
+}
+
+void ApiSystem::setWifiPowerSafe(bool state)
+{
+	LOG(LogInfo) << "ApiSystem::setWifiPowerSafe()";
+
+	executeScript("es-wifi set_wifi_power_safe " + Utils::String::boolToString(state) + " &");
+}
+
+
 bool ApiSystem::setLanguage(std::string language)
 {
 	LOG(LogInfo) << "ApiSystem::setLanguage()";

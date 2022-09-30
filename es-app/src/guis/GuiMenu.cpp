@@ -1417,6 +1417,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::REMOTE_SERVICES))
 		s->addEntry(_("REMOTE SERVICES SETTINGS"), true, [this] { openRemoteServicesSettings(); });
 
+	// Automatically enable or disable WIFI power saving mode
+	auto wifi_powersave = std::make_shared<SwitchComponent>(mWindow, ApiSystem::getInstance()->isWifiPowerSafeEnabled());
+	s->addWithLabel(_("ENABLE WIFI POWERSAVE"), wifi_powersave);
+	s->addSaveFunc([wifi_powersave]
+		{
+			ApiSystem::getInstance()->setWifiPowerSafe( wifi_powersave->getState() );
+		});
+
 	// Wifi enable
 	auto enable_wifi = std::make_shared<SwitchComponent>(mWindow, baseWifiEnabled);
 	s->addWithLabel(_("ENABLE WIFI"), enable_wifi, selectWifiEnable);
