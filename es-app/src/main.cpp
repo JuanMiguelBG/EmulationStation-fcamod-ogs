@@ -4,6 +4,11 @@
 #include "guis/GuiDetectDevice.h"
 #include "guis/GuiMsgBox.h"
 #include "utils/FileSystemUtil.h"
+
+#if defined(USE_PROFILING)
+#include "utils/ProfilingUtil.h"
+#endif // USE_PROFILING
+
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
 #include "EmulationStation.h"
@@ -305,7 +310,7 @@ bool parseArgs(int argc, char* argv[])
 	return true;
 }
 
-void	loadOtherSettings()
+void loadOtherSettings()
 {
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::WIFI))
 		Settings::getInstance()->setString("wifi.already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
@@ -527,15 +532,9 @@ int main(int argc, char* argv[])
 	if (scrape_cmdline)
 		return run_scraper_cmdline();
 
-	//dont generate joystick events while we're loading (hopefully fixes "automatically started emulator" bug)
-	SDL_JoystickEventState(SDL_DISABLE);
-
 	// preload what we can right away instead of waiting for the user to select it
 	// this makes for no delays when accessing content, but a longer startup time
 	ViewController::get()->preload();
-
-	// Initialize input
-	InputConfig::AssignActionButtons();
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
 	{
@@ -566,6 +565,10 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// Initialize input
+	InputConfig::AssignActionButtons();
+	InputManager::getInstance()->init();
+
 	//choose which GUI to open depending on if an input configuration already exists
 	if (errorMsg == NULL)
 	{
@@ -574,9 +577,6 @@ int main(int argc, char* argv[])
 //		else
 //			window.pushGui(new GuiDetectDevice(&window, true, [] { ViewController::get()->goToStart(true); }));
 	}
-
-	//generate joystick events since we're done loading
-	SDL_JoystickEventState(SDL_ENABLE);
 
 	window.endRenderLoadingScreen();
 
@@ -676,12 +676,17 @@ int main(int argc, char* argv[])
 	FreeImage_DeInitialise();
 #endif
 
+	InputManager::getInstance()->deinit();
 	window.deinit(true);
 
 	// remove special lock files
 	removeLockFiles();
 
 	processQuitMode();
+
+#if defined(USE_PROFILING)
+	ProfileDump();
+#endif // USE_PROFILING
 
 	LOG(LogInfo) << "MAIN::main() - EmulationStation cleanly shutting down.";
 	Log::flush();

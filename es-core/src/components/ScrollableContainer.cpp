@@ -2,9 +2,10 @@
 
 #include "math/Vector2i.h"
 #include "renderers/Renderer.h"
+#include "Settings.h"
 
 #define AUTO_SCROLL_RESET_DELAY 3000 // ms to reset to top after we reach the bottom
-#define AUTO_SCROLL_DELAY 3000 // ms to wait before we start to scroll
+//#define AUTO_SCROLL_DELAY 3000 // ms to wait before we start to scroll
 #define AUTO_SCROLL_SPEED 50 // ms between scrolls
 
 ScrollableContainer::ScrollableContainer(Window* window) : GuiComponent(window),
@@ -36,13 +37,18 @@ void ScrollableContainer::render(const Transform4x4f& parentTrans)
 
 void ScrollableContainer::setAutoScroll(bool autoScroll)
 {
-	if(autoScroll)
+	if (autoScroll)
 	{
 		mScrollDir = Vector2f(0, 1);
-		mAutoScrollDelay = AUTO_SCROLL_DELAY;
+
+		if (mAutoScrollDelay == 0)
+			mAutoScrollDelay = Settings::getInstance()->getInt("DescriptionAutoScrollDelay") * 1000;
+
 		mAutoScrollSpeed = AUTO_SCROLL_SPEED;
 		reset();
-	}else{
+	}
+	else
+	{
 		mScrollDir = Vector2f(0, 0);
 		mAutoScrollDelay = 0;
 		mAutoScrollSpeed = 0;

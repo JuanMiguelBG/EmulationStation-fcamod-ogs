@@ -14,6 +14,7 @@
 #include "FileFilterIndex.h"
 #include "CollectionSystemManager.h"
 #include "Log.h"
+#include "Scripting.h"
 #include "Settings.h"
 #include "SystemData.h"
 #include "Window.h"
@@ -104,14 +105,21 @@ void ViewController::goToStart(bool forceImmediate)
 			else
 				goToSystemView(system, forceImmediate);
 
+			Scripting::fireEvent("system-select", requestedSystem, "requestedsystem");
 			return;
 		}
+
+		// Requested system doesn't exist
+		Settings::getInstance()->setString("StartupSystem", "");
 	}
 
+	auto first_visible_System = SystemData::getFirstVisibleSystem();
 	if (hideSystemView || startOnGamelist)
-		goToGameList(SystemData::getFirstVisibleSystem(), forceImmediate);
+		goToGameList(first_visible_System, forceImmediate);
 	else
-		goToSystemView(SystemData::getFirstVisibleSystem());
+		goToSystemView(first_visible_System);
+
+	Scripting::fireEvent("system-select", first_visible_System->getName(), "gotostart");
 }
 
 void ViewController::reloadAndGoToStart()
@@ -205,9 +213,21 @@ void ViewController::goToGameList(SystemData* system, bool forceImmediate)
 	if (mCurrentView)
 		mCurrentView->onHide();
 
-	mCurrentView = getGameListView(system);
+	auto gameListView = getGameListView(system);
+	mCurrentView = gameListView;
 	if (mCurrentView)
+	{
 		mCurrentView->onShow();
+		FileData* cursor = gameListView->getCursor();
+		if (cursor != NULL)
+		{
+			Scripting::fireEvent("game-select", system->getName(), cursor->getPath(), cursor->getName(), "gotogamelist");
+		}
+		else
+		{
+			Scripting::fireEvent("game-select", "NULL", "NULL", "NULL", "gotogamelist");
+		}
+	}
 
 	playViewTransition(forceImmediate);
 }

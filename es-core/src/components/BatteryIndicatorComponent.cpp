@@ -45,15 +45,12 @@ void BatteryIndicatorComponent::init()
 		mAt25 = ResourceManager::getInstance()->getResourcePath(":/battery/25.svg");
 
 	if (ResourceManager::getInstance()->fileExists(":/battery/empty.svg"))
-		mEmpty = ResourceManager::getInstance()->getResourcePath(":/battery/empty.svg");	
-
-	if (ResourceManager::getInstance()->fileExists(":/battery/empty.svg"))
 		mEmpty = ResourceManager::getInstance()->getResourcePath(":/battery/empty.svg");
 
-	if (ResourceManager::getInstance()->fileExists(":/network.svg"))
+	if (ResourceManager::getInstance()->fileExists(":/network/network.svg"))
 	{
 		mView |= ActivityView::NETWORK;
-		mNetworkImage = TextureResource::get(ResourceManager::getInstance()->getResourcePath(":/network.svg"), false, true);
+		mNetworkImage = TextureResource::get(ResourceManager::getInstance()->getResourcePath(":/network/network.svg"), false, true);
 	}
 
 	updateBatteryInfo();

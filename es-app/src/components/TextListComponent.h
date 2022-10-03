@@ -92,6 +92,7 @@ private:
 	Alignment mAlignment;
 	float mHorizontalMargin;
 
+	int getFirstVisibleEntry();
 	std::function<void(CursorState state)> mCursorChangedCallback;
 
 	std::shared_ptr<Font> mFont;
@@ -106,6 +107,10 @@ private:
 	std::string mScrollSound;
 	static const unsigned int COLOR_ID_COUNT = 2;
 	unsigned int mColors[COLOR_ID_COUNT];
+	unsigned int mScreenCount;
+	int mStartEntry = 0;
+	unsigned int mCursorPrev = -1;
+	bool mOneEntryUpDn = true;
 
 	ImageComponent mSelectorImage;
 };
@@ -124,7 +129,7 @@ TextListComponent<T>::TextListComponent(Window* window) :
 	mFont = Font::get(FONT_SIZE_MEDIUM);
 	mUppercase = false;
 	mLineSpacing = 1.5f;
-	mSelectorHeight = mFont->getSize() * 1.5f;
+	mSelectorHeight = mFont->getSize() * mLineSpacing;
 	mSelectorOffsetY = 0;
 	mSelectorColor = 0x000000FF;
 	mSelectorColorEnd = 0x000000FF;
@@ -158,35 +163,30 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 
 	const float entrySize = Math::max(font->getHeight(1.0), (float)font->getSize()) * mLineSpacing;
 
-	int startEntry = 0;
-
 	//number of entries that can fit on the screen simultaniously
-	int screenCount = Math::round(mSize.y() / entrySize); // (int)(mSize.y() / entrySize); //  + 0.5f -> avoid partial items
+	mScreenCount = Math::round(mSize.y() / entrySize); // (int)(mSize.y() / entrySize); //  + 0.5f -> avoid partial items
 	
-	if(size() >= screenCount)
+	if(mCursor != mCursorPrev)
 	{
-		startEntry = mCursor - screenCount/2;
-		if(startEntry < 0)
-			startEntry = 0;
-		if(startEntry >= size() - screenCount)
-			startEntry = size() - screenCount;
+		mStartEntry = (size() > mScreenCount) ? getFirstVisibleEntry() : 0;
+		mCursorPrev = mCursor;
 	}
 
-	float y = 0;
-
-	int listCutoff = startEntry + screenCount;
+	unsigned int listCutoff = mStartEntry + mScreenCount;
 	if(listCutoff > size())
 		listCutoff = size();
 
+	float y = (mSize.y() - (mScreenCount * entrySize)) * 0.5f;
+
 	// draw selector bar
-	if(startEntry < listCutoff)
+	if(mStartEntry < listCutoff)
 	{
 		if (mSelectorImage.hasImage()) {
-			mSelectorImage.setPosition(0.f, (mCursor - startEntry)*entrySize + mSelectorOffsetY, 0.f);
+			mSelectorImage.setPosition(0.f, y + (mCursor - mStartEntry)*entrySize + mSelectorOffsetY, 0.f);
 			mSelectorImage.render(trans);
 		} else {
 			Renderer::setMatrix(trans);
-			Renderer::drawRect(0.0f, (mCursor - startEntry)*entrySize + mSelectorOffsetY, mSize.x(),
+			Renderer::drawRect(0.0f, y + (mCursor - mStartEntry)*entrySize + mSelectorOffsetY, mSize.x(),
 					mSelectorHeight, mSelectorColor, mSelectorColorEnd, mSelectorColorGradientHorizontal);
 		}
 	}
@@ -197,7 +197,7 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 	Renderer::pushClipRect(Vector2i((int)(trans.translation().x() + mHorizontalMargin), (int)trans.translation().y()), 
 		Vector2i((int)(dim.x() - mHorizontalMargin*2), (int)dim.y()));
 
-	for(int i = startEntry; i < listCutoff; i++)
+	for(int i = mStartEntry; i < listCutoff; i++)
 	{
 		typename IList<TextListData, T>::Entry& entry = mEntries.at((unsigned int)i);
 
@@ -264,6 +264,52 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 	GuiComponent::renderChildren(trans);
 }
 
+
+template <typename T>
+int TextListComponent<T>::getFirstVisibleEntry()
+{
+	if (mCursorPrev == -1)
+	{
+		// init or returned from emulator
+		mCursorPrev = mCursor;
+		int quot = div(mCursor, mScreenCount).quot;
+		mStartEntry = quot * mScreenCount;
+	}
+	int screenRelCursor = mCursorPrev - mStartEntry;
+	bool cursorCentered = screenRelCursor == mScreenCount/2;
+	int visibleEntryMax = size() - mScreenCount;
+	int firstVisibleEntry = 0;
+
+	if(Settings::getInstance()->getBool("UseFullscreenPaging") && !cursorCentered)
+	{
+		// keep visible cursor constant but move visible list (default)
+		firstVisibleEntry = mCursor - screenRelCursor;
+		if(mOneEntryUpDn)
+		{
+			int delta = mCursor - mCursorPrev;
+			// detect rollover (== delta is more than one item)
+			if(delta < -3)
+				firstVisibleEntry = 0;
+			else if(delta > 3)
+				firstVisibleEntry = visibleEntryMax;
+			else if(screenRelCursor < mScreenCount/2 && delta > 0 /*down pressed*/
+				|| screenRelCursor > mScreenCount/2 && delta < 0 /*up pressed*/)
+				// cases for list begin / list end
+				// move visible cursor and keep visible list section constant
+				firstVisibleEntry = firstVisibleEntry - delta;
+		}
+	} else {
+		// cursor always in middle of visible list
+		firstVisibleEntry = mCursor - mScreenCount/2;
+	}
+	// bounds check
+	if(firstVisibleEntry < 0)
+		firstVisibleEntry = 0;
+	else if(firstVisibleEntry > visibleEntryMax)
+		firstVisibleEntry = visibleEntryMax;
+	return firstVisibleEntry;
+}
+
 template <typename T>
 bool TextListComponent<T>::input(InputConfig* config, Input input)
 {
@@ -274,23 +320,29 @@ bool TextListComponent<T>::input(InputConfig* config, Input input)
 			if(config->isMappedLike("down", input))
 			{
 				listInput(1);
+				mOneEntryUpDn = true;
 				return true;
 			}
 
 			if(config->isMappedLike("up", input))
 			{
 				listInput(-1);
+				mOneEntryUpDn = true;
 				return true;
 			}
 			if(config->isMappedLike(BUTTON_PD, input))
 			{
-				listInput(10);
+				int delta = Settings::getInstance()->getBool("UseFullscreenPaging") ? mScreenCount : 10;
+				listInput(delta);
+				mOneEntryUpDn = false;
 				return true;
 			}
 
 			if(config->isMappedLike(BUTTON_PU, input))
 			{
-				listInput(-10);
+				int delta = Settings::getInstance()->getBool("UseFullscreenPaging") ? mScreenCount : 10;
+				listInput(-delta);
+				mOneEntryUpDn = false;
 				return true;
 			}
 		}else{
@@ -390,7 +442,7 @@ void TextListComponent<T>::applyTheme(const std::shared_ptr<ThemeData>& theme, c
 		if (elem->has("selectorColorEnd"))
 			setSelectorColorEnd(elem->get<unsigned int>("selectorColorEnd"));
 		if (elem->has("selectorGradientType"))
-			setSelectorColorGradientHorizontal(elem->get<std::string>("selectorGradientType").compare("horizontal"));
+			setSelectorColorGradientHorizontal(!(elem->get<std::string>("selectorGradientType").compare("horizontal")));
 		if(elem->has("selectedColor"))
 			setSelectedColor(elem->get<unsigned int>("selectedColor"));
 		if(elem->has("primaryColor"))

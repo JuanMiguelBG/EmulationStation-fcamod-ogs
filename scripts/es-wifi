@@ -25,6 +25,8 @@ do_help() {
     echo "$0 is_network_manager_enabled" >&2
     echo "$0 is_network_exist <SSID>" >&2
     echo "$0 get_network_exist_flag" >&2
+    echo "$0 is_wifi_power_safe_enabled" >&2
+    echo "$0 set_wifi_power_safe [true/false]" >&2
     echo "$0 test_network_manager" >&2
 }
 
@@ -154,9 +156,9 @@ do_connect() {
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Disconnecting of '$actual_network'"
       sudo nmcli con down "$actual_network" > /dev/null 2>&1
     fi
-    net_regexp=`echo "$SSID" | tr -s " "`
+    local net_regexp=`echo "$SSID" | tr -s " "`
     net_regexp=${net_regexp=// /\s}
-    exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
+    exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
 
     if [ ! -z "$exist" ]; then
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Connection '$SSID' already exist"
@@ -353,7 +355,9 @@ is_network_exist()
 {
     local SSID=$1
 
-    exist=$(ls -1 /etc/NetworkManager/system-connections/ | grep $SSID)
+    local net_regexp=`echo "$SSID" | tr -s " "`
+    net_regexp=${net_regexp=// /\s}
+    exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
     if [ ! -z "$exist" ]; then
       # Exist
       #print_log $LOG_FILE "INFO" "Executing 'is_network_exist()': Connection to network '$SSID' exist on system"
@@ -367,6 +371,38 @@ is_network_exist()
 get_network_exist_flag()
 {
     echo "$EXIST_CONNECTION_FLAG"
+}
+
+is_wifi_power_safe_enabled() {
+    #print_log $LOG_FILE "INFO" "Executing 'is_wifi_power_safe_enabled()'"
+
+    status=`sudo iw dev wlan0 get power_save | awk '{print $3}'`
+    if [ "$status" == "on" ]; then
+      # enabled
+      #print_log $LOG_FILE "INFO" "is_wifi_power_safe_enabled() - NetworkManager Wifi Power Safe is enabled"
+      return 0
+    fi
+
+    # disabled
+    #print_log $LOG_FILE "INFO" "is_wifi_power_safe_enabled() - NetworkManager Wifi Power Safe is disabled"
+    return 1
+}
+
+set_wifi_power_safe()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'set_wifi_power_safe()': $1"
+    local POWER_SAFE_FILE="/etc/NetworkManager/conf.d/default-wifi-powersave-on.conf"
+    if [ "$1" == "true" ]; then
+      # enabled
+      #print_log $LOG_FILE "INFO" "set_wifi_power_safe() - NetworkManager Wifi Power Safe setting enabled"
+      sudo iw wlan0 set power_save on
+      sudo sed -i '/wifi.powersave \=/c\wifi.powersave = 3' "$POWER_SAFE_FILE"
+    else
+      # disabled
+      #print_log $LOG_FILE "INFO" "set_wifi_power_safe() - NetworkManager Wifi Power Safe setting disabled"
+      sudo iw wlan0 set power_save off
+      sudo sed -i '/wifi.powersave \=/c\wifi.powersave = 2' "$POWER_SAFE_FILE"
+    fi
 }
 
 # ******************************************************************************************
@@ -468,6 +504,12 @@ case "${ACTION}" in
     ;;
     "get_network_exist_flag")
         get_network_exist_flag
+    ;;
+    "is_wifi_power_safe_enabled")
+        is_wifi_power_safe_enabled || exit 1
+    ;;
+    "set_wifi_power_safe")
+        set_wifi_power_safe "$1" || exit 1
     ;;
     *)
         do_help

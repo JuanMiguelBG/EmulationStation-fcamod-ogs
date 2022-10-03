@@ -186,6 +186,8 @@ public:
 	std::string getDnsOne();
 	std::string getDnsTwo();
 	std::string getWifiNetworkExistFlag();
+	bool isWifiPowerSafeEnabled();
+	void setWifiPowerSafe(bool state);
 
 	bool setLanguage(std::string language);
 

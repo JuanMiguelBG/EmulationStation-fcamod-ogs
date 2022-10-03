@@ -5,6 +5,7 @@
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "Log.h"
+#include "Scripting.h"
 #include "Settings.h"
 #include "SystemData.h"
 #include "EsLocale.h"
@@ -613,6 +614,8 @@ bool SystemView::input(InputConfig* config, Input input)
 				config->isMappedTo(BUTTON_PD, input) ||
 				config->isMappedTo(BUTTON_PU, input))
 			listInput(0);
+		
+		Scripting::fireEvent("system-select", getSelected()->getName(), "input");
 	}
 
 	return GuiComponent::input(config, input);

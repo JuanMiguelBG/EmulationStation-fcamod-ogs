@@ -7,6 +7,7 @@
 #include "CollectionSystemManager.h"
 #include "FileFilterIndex.h"
 #include "FileSorts.h"
+#include "InputManager.h"
 #include "Log.h"
 #include "MameNames.h"
 #include "platform.h"
@@ -329,6 +330,7 @@ void FileData::launchGame(Window* window)
 
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
+	InputManager::getInstance()->deinit();
 
 	bool hideWindow = Settings::getInstance()->getBool("HideWindow");
 	window->deinit(hideWindow);
@@ -368,7 +370,7 @@ void FileData::launchGame(Window* window)
 		command = Utils::String::replace(command, "%SYSTEM%", getSystemName());
 		command = Utils::String::replace(command, "%HOME%", Utils::FileSystem::getHomePath());
 
-		Scripting::fireEvent("game-start", rom, basename);
+		Scripting::fireEvent("game-start", rom, basename, getName());
 
 		tstart = time(NULL);
 
@@ -380,8 +382,8 @@ void FileData::launchGame(Window* window)
 	}
 	Scripting::fireEvent("game-end");
 
-	window->init(hideWindow);
-
+	window->init(hideWindow, Settings::getInstance()->getBool("FullScreenMode"));
+	InputManager::getInstance()->init();
 	VolumeControl::getInstance()->init();
 	AudioManager::getInstance()->init();
 	window->normalizeNextUpdate();

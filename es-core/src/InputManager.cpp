@@ -78,7 +78,8 @@ void InputManager::init()
 
 void InputManager::addJoystickByDeviceIndex(int id)
 {
-	assert(id >= 0 && id < SDL_NumJoysticks());
+	assert(id > -1);
+	assert(id < SDL_NumJoysticks());
 
 	// open joystick & add to our list
 	SDL_Joystick* joy = SDL_JoystickOpen(id);
@@ -95,9 +96,9 @@ void InputManager::addJoystickByDeviceIndex(int id)
 	mInputConfigs[joyId] = new InputConfig(joyId, SDL_JoystickName(joy), guid);
 	if(!loadInputConfig(mInputConfigs[joyId]))
 	{
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick " << SDL_JoystickName(joy) << " (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ").";
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick '" << SDL_JoystickName(joy) << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ").";
 	}else{
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick " << SDL_JoystickName(joy) << " (instance ID: " << joyId << ", device index: " << id << ")";
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick '" << SDL_JoystickName(joy) << "' (instance ID: " << joyId << ", device index: " << id << ")";
 	}
 
 	// set up the prevAxisValues
@@ -124,6 +125,7 @@ void InputManager::removeJoystickByJoystickID(SDL_JoystickID joyId)
 	auto joyIt = mJoysticks.find(joyId);
 	if(joyIt != mJoysticks.cend())
 	{
+		LOG(LogInfo) << "InputManager::removeJoystickByJoystickID() - Removed joystick '" << SDL_JoystickName(joyIt->second) << "' (instance ID: " << joyId << ")";
 		SDL_JoystickClose(joyIt->second);
 		mJoysticks.erase(joyIt);
 	}else{

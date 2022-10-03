@@ -484,3 +484,8 @@ void VideoGameListView::onShow()
 	GuiComponent::onShow();
 	updateInfoPanel();
 }
+
+void VideoGameListView::onFocusLost() {
+	mDescContainer.reset();
+	mList.stopScrolling(true);
+}

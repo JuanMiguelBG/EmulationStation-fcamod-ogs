@@ -135,16 +135,24 @@ namespace Utils
 			{
 				int ret = stat64(key.c_str(), info);
 
-				std::unique_lock<std::mutex> lock(mFileCacheMutex);
+				mFileCacheMutex.lock();
 
 				FileCache cache(ret == 0, false);
 				if (cache.exists)
 				{
 					cache.directory = S_ISDIR(info->st_mode);
 					cache.isSymLink = S_ISLNK(info->st_mode);
+					if (cache.isSymLink)
+					{
+						struct stat64 si;
+						if (stat64(resolveSymlink(key).c_str(), &si) == 0)
+							cache.directory = S_ISDIR(si.st_mode);
+					}
 				}
 
 				mFileCache[key] = cache;
+
+				mFileCacheMutex.unlock();
 
 				return ret;
 			}
@@ -154,8 +162,9 @@ namespace Utils
 				if (!mEnabled)
 					return;
 
-				std::unique_lock<std::mutex> lock(mFileCacheMutex);
+				mFileCacheMutex.lock();
 				mFileCache[key] = cache;
+				mFileCacheMutex.unlock();
 			}
 
 			static FileCache* get(const std::string& key)
@@ -181,11 +190,13 @@ namespace Utils
 
 			static void resetCache()
 			{
-				std::unique_lock<std::mutex> lock(mFileCacheMutex);
+				mFileCacheMutex.lock();
 				mFileCache.clear();
+				mFileCacheMutex.unlock();
 			}
 
 			static void setEnabled(bool value) { mEnabled = value; }
+			static inline bool isEnabled() { return mEnabled; }
 
 		private:
 			static std::map<std::string, FileCache> mFileCache;
@@ -196,6 +207,8 @@ namespace Utils
 		std::map<std::string, FileCache> FileCache::mFileCache;
 		std::mutex FileCache::mFileCacheMutex;
 		bool FileCache::mEnabled = false;
+
+		int FileSystemCacheActivator::mReferenceCount = 0;
 
 		FileSystemCacheActivator::FileSystemCacheActivator()
 		{
@@ -219,19 +232,17 @@ namespace Utils
 			}
 		}
 
-		int FileSystemCacheActivator::mReferenceCount = 0;
-
 		fileList getDirInfo(const std::string& _path/*, const bool _recursive*/)
 		{
 			std::string path = getGenericPath(_path);
 			fileList  contentList;
 
-			// tell filecache we enumerated the folder
-			FileCache::add(path + "/*", FileCache(true, true));
-
 			// only parse the directory, if it's a directory
 			if (isDirectory(path))
 			{
+				// tell filecache we enumerated the folder
+				FileCache::add(path + "/*", FileCache(true, true));
+
 				DIR* dir = opendir(path.c_str());
 
 				if (dir != NULL)
@@ -306,15 +317,20 @@ namespace Utils
 						if((name != ".") && (name != ".."))
 						{
 							std::string fullName(getGenericPath(path + "/" + name));
-							FileCache::add(fullName, FileCache(fullName, entry));
 
-							if (!includeHidden && Utils::FileSystem::isHidden(fullName))
+							FileCache cache(fullName, entry, getFileName(fullName)[0] == '.');
+							FileCache::add(fullName, cache);
+
+							if (!includeHidden && cache.hidden)
 								continue;
 
 							contentList.push_back(fullName);
-							
-							if(_recursive && isDirectory(fullName))
-								contentList.merge(getDirContent(fullName, true));
+
+							if (_recursive && cache.directory)
+							{
+								for (auto item : getDirContent(fullName, true, includeHidden))
+									contentList.push_back(item);
+							}
 						}
 					}
 
@@ -1196,6 +1212,23 @@ namespace Utils
 
 			return hex;
 		} // getFileMd5
+
+		bool isExecutable(const std::string& _path)
+		{
+			const std::string path = getGenericPath(_path);
+
+			// regular files and executables, but not setuid, setgid, shared text
+			const mode_t mask = S_IFREG;
+			const mode_t mask_exec = S_IXUSR | S_IXGRP | S_IXOTH;
+			struct stat64 info;
+
+			// check if stat64 succeeded
+			if(stat64(path.c_str(), &info) != 0)
+				return false;
+
+			// check for mask attributes
+			return (info.st_mode & mask) == mask && (info.st_mode & mask_exec) != 0;
+		} // isExecutable
 
 	} // FileSystem::
 

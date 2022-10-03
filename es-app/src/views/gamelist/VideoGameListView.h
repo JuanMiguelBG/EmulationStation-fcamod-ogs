@@ -16,6 +16,7 @@ public:
 	virtual ~VideoGameListView();
 
 	virtual void onShow() override;
+	void onFocusLost() override;
 
 	virtual void onThemeChanged(const std::shared_ptr<ThemeData>& theme) override;
 

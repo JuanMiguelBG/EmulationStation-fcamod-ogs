@@ -498,3 +498,8 @@ void DetailedGameListView::onShow()
 	BasicGameListView::onShow();
 	updateInfoPanel();
 }
+
+void DetailedGameListView::onFocusLost() {
+	mDescContainer.reset();
+	mList.stopScrolling(true);
+}

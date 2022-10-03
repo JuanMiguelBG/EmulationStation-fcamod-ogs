@@ -114,6 +114,7 @@ void Settings::setDefaults()
 	mBoolMap["ThreadedLoading"] = true;
 	mBoolMap["OptimizeSystem"] = false;
 	mBoolMap["AutoMenuWidth"] = false;
+	mIntMap["DescriptionAutoScrollDelay"] = 3; // s to wait before we start to scroll
 
 	mBoolMap["Debug"] = false;
 	mBoolMap["DebugGrid"] = false;
@@ -124,7 +125,7 @@ void Settings::setDefaults()
 	mIntMap["ScraperResizeWidth"] = 400;
 	mIntMap["ScraperResizeHeight"] = 0;
 
-	mIntMap["MaxVRAM"] = 100;
+	mIntMap["MaxVRAM"] = 150;
 
 	mBoolMap["HideWindow"] = true;
 
@@ -188,6 +189,8 @@ void Settings::setDefaults()
 	mBoolMap["ForceKiosk"] = false;
 	mBoolMap["ForceKid"] = false;
 	mBoolMap["ForceDisableFilters"] = false;
+
+	mBoolMap["UseFullscreenPaging"] = false;
 
 	mStringMap["Scraper"] = "ScreenScraper";
 	mStringMap["ScrapperImageSrc"] = "ss";

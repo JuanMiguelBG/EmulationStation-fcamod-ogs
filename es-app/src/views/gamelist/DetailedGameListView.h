@@ -17,6 +17,7 @@ public:
 
 	virtual void onThemeChanged(const std::shared_ptr<ThemeData>& theme) override;
 	virtual void onShow() override;
+	void onFocusLost() override;
 
 	virtual const char* getName() const override 
 	{ 

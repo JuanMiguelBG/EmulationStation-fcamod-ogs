@@ -42,13 +42,14 @@ public:
 	virtual ~Font();
 
 	Vector2f sizeText(std::string text, float lineSpacing = 1.5f); // Returns the expected size of a string when rendered.  Extra spacing is applied to the Y axis.
+	Vector2f sizeCodePoint(unsigned int, float lineSpacing = 1.5f); // Returns the expected size of a Unicode code point.
 	TextCache* buildTextCache(const std::string& text, float offsetX, float offsetY, unsigned int color);
 	TextCache* buildTextCache(const std::string& text, Vector2f offset, unsigned int color, float xLen, Alignment alignment = ALIGN_LEFT, float lineSpacing = 1.5f);
 	
 	void renderTextCache(TextCache* cache);
 	void renderGradientTextCache(TextCache* cache, unsigned int colorTop, unsigned int colorBottom, bool horz = false);
 
-	std::string wrapText(std::string text, float xLen); // Inserts newlines into text to make it wrap properly.
+	std::string wrapText(std::string text, float maxWidth); // Inserts newlines into text to make it wrap properly.
 	Vector2f sizeWrappedText(std::string text, float xLen, float lineSpacing = 1.5f); // Returns the expected size of a string after wrapping is applied.
 	Vector2f getWrappedTextCursorOffset(std::string text, float xLen, size_t cursor, float lineSpacing = 1.5f); // Returns the position of of the cursor after moving "cursor" characters.
 
@@ -130,6 +131,8 @@ private:
 	std::map<unsigned int, Glyph*> mGlyphMap;
 
 	Glyph* getGlyph(unsigned int id);
+
+	bool isWhiteSpace(unsigned int c);
 
 	int mMaxGlyphHeight;
 

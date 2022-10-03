@@ -5,7 +5,6 @@
 #include "components/TextComponent.h"
 #include "resources/Font.h"
 #include "resources/TextureResource.h"
-#include "InputManager.h"
 #include "Log.h"
 #include "Scripting.h"
 #include <algorithm>
@@ -96,8 +95,6 @@ bool Window::init(bool initRenderer, bool initInputManager)
 			LOG(LogError) << "Window::init() --> Renderer failed to initialize!";
 			return false;
 		}
-
-		InputManager::getInstance()->init();
 	}
 	else
 		Renderer::activateWindow();
@@ -172,9 +169,6 @@ void Window::deinit(bool deinitRenderer)
 	// Hide all GUI elements on uninitialisation - this disable
 	for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)
 		(*i)->onHide();
-
-	if (deinitRenderer)
-		InputManager::getInstance()->deinit();
 
 	TextureResource::resetCache();
 
@@ -682,6 +676,7 @@ void Window::startScreenSaver()
 {
 	if (isScreenSaverEnabled() && !mRenderScreenSaver)
 	{
+		Scripting::fireEvent("screensaver-start");
 		for (auto extra : mScreenExtras)
 			extra->onScreenSaverActivate();
 
@@ -706,6 +701,7 @@ bool Window::cancelScreenSaver()
 		mScreenSaver->stopScreenSaver();
 		mRenderScreenSaver = false;
 		mScreenSaver->resetCounts();
+		Scripting::fireEvent("screensaver-stop");
 
 		// Tell the GUI components the screensaver has stopped
 		for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)
