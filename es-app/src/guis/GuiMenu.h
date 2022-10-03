@@ -65,6 +65,7 @@ private:
 	static std::string getIconSound(int level);
 	static std::string getIconBrightness(int level);
 	static std::string getIconNetwork(bool status);
+	static std::string getIconBluetooth(bool status);
 
 	MenuComponent mMenu;
 	TextComponent mVersion;

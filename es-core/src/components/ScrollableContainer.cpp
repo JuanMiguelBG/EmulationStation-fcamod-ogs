@@ -5,7 +5,7 @@
 #include "Settings.h"
 
 #define AUTO_SCROLL_RESET_DELAY 3000 // ms to reset to top after we reach the bottom
-//#define AUTO_SCROLL_DELAY 3000 // ms to wait before we start to scroll
+#define AUTO_SCROLL_DELAY 3000 // ms to wait before we start to scroll
 #define AUTO_SCROLL_SPEED 50 // ms between scrolls
 
 ScrollableContainer::ScrollableContainer(Window* window) : GuiComponent(window),
@@ -40,10 +40,7 @@ void ScrollableContainer::setAutoScroll(bool autoScroll)
 	if (autoScroll)
 	{
 		mScrollDir = Vector2f(0, 1);
-
-		if (mAutoScrollDelay == 0)
-			mAutoScrollDelay = Settings::getInstance()->getInt("DescriptionAutoScrollDelay") * 1000;
-
+		mAutoScrollDelay = AUTO_SCROLL_DELAY;
 		mAutoScrollSpeed = AUTO_SCROLL_SPEED;
 		reset();
 	}
