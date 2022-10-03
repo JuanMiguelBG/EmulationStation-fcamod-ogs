@@ -372,13 +372,6 @@ get_network_exist_flag()
 is_wifi_power_safe_enabled() {
     #print_log $LOG_FILE "INFO" "Executing 'is_wifi_power_safe_enabled()'"
 
-    local status=`sudo cat /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf | grep wifi.powersave | awk '{print $3}'`
-    if [ "$status" == "3" ]; then
-      # enabled
-      #print_log $LOG_FILE "INFO" "is_wifi_power_safe_enabled() - NetworkManager Wifi Power Safe is enabled"
-      return 0
-    fi
-
     status=`sudo iw dev wlan0 get power_save | awk '{print $3}'`
     if [ "$status" == "on" ]; then
       # enabled
@@ -398,18 +391,13 @@ set_wifi_power_safe()
     if [ "$1" == "true" ]; then
       # enabled
       #print_log $LOG_FILE "INFO" "set_wifi_power_safe() - NetworkManager Wifi Power Safe setting enabled"
+      sudo iw wlan0 set power_save on
       sudo sed -i '/wifi.powersave \=/c\wifi.powersave = 3' "$POWER_SAFE_FILE"
     else
       # disabled
       #print_log $LOG_FILE "INFO" "set_wifi_power_safe() - NetworkManager Wifi Power Safe setting disabled"
+      sudo iw wlan0 set power_save off
       sudo sed -i '/wifi.powersave \=/c\wifi.powersave = 2' "$POWER_SAFE_FILE"
-    fi
-
-    is_network_manager_active
-    if [ $? -eq 0 ]; then
-      # active
-      #print_log $LOG_FILE "INFO" "set_wifi_power_safe() - NetworkManager is active, restarting..."
-      sudo systemctl restart NetworkManager || return 1
     fi
 }
 
