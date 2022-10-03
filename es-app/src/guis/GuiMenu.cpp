@@ -2767,7 +2767,6 @@ void GuiMenu::addStatusBarInfo(Window* mWindow)
 	bool status = ApiSystem::getInstance()->isNetworkConnected();
 	iconPath = getIconNetwork(status);
 	text.clear();
-	LOG(LogDebug) << "GuiMenu::addStatusBarInfo() - isNetworkConnected(): " << Utils::String::boolToString(status);
 	if (!iconPath.empty())
 	{
 		// icon
