@@ -152,9 +152,9 @@ do_connect() {
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Disconnecting of '$actual_network'"
       sudo nmcli con down "$actual_network" > /dev/null 2>&1
     fi
-    net_regexp=`echo "$SSID" | tr -s " "`
+    local net_regexp=`echo "$SSID" | tr -s " "`
     net_regexp=${net_regexp=// /\s}
-    exist=$(ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
+    exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
 
     if [ ! -z "$exist" ]; then
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Connection '$SSID' already exist"
@@ -351,7 +351,9 @@ is_network_exist()
 {
     local SSID=$1
 
-    exist=$(ls -1 /etc/NetworkManager/system-connections/ | grep $SSID)
+    local net_regexp=`echo "$SSID" | tr -s " "`
+    net_regexp=${net_regexp=// /\s}
+    exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
     if [ ! -z "$exist" ]; then
       # Exist
       #print_log $LOG_FILE "INFO" "Executing 'is_network_exist()': Connection to network '$SSID' exist on system"
