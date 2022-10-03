@@ -115,7 +115,6 @@ void Settings::setDefaults()
 	mBoolMap["ThreadedLoading"] = true;
 	mBoolMap["OptimizeSystem"] = false;
 	mBoolMap["AutoMenuWidth"] = false;
-	mIntMap["DescriptionAutoScrollDelay"] = 3; // s to wait before we start to scroll
 
 	mBoolMap["Debug"] = false;
 	mBoolMap["DebugGrid"] = false;

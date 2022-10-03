@@ -1178,15 +1178,6 @@ void GuiMenu::openUISettings()
 		}
 	});
 
-	// description auto-scroll delay
-	auto desc_autoscroll_delay = std::make_shared<SliderComponent>(mWindow, 1.0f, 10.f, 1.0f, "s");
-	desc_autoscroll_delay->setValue((float) Settings::getInstance()->getInt("DescriptionAutoScrollDelay"));
-	s->addWithLabel(_("AUTO SCROLL DELAY OF DESCRIPTION TEXT"), desc_autoscroll_delay);
-	s->addSaveFunc([desc_autoscroll_delay]
-	{
-		Settings::getInstance()->setInt("DescriptionAutoScrollDelay", (int)Math::round( desc_autoscroll_delay->getValue() ));
-	});
-
 	s->onFinalize([s, pthis, window]
 	{
 		if (s->getVariable("reloadCollections"))
@@ -2701,8 +2692,7 @@ void GuiMenu::addStatusBarInfo(Window* mWindow)
 	{
 		text.append("BAT: ");
 	}
-	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("% "), font, color), false);
-	row.addElement(std::make_shared<TextComponent>(mWindow, " | ", font, color), false);
+	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Sound Information
 	level = ApiSystem::getInstance()->getVolume();
@@ -2722,8 +2712,7 @@ void GuiMenu::addStatusBarInfo(Window* mWindow)
 	{
 		text.append("SND: ");
 	}
-	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("% "), font, color), false);
-	row.addElement(std::make_shared<TextComponent>(mWindow, " | ", font, color), false);
+	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Brightness Information
 	level = ApiSystem::getInstance()->getBrightnessLevel();
@@ -2743,8 +2732,7 @@ void GuiMenu::addStatusBarInfo(Window* mWindow)
 	{
 		text.append("BRT: ");
 	}
-	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("% "), font, color), false);
-	row.addElement(std::make_shared<TextComponent>(mWindow, " | ", font, color), false);
+	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Network Information
 	iconPath = ResourceManager::getInstance()->getResourcePath(":/network/network_icon.svg");
@@ -2761,8 +2749,7 @@ void GuiMenu::addStatusBarInfo(Window* mWindow)
 	}
 	else
 	{
-		text.append("NTW: ");
-		row.addElement(std::make_shared<TextComponent>(mWindow, text, font, color), false);
+		row.addElement(std::make_shared<TextComponent>(mWindow, text.append("NTW: "), font, color), false);
 	}
 	bool status = ApiSystem::getInstance()->isNetworkConnected();
 	iconPath = getIconNetwork(status);
@@ -2779,8 +2766,7 @@ void GuiMenu::addStatusBarInfo(Window* mWindow)
 	}
 	else
 	{
-		text.append(formatNetworkStatus(status));
-		row.addElement(std::make_shared<TextComponent>(mWindow, text, font, color), false);
+		row.addElement(std::make_shared<TextComponent>(mWindow, text.append(formatNetworkStatus(status)), font, color), false);
 	}
 	
 	mMenu.addRow(row);
