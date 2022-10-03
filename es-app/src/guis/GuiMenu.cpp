@@ -102,12 +102,9 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 
 	if (Settings::getInstance()->getBool("FullScreenMode"))
 	{
-		BatteryInformation battery = ApiSystem::getInstance()->getBatteryInformation();
+		addStatusBarInfo(window);
+
 		SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
-
-		// battery | Sound | Brightness | Network
-		addEntry(formatIconsBatteryStatus(battery.level, battery.isCharging) + "  |  " + formatIconsSoundStatus(ApiSystem::getInstance()->getVolume()) + "  |  " + formatIconsBrightnessStatus(ApiSystem::getInstance()->getBrightnessLevel()) + "  |  " + formatIconsNetworkStatus(ApiSystem::getInstance()->isNetworkConnected()), false, [this] {  });
-
 		addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 	}
 
@@ -2614,77 +2611,178 @@ std::string GuiMenu::formatNetworkStatus(bool isConnected)
 	return (isConnected ? "    " + _("CONNECTED") + " " : _("NOT CONNECTED"));
 }
 
-std::string GuiMenu::formatIconsBatteryStatus(int level, bool isCharging)
+std::string GuiMenu::getIconBattery(int level, bool isCharging)
 {
-	std::string batteryInfo("");
-	if (level > 75)
-		batteryInfo.append(_U("\uF240 "));
-	else if (level > 50)
-		batteryInfo.append(_U("\uF241 "));
-	else if (level > 25)
-		batteryInfo.append(_U("\uF242 "));
-	else if (level > 5)
-		batteryInfo.append(_U("\uF243 "));
-	else
-		batteryInfo.append(_U("\uF244 "));
-
-	batteryInfo.append(std::to_string( level )).append("% ");
-
 	if (isCharging)
-		batteryInfo.append(_U("\uF0E7 "));
-
-	return batteryInfo;
+		return ResourceManager::getInstance()->getResourcePath(":/battery/incharge.svg");
+	else if (level > 75)
+		return ResourceManager::getInstance()->getResourcePath(":/battery/full.svg");
+	else if (level > 50)
+		return ResourceManager::getInstance()->getResourcePath(":/battery/75.svg");
+	else if (level > 25)
+		return ResourceManager::getInstance()->getResourcePath(":/battery/50.svg");
+	else if (level > 5)
+		return ResourceManager::getInstance()->getResourcePath(":/battery/25.svg");
+	else
+		return ResourceManager::getInstance()->getResourcePath(":/battery/empty.svg");
 }
 
-std::string GuiMenu::formatIconsSoundStatus(int level)
+std::string GuiMenu::getIconSound(int level)
 {
-	std::string soundInfo("");
-
 	if (level > 70)
-		soundInfo.append(_U("\uF028 "));
+		return ResourceManager::getInstance()->getResourcePath(":/sound/sound_max.svg");
 	else if (level > 20)
-		soundInfo.append(_U("\uF027 "));
+		return ResourceManager::getInstance()->getResourcePath(":/sound/sound_middle.svg");
+	else if (level > 0)
+		return ResourceManager::getInstance()->getResourcePath(":/sound/sound_min.svg");
 	else
-		soundInfo.append(_U("\uF026 "));
-
-	soundInfo.append(std::to_string( level )).append("% ");
-
-	return soundInfo;
+		return ResourceManager::getInstance()->getResourcePath(":/sound/sound_mute.svg");
 }
 
-std::string GuiMenu::formatIconsBrightnessStatus(int level)
+std::string GuiMenu::getIconBrightness(int level)
 {
-	std::string brightnessInfo("");
-
 	if (level > 89)
-		brightnessInfo.append(_U("\uF18B "));
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_max.svg");
 	else if (level > 74) // 78%
-		brightnessInfo.append(_U("\uF18A "));
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_84.svg");
 	else if (level > 60) // 65%
-		brightnessInfo.append(_U("\uF189 "));
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_70.svg");
 	else if (level > 45) // 50%
-		brightnessInfo.append(_U("\uF188 "));
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_56.svg");
 	else if (level > 35) // 38%
-		brightnessInfo.append(_U("\uF187 "));
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_42.svg");
 	else if (level > 22) // 25%
-		brightnessInfo.append(_U("\uF186 "));
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_28.svg");
 	else if (level > 10) // 13%
-		brightnessInfo.append(_U("\uF185 "));
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_14.svg");
 	else // <= 10%
-		brightnessInfo.append(_U("\uF184 "));
-
-	brightnessInfo.append(std::to_string( level )).append("% ");
-
-	return brightnessInfo;
+		return ResourceManager::getInstance()->getResourcePath(":/brightness/brightness_min.svg");
 }
 
-std::string GuiMenu::formatIconsNetworkStatus(bool status)
+std::string GuiMenu::getIconNetwork(bool status)
 {
-	std::string networkInfo(_U("\uF0E8 "));
-	if (ApiSystem::getInstance()->isNetworkConnected())
-		networkInfo.append(_U("\uF1EB "));
+	if (status)
+		return ResourceManager::getInstance()->getResourcePath(":/network/network.svg");
 	else
-		networkInfo.append(_U("\uF05E "));
+		return ResourceManager::getInstance()->getResourcePath(":/network/network_disc.svg");
+}
 
-	return networkInfo;
+void GuiMenu::addStatusBarInfo(Window* mWindow)
+{
+	BatteryInformation battery = ApiSystem::getInstance()->getBatteryInformation();
+
+	auto theme = ThemeData::getMenuTheme();
+	std::shared_ptr<Font> font = theme->Text.font;
+	unsigned int color = theme->Text.color;
+
+	// populate the list
+	ComponentListRow row;
+
+	// spacer between icon and text
+	auto spacer = std::make_shared<GuiComponent>(mWindow);
+	spacer->setSize(10, 0);
+
+	// Battery Information
+	std::string iconPath = getIconBattery(battery.level, battery.isCharging);
+	int level = battery.level;
+	std::string text;
+
+	if (!iconPath.empty())
+	{
+		// icon
+		auto icon = std::make_shared<ImageComponent>(mWindow);
+		icon->setImage(iconPath);
+		icon->setColorShift(theme->Text.color);
+		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
+		row.addElement(icon, false, false);
+		row.addElement(spacer, false);
+	}
+	else
+	{
+		text.append("BAT: ");
+	}
+	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("% "), font, color), false);
+	row.addElement(std::make_shared<TextComponent>(mWindow, " | ", font, color), false);
+
+	// Sound Information
+	level = ApiSystem::getInstance()->getVolume();
+	iconPath = getIconSound(level);
+	text.clear();
+	if (!iconPath.empty())
+	{
+		// icon
+		auto icon = std::make_shared<ImageComponent>(mWindow);
+		icon->setImage(iconPath);
+		icon->setColorShift(theme->Text.color);
+		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
+		row.addElement(icon, false, false);
+		row.addElement(spacer, false);
+	}
+	else
+	{
+		text.append("SND: ");
+	}
+	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("% "), font, color), false);
+	row.addElement(std::make_shared<TextComponent>(mWindow, " | ", font, color), false);
+
+	// Brightness Information
+	level = ApiSystem::getInstance()->getBrightnessLevel();
+	iconPath = getIconBrightness(level);
+	text.clear();
+	if (!iconPath.empty())
+	{
+		// icon
+		auto icon = std::make_shared<ImageComponent>(mWindow);
+		icon->setImage(iconPath);
+		icon->setColorShift(theme->Text.color);
+		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
+		row.addElement(icon, false, false);
+		row.addElement(spacer, false);
+	}
+	else
+	{
+		text.append("BRT: ");
+	}
+	row.addElement(std::make_shared<TextComponent>(mWindow, text.append(std::to_string( level )).append("% "), font, color), false);
+	row.addElement(std::make_shared<TextComponent>(mWindow, " | ", font, color), false);
+
+	// Network Information
+	iconPath = ResourceManager::getInstance()->getResourcePath(":/network/network_icon.svg");
+	text.clear();
+	if (!iconPath.empty())
+	{
+		// icon
+		auto icon = std::make_shared<ImageComponent>(mWindow);
+		icon->setImage(iconPath);
+		icon->setColorShift(theme->Text.color);
+		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
+		row.addElement(icon, false, false);
+		row.addElement(spacer, false);
+	}
+	else
+	{
+		text.append("NTW: ");
+		row.addElement(std::make_shared<TextComponent>(mWindow, text, font, color), false);
+	}
+	bool status = ApiSystem::getInstance()->isNetworkConnected();
+	iconPath = getIconNetwork(status);
+	text.clear();
+	LOG(LogDebug) << "GuiMenu::addStatusBarInfo() - isNetworkConnected(): " << Utils::String::boolToString(status);
+	if (!iconPath.empty())
+	{
+		// icon
+		auto icon = std::make_shared<ImageComponent>(mWindow);
+		icon->setImage(iconPath);
+		icon->setColorShift(theme->Text.color);
+		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
+		row.addElement(icon, false, false);		
+		row.addElement(spacer, false);
+	}
+	else
+	{
+		text.append(formatNetworkStatus(status));
+		row.addElement(std::make_shared<TextComponent>(mWindow, text, font, color), false);
+	}
+	
+	mMenu.addRow(row);
 }

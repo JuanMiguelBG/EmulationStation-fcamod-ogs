@@ -57,11 +57,13 @@ private:
 	void openDisplayAutoDimSettings();
 	void openRemoteServicesSettings();
 
+	void addStatusBarInfo(Window* window);
+
 	static std::string formatNetworkStatus(bool isConnected);
-	static std::string formatIconsBatteryStatus(int level, bool isCharging);
-	static std::string formatIconsSoundStatus(int level);
-	static std::string formatIconsBrightnessStatus(int level);
-	static std::string formatIconsNetworkStatus(bool status);
+	static std::string getIconBattery(int level, bool isCharging);
+	static std::string getIconSound(int level);
+	static std::string getIconBrightness(int level);
+	static std::string getIconNetwork(bool status);
 
 	MenuComponent mMenu;
 	TextComponent mVersion;
