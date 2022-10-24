@@ -1,6 +1,6 @@
 #pragma once
 #ifndef ES_CORE_WINDOW_H
-#define ES_CORE_WInDOW_H
+#define ES_CORE_WINDOW_H
 
 #include "HelpPrompt.h"
 #include "InputConfig.h"
