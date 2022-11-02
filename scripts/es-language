@@ -1,8 +1,8 @@
 #!/bin/sh
 
 if [ ! "$1" ];then
-	printf "usage : es-language [set value/get]\n"
-	exit 1
+  printf "usage : es-language [set value/get]\n"
+  exit 1
 fi
 
 # Configure ES commons variables
@@ -50,28 +50,28 @@ ra32ConfigFile="$RA32_CONFIG_FOLDER/retroarch.cfg"
 
 setRetroarchLanguage ()
 {
-	value=$1
-	configFile=$2
+  value=$1
+  configFile=$2
 
-	cat "$configFile" | grep -iw "user_language" > /dev/null
-	valPresent=$?
+  cat "$configFile" | grep -iw "user_language" > /dev/null
+  valPresent=$?
 
-	if [ "$valPresent" != "0" ]; then
-		echo "user_language = \"$value\"" | sudo tee -a "$configFile" > /dev/null
-	else
-		sudo sed -i "s/#\?user_language =.*/user_language = \"$value\"/g" "$configFile" > /dev/null
-	fi
+  if [ "$valPresent" != "0" ]; then
+    echo "user_language = \"$value\"" | sudo tee -a "$configFile" > /dev/null
+  else
+    sudo sed -i "s/#\?user_language =.*/user_language = \"$value\"/g" "$configFile" > /dev/null
+  fi
 }
 
 setRetroarchLanguageValue ()
 {
 #property -->  user_language = "0"
 
-	getRetroarchLanguageValue $pvalue
-	value=$?
+  getRetroarchLanguageValue $pvalue
+  value=$?
 
-	setRetroarchLanguage $value $raConfigFile
-	setRetroarchLanguage $value $ra32ConfigFile
+  setRetroarchLanguage $value $raConfigFile
+  setRetroarchLanguage $value $ra32ConfigFile
 }
 
 getRetroarchLanguageValue ()
@@ -140,12 +140,12 @@ pspGoConfigFile="$USER_HOME_PATH/.config/ppsspp/PSP/SYSTEM/ppsspp.ini.go"
 
 setPpssppLanguage ()
 {
-	valuestr=$1
-	valuenum=$2
-	configFile=$3
+  valuestr=$1
+  valuenum=$2
+  configFile=$3
 
-	sudo sed -i -E "s/^Language = [a-z]{2}_[A-Z]{2}$/Language = $valuestr/g" "$configFile" > /dev/null
-	sudo sed -i -E "s/^Language = [0-9]?$/Language = $valuenum/g" "$configFile" > /dev/null
+  sudo sed -i -E "s/^Language = [a-z]{2}_[A-Z]{2}$/Language = $valuestr/g" "$configFile" > /dev/null
+  sudo sed -i -E "s/^Language = [0-9]?$/Language = $valuenum/g" "$configFile" > /dev/null
 }
 
 setPpssppLanguageValue ()
@@ -153,16 +153,16 @@ setPpssppLanguageValue ()
 #property --> Language = en_US
 #property --> Language = 1
 
-	# language string
-	valuestr=$(getPpssppLanguageString $pvalue)
+  # language string
+  valuestr=$(getPpssppLanguageString $pvalue)
 
-	# language number
-	getPpssppLanguageNumber $pvalue
-	valuenum=$?
+  # language number
+  getPpssppLanguageNumber $pvalue
+  valuenum=$?
 
-	setPpssppLanguage $valuestr $valuenum $pspConfigFile
-	setPpssppLanguage $valuestr $valuenum $pspSdlConfigFile
-	setPpssppLanguage $valuestr $valuenum $pspGoConfigFile
+  setPpssppLanguage $valuestr $valuenum $pspConfigFile
+  setPpssppLanguage $valuestr $valuenum $pspSdlConfigFile
+  setPpssppLanguage $valuestr $valuenum $pspGoConfigFile
 }
 
 getPpssppLanguageString ()
@@ -263,16 +263,16 @@ setScummvmLanguageValue ()
 {
 #property --> gui_language=en
 
-	value=$(getScummvmLanguageValue $pvalue)
+  value=$(getScummvmLanguageValue $pvalue)
 
-	cat "$scummvmConfigFile" | grep -iw "gui_language" > /dev/null
-	valPresent=$?
+  cat "$scummvmConfigFile" | grep -iw "gui_language" > /dev/null
+  valPresent=$?
 
-	if [ "$valPresent" != "0" ]; then
-		sudo sed -i "/\[scummvm\]/ a gui_language=$value" "$scummvmConfigFile"
-	else
-		sudo sed -i "s/#\?gui_language=.*/gui_language=$value/g" "$scummvmConfigFile" > /dev/null
-	fi
+  if [ "$valPresent" != "0" ]; then
+    sudo sed -i "/\[scummvm\]/ a gui_language=$value" "$scummvmConfigFile"
+  else
+    sudo sed -i "s/#\?gui_language=.*/gui_language=$value/g" "$scummvmConfigFile" > /dev/null
+  fi
 }
 
 getScummvmLanguageValue ()
@@ -334,16 +334,16 @@ setLzdoomLanguageValue ()
 {
 #property --> language=auto
 
-	value=$(getLzdoomLanguageValue $pvalue)
+  value=$(getLzdoomLanguageValue $pvalue)
 
-	cat "$lzdoomConfigFile" | grep -iw "language" > /dev/null
-	valPresent=$?
+  cat "$lzdoomConfigFile" | grep -iw "language" > /dev/null
+  valPresent=$?
 
-	if [ "$valPresent" != "0" ]; then
-		sudo sed -i "/\[GlobalSettings\]/ a language=$value" "$lzdoomConfigFile"
-	else
-		sudo sed -i "s/#\?language=.*/language=$value/g" "$lzdoomConfigFile" > /dev/null
-	fi
+  if [ "$valPresent" != "0" ]; then
+    sudo sed -i "/\[GlobalSettings\]/ a language=$value" "$lzdoomConfigFile"
+  else
+    sudo sed -i "s/#\?language=.*/language=$value/g" "$lzdoomConfigFile" > /dev/null
+  fi
 
 }
 
@@ -403,7 +403,7 @@ setRetrorunLanguageValue ()
 {
 #launch script
 
-	getRetrorunLanguageValue $pvalue
+  getRetrorunLanguageValue $pvalue
 }
 
 getRetrorunLanguageValue ()
@@ -443,23 +443,158 @@ getRetrorunLanguageValue ()
 }
 
 
-get_es_language_value () {
+get_es_language_value ()
+{
 #<string name="Language" value="es" />
-	sed -n "s/.*name=\"Language\".*value=\"\([^\"]*\).*/\1/p" "$esConfigFile"
+  sed -n "s/.*name=\"Language\".*value=\"\([^\"]*\).*/\1/p" "$esConfigFile"
 }
 
+
+# SONIC 1 & 2 PORTS
+# 0 = EN
+# 1 = FR
+# 2 = IT
+# 3 = DE
+# 4 = ES
+# 5 = JP
+# 6 = PT
+# 7 = RU
+# 8 = KO
+# 9 = ZH
+# 10 = ZS
+
+sonic1ConfigFile="$ROMS_DIR/ports/sonic1/settings.ini"
+sonic2ConfigFile="$ROMS_DIR/ports/sonic2/settings.ini"
+
+setSonicLanguageValue()
+{
+  value=$1
+  configFile=$2
+
+  if [[ -f "$configFile" ]]; then
+    getSonic1LanguageValue $value
+    value=$?
+#Language=0
+    sudo sed -i -E "s/^Language=[0-9]?$/Language=$value/g" "$configFile" > /dev/null
+  fi
+}
+
+getSonicLanguageValue()
+{
+  case $1 in
+  br)
+    return 6
+  ;;
+  de)
+    return 3
+  ;;
+  es)
+    return 4
+  ;;
+  fr)
+    return 1
+  ;;
+  ko)
+    return 8
+  ;;
+  pt)
+    return 6
+  ;;
+  it)
+    return 2
+  ;;
+  zh-CN)
+    return 9
+  ;;
+  jp)
+    return 5
+  ;;
+  *) # default ENGLISH
+    return 0
+  ;;
+  esac
+}
+
+setSonic1LanguageValue()
+{
+  setSonicLanguageValue $pvalue $sonic1ConfigFile
+}
+
+setSonic2LanguageValue()
+{
+  setSonicLanguageValue $pvalue $sonic2ConfigFile
+}
+
+# SONIC CD PORTS
+# 0 = EN
+# 1 = FR
+# 2 = IT
+# 3 = DE
+# 4 = ES
+# 5 = JP
+
+soniccdConfigFile="$ROMS_DIR/ports/soniccd/settings.ini"
+
+setSoniccdLanguageValue()
+{
+  if [[ -f "$soniccdConfigFile" ]]; then
+    getSoniccdLanguageValue $pvalue
+    value=$?
+#Language=0
+    sudo sed -i -E "s/^Language=[0-9]?$/Language=$value/g" "$soniccdConfigFile" > /dev/null
+  fi
+}
+
+getSoniccdLanguageValue()
+{
+  case $1 in
+#  br)
+#    return 6
+#  ;;
+  de)
+    return 3
+  ;;
+  es)
+    return 4
+  ;;
+  fr)
+    return 1
+  ;;
+#  ko)
+#    return 8
+#  ;;
+#  pt)
+#    return 6
+#  ;;
+  it)
+    return 2
+  ;;
+#  zh-CN)
+#    return 9
+#  ;;
+  jp)
+    return 5
+  ;;
+  *) # default ENGLISH
+    return 0
+  ;;
+  esac
+}
 
 # ******************************************************************************************
 
 
 if [ "$command" = "set" ]; then
-	setRetroarchLanguageValue
-	setPpssppLanguageValue
-	setScummvmLanguageValue
-	setLzdoomLanguageValue
-	setRetrorunLanguageValue
+  setRetroarchLanguageValue
+  setPpssppLanguageValue
+  setScummvmLanguageValue
+  setLzdoomLanguageValue
+  setRetrorunLanguageValue
+  setSonic1LanguageValue
+  setSonic2LanguageValue
+  setSoniccdLanguageValue
 
-	exit 0
+  exit 0
 elif [ "$command" = "get" ]; then
-	get_es_language_value
+  get_es_language_value
 fi
