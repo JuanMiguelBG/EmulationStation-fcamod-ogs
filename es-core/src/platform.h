@@ -8,6 +8,17 @@
 
 class Window;
 
+enum RemoteServicesId : unsigned int
+{
+	UNKNOWN = 0,
+	NTP = 1,
+	SAMBA = 2,
+	NETBIOS = 3,
+	SSH = 4,
+	FILE_BROWSER = 5,
+	NETWORK_MANAGER_WAIT_ONLINE = 6
+};
+
 enum QuitMode
 {
 	QUIT = 0,
@@ -281,19 +292,22 @@ struct RemoteServiceInformation
 {
 	RemoteServiceInformation()
 	{
-		name = "N/A";
+		id = RemoteServicesId::UNKNOWN;
 		platformName = "N/A";
 		isActive = false;
 		isStartOnBoot = false;
 	}
 
+	RemoteServicesId id;
 	std::string name;
 	std::string platformName;
 	bool isActive;
 	bool isStartOnBoot;
 };
 
-RemoteServiceInformation queryRemoteServiceStatus(const std::string &name);
+std::string getRemoteServiceName(RemoteServicesId id = RemoteServicesId::UNKNOWN);
+std::string getRemoteServicePlatformName(RemoteServicesId id = RemoteServicesId::UNKNOWN);
+RemoteServiceInformation queryRemoteServiceStatus(RemoteServicesId id = RemoteServicesId::UNKNOWN);
 bool setRemoteServiceStatus(RemoteServiceInformation service);
 
 #ifdef _DEBUG

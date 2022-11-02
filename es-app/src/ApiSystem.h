@@ -242,11 +242,7 @@ public:
 	std::string getOutputDevice();
 	bool setOutputDevice(const std::string device);
 
-	RemoteServiceInformation getNtpStatus();
-	RemoteServiceInformation getSambaStatus();
-	RemoteServiceInformation getNetBiosStatus();
-	RemoteServiceInformation getSshStatus();
-	RemoteServiceInformation getFileBrowserStatus();
+	RemoteServiceInformation getRemoteServiceStatus(RemoteServicesId id);
 	bool configRemoteService(RemoteServiceInformation service);
 
 	virtual bool launchKodi(Window *window);
