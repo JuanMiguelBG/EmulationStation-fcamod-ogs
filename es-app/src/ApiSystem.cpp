@@ -165,93 +165,39 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case WIFI:
 				executables.push_back("es-wifi");
 				break;
-		case ApiSystem::RETROACHIVEMENTS:
+		case RETROACHIVEMENTS:
 				executables.push_back("es-cheevos");
 				break;
-		case ApiSystem::LANGUAGE:
+		case LANGUAGE:
 				executables.push_back("es-language");
 				break;
-		case ApiSystem::SYSTEM_INFORMATION:
+		case SYSTEM_INFORMATION:
 				executables.push_back("es-system_inf");
 				break;
-		case ApiSystem::AUTO_SUSPEND:
+		case AUTO_SUSPEND:
 				executables.push_back("es-auto_suspend");
 				break;
-		case ApiSystem::OPTMIZE_SYSTEM:
+		case OPTMIZE_SYSTEM:
 				executables.push_back("es-optimize_system");
 				break;
-		case ApiSystem::SHOW_FPS:
+		case SHOW_FPS:
 				executables.push_back("es-show_fps");
 				break;
-		case ApiSystem::OVERCLOCK:
+		case OVERCLOCK:
 				executables.push_back("es-overclock_system");
 				break;
-		case ApiSystem::PRELOAD_VLC:
+		case PRELOAD_VLC:
 				executables.push_back("es-preload_vlc");
 				break;
-		case ApiSystem::SOUND:
+		case SOUND:
 				executables.push_back("es-sound");
 				break;
-		case ApiSystem::REMOTE_SERVICES:
+		case REMOTE_SERVICES:
 				executables.push_back("es-remote_services");
 				break;
-		case ApiSystem::LOG_SCRIPTS:
+		case LOG_SCRIPTS:
 				executables.push_back("es-log_scripts");
 				break;
-/*
-	case ApiSystem::RETROACHIVEMENTS:
-#ifdef CHEEVOS_DEV_LOGIN
-		return true;
-#endif
-		break;
-	case ApiSystem::KODI:
-		executables.push_back("kodi");
-		break;
-	case ApiSystem::WIFI:
-		executables.push_back("batocera-wifi");
-		break;
-	case ApiSystem::BLUETOOTH:
-		executables.push_back("batocera-bluetooth");
-		break;
-	case ApiSystem::RESOLUTION:
-		executables.push_back("batocera-resolution");
-		break;
-	case ApiSystem::BIOSINFORMATION:
-		executables.push_back("batocera-systems");
-		break;
-	case ApiSystem::DISKFORMAT:
-		executables.push_back("batocera-format");
-		break;
-	case ApiSystem::OVERCLOCK:
-		executables.push_back("batocera-overclock");
-		break;
-	case ApiSystem::THEMESDOWNLOADER:
-		executables.push_back("batocera-es-theme");
-		break;
-	case ApiSystem::NETPLAY:
-		executables.push_back("7zr");
-		break;
-	case ApiSystem::PDFEXTRACTION:
-		executables.push_back("pdftoppm");
-		executables.push_back("pdfinfo");
-		break;
-	case ApiSystem::BATOCERASTORE:
-		executables.push_back("batocera-store");
-		break;
-	case ApiSystem::THEBEZELPROJECT:
-		executables.push_back("batocera-es-thebezelproject");
-		break;
-	case ApiSystem::PADSINFO:
-		executables.push_back("batocera-padsinfo");
-		break;
-	case ApiSystem::EVMAPY:
-		executables.push_back("evmapy");
-		break;
-*/
-	}
-
-//	if (executables.size() == 0)
-//		return true;
 
 	for (auto executable : executables)
 		if (Utils::FileSystem::exists("/usr/bin/" + executable) || Utils::FileSystem::exists("/usr/local/bin/" + executable))
@@ -415,7 +361,7 @@ std::string ApiSystem::getFreeSpaceUserInfo() {
 std::string ApiSystem::getFreeSpaceUsbDriveInfo(const std::string mountpoint)
 {
 	LOG(LogDebug) << "ApiSystem::getFreeSpaceUsbDriveInfo() - mount point: " << mountpoint;
-	if ( isUsbDriveMounted(mountpoint) )
+	if ( isDriveMounted(mountpoint) )
 		return getFreeSpaceInfo(mountpoint);
 
 	return "";
@@ -466,7 +412,7 @@ bool ApiSystem::isFreeSpaceUserLimit() {
 }
 
 bool ApiSystem::isFreeSpaceUsbDriveLimit(const std::string mountpoint) {
-	if ( isUsbDriveMounted(mountpoint) )
+	if ( isDriveMounted(mountpoint) )
 		return isFreeSpaceLimit(mountpoint, 2);
 
 	return false;
@@ -1508,32 +1454,11 @@ bool ApiSystem::setOutputDevice(const std::string device)
 	return executeScript("es-sound set output_device \"" + device + '"');
 }
 
-RemoteServiceInformation ApiSystem::getNtpStatus()
+RemoteServiceInformation ApiSystem::getRemoteServiceStatus(RemoteServicesId id)
 {
-	LOG(LogInfo) << "ApiSystem::getNtpStatus()";
+	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus() - id: " << std::to_string(id);
 
-	return queryRemoteServiceStatus("NTP");
-}
-
-RemoteServiceInformation ApiSystem::getSambaStatus()
-{
-	LOG(LogInfo) << "ApiSystem::getSambaStatus()";
-
-	return queryRemoteServiceStatus("SAMBA");
-}
-
-RemoteServiceInformation ApiSystem::getNetBiosStatus()
-{
-	LOG(LogInfo) << "ApiSystem::getNetBiosStatus()";
-
-	return queryRemoteServiceStatus("NETBIOS");
-}
-
-RemoteServiceInformation ApiSystem::getSshStatus()
-{
-	LOG(LogInfo) << "ApiSystem::getSshStatus()";
-
-	return queryRemoteServiceStatus("SSH");
+	return queryRemoteServiceStatus(id);
 }
 
 bool ApiSystem::configRemoteService(RemoteServiceInformation service)

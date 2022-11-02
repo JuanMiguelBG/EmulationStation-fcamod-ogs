@@ -8,6 +8,17 @@
 
 class Window;
 
+enum RemoteServicesId : unsigned int
+{
+	UNKNOWN = 0,
+	NTP = 1,
+	SAMBA = 2,
+	NETBIOS = 3,
+	SSH = 4,
+	FILE_BROWSER = 5,
+	NETWORK_MANAGER_WAIT_ONLINE = 6
+};
+
 enum QuitMode
 {
 	QUIT = 0,
@@ -266,8 +277,8 @@ struct DeviceInformation
 std::string queryDeviceName();
 DeviceInformation queryDeviceInformation(bool summary);
 
-bool isUsbDriveMounted(std::string device);
-std::string queryUsbDriveMountPoint(std::string device);
+bool isDriveMounted(std::string device);
+std::string queryDriveMountPoint(std::string device);
 std::vector<std::string> queryUsbDriveMountPoints();
 
 std::string queryTimezones();
@@ -278,19 +289,23 @@ struct RemoteServiceInformation
 {
 	RemoteServiceInformation()
 	{
+		id = RemoteServicesId::UNKNOWN;
 		name = "N/A";
 		platformName = "N/A";
 		isActive = false;
 		isStartOnBoot = false;
 	}
 
+	RemoteServicesId id;
 	std::string name;
 	std::string platformName;
 	bool isActive;
 	bool isStartOnBoot;
 };
 
-RemoteServiceInformation queryRemoteServiceStatus(const std::string &name);
+std::string getRemoteServiceName(RemoteServicesId id = RemoteServicesId::UNKNOWN);
+std::string getRemoteServicePlatformName(RemoteServicesId id = RemoteServicesId::UNKNOWN);
+RemoteServiceInformation queryRemoteServiceStatus(RemoteServicesId id = RemoteServicesId::UNKNOWN);
 bool setRemoteServiceStatus(RemoteServiceInformation service);
 
 #ifdef _DEBUG

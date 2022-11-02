@@ -54,7 +54,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 {
 	// NTP
 	addGroup(_("NTP"));
-	RemoteServiceInformation ntp = ApiSystem::getInstance()->getNtpStatus();
+	RemoteServiceInformation ntp = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::NTP);
 
 	auto ntp_active = std::make_shared<SwitchComponent>(window, ntp.isActive);
 	addWithLabel(_("ACTIVATE"), ntp_active);
@@ -69,7 +69,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// SAMBA
 	addGroup(_("SAMBA"));
-	RemoteServiceInformation samba = ApiSystem::getInstance()->getSambaStatus();
+	RemoteServiceInformation samba = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::SAMBA);
 
 	auto samba_active = std::make_shared<SwitchComponent>(window, samba.isActive);
 	addWithLabel(_("ACTIVATE"), samba_active);
@@ -84,7 +84,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// NetBIOS
 	addGroup(_("NetBIOS"));
-	RemoteServiceInformation netbios = ApiSystem::getInstance()->getNetBiosStatus();
+	RemoteServiceInformation netbios = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::NETBIOS);
 
 	auto netbios_active = std::make_shared<SwitchComponent>(window, netbios.isActive);
 	addWithLabel(_("ACTIVATE"), netbios_active);
@@ -99,7 +99,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// SSH
 	addGroup(_("SSH"));
-	RemoteServiceInformation ssh = ApiSystem::getInstance()->getSshStatus();
+	RemoteServiceInformation ssh = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::SSH);
 
 	auto ssh_active = std::make_shared<SwitchComponent>(window, ssh.isActive);
 	addWithLabel(_("ACTIVATE"), ssh_active);
@@ -110,5 +110,20 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 	addSaveFunc([this, window, ssh, ssh_active, ssh_boot]
 	{
 		configRemoteService(window, ssh, ssh_active->getState(), ssh_boot->getState());
+	});
+
+	// NetworkManager-wait-online
+	addGroup(_("NETWORK MANAGER WAIT ONLINE"));
+	RemoteServiceInformation nmwo = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::NETWORK_MANAGER_WAIT_ONLINE);
+
+	auto nmwo_active = std::make_shared<SwitchComponent>(window, nmwo.isActive);
+	addWithLabel(_("ACTIVATE"), nmwo_active);
+
+	auto nmwo_boot = std::make_shared<SwitchComponent>(window, nmwo.isStartOnBoot);
+	addWithLabel(_("BOOT WITH SYSTEM"), nmwo_boot);
+
+	addSaveFunc([this, window, nmwo, nmwo_active, nmwo_boot]
+	{
+		configRemoteService(window, nmwo, nmwo_active->getState(), nmwo_boot->getState());
 	});
 }

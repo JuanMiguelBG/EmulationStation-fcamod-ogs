@@ -239,10 +239,7 @@ public:
 	std::string getOutputDevice();
 	bool setOutputDevice(const std::string device);
 
-	RemoteServiceInformation getNtpStatus();
-	RemoteServiceInformation getSambaStatus();
-	RemoteServiceInformation getNetBiosStatus();
-	RemoteServiceInformation getSshStatus();
+	RemoteServiceInformation getRemoteServiceStatus(RemoteServicesId id);
 	bool configRemoteService(RemoteServiceInformation service);
 
 };

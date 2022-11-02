@@ -946,13 +946,13 @@ std::string getShOutput(const std::string& mStr)
 	return result;
 }
 
-bool isUsbDriveMounted(std::string device)
+bool isDriveMounted(std::string device)
 {
 	return ( Utils::FileSystem::exists(device) && Utils::FileSystem::exists("/bin/findmnt")
 		&& !getShOutput("findmnt -rno SOURCE,TARGET \"" + device + '"').empty() );
 }
 
-std::string queryUsbDriveMountPoint(std::string device)
+std::string queryDriveMountPoint(std::string device)
 {
 	std::string dev = "/dev/" + device;
 	if ( Utils::FileSystem::exists(dev) && Utils::FileSystem::exists("/bin/lsblk") )
@@ -967,7 +967,7 @@ std::vector<std::string> queryUsbDriveMountPoints()
 													 mount_points;
 	for (auto partition = begin (partitions); partition != end (partitions); ++partition)
 	{
-		std::string mp = queryUsbDriveMountPoint(*partition);
+		std::string mp = queryDriveMountPoint(*partition);
 		if (!mp.empty())
 			mount_points.push_back(mp);
 	}
@@ -1012,18 +1012,60 @@ bool setCurrentTimezone(std::string timezone)
 	return executeSystemScript("sudo ln -sf \"/usr/share/zoneinfo/" + timezone +"\" /etc/localtime &");
 }
 
-RemoteServiceInformation queryRemoteServiceStatus(const std::string &name)
+std::string getRemoteServiceName(RemoteServicesId id)
+{
+	switch (id)
+	{
+		case NTP:
+			return "NTP";
+
+		case SAMBA:
+			return "SAMBA";
+
+		case NETBIOS:
+			return "NETBIOS";
+
+		case SSH:
+			return "SSH";
+
+		case NETWORK_MANAGER_WAIT_ONLINE:
+			return "NETWORK-MANAGER-WAIT-ONLINE";
+	
+		default: // UNKNOWN
+			return "N/A";
+	}
+}
+
+std::string getRemoteServicePlatformName(RemoteServicesId id)
+{
+	switch (id)
+	{
+		case NTP:
+			return "ntp";
+
+		case SAMBA:
+			return "smbd.service";
+
+		case NETBIOS:
+			return "nmbd.service";
+
+		case SSH:
+			return "ssh.service";
+
+		case NETWORK_MANAGER_WAIT_ONLINE:
+			return "NetworkManager-wait-online";
+	
+		default: // UNKNOWN
+			return "N/A";
+	}
+}
+
+RemoteServiceInformation queryRemoteServiceStatus(RemoteServicesId id)
 {
 	RemoteServiceInformation rsi;
-	rsi.name = name;
-	if (name == "SAMBA")
-		rsi.platformName = "smbd.service";
-	else if (name == "NETBIOS")
-		rsi.platformName = "nmbd.service";
-	else if (name == "NTP")
-		rsi.platformName = "ntp";
-	else
-		rsi.platformName =  Utils::String::toLower(name) + ".service";
+
+	rsi.name = getRemoteServiceName(id);
+	rsi.platformName = getRemoteServicePlatformName(id);
 
 	std::string result = getShOutput("es-remote_services get_status \"" + rsi.platformName + '"');
 	std::vector<std::string> data = Utils::String::split(result, ';');

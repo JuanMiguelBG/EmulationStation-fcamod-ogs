@@ -272,6 +272,7 @@ do_remote_services_active()
     sudo systemctl start smbd.service --quiet
     sudo systemctl start nmbd.service --quiet
     sudo systemctl start ssh.service --quiet
+    sudo systemctl start NetworkManager-wait-online --quiet
 
     if [ -f "/usr/local/bin/filebrowser" ]; then
       sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
@@ -288,6 +289,7 @@ do_remote_services_inactive()
     sudo systemctl stop smbd.service --quiet
     sudo systemctl stop nmbd.service --quiet
     sudo systemctl stop ssh.service --quiet
+    sudo systemctl stop NetworkManager-wait-online --quiet
 
     if [ -f "/usr/local/bin/filebrowser" ]; then
       sudo pkill filebrowser
