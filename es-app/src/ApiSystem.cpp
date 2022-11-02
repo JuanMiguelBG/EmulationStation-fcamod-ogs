@@ -198,6 +198,7 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case LOG_SCRIPTS:
 				executables.push_back("es-log_scripts");
 				break;
+	}
 
 	for (auto executable : executables)
 		if (Utils::FileSystem::exists("/usr/bin/" + executable) || Utils::FileSystem::exists("/usr/local/bin/" + executable))
