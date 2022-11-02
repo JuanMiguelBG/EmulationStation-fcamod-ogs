@@ -293,6 +293,7 @@ struct RemoteServiceInformation
 	RemoteServiceInformation()
 	{
 		id = RemoteServicesId::UNKNOWN;
+		name = "N/A";
 		platformName = "N/A";
 		isActive = false;
 		isStartOnBoot = false;
