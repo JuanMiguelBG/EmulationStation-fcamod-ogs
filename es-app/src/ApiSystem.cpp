@@ -17,6 +17,7 @@
 #include "InputManager.h"
 #include "EsLocale.h"
 #include <algorithm>
+#include "guis/GuiMsgBox.h"
 
 UpdateState::State ApiSystem::state = UpdateState::State::NO_UPDATE;
 
@@ -1509,8 +1510,6 @@ bool ApiSystem::launchKodi(Window *window)
 
 bool ApiSystem::launchBluetoothConfigurator(Window *window)
 {
-	LOG(LogDebug) << "ApiSystem::launchBluetoothConfigurator()";
-
 	std::string command = "Bluetooth.sh";
 
 	ApiSystem::launchExternalWindow_before(window);
@@ -1523,6 +1522,18 @@ bool ApiSystem::launchBluetoothConfigurator(Window *window)
 		exitCode = WEXITSTATUS(exitCode);
 
 	ApiSystem::launchExternalWindow_after(window);
+
+	// handle end of Bluetooth Configuration
+	if (exitCode == 20)
+	{
+		window->pushGui(new GuiMsgBox(window, _("THE EMULATIONSTATION WILL NOW RESTART"),
+						_("OK"),
+							[] {
+								if (quitES(QuitMode::RESTART) != 0)
+									LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
+						}));
+		return true;
+	}
 
 	return exitCode == 0;
 }

@@ -90,10 +90,10 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 			break;
 		}
 
-		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::WIFI))
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 			addEntry(_("NETWORK SETTINGS").c_str(), true, [this] { preloadNetworkSettings(); openNetworkSettings(); }, "iconNetwork");
 
-		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BLUETOOTH))
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
 			addEntry(_("BLUETOOTH SETTINGS").c_str(), true, [this] { preloadBluetoothSettings(); openBluetoothSettings(); }, "iconBluetooth");
 
 		addEntry(_("SCRAPER"), true, [this] { openScraperSettings(); }, "iconScraper");
@@ -1385,7 +1385,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	// Hostname
 	s->addInputTextRow(_("HOSTNAME"), "system.hostname", false, false);
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::REMOTE_SERVICES))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::REMOTE_SERVICES))
 		s->addEntry(_("REMOTE SERVICES SETTINGS"), true, [this] { openRemoteServicesSettings(); });
 
 	// Automatically enable or disable WIFI power saving mode
@@ -1690,35 +1690,48 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 
 	Window *window = mWindow;
 
-	auto s = new GuiSettings(mWindow, _("BLUETOOTH SETTINGS").c_str());
+	auto s = new GuiSettings(window, _("BLUETOOTH SETTINGS").c_str());
 
 	// Bluetooth enable
-	auto enable_bt = std::make_shared<SwitchComponent>(mWindow, baseBtEnabled);
+	auto enable_bt = std::make_shared<SwitchComponent>(window, baseBtEnabled);
 	s->addWithLabel(_("ENABLE BLUETOOTH"), enable_bt, selectBtEnable);
-	enable_bt->setOnChangedCallback([this, s, baseBtEnabled, enable_bt]()
+	enable_bt->setOnChangedCallback([this, window, s, baseBtEnabled, enable_bt]()
 		{
 			bool bt_enabled = enable_bt->getState();
-			if (bt_enabled != baseBtEnabled)
+			SystemConf::getInstance()->setBool("bluetooth.enabled", bt_enabled);
+
+			if (bt_enabled)
 			{
-				SystemConf::getInstance()->setBool("bluetooth.enabled", bt_enabled);
-
-				if (bt_enabled)
-				{
-					ApiSystem::getInstance()->enableBluetooth();
-				}
-				else
-					ApiSystem::getInstance()->disableBluetooth();
-
-				delete s;
-				openBluetoothSettings(true);
+				mWindow->pushGui(new GuiLoading<bool>(mWindow, _("ENABLING BLUETOOTH ..."), 
+					[this, window]
+					{
+						return ApiSystem::getInstance()->enableBluetooth();
+					},
+					[this, window, s](bool result)
+					{
+						delete s;
+						openBluetoothSettings(true);
+					}));
+			}
+			else
+			{
+				mWindow->pushGui(new GuiLoading<bool>(mWindow, _("DISABLING BLUETOOTH ..."), 
+					[this, window]
+					{
+						return ApiSystem::getInstance()->disableBluetooth();
+					},
+					[this, window, s](bool result)
+					{
+						delete s;
+						openBluetoothSettings(true);
+					}));
 			}
 		});
 
 	if (baseBtEnabled)
 	{
-		s->addEntry(_("BLUETOOTH CONFIGURATOR").c_str(), false, [this]
+		s->addEntry(_("BLUETOOTH CONFIGURATOR").c_str(), false, [this, window]
 			{
-				Window *window = mWindow;
 				delete this;
 				if (!ApiSystem::getInstance()->launchBluetoothConfigurator(window))
 					LOG(LogWarning) << "GuiMenu::openBluetoothSettings() - Shutdown Bluetooth Configurator terminated with non-zero result!";
@@ -1892,7 +1905,7 @@ void GuiMenu::openAdvancedSettings()
 				{
 					Settings::getInstance()->setString("Language", language->getSelected());
 					s->setVariable("reloadGuiMenu", true);
-					if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::LANGUAGE))
+					if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LANGUAGE))
 						ApiSystem::getInstance()->setLanguage(language->getSelected());
 				}
 			});
@@ -1974,7 +1987,7 @@ void GuiMenu::openAdvancedSettings()
 	s->addWithLabel(_("THREADED LOADING"), threadedLoading);
 	s->addSaveFunc([threadedLoading] { Settings::getInstance()->setBool("ThreadedLoading", threadedLoading->getState()); });
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OPTMIZE_SYSTEM))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
 	{
 		// optimize system
 		bool optimize_system_old_value = Settings::getInstance()->getBool("OptimizeSystem");
@@ -2003,7 +2016,7 @@ void GuiMenu::openAdvancedSettings()
 			});
 	}
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::OVERCLOCK))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OVERCLOCK))
 	{
 		// overclock
 		bool overclock_system_old_value = ApiSystem::getInstance()->isOverclockSystem();
@@ -2031,7 +2044,7 @@ void GuiMenu::openAdvancedSettings()
 			});
 	}
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC))
 	{
 		// preloa VLC - workaround for the freeze of the first video play
 		auto preloa_VLC = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("PreloadVLC"));
@@ -2050,7 +2063,7 @@ void GuiMenu::openAdvancedSettings()
 	s->addWithLabel(_("SHOW FRAMERATE"), framerate);
 	s->addSaveFunc([framerate] { Settings::getInstance()->setBool("DrawFramerate", framerate->getState()); });
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SHOW_FPS))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SHOW_FPS))
 	{
 	// retroarch framerate
 		bool retroarch_fps_value = ApiSystem::getInstance()->isShowRetroarchFps();
@@ -2152,7 +2165,7 @@ void GuiMenu::openAdvancedSettings()
 		{
 			Log::setupReportingLevel();
 			Log::init();
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::LOG_SCRIPTS) && ApiSystem::getInstance()->isEsScriptsLoggingActivated())
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS) && ApiSystem::getInstance()->isEsScriptsLoggingActivated())
 				ApiSystem::getInstance()->setEsScriptsLoggingLevel(logLevel->getSelected());
 		}
 	});
@@ -2169,7 +2182,7 @@ void GuiMenu::openAdvancedSettings()
 		}
 	});
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::LOG_SCRIPTS))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS))
 	{
 		bool scripts_log_activated_value = ApiSystem::getInstance()->isEsScriptsLoggingActivated();
 		auto scripts_log_activated = std::make_shared<SwitchComponent>(mWindow, scripts_log_activated_value);

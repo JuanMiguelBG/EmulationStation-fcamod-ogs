@@ -312,7 +312,7 @@ bool parseArgs(int argc, char* argv[])
 
 void loadOtherSettings()
 {
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::WIFI))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 		Settings::getInstance()->setString("wifi.already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
 }
 
@@ -407,7 +407,7 @@ int main(int argc, char* argv[])
 
 
 	std::string async_log;
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
 	{
 		if (Utils::Async::isCanRunAsync())
 		{
@@ -536,7 +536,7 @@ int main(int argc, char* argv[])
 	// this makes for no delays when accessing content, but a longer startup time
 	ViewController::get()->preload();
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
 	{
 		LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock'";
 		std::string preloa_vlc_lock_file_path = Utils::FileSystem::getEsConfigPath() + "/preload_vlc.lock";
