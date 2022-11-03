@@ -120,7 +120,7 @@ is_enabled() {
 # ******************************************************************************************
 
 # Configure ES commons variables
-. es-commons
+. es-log_scripts
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-bluetooth.log"
 
