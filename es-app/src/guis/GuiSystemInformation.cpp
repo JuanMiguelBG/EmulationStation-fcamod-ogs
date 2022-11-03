@@ -48,7 +48,7 @@ void GuiSystemInformation::showSummarySystemInfo()
 	NetworkInformation ni = ApiSystem::getInstance()->getNetworkInformation();
 
 	// device name
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SYSTEM_INFORMATION))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SYSTEM_INFORMATION))
 		addWithLabel(_("DEVICE"), std::make_shared<TextComponent>(mWindow, ApiSystem::getInstance()->getDeviceName(), font, color));
 
 	addGroup(_("CPU"));
@@ -212,7 +212,7 @@ void GuiSystemInformation::showDetailedSystemInfo()
 	if (bi.hasBattery)
 		addSubMenu(_("BATTERY"), [this, bi]() { openBattery(&bi); });
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SYSTEM_INFORMATION))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SYSTEM_INFORMATION))
 		addSubMenu(_("SOFTWARE"), [this]() { openSoftware(); });
 
 	addSubMenu(_("DEVICE"), [this]() { openDevice(); });
@@ -232,7 +232,7 @@ void GuiSystemInformation::openCpuAndSocket()
 	CpuAndSocketInformation csi = ApiSystem::getInstance()->getCpuAndChipsetInformation(false);
 
 	// SOC name
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SYSTEM_INFORMATION))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SYSTEM_INFORMATION))
 		s->addWithLabel(_("SOC"), std::make_shared<TextComponent>(window, csi.soc_name,font, color));
 
 	// vendor ID
@@ -658,7 +658,7 @@ void GuiSystemInformation::openDevice()
 	DeviceInformation di = ApiSystem::getInstance()->getDeviceInformation(false);
 
 	// device name
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SYSTEM_INFORMATION))
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SYSTEM_INFORMATION))
 		s->addWithLabel(_("NAME"), std::make_shared<TextComponent>(window, di.name, font, color));
 
 	// device hardware
