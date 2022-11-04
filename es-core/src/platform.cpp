@@ -1123,7 +1123,7 @@ uint32_t getVolume()
 	if (Utils::FileSystem::exists("/usr/local/bin/current_volume"))
 		value = std::atoi( getShOutput(R"(/usr/local/bin/current_volume)").c_str() );
 	else
-		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Playback))").c_str() );
+		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Master))").c_str() );
 	return value;
 }
 #endif

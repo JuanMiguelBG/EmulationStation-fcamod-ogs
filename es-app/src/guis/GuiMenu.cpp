@@ -443,39 +443,46 @@ void GuiMenu::openSoundSettings()
 			unsigned int color = theme->Text.color;
 
 			// audio card
-			s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("default")), font, color));
-
-			// volume control device
-			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("Playback")), font, color));
-
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+			if (!Settings::getInstance()->getBool("BluetoothAudioConnected"))
 			{
-				// output device
-				auto out_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("OUTPUT DEVICE"), false);
-				std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
-				std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
-				//LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
-				for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
-				{
-					std::string out_dev_label;
-					if (*od == "OFF")
-						out_dev_label = "MUTE";
-					else if (*od == "SPK")
-						out_dev_label = "SPEAKER";
-					else if (*od == "HP")
-						out_dev_label = "HEADPHONES";
-					else if (*od == "SPK_HP")
-						out_dev_label = "SPEAKER AND HEADPHONES";
-					else
-						out_dev_label = *od;
+				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("default")), font, color));
 
-					out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
-				}
-				s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
-				out_dev->setSelectedChangedCallback([](const std::string &newVal)
+				// volume control device
+				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("Playback")), font, color));
+
+				if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+				{
+					// output device
+					auto out_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, _("OUTPUT DEVICE"), false);
+					std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
+					std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
+					//LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
+					for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
 					{
-						ApiSystem::getInstance()->setOutputDevice(newVal);
-					});
+						std::string out_dev_label;
+						if (*od == "OFF")
+							out_dev_label = "MUTE";
+						else if (*od == "SPK")
+							out_dev_label = "SPEAKER";
+						else if (*od == "HP")
+							out_dev_label = "HEADPHONES";
+						else if (*od == "SPK_HP")
+							out_dev_label = "SPEAKER AND HEADPHONES";
+						else
+							out_dev_label = *od;
+
+						out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+					}
+					s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
+					out_dev->setSelectedChangedCallback([](const std::string &newVal)
+						{
+							ApiSystem::getInstance()->setOutputDevice(newVal);
+						});
+				}
+			}
+			else
+			{
+				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, _("BLUETOOTH AUDIO"), font, color));
 			}
 		}
 	}
@@ -1718,12 +1725,29 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 				mWindow->pushGui(new GuiLoading<bool>(mWindow, _("DISABLING BLUETOOTH ..."), 
 					[this, window]
 					{
+						if (Settings::getInstance()->getBool("BluetoothAudioConnected"))
+						{
+							AudioManager::getInstance()->deinit();
+							VolumeControl::getInstance()->deinit();
+						}
 						return ApiSystem::getInstance()->disableBluetooth();
 					},
 					[this, window, s](bool result)
 					{
-						delete s;
-						openBluetoothSettings(true);
+						if (Settings::getInstance()->getBool("BluetoothAudioConnected"))
+						{
+							window->pushGui(new GuiMsgBox(window, _("THE EMULATIONSTATION WILL NOW RESTART"),
+							_("OK"),
+								[] {
+									if (quitES(QuitMode::RESTART) != 0)
+										LOG(LogWarning) << "GuiMenu::openBluetoothSettings() - Restart terminated with non-zero result!";
+							}));
+						}
+						else
+						{
+							delete s;
+							openBluetoothSettings(true);
+						}
 					}));
 			}
 		});
@@ -1731,11 +1755,27 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 	if (baseBtEnabled)
 	{
 		s->addEntry(_("BLUETOOTH CONFIGURATOR").c_str(), false, [this, window]
-			{
-				delete this;
-				if (!ApiSystem::getInstance()->launchBluetoothConfigurator(window))
+			{			
+				if (ApiSystem::getInstance()->launchBluetoothConfigurator(window))
+				{
+					bool sys_btadc = ApiSystem::getInstance()->isBluetoothAudioDeviceConnected();
+					bool es_btadc = Settings::getInstance()->getBool("BluetoothAudioConnected");
+					Settings::getInstance()->setBool("BluetoothAudioConnected", sys_btadc);
+					if ((sys_btadc && !es_btadc) || (!sys_btadc && es_btadc))
+					{
+						window->pushGui(new GuiMsgBox(window, _("THE EMULATIONSTATION WILL NOW RESTART"),
+							_("OK"),
+							[] {
+								if (quitES(QuitMode::RESTART) != 0)
+									LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
+							}));
+					}
+					
+				}
+				else
 					LOG(LogWarning) << "GuiMenu::openBluetoothSettings() - Shutdown Bluetooth Configurator terminated with non-zero result!";
-
+				
+				delete this;
 			});
 	}
 

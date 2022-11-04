@@ -1155,6 +1155,10 @@ msgid "AUDIO CARD"
 msgstr "TARJETA DE SONIDO"
 
 #:
+msgid "BLUETOOTH AUDIO"
+msgstr "SONIDO BLUETOOTH"
+
+#:
 msgid "AUDIO DEVICE"
 msgstr "DISPOSITIVO DE SONIDO"
 

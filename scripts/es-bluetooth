@@ -8,6 +8,8 @@ do_help() {
     echo "$0 disable_bluetooth" >&2
     echo "$0 is_bluetooth_active" >&2
     echo "$0 is_bluetooth_enabled" >&2
+    echo "$0 is_bluetooth_audio_device_connected" >&2
+    echo "$0 get_bluetooth_audio_devices_connected" >&2
     echo "$0 test_bluetooth" >&2
 }
 
@@ -117,6 +119,28 @@ is_enabled() {
     return 0
 }
 
+is_bluetooth_audio_device_connected()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device_connected()'"
+
+    local BT_AUDIO_DEVICES_CONNECTED=`bluealsa-cli --quiet list-pcms | grep -Ec '/a2dp(src|sink)/sink$'`
+    if [[ $(bluealsa-cli --quiet list-pcms | grep -Ec '/a2dp(src|sink)/sink$') -gt 0 ]] ; then
+      # BT audio devices connected
+      #print_log $LOG_FILE "INFO" "is_enabled() - A total of $BT_AUDIO_DEVICES_CONNECTED Bluetooth Audio Devices connected"
+      return 0
+    fi
+    #print_log $LOG_FILE "INFO" "is_enabled() -No Bluetooth Audio Devices connected"
+    # NO BT audio devices connected
+    return 1
+}
+
+get_bluetooth_audio_devices_connected()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'get_bluetooth_audio_devices_connected()'"
+
+    bluealsa-cli --quiet list-pcms | grep -E '/a2dp(src|sink)/sink$'
+}
+
 # ******************************************************************************************
 
 # Configure ES commons variables
@@ -158,6 +182,12 @@ case "${ACTION}" in
     ;;
     "is_bluetooth_enabled")
         is_bluetooth_enabled || exit 1
+    ;;
+    "is_bluetooth_audio_device_connected")
+        is_bluetooth_audio_device_connected || exit 1
+    ;;
+    "get_bluetooth_audio_devices_connected")
+        get_bluetooth_audio_devices_connected
     ;;
     "test_bluetooth")
         test_bluetooth

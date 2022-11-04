@@ -1523,18 +1523,6 @@ bool ApiSystem::launchBluetoothConfigurator(Window *window)
 
 	ApiSystem::launchExternalWindow_after(window);
 
-	// handle end of Bluetooth Configuration
-	if (exitCode == 20)
-	{
-		window->pushGui(new GuiMsgBox(window, _("THE EMULATIONSTATION WILL NOW RESTART"),
-						_("OK"),
-							[] {
-								if (quitES(QuitMode::RESTART) != 0)
-									LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
-						}));
-		return true;
-	}
-
 	return exitCode == 0;
 }
 
@@ -1557,4 +1545,11 @@ bool ApiSystem::disableBluetooth()
 	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
 
 	return executeScript("es-bluetooth disable");
+}
+
+bool ApiSystem::isBluetoothAudioDeviceConnected()
+{
+	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
+
+	return executeScript("es-bluetooth is_bluetooth_audio_device_connected");
 }

@@ -314,6 +314,11 @@ void loadOtherSettings()
 {
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 		Settings::getInstance()->setString("wifi.already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+	
+	if (ApiSystem::getInstance()->isBluetoothEnabled())
+	{
+		Settings::getInstance()->setBool("BluetoothAudioConnected", ApiSystem::getInstance()->isBluetoothAudioDeviceConnected());
+	}
 }
 
 bool verifyHomeFolderExists()
@@ -440,7 +445,18 @@ int main(int argc, char* argv[])
 	// remove special lock files
 	removeLockFiles();
 
-	loadOtherSettings();
+	if (Utils::Async::isCanRunAsync())
+	{
+		LOG(LogDebug) << "MAIN::main() - Asynchronous execution of 'loadOtherSettings()'!";
+		auto dummy= std::async(std::launch::async, loadOtherSettings);
+		LOG(LogDebug) << "MAIN::main() - exit Asynchronous executionof 'loadOtherSettings()'!";
+		return false;
+	}
+	else
+	{
+		LOG(LogDebug) << "MAIN::main() - normal execution of 'loadOtherSettings()'!";
+		loadOtherSettings();
+	}
 
 /*
 	ApiSystem::getInstance()->checkUpdateVersion();

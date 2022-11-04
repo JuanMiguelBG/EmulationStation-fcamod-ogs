@@ -251,6 +251,7 @@ public:
 	bool isBluetoothEnabled();
 	bool enableBluetooth();
 	bool disableBluetooth();
+	bool isBluetoothAudioDeviceConnected();
 };
 
 #endif
