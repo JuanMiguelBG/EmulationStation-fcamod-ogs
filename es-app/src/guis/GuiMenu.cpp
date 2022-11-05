@@ -176,34 +176,32 @@ void GuiMenu::openDisplaySettings()
 			s->setVariable("reloadGuiMenu", true);
 		});
 
-	// brightness
-	auto brightnessPopup = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("BrightnessPopup"));
-	s->addWithLabel(_("SHOW OVERLAY WHEN BRIGHTNESS CHANGES"), brightnessPopup);
-	s->addSaveFunc([brightnessPopup]
-		{
-			bool old_value = Settings::getInstance()->getBool("BrightnessPopup");
-			if (old_value != brightnessPopup->getState())
-				Settings::getInstance()->setBool("BrightnessPopup", brightnessPopup->getState());
-		}
-	);
-
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
+	if (UIModeController::getInstance()->isUIModeFull())
 	{
-		// blink with low battery
-		bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
-		auto blink_low_battery = std::make_shared<SwitchComponent>(mWindow, blink_low_battery_value);
-		s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
-		s->addSaveFunc([blink_low_battery, blink_low_battery_value]
-			{
-				bool new_blink_low_battery_value = blink_low_battery->getState();
-				if (blink_low_battery_value != new_blink_low_battery_value)
-				{
-					Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
-					ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
-				}
-			});
+		// brightness overlay
+		s->addSwitch(_("SHOW OVERLAY WHEN BRIGHTNESS CHANGES"), "BrightnessPopup", true);
 
-		s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
+		// restore brightness
+		s->addSwitch(_("RESTORE BRIGHTNESS AFTER GAME"), "RestoreBrightnesAfterGame", true);
+
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
+		{
+			// blink with low battery
+			bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
+			auto blink_low_battery = std::make_shared<SwitchComponent>(mWindow, blink_low_battery_value);
+			s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
+			s->addSaveFunc([blink_low_battery, blink_low_battery_value]
+				{
+					bool new_blink_low_battery_value = blink_low_battery->getState();
+					if (blink_low_battery_value != new_blink_low_battery_value)
+					{
+						Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
+						ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
+					}
+				});
+
+			s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
+		}
 	}
 
 	s->onFinalize([s, pthis, window]
@@ -434,10 +432,14 @@ void GuiMenu::openSoundSettings()
 		musicVolume->setOnValueChanged([](const float &newVal) { Settings::getInstance()->setInt("MusicVolume", (int)round(newVal)); });
 		s->addWithLabel(_("MUSIC VOLUME"), musicVolume);
 
-		s->addSwitch(_("SHOW OVERLAY WHEN VOLUME CHANGES"), "VolumePopup", true);
-
 		if (UIModeController::getInstance()->isUIModeFull())
 		{
+			// volume overlay
+			s->addSwitch(_("SHOW OVERLAY WHEN VOLUME CHANGES"), "VolumePopup", true);
+
+			// restore volume
+			s->addSwitch(_("RESTORE VOLUME AFTER GAME"), "RestoreVolumeAfterGame", true);
+
 			auto theme = ThemeData::getMenuTheme();
 			std::shared_ptr<Font> font = theme->Text.font;
 			unsigned int color = theme->Text.color;
@@ -501,36 +503,38 @@ void GuiMenu::openSoundSettings()
 	//display music titles
 	s->addSwitch(_("DISPLAY SONG TITLES"), "audio.display_titles", true);
 
-	// how long to display the song titles?
-	auto titles_time = std::make_shared<SliderComponent>(mWindow, 2.f, 120.f, 2.f, "s");
-	titles_time->setValue(Settings::getInstance()->getInt("audio.display_titles_time"));
-	s->addWithLabel(_("SONG TITLE DISPLAY DURATION"), titles_time);
-	s->addSaveFunc([titles_time] {
-			Settings::getInstance()->setInt("audio.display_titles_time", (int)Math::round(titles_time->getValue()));
-		});
+	if (UIModeController::getInstance()->isUIModeFull())
+	{
+		// how long to display the song titles?
+		auto titles_time = std::make_shared<SliderComponent>(mWindow, 2.f, 120.f, 2.f, "s");
+		titles_time->setValue(Settings::getInstance()->getInt("audio.display_titles_time"));
+		s->addWithLabel(_("SONG TITLE DISPLAY DURATION"), titles_time);
+		s->addSaveFunc([titles_time] {
+				Settings::getInstance()->setInt("audio.display_titles_time", (int)Math::round(titles_time->getValue()));
+			});
 
-	// music per system
-	s->addSwitch(_("ONLY PLAY SYSTEM-SPECIFIC MUSIC FOLDER"), "audio.persystem", true, [] { AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true); } );
+		// music per system
+		s->addSwitch(_("ONLY PLAY SYSTEM-SPECIFIC MUSIC FOLDER"), "audio.persystem", true, [] { AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true); } );
 
-	// batocera - music per system
-	s->addSwitch(_("PLAY SYSTEM-SPECIFIC MUSIC"), "audio.thememusics", true, [] { AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true); });
+		// batocera - music per system
+		s->addSwitch(_("PLAY SYSTEM-SPECIFIC MUSIC"), "audio.thememusics", true, [] { AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true); });
 
-	s->addSwitch(_("LOWER MUSIC WHEN PLAYING VIDEO"), "VideoLowersMusic", true);
+		s->addSwitch(_("LOWER MUSIC WHEN PLAYING VIDEO"), "VideoLowersMusic", true);
 
-	s->addGroup(_("SOUNDS"));
+		s->addGroup(_("SOUNDS"));
 
-	// disable sounds
-	s->addSwitch(_("ENABLE NAVIGATION SOUNDS"), "EnableSounds", true, []
-		{
-			if (Settings::getInstance()->getBool("EnableSounds") && PowerSaver::getMode() == PowerSaver::INSTANT)
+		// disable sounds
+		s->addSwitch(_("ENABLE NAVIGATION SOUNDS"), "EnableSounds", true, []
 			{
-				Settings::getInstance()->setPowerSaverMode("default");
-				PowerSaver::init();
-			}
-		});
+				if (Settings::getInstance()->getBool("EnableSounds") && PowerSaver::getMode() == PowerSaver::INSTANT)
+				{
+					Settings::getInstance()->setPowerSaverMode("default");
+					PowerSaver::init();
+				}
+			});
 
-	s->addSwitch(_("ENABLE VIDEO PREVIEW AUDIO"), "VideoAudio", true);
-
+		s->addSwitch(_("ENABLE VIDEO PREVIEW AUDIO"), "VideoAudio", true);
+	}
 
 	s->onFinalize([s, pthis, window]
 	{
@@ -1734,9 +1738,11 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 					},
 					[this, window, s](bool result)
 					{
+						delete s;
 						if (Settings::getInstance()->getBool("BluetoothAudioConnected"))
 						{
-							window->pushGui(new GuiMsgBox(window, _("THE EMULATIONSTATION WILL NOW RESTART"),
+							std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
+							window->pushGui(new GuiMsgBox(window, msg,
 							_("OK"),
 								[] {
 									if (quitES(QuitMode::RESTART) != 0)
@@ -1745,7 +1751,6 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 						}
 						else
 						{
-							delete s;
 							openBluetoothSettings(true);
 						}
 					}));
@@ -1763,7 +1768,8 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 					Settings::getInstance()->setBool("BluetoothAudioConnected", sys_btadc);
 					if ((sys_btadc && !es_btadc) || (!sys_btadc && es_btadc))
 					{
-						window->pushGui(new GuiMsgBox(window, _("THE EMULATIONSTATION WILL NOW RESTART"),
+						std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
+						window->pushGui(new GuiMsgBox(window, msg,
 							_("OK"),
 							[] {
 								if (quitES(QuitMode::RESTART) != 0)
@@ -1774,7 +1780,7 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 				}
 				else
 					LOG(LogWarning) << "GuiMenu::openBluetoothSettings() - Shutdown Bluetooth Configurator terminated with non-zero result!";
-				
+
 				delete this;
 			});
 	}

@@ -36,8 +36,8 @@ protected:
 
 	static ApiSystem* instance;
 
-	void launchExternalWindow_before(Window *window);
-	void launchExternalWindow_after(Window *window);
+	void launchExternalWindow_before(Window *window, const std::string command);
+	void launchExternalWindow_after(Window *window, const std::string command);
 
 public:
 	enum ScriptId : unsigned int
@@ -137,9 +137,13 @@ public:
 	int getBrightness();
 	int getBrightnessLevel();
 	void setBrightnessLevel(int brightnessLevel);
+	void backupBrightnessLevel();
+	void restoreBrightnessLevel();
 
 	int getVolume();
 	void setVolume(int volumeLevel);
+	void backupVolume();
+	void restoreVolume();
 
 	std::string getTimezones();
 	std::string getCurrentTimezone();
@@ -252,6 +256,9 @@ public:
 	bool enableBluetooth();
 	bool disableBluetooth();
 	bool isBluetoothAudioDeviceConnected();
+
+	void backupAfterGameValues();
+	void restoreAfterGameValues();
 };
 
 #endif

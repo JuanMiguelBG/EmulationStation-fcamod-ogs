@@ -90,6 +90,11 @@ int quitES(QuitMode mode)
 			Scripting::fireEvent("quit");
 			break;
 
+		case QuitMode::RESTART:
+			Scripting::fireEvent("quit", "restart");
+			Scripting::fireEvent("restart");
+			break;
+
 		case QuitMode::REBOOT:
 		case QuitMode::FAST_REBOOT:
 			Scripting::fireEvent("quit", "reboot");

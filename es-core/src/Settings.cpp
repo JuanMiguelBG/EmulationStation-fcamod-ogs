@@ -40,7 +40,8 @@ std::vector<const char*> settings_dont_save {
 	{ "wifi.dns1" },
 	{ "wifi.dns2" },
 	{ "wait.process.loading" },
-	{ "BluetoothAudioConnected" }
+	{ "BluetoothAudioConnected" },
+	{ "BrightnessBackup" }
 };
 
 Settings::Settings()
@@ -225,6 +226,11 @@ void Settings::setDefaults()
 	mBoolMap["GuiEditMetadataCloseAllWindows"] = false;
 
 	mBoolMap["wait.process.loading"] = false;
+
+	mBoolMap["RestoreBrightnesAfterGame"] = true;
+	mBoolMap["RestoreVolumeAfterGame"] = true;
+	mIntMap["BrightnessBackup"] = 50;
+	mIntMap["VolumeBackup"] = 75;
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

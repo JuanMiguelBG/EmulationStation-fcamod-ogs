@@ -18,6 +18,7 @@
 #include "EsLocale.h"
 #include <algorithm>
 #include "guis/GuiMsgBox.h"
+#include "Scripting.h"
 
 UpdateState::State ApiSystem::state = UpdateState::State::NO_UPDATE;
 
@@ -607,6 +608,20 @@ int ApiSystem::getBrightness()
 	return queryBrightness();
 }
 
+void ApiSystem::backupBrightnessLevel()
+{
+	LOG(LogDebug) << "ApiSystem::backupBrightnessLevel()";
+
+	Settings::getInstance()->setInt("BrightnessBackup", ApiSystem::getInstance()->getBrightnessLevel());
+}
+
+void ApiSystem::restoreBrightnessLevel()
+{
+	LOG(LogDebug) << "ApiSystem::restoreBrightnessLevel()";
+
+	ApiSystem::getInstance()->setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
+}
+
 int ApiSystem::getVolume()
 {
 	LOG(LogDebug) << "ApiSystem::getVolume()";
@@ -619,6 +634,20 @@ void ApiSystem::setVolume(int volumeLevel)
 	LOG(LogDebug) << "ApiSystem::setVolume()";
 
 	VolumeControl::getInstance()->setVolume(volumeLevel);
+}
+
+void ApiSystem::backupVolume()
+{
+	LOG(LogDebug) << "ApiSystem::backupVolume()";
+
+	Settings::getInstance()->setInt("VolumeBackup", ApiSystem::getInstance()->getVolume());
+}
+
+void ApiSystem::restoreVolume()
+{
+	LOG(LogDebug) << "ApiSystem::restoreVolume()";
+
+	ApiSystem::getInstance()->setVolume(Settings::getInstance()->getInt("VolumeBackup"));
 }
 
 int ApiSystem::getBatteryLevel()
@@ -1448,9 +1477,12 @@ bool ApiSystem::configRemoteService(RemoteServiceInformation service)
 	return setRemoteServiceStatus(service);
 }
 
-void ApiSystem::launchExternalWindow_before(Window *window)
+void ApiSystem::launchExternalWindow_before(Window *window, const std::string command)
 {
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before";
+
+    // Backup Brightness and Volume
+	ApiSystem::backupAfterGameValues();
 
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
@@ -1458,11 +1490,18 @@ void ApiSystem::launchExternalWindow_before(Window *window)
 	window->deinit();
 
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before OK";
+
+	Scripting::fireEvent("application-start", command);
 }
 
-void ApiSystem::launchExternalWindow_after(Window *window)
+void ApiSystem::launchExternalWindow_after(Window *window, const std::string command)
 {
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_after";
+
+	Scripting::fireEvent("application-end", command);
+
+    // Restore Brightness and Volume
+	ApiSystem::restoreAfterGameValues();
 
 	window->init();
 	InputManager::getInstance()->init();
@@ -1482,7 +1521,7 @@ bool ApiSystem::launchKodi(Window *window)
 
 	std::string command = "Kodi.sh";
 
-	ApiSystem::launchExternalWindow_before(window);
+	ApiSystem::launchExternalWindow_before(window, command);
 
 	int exitCode = system(command.c_str());
 
@@ -1491,7 +1530,7 @@ bool ApiSystem::launchKodi(Window *window)
 	if (WIFEXITED(exitCode))
 		exitCode = WEXITSTATUS(exitCode);
 
-	ApiSystem::launchExternalWindow_after(window);
+	ApiSystem::launchExternalWindow_after(window, command);
 
 	// handle end of kodi
 	switch (exitCode)
@@ -1512,7 +1551,7 @@ bool ApiSystem::launchBluetoothConfigurator(Window *window)
 {
 	std::string command = "Bluetooth.sh";
 
-	ApiSystem::launchExternalWindow_before(window);
+	ApiSystem::launchExternalWindow_before(window, command);
 
 	int exitCode = system(command.c_str());
 
@@ -1521,7 +1560,7 @@ bool ApiSystem::launchBluetoothConfigurator(Window *window)
 	if (WIFEXITED(exitCode))
 		exitCode = WEXITSTATUS(exitCode);
 
-	ApiSystem::launchExternalWindow_after(window);
+	ApiSystem::launchExternalWindow_after(window, command);
 
 	return exitCode == 0;
 }
@@ -1552,4 +1591,26 @@ bool ApiSystem::isBluetoothAudioDeviceConnected()
 	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
 
 	return executeScript("es-bluetooth is_bluetooth_audio_device_connected");
+}
+
+void ApiSystem::backupAfterGameValues()
+{
+	LOG(LogInfo) << "ApiSystem::backupAfterGameValues()";
+
+	if (Settings::getInstance()->getBool("RestoreBrightnesAfterGame"))
+		ApiSystem::backupBrightnessLevel();
+
+	if (Settings::getInstance()->getBool("RestoreVolumeAfterGame"))
+		ApiSystem::backupVolume();
+}
+
+void ApiSystem::restoreAfterGameValues()
+{
+	LOG(LogInfo) << "ApiSystem::restoreAfterGameValues()";
+
+	if (Settings::getInstance()->getBool("RestoreBrightnesAfterGame"))
+		ApiSystem::restoreBrightnessLevel();
+
+	if (Settings::getInstance()->getBool("RestoreVolumeAfterGame"))
+		ApiSystem::restoreVolume();
 }

@@ -21,6 +21,7 @@
 #include "MetaData.h"
 #include <fstream>
 #include "guis/GuiMsgBox.h"
+#include "ApiSystem.h"
 
 
 FileData::FileData(FileType type, const std::string& path, SystemData* system)
@@ -332,6 +333,9 @@ void FileData::launchGame(Window* window)
 	if (system == nullptr)
 		return;
 
+    // Backup Brightness and Volume
+	ApiSystem::getInstance()->backupAfterGameValues();
+
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
 	InputManager::getInstance()->deinit();
@@ -385,6 +389,9 @@ void FileData::launchGame(Window* window)
 			LOG(LogWarning) << "FileData::launchGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
 	}
 	Scripting::fireEvent("game-end");
+
+    // Restore Brightness and Volume
+	ApiSystem::getInstance()->restoreAfterGameValues();
 
 	window->init(hideWindow, Settings::getInstance()->getBool("FullScreenMode"));
 	InputManager::getInstance()->init();

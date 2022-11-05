@@ -450,7 +450,6 @@ int main(int argc, char* argv[])
 		LOG(LogDebug) << "MAIN::main() - Asynchronous execution of 'loadOtherSettings()'!";
 		auto dummy= std::async(std::launch::async, loadOtherSettings);
 		LOG(LogDebug) << "MAIN::main() - exit Asynchronous executionof 'loadOtherSettings()'!";
-		return false;
 	}
 	else
 	{

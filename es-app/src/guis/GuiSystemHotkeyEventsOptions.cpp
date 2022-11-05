@@ -24,7 +24,7 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	auto brightness = std::make_shared<SwitchComponent>(window, brightness_value);
 	addWithLabel(_("BRIGHTNESS"), brightness);
 
-	// Brightness step
+	// brightness step
 	auto brightness_step = std::make_shared<SliderComponent>(mWindow, 1.0f, 25.f, 1.0f, "%");
 	int brightness_step_value = ApiSystem::getInstance()->getSystemHotkeyBrightnessStep();
 	brightness_step->setValue((float) brightness_step_value);
@@ -35,9 +35,18 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 	auto volume = std::make_shared<SwitchComponent>(window, volume_value);
 	addWithLabel(_("VOLUME"), volume);
 
-	// Brightness step
-	auto volume_step = std::make_shared<SliderComponent>(mWindow, 1.0f, 25.f, 1.0f, "%");
+	// volume step
+	float volume_start = 1.0f;
 	int volume_step_value = ApiSystem::getInstance()->getSystemHotkeyVolumeStep();
+	if (Settings::getInstance()->getBool("BluetoothAudioConnected"))
+	{
+		volume_start = 2.0f;
+		if (volume_step_value == 1)
+			volume_step_value = 2;
+	}
+
+	auto volume_step = std::make_shared<SliderComponent>(mWindow, volume_start, 25.f, 1.0f, "%");
+	
 	volume_step->setValue((float) volume_step_value);
 	addWithLabel(_("VOLUME STEP"), volume_step);
 
