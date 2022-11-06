@@ -1761,25 +1761,22 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 	{
 		s->addEntry(_("BLUETOOTH CONFIGURATOR").c_str(), false, [this, window]
 			{			
-				if (ApiSystem::getInstance()->launchBluetoothConfigurator(window))
-				{
-					bool sys_btadc = ApiSystem::getInstance()->isBluetoothAudioDeviceConnected();
-					bool es_btadc = Settings::getInstance()->getBool("BluetoothAudioConnected");
-					Settings::getInstance()->setBool("BluetoothAudioConnected", sys_btadc);
-					if ((sys_btadc && !es_btadc) || (!sys_btadc && es_btadc))
-					{
-						std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
-						window->pushGui(new GuiMsgBox(window, msg,
-							_("OK"),
-							[] {
-								if (quitES(QuitMode::RESTART) != 0)
-									LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
-							}));
-					}
-					
-				}
-				else
+				if (!ApiSystem::getInstance()->launchBluetoothConfigurator(window))
 					LOG(LogWarning) << "GuiMenu::openBluetoothSettings() - Shutdown Bluetooth Configurator terminated with non-zero result!";
+
+				bool sys_btadc = ApiSystem::getInstance()->isBluetoothAudioDeviceConnected();
+				bool es_btadc = Settings::getInstance()->getBool("BluetoothAudioConnected");
+				Settings::getInstance()->setBool("BluetoothAudioConnected", sys_btadc);
+				if ((sys_btadc && !es_btadc) || (!sys_btadc && es_btadc))
+				{
+					std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
+					window->pushGui(new GuiMsgBox(window, msg,
+						_("OK"),
+						[] {
+							if (quitES(QuitMode::RESTART) != 0)
+								LOG(LogWarning) << "GuiMenu::openAdvancedSettings() - Restart terminated with non-zero result!";
+						}));
+				}
 
 				delete this;
 			});
