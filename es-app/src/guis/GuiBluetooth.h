@@ -1,0 +1,34 @@
+#pragma once
+
+#include "GuiComponent.h"
+#include "components/MenuComponent.h"
+#include "components/BusyComponent.h"
+
+#include <thread>
+
+class GuiBluetooth : public GuiComponent
+{
+public:
+	GuiBluetooth(Window* window, const std::string title, const std::string subtitle, bool listPairedDevices = false);
+
+	bool input(InputConfig* config, Input input) override;
+	virtual std::vector<HelpPrompt> getHelpPrompts() override;
+
+protected:
+
+	MenuComponent* getMenu() { return &mMenu; }
+
+private:
+	void	load(std::vector<std::string> bt_devices);
+
+	bool	onSave(const std::string& value);
+	void	onRefresh();
+	void	onDeleteConnection();
+
+	MenuComponent mMenu;
+
+	std::string mTitle;
+
+	bool	mWaitingLoad;
+	bool    mListPairedDevices; 
+};

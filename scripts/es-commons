@@ -8,6 +8,7 @@ export ES_PRELOAD_VLC_LOCK_FILE="$ES_HOME_PATH/preload_vlc.lock"
 export RA_CONFIG_FOLDER="$USER_HOME_PATH/.config/retroarch"
 export RA32_CONFIG_FOLDER="$USER_HOME_PATH/.config/retroarch32"
 export ES_SCRIPTS_PATH="/usr/local/bin"
+export EXIST_CONNECTION_FLAG=" (**)"
 
 if [ -f "/opt/system/Advanced/Switch to main SD for Roms.sh" ]; then
   export ROMS_DIR="/roms2"

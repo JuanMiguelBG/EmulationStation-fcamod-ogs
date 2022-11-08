@@ -17,6 +17,7 @@
 #include "guis/GuiQuitOptions.h"
 #include "guis/GuiSystemHotkeyEventsOptions.h"
 #include "guis/GuiWifi.h"
+#include "guis/GuiBluetooth.h"
 #include "guis/GuiAutoSuspendOptions.h"
 #include "guis/GuiRetroachievementsOptions.h"
 #include "guis/GuiDisplayAutoDimOptions.h"
@@ -444,9 +445,9 @@ void GuiMenu::openSoundSettings()
 			std::shared_ptr<Font> font = theme->Text.font;
 			unsigned int color = theme->Text.color;
 
-			// audio card
-			if (!Settings::getInstance()->getBool("BluetoothAudioConnected"))
+			if (!SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
 			{
+				// audio card
 				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(_("default")), font, color));
 
 				// volume control device
@@ -484,7 +485,11 @@ void GuiMenu::openSoundSettings()
 			}
 			else
 			{
+				// audio card
 				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(mWindow, _("BLUETOOTH AUDIO"), font, color));
+
+				// volume control device
+				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(mWindow, SystemConf::getInstance()->get("bluetooth.audio.device"), font, color));
 			}
 		}
 	}
@@ -1692,12 +1697,21 @@ void GuiMenu::resetNetworkSettings(GuiSettings *gui)
 
 void GuiMenu::preloadBluetoothSettings()
 {
-	SystemConf::getInstance()->setBool("bluetooth.enabled", ApiSystem::getInstance()->isBluetoothEnabled());
+	bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
+	SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
+	std::string btAudioDevice = "";
+	if (btEnabled)
+		btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
+
+	SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
+	SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 }
 
 void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 {
 	const bool baseBtEnabled = SystemConf::getInstance()->getBool("bluetooth.enabled");
+	const bool baseBtAudioConnected = SystemConf::getInstance()->getBool("bluetooth.audio.connected");
+	const std::string baseBtAudioDevice = SystemConf::getInstance()->get("bluetooth.audio.device");
 
 	Window *window = mWindow;
 
@@ -1706,7 +1720,7 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 	// Bluetooth enable
 	auto enable_bt = std::make_shared<SwitchComponent>(window, baseBtEnabled);
 	s->addWithLabel(_("ENABLE BLUETOOTH"), enable_bt, selectBtEnable);
-	enable_bt->setOnChangedCallback([this, window, s, baseBtEnabled, enable_bt]()
+	enable_bt->setOnChangedCallback([this, window, s, baseBtEnabled, baseBtAudioConnected, enable_bt]()
 		{
 			bool bt_enabled = enable_bt->getState();
 			SystemConf::getInstance()->setBool("bluetooth.enabled", bt_enabled);
@@ -1727,19 +1741,31 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 			else
 			{
 				mWindow->pushGui(new GuiLoading<bool>(mWindow, _("DISABLING BLUETOOTH ..."), 
-					[this, window]
+					[this, window, baseBtAudioConnected]
 					{
-						if (Settings::getInstance()->getBool("BluetoothAudioConnected"))
+						if (baseBtAudioConnected)
 						{
 							AudioManager::getInstance()->deinit();
 							VolumeControl::getInstance()->deinit();
 						}
-						return ApiSystem::getInstance()->disableBluetooth();
+						bool result = ApiSystem::getInstance()->disableBluetooth();
+						if (result)
+						{ // successfully disabled
+							SystemConf::getInstance()->setBool("bluetooth.audio.connected", false);
+							SystemConf::getInstance()->set("bluetooth.audio.device", "");
+						}
+						if (baseBtAudioConnected)
+						{
+							VolumeControl::getInstance()->init();
+							AudioManager::getInstance()->init();
+						}
+						return result;
 					},
 					[this, window, s](bool result)
 					{
 						delete s;
-						if (Settings::getInstance()->getBool("BluetoothAudioConnected"))
+/*
+						if (SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
 						{
 							std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
 							window->pushGui(new GuiMsgBox(window, msg,
@@ -1751,22 +1777,34 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 						}
 						else
 						{
+*/
 							openBluetoothSettings(true);
-						}
+//						}
 					}));
 			}
 		});
 
 	if (baseBtEnabled)
 	{
+		s->addEntry(_("SEARCH NEW BLUETOOTH DEVICES"), true, [this] { openBluetoothDevicesList(mWindow, _("SEARCH NEW BLUETOOTH DEVICES")); });
+		s->addEntry(_("PAIRED BLUETOOTH DEVICES"), true, [this] { openBluetoothDevicesList(mWindow, _("PAIRED BLUETOOTH DEVICES"), true); });
+		if (baseBtAudioConnected)
+		{
+			auto theme = ThemeData::getMenuTheme();
+			std::shared_ptr<Font> font = theme->Text.font;
+			unsigned int color = theme->Text.color;
+
+			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color));
+		}
+/*
 		s->addEntry(_("BLUETOOTH CONFIGURATOR").c_str(), false, [this, window]
 			{			
 				if (!ApiSystem::getInstance()->launchBluetoothConfigurator(window))
 					LOG(LogWarning) << "GuiMenu::openBluetoothSettings() - Shutdown Bluetooth Configurator terminated with non-zero result!";
 
 				bool sys_btadc = ApiSystem::getInstance()->isBluetoothAudioDeviceConnected();
-				bool es_btadc = Settings::getInstance()->getBool("BluetoothAudioConnected");
-				Settings::getInstance()->setBool("BluetoothAudioConnected", sys_btadc);
+				bool es_btadc = SystemConf::getInstance()->getBool("bluetooth.audio.connected");
+				SystemConf::getInstance()->setBool("bluetooth.audio.connected", sys_btadc);
 				if ((sys_btadc && !es_btadc) || (!sys_btadc && es_btadc))
 				{
 					std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
@@ -1780,9 +1818,15 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 
 				delete this;
 			});
+*/
 	}
 
 	mWindow->pushGui(s);
+}
+
+void GuiMenu::openBluetoothDevicesList(Window* win, std::string title, bool searchPairedDevices)
+{
+	win->pushGui(new GuiBluetooth(win, title, _("\"(**)\" ALREADY CONNECTED"), searchPairedDevices));
 }
 
 void GuiMenu::openUpdateSettings()

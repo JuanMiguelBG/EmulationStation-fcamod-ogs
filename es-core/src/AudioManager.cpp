@@ -9,12 +9,8 @@
 #include "utils/Randomizer.h"
 #include "SystemConf.h"
 #include "ThemeData.h"
-
-#ifdef WIN32
-#include <time.h>
-#else
 #include <unistd.h>
-#endif
+
 
 // batocera
 // Size of last played music history as a percentage of file total

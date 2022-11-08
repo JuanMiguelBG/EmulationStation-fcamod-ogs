@@ -1,6 +1,7 @@
 #!/bin/bash
 
 do_help() {
+    echo "$0 scanlist" >&2
     echo "$0 enable" >&2
     echo "$0 disable" >&2
     echo "$0 is_enabled" >&2
@@ -9,7 +10,11 @@ do_help() {
     echo "$0 is_bluetooth_active" >&2
     echo "$0 is_bluetooth_enabled" >&2
     echo "$0 is_bluetooth_audio_device_connected" >&2
-    echo "$0 get_bluetooth_audio_devices_connected" >&2
+    echo "$0 audio_device_connected" >&2
+    echo "$0 paired_devices" >&2
+    echo "$0 connect_device <DEVICE_ID>" >&2
+    echo "$0 disconnect_device <DEVICE_ID>" >&2
+    echo "$0 delete_device_connection <DEVICE_ID>" >&2
     echo "$0 test_bluetooth" >&2
 }
 
@@ -48,16 +53,20 @@ enable_bluetooth() {
     if [ $? -eq 1 ]; then
       # inactive
       #print_log $LOG_FILE "INFO" "enable_bluetooth() - Bluetooth is inactive, activing..."
-      sudo systemctl start enable_bluetooth
-      sudo systemctl enable enable_bluetooth
-      sudo systemctl start bluetooth
-      sudo systemctl enable bluetooth
-      sudo systemctl start bluealsa
-      sudo systemctl enable bluealsa
-      sudo systemctl start watchforbtaudio
-      sudo systemctl enable watchforbtaudio
-      sudo systemctl restart oga_events
+      bluetoothctl power on
+      sudo systemctl start enable_bluetooth && \
+      sudo systemctl start bluetooth && \
+      sudo systemctl start bluealsa && \
+      sudo systemctl start watchforbtaudio &
+      sudo systemctl enable enable_bluetooth && \
+      sudo systemctl enable bluetooth && \
+      sudo systemctl enable bluealsa && \
+      sudo systemctl enable watchforbtaudio && \
       sudo systemctl daemon-reload --quiet &
+      sudo systemctl restart oga_events &
+      # security fix
+      bluetoothctl pairable off && \
+      bluetoothctl discoverable off &
     fi
 }
 
@@ -68,17 +77,21 @@ disable_bluetooth() {
     if [ $? -eq 0 ]; then
       # active
       #print_log $LOG_FILE "INFO" "disable_bluetooth() - Bluetooth is active, inactiving..."
-      sudo systemctl stop watchforbtaudio
-      sudo systemctl disable watchforbtaudio
-      sudo systemctl stop bluetooth
-      sudo systemctl disable bluetooth
-      sudo systemctl stop bluealsa
-      sudo systemctl disable bluealsa
-      sudo systemctl stop enable_bluetooth
-      sudo systemctl disable enable_bluetooth
-      sudo systemctl restart oga_events
+      sudo systemctl stop watchforbtaudio && \
+      sudo systemctl stop bluetooth && \
+      sudo systemctl stop bluealsa && \
+      sudo systemctl stop enable_bluetooth &
+      sudo systemctl disable watchforbtaudio && \
+      sudo systemctl disable bluetooth && \
+      sudo systemctl disable bluealsa && \
+      sudo systemctl disable enable_bluetooth && \
       sudo systemctl daemon-reload --quiet &
-      cp -f /home/ark/.asoundrcbak /home/ark/.asoundrc
+      sudo systemctl restart oga_events &
+      cp -f /home/ark/.asoundrcbak /home/ark/.asoundrc &
+      # security fix
+      bluetoothctl pairable off && \
+      bluetoothctl discoverable off  && \
+      bluetoothctl power off &
     fi
 }
 
@@ -123,8 +136,7 @@ is_bluetooth_audio_device_connected()
 {
     #print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device_connected()'"
 
-    local BT_AUDIO_DEVICES_CONNECTED=`bluealsa-cli --quiet list-pcms | grep -Ec '/a2dp(src|sink)/sink$'`
-    if [[ $(bluealsa-cli --quiet list-pcms | grep -Ec '/a2dp(src|sink)/sink$') -gt 0 ]] ; then
+    if [[ $(amixer scontrols | grep -c " A2DP'") -gt 0 ]] ; then
       # BT audio devices connected
       #print_log $LOG_FILE "INFO" "is_enabled() - A total of $BT_AUDIO_DEVICES_CONNECTED Bluetooth Audio Devices connected"
       return 0
@@ -134,11 +146,171 @@ is_bluetooth_audio_device_connected()
     return 1
 }
 
-get_bluetooth_audio_devices_connected()
+get_bluetooth_audio_device_connected()
 {
     #print_log $LOG_FILE "INFO" "Executing 'get_bluetooth_audio_devices_connected()'"
 
-    bluealsa-cli --quiet list-pcms | grep -E '/a2dp(src|sink)/sink$'
+    awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep  " A2DP'")
+}
+
+do_scanlist()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_scanlist()'"
+
+    sudo systemctl stop bluetooth
+    sleep 1
+    sudo hciconfig hci0 down
+    sleep 1
+    sudo hciconfig hci0 up
+    sleep 1
+    sudo systemctl start bluetooth
+    sleep 1
+
+    # security fix
+    bluetoothctl pairable on
+    bluetoothctl discoverable on
+
+    local bt_devices=`bluetoothctl --timeout 10 scan on | grep -E ".*NEW.* Device "`
+
+    # security fix
+    bluetoothctl pairable off && \
+    bluetoothctl discoverable off &
+
+    local result=""
+
+    # Set space as the delimiter
+    IFS=' '
+    while IFS= read -r bt_device; do
+      local ITEM=${bt_device#* }
+      ITEM=${ITEM#* }
+      local ID=${ITEM%% *}
+      local NAME=${ITEM#* }
+      NAME=$(trim "$NAME")
+      result="$result\n$ID $NAME"
+    done <<< "$bt_devices"
+    if [ -z "$result" ]; then
+      echo ""
+    else
+      # remove first \n
+      result="${result:2:${#result}}"
+      echo -e "$result"
+    fi
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_scanlist()' - result: '$result'"
+}
+
+get_paired_devices()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'get_paired_devices()'"
+
+    local paired_devices=`timeout 5s bluetoothctl paired-devices | grep "Device "`
+    local result=""
+
+    while read -r paired_device; do
+      local ITEM=${paired_device#* }
+      local ID=${ITEM%% *}
+      local NAME=${ITEM#* }
+      NAME=$(trim "$NAME")
+
+      local exist=`bluetoothctl info $ID | grep "Connected: yes"`
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - exist: '$exist'"
+      # skip empty values
+      if [ ! -z "$ITEM" ]; then
+        if [ ! -z "$exist" ]; then
+          result="$result\n$ID $NAME$EXIST_CONNECTION_FLAG"
+        else
+          result="$result\n$ID $NAME"
+        fi
+      fi
+    done <<< "$paired_devices"
+    if [ -z "$result" ]; then
+      echo ""
+    else
+      # remove first \n
+      result="${result:2:${#result}}"
+      echo -e "$result"
+    fi
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices()' - result: '$result'"
+}
+
+do_disconnect_device()
+{
+    local DEVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' to device '$DEVICE'"
+
+    #bluetoothctl --timeout 5 scan on >> /dev/null
+
+    local output=`bluetoothctl disconnect "$DEVICE"`
+    local success=`echo "$output" | grep "Successful disconnected"`
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' to device '$DEVICE' - result: $output"
+
+    if [ -z "$success" ]; then
+      # success
+      return 0
+    fi
+
+    # fail
+    return 1
+}
+
+do_connect_device()
+{
+    local DEVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' to device '$DEVICE'"
+
+    local alreadypaired=`bluetoothctl paired-devices | grep "$DEVICE"`
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' checking already paired device '$DEVICE' - result: $alreadypaired"
+    if [ ! -z "$alreadypaired" ]; then
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' removing already paired device '$DEVICE'"
+      bluetoothctl remove "$DEVICE" >> /dev/null
+    fi
+
+    # security fix
+    bluetoothctl pairable on
+    #bluetoothctl discoverable on
+
+    local output=`bluetoothctl pair "$DEVICE"`
+
+    # security fix
+    bluetoothctl pairable off && \
+    bluetoothctl discoverable off &
+
+    local success=`echo "$output" | grep "Paired: yes"`
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - result: $output"
+
+    if [ ! -z "$success" ]; then
+      bluetoothctl trust "$DEVICE" >> /dev/null
+      success=`bluetoothctl connect "$DEVICE"`
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' connecting device '$DEVICE' - result: $output"
+      if [ ! -z "$success" ]; then
+        # success
+        return 0
+      fi
+    fi
+
+    # fail
+    return 1
+}
+
+do_delete_device_connection()
+{
+    local DEVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_delete_device_connection()' to device '$DEVICE'"
+
+    bluetoothctl untrust "$1" >> /dev/null
+    bluetoothctl remove "$1" >> /dev/null
+    if [ $? != 0 ]; then
+      # fail
+      #print_log $LOG_FILE "INFO" "Executing 'do_delete_device_connection()' fail to delete device '$DEVICE'"
+      return 1
+    fi
+
+    # success
+    #print_log $LOG_FILE "INFO" "Executing 'do_delete_device_connection()' success to delete device '$DEVICE'"
+    return 0
 }
 
 # ******************************************************************************************
@@ -165,8 +337,11 @@ shift
 #print_log $LOG_FILE "INFO" "##### Executing operation: $ACTION #####"
 
 case "${ACTION}" in
+    "scanlist")
+        do_scanlist || exit 1
+    ;;
     "enable")
-        do_enable "$1" "$2" || exit 1
+        do_enable || exit 1
     ;;
     "disable")
         do_disable || exit 1
@@ -186,11 +361,23 @@ case "${ACTION}" in
     "is_bluetooth_audio_device_connected")
         is_bluetooth_audio_device_connected || exit 1
     ;;
-    "get_bluetooth_audio_devices_connected")
-        get_bluetooth_audio_devices_connected
+    "audio_device_connected")
+        get_bluetooth_audio_device_connected || exit 1
+    ;;
+    "paired_devices")
+        get_paired_devices || exit 1
+    ;;
+    "disconnect_device")
+        do_disconnect_device "$1" || exit 1
+    ;;
+    "connect_device")
+        do_connect_device "$1" || exit 1
+    ;;
+    "delete_device_connection")
+        do_delete_device_connection || exit 1
     ;;
     "test_bluetooth")
-        test_bluetooth
+        test_bluetooth || exit 1
     ;;
     *)
         do_help

@@ -3,6 +3,7 @@
 #include "math/Misc.h"
 #include "Log.h"
 #include "Settings.h"
+#include "SystemConf.h"
 
 std::string VolumeControl::mixerName = "Master";
 std::string VolumeControl::mixerCard = "default";
@@ -54,6 +55,9 @@ void VolumeControl::init()
 		auto audioDevice = Settings::getInstance()->getString("AudioDevice");
 		if (!audioDevice.empty())
 			mixerName = audioDevice;
+
+		if (SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
+			mixerName = SystemConf::getInstance()->get("bluetooth.audio.device");
 
 		snd_mixer_selem_id_alloca(&mixerSelemId);
 		//sets simple-mixer index and name
@@ -159,6 +163,8 @@ void VolumeControl::deinit()
 		snd_mixer_close(mixerHandle);
 		mixerHandle = nullptr;
 		mixerElem = nullptr;
+		mixerSelemId = nullptr;
+		mixerIndex = 0;
 	}
 }
 

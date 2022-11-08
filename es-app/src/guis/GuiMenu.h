@@ -50,6 +50,7 @@ private:
 
 	void preloadBluetoothSettings();
 	void openBluetoothSettings(bool selectBtEnable = false);
+	void openBluetoothDevicesList(Window* win, std::string title, bool searchPairedDevices = false);
 
 	void openUpdateSettings();
 	void openEmulatorSettings();

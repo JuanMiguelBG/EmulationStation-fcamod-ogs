@@ -19,6 +19,7 @@
 #include "PowerSaver.h"
 #include "ScraperCmdLine.h"
 #include "Settings.h"
+#include "SystemConf.h"
 #include "SystemData.h"
 #include "SystemScreenSaver.h"
 #include <SDL_events.h>
@@ -63,7 +64,7 @@ void playVideo()
 	Settings::getInstance()->setBool("AlwaysOnTop", true);
 
 	Window window;
-	if (!window.init(true, true))
+	if (!window.init(true))
 	{
 		LOG(LogError) << WINDOW_FAILED_INITIALIZE;
 		return;
@@ -230,10 +231,6 @@ bool parseArgs(int argc, char* argv[])
 			Settings::getInstance()->setBool("DebugImage", true);
 			Log::setReportingLevel(LogDebug);
 		}
-		else if (strcmp(argv[i], "--fullscreen") == 0)
-		{
-			Settings::getInstance()->setBool("FullScreenMode", true);
-		}
 		else if (strcmp(argv[i], "--no-preload-vlc") == 0)
 		{
 			Settings::getInstance()->setBool("PreloadVLC", false);
@@ -313,11 +310,15 @@ bool parseArgs(int argc, char* argv[])
 void loadOtherSettings()
 {
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-		Settings::getInstance()->setString("wifi.already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
-	
-	if (ApiSystem::getInstance()->isBluetoothEnabled())
+		Settings::getInstance()->setString("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+
+	bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
+	SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
+	if (btEnabled)
 	{
-		Settings::getInstance()->setBool("BluetoothAudioConnected", ApiSystem::getInstance()->isBluetoothAudioDeviceConnected());
+		std::string btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
+		SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
+		SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 	}
 }
 
@@ -506,7 +507,7 @@ int main(int argc, char* argv[])
 
 	if (!scrape_cmdline)
 	{
-		if(!window.init(true, Settings::getInstance()->getBool("FullScreenMode")))
+		if(!window.init(true))
 		{
 			LOG(LogError) << WINDOW_FAILED_INITIALIZE;
 			Log::flush();

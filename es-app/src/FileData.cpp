@@ -393,7 +393,7 @@ void FileData::launchGame(Window* window)
     // Restore Brightness and Volume
 	ApiSystem::getInstance()->restoreAfterGameValues();
 
-	window->init(hideWindow, Settings::getInstance()->getBool("FullScreenMode"));
+	window->init(hideWindow);
 	InputManager::getInstance()->init();
 	VolumeControl::getInstance()->init();
 	AudioManager::getInstance()->init();

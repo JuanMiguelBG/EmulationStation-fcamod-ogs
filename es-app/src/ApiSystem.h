@@ -256,6 +256,12 @@ public:
 	bool enableBluetooth();
 	bool disableBluetooth();
 	bool isBluetoothAudioDeviceConnected();
+	std::vector<std::string> getBluetoothDevices();
+	std::vector<std::string> getBluetoothPairedDevices();
+	bool connectBluetoothDevice(const std::string id);
+	bool disconnectBluetoothDevice(const std::string id);
+	bool deleteBluetoothDeviceConnection(const std::string id);
+	std::string getBluetoothAudioDevice();
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();

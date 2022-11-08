@@ -41,6 +41,7 @@ std::vector<const char*> settings_dont_save {
 	{ "wifi.dns2" },
 	{ "wait.process.loading" },
 	{ "BluetoothAudioConnected" },
+	{ "BluetoothAudioDevice" },
 	{ "BrightnessBackup" }
 };
 
@@ -185,6 +186,7 @@ void Settings::setDefaults()
 	mStringMap["AudioDevice"] = "Master";
 	mStringMap["AudioCard"] = "default";
 	mBoolMap["BluetoothAudioConnected"] = false;
+	mStringMap["BluetoothAudioDevice"] = "";
 
 	mStringMap["UIMode"] = "Full";
 	mStringMap["UIMode_passkey"] = "uuddlrlrba";
@@ -213,7 +215,7 @@ void Settings::setDefaults()
 	mBoolMap["updates.enabled"] = false;
 	mStringMap["wifi.ssid"] = "";
 	mBoolMap["wifi.manual_dns"] = false;
-	mStringMap["wifi.already.connection.exist.flag"] = " (**)";
+	mStringMap["already.connection.exist.flag"] = " (**)";
 
 	// Log settings
 	mStringMap["LogLevel"] = "default";

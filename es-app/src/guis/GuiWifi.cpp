@@ -11,6 +11,8 @@
 #include "guis/GuiLoading.h"
 #include "Settings.h"
 
+const std::string ALREADY_CONNECTION_EXIST_FLAG = Settings::getInstance()->getString("already.connection.exist.flag");
+
 GuiWifi::GuiWifi(Window* window, const std::string title, const std::string subtitle, std::string data, const std::function<bool(std::string)>& onsave)
 	: GuiComponent(window), mMenu(window, title.c_str())
 {
@@ -73,7 +75,7 @@ bool GuiWifi::onSave(const std::string& value)
 	if (mWaitingLoad)
 		return false;
 
-	std::string rep_value = Utils::String::replace(value, Settings::getInstance()->getString("wifi.already.connection.exist.flag"), "");
+	std::string rep_value = Utils::String::replace(value, ALREADY_CONNECTION_EXIST_FLAG, "");
 	if (mSaveFunction(rep_value))
 	{
 		delete this;
@@ -122,7 +124,7 @@ void GuiWifi::onRefresh()
 {
 	Window* window = mWindow;
 
-	mWindow->pushGui(new GuiLoading<std::vector<std::string>>(mWindow, _("SEARCHING WIFI NETWORKS"), 
+	mWindow->pushGui(new GuiLoading<std::vector<std::string>>(mWindow, _("SEARCHING WIFI NETWORKS..."), 
 		[this, window]
 		{
 			mWaitingLoad = true;

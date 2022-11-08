@@ -65,13 +65,13 @@ enable_network_manager() {
     if [ $? -eq 1 ]; then
       # inactive
       #print_log $LOG_FILE "INFO" "disable_network_manager() - NetworkManager is inactive, activing..."
-      sudo systemctl stop networkwatchdaemon --quiet
-      sudo systemctl disable networkwatchdaemon --quiet
-      sudo systemctl enable NetworkManager --quiet
-      sudo systemctl start NetworkManager --quiet
+      sudo systemctl stop networkwatchdaemon --quiet && \
+      sudo systemctl start NetworkManager --quiet 
+      sudo systemctl disable networkwatchdaemon --quiet && \
+      sudo systemctl enable NetworkManager --quiet && \
       sudo systemctl daemon-reload --quiet &
-      sudo nmcli network on
-      sudo nmcli radio wifi on
+      sudo nmcli network on && \
+      sudo nmcli radio wifi on &
     fi
 }
 
@@ -82,12 +82,12 @@ disable_network_manager() {
     if [ $? -eq 0 ]; then
       # active
       #print_log $LOG_FILE "INFO" "disable_network_manager() - NetworkManager is active, inactiving..."
-      sudo nmcli radio wifi off
-      sudo network off
-      sudo systemctl stop networkwatchdaemon --quiet
-      sudo systemctl disable networkwatchdaemon --quiet
-      sudo systemctl stop NetworkManager --quiet
-      sudo systemctl disable NetworkManager --quiet
+      sudo nmcli radio wifi off && \
+      sudo network off &
+      sudo systemctl stop networkwatchdaemon --quiet && \
+      sudo systemctl stop NetworkManager --quiet &
+      sudo systemctl disable networkwatchdaemon --quiet && \
+      sudo systemctl disable NetworkManager --quiet && \
       sudo systemctl daemon-reload --quiet &
     fi
 }
@@ -124,12 +124,12 @@ do_list() {
         else
           result="$result\n$line_aux"
         fi
-    fi
+      fi
     done <<< "$networks"
     if [ -z "$result" ]; then
       echo ""
     else
-      echo -e "${result#\\n}"
+      echo -e "${result:2:${#result}}"
     fi
 
     #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - result: '$result'"
@@ -410,7 +410,6 @@ set_wifi_power_safe()
 # Configure ES commons variables
 . es-log_scripts
 
-EXIST_CONNECTION_FLAG=" (**)"
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-wifi.log"
 
 

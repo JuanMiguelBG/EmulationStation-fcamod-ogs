@@ -1593,6 +1593,48 @@ bool ApiSystem::isBluetoothAudioDeviceConnected()
 	return executeScript("es-bluetooth is_bluetooth_audio_device_connected");
 }
 
+std::vector<std::string> ApiSystem::getBluetoothDevices()
+{
+	LOG(LogInfo) << "ApiSystem::getBluetoothDevices()";
+
+	return executeEnumerationScript("es-bluetooth scanlist");
+}
+
+std::vector<std::string> ApiSystem::getBluetoothPairedDevices()
+{
+	LOG(LogInfo) << "ApiSystem::getBluetoothPairedDevices()";
+
+	return executeEnumerationScript("es-bluetooth paired_devices");
+}
+
+bool ApiSystem::connectBluetoothDevice(const std::string id)
+{
+	LOG(LogInfo) << "ApiSystem::connectBluetoothDevice() - ID: " << id;
+
+	return executeScript("es-bluetooth connect_device \"" + id + "\"" );
+}
+
+bool ApiSystem::disconnectBluetoothDevice(const std::string id)
+{
+	LOG(LogInfo) << "ApiSystem::disconnectBluetoothDevice() - ID: " << id;
+
+	return executeScript("es-bluetooth disconnect_device \"" + id + "\"" );
+}
+
+bool ApiSystem::deleteBluetoothDeviceConnection(const std::string id)
+{
+	LOG(LogInfo) << "ApiSystem::deleteBluetoothDeviceConnection() - ID: " << id;
+
+	return executeScript("es-bluetooth delete_device_connection \"" + id + "\"" );
+}
+
+std::string ApiSystem::getBluetoothAudioDevice()
+{
+	LOG(LogInfo) << "ApiSystem::getBluetoothAudioDevice()";
+
+	return getShOutput(R"(es-bluetooth audio_device_connected)");
+}
+
 void ApiSystem::backupAfterGameValues()
 {
 	LOG(LogInfo) << "ApiSystem::backupAfterGameValues()";

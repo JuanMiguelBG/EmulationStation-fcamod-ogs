@@ -41,10 +41,13 @@ static std::map<std::string, std::string> defaults =
 	{ "global.retroachievements.username", "" },
 	{ "global.retroachievements.password", "" },
 	{ "global.ai_service_enabled", "0" },
+	{ "bluetooth.enabled", "0" },
+	{ "bluetooth.audio.connected", "0" },
+	{ "bluetooth.audio.device", "" }
 };
 
-std::string systemConfFile = "~/.emulationstation.conf";
-std::string systemConfFileTmp = "~/.emulationstation.conf.tmp";
+std::string systemConfFile = Utils::FileSystem::getHomePath() + "/.emulationstation.conf";
+std::string systemConfFileTmp = Utils::FileSystem::getHomePath() + "/.emulationstation.conf.tmp";
 
 SystemConf::SystemConf() 
 {
