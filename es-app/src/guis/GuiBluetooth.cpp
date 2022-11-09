@@ -13,7 +13,6 @@
 #include "AudioManager.h"
 #include "VolumeControl.h"
 
-const std::string ALREADY_CONNECTION_EXIST_FLAG = Settings::getInstance()->getString("already.connection.exist.flag");
 
 GuiBluetooth::GuiBluetooth(Window* window, const std::string title, const std::string subtitle, bool listPairedDevices)
 	: GuiComponent(window), mMenu(window, title.c_str())
@@ -70,7 +69,7 @@ bool GuiBluetooth::onSave(const std::string& value)
 	if (mWaitingLoad)
 		return false;
 
-	std::string rep_value = Utils::String::replace(value, ALREADY_CONNECTION_EXIST_FLAG, "");
+	std::string rep_value = Utils::String::replace(value, Settings::getInstance()->getString("already.connection.exist.flag"), "");
 	// pattern --> DEVICE_ID DEVICE_NAME
 	std::vector<std::string> device_info = Utils::String::split(rep_value, ' ', true);
 	std::string device_id = device_info[0],
@@ -180,7 +179,7 @@ std::vector<HelpPrompt> GuiBluetooth::getHelpPrompts()
 	std::vector<HelpPrompt> prompts = mMenu.getHelpPrompts();
 	prompts.push_back(HelpPrompt("x", _("REFRESH")));
 
-	if (mListPairedDevices && Utils::String::endsWith(mMenu.getSelected(), ALREADY_CONNECTION_EXIST_FLAG))
+	if (mListPairedDevices && Utils::String::endsWith(mMenu.getSelected(), Settings::getInstance()->getString("already.connection.exist.flag")))
 		prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
 	else
     	prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT")));

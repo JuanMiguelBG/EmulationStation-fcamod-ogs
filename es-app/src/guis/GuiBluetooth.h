@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ES_APP_GUIS_GUI_BLUETOOTH_H
+#define ES_APP_GUIS_GUI_BLUETOOTH_H
 
 #include "GuiComponent.h"
 #include "components/MenuComponent.h"
@@ -32,3 +34,5 @@ private:
 	bool	mWaitingLoad;
 	bool    mListPairedDevices; 
 };
+
+#endif // ES_APP_GUIS_GUI_BLUETOOTH_H

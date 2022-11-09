@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ES_APP_GUIS_GUI_WIFI_H
+#define ES_APP_GUIS_GUI_WIFI_H
 
 #include "GuiComponent.h"
 #include "components/MenuComponent.h"
@@ -30,3 +32,5 @@ private:
 
 	bool		mWaitingLoad;
 };
+
+#endif // ES_APP_GUIS_GUI_WIFI_H
