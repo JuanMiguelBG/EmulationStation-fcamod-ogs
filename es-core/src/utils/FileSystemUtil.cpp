@@ -489,6 +489,9 @@ namespace Utils
 		std::string getExePath()
 		{
 			// return constructed exepath
+			if (exePath.empty())
+				return "/usr/bin/emulationstation";
+			
 			return exePath;
 		} // getExePath
 
