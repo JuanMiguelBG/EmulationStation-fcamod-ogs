@@ -43,7 +43,8 @@ std::vector<const char*> settings_dont_save {
 	{ "bluetooth.enabled" },
 	{ "bluetooth.audio.connected" },
 	{ "bluetooth.audio.device" },
-	{ "BrightnessBackup" }
+	{ "BrightnessBackup" },
+	{ "VolumeBackup" }
 };
 
 Settings::Settings()
