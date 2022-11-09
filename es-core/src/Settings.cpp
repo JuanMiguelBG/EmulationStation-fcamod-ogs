@@ -40,8 +40,9 @@ std::vector<const char*> settings_dont_save {
 	{ "wifi.dns1" },
 	{ "wifi.dns2" },
 	{ "wait.process.loading" },
-	{ "BluetoothAudioConnected" },
-	{ "BluetoothAudioDevice" },
+	{ "bluetooth.enabled" },
+	{ "bluetooth.audio.connected" },
+	{ "bluetooth.audio.device" },
 	{ "BrightnessBackup" }
 };
 
@@ -185,8 +186,9 @@ void Settings::setDefaults()
 	// Audio out device for volume control
 	mStringMap["AudioDevice"] = "Master";
 	mStringMap["AudioCard"] = "default";
-	mBoolMap["BluetoothAudioConnected"] = false;
-	mStringMap["BluetoothAudioDevice"] = "";
+	mBoolMap["bluetooth.enabled"] = false;
+	mBoolMap["bluetooth.audio.connected"] = false;
+	mStringMap["bluetooth.audio.device"] = "";
 
 	mStringMap["UIMode"] = "Full";
 	mStringMap["UIMode_passkey"] = "uuddlrlrba";

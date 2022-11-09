@@ -46,8 +46,8 @@ static std::map<std::string, std::string> defaults =
 	{ "bluetooth.audio.device", "" }
 };
 
-std::string systemConfFile = Utils::FileSystem::getHomePath() + "/.emulationstation.conf";
-std::string systemConfFileTmp = Utils::FileSystem::getHomePath() + "/.emulationstation.conf.tmp";
+std::string systemConfFile = "~/.emulationstation.conf";
+std::string systemConfFileTmp = "~/.emulationstation.conf.tmp";
 
 SystemConf::SystemConf() 
 {
