@@ -26,13 +26,15 @@ private:
 	bool	onSave(const std::string& value);
 	void	onRefresh();
 	void	onDeleteConnection();
+	bool	isDeviceConnected(const std::string device);
 
 	MenuComponent mMenu;
 
 	std::string mTitle;
 
 	bool	mWaitingLoad;
-	bool    mListPairedDevices; 
+	bool    mListPairedDevices;
+	bool    mMenuLoaded;
 };
 
 #endif // ES_APP_GUIS_GUI_BLUETOOTH_H

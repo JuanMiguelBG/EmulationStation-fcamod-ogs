@@ -243,14 +243,15 @@ do_disconnect_device()
     local success=`echo "$output" | grep "Successful disconnected"`
 
     #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' to device '$DEVICE' - result: $output"
+    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' to device '$DEVICE' - success: $success"
 
     if [ -z "$success" ]; then
-      # success
-      return 0
+      # fail
+      return 1
     fi
 
-    # fail
-    return 1
+    # success
+    return 0
 }
 
 do_connect_device()
@@ -259,7 +260,7 @@ do_connect_device()
     #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' to device '$DEVICE'"
 
     local alreadypaired=`bluetoothctl paired-devices | grep "$DEVICE"`
-    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' checking already paired device '$DEVICE' - result: $alreadypaired"
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' checking already paired device '$DEVICE' - result: '$alreadypaired'"
     if [ ! -z "$alreadypaired" ]; then
       #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' removing already paired device '$DEVICE'"
       bluetoothctl remove "$DEVICE" >> /dev/null
@@ -277,20 +278,23 @@ do_connect_device()
 
     local success=`echo "$output" | grep "Paired: yes"`
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - result: $output"
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - result: '$output'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - success: '$success'"
 
     if [ ! -z "$success" ]; then
       bluetoothctl trust "$DEVICE" >> /dev/null
-      success=`bluetoothctl connect "$DEVICE"`
-      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' connecting device '$DEVICE' - result: $output"
-      if [ ! -z "$success" ]; then
-        # success
-        return 0
+      output=`bluetoothctl connect "$DEVICE"`
+      success=`echo "$output" | grep "Successful connected"`
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' connecting device '$DEVICE' - result: '$output'"
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - success: '$success'"
+      if [ -z "$success" ]; then
+        # fail
+        return 1
       fi
     fi
 
-    # fail
-    return 1
+    # success
+    return 0
 }
 
 do_delete_device_connection()
@@ -372,7 +376,7 @@ case "${ACTION}" in
         do_connect_device "$1" || exit 1
     ;;
     "delete_device_connection")
-        do_delete_device_connection || exit 1
+        do_delete_device_connection "$1" || exit 1
     ;;
     "test_bluetooth")
         test_bluetooth || exit 1

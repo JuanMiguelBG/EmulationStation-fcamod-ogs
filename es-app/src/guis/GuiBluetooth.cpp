@@ -12,6 +12,7 @@
 #include "SystemConf.h"
 #include "AudioManager.h"
 #include "VolumeControl.h"
+#include "Log.h"
 
 
 GuiBluetooth::GuiBluetooth(Window* window, const std::string title, const std::string subtitle, bool listPairedDevices)
@@ -20,6 +21,7 @@ GuiBluetooth::GuiBluetooth(Window* window, const std::string title, const std::s
 	mTitle = title;
 	mWaitingLoad = false;
 	mListPairedDevices = listPairedDevices;
+	mMenuLoaded = false;
 	mMenu.setSubTitle(subtitle);
 
 	auto theme = ThemeData::getMenuTheme();
@@ -61,6 +63,7 @@ void GuiBluetooth::load(std::vector<std::string> btDevices)
 		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
 
 	mWaitingLoad = false;
+	mMenuLoaded = true;
 }
 
 bool GuiBluetooth::onSave(const std::string& value)
@@ -68,7 +71,8 @@ bool GuiBluetooth::onSave(const std::string& value)
 	if (mWaitingLoad)
 		return false;
 
-	std::string rep_value = Utils::String::replace(value, Settings::getInstance()->getString("already.connection.exist.flag"), "");
+	std::string conected_flag = Settings::getInstance()->getString("already.connection.exist.flag");
+	std::string rep_value = Utils::String::replace(value, conected_flag, "");
 	// pattern --> DEVICE_ID DEVICE_NAME
 	std::vector<std::string> device_info = Utils::String::split(rep_value, ' ', true);
 	std::string device_id = device_info[0],
@@ -77,7 +81,7 @@ bool GuiBluetooth::onSave(const std::string& value)
 		device_name = Utils::String::trim( Utils::String::replace(rep_value, device_id, "") );
 
 	std::string msg;
-	if (mListPairedDevices)
+	if (mListPairedDevices && Utils::String::endsWith(mMenu.getSelected(), conected_flag))
 		msg.append(_("DISCONNECTING BLUETOOTH DEVICE")).append(" '").append(device_name).append("' ...");
 	else
 		msg.append(_("CONNECTING BLUETOOTH DEVICE")).append(" '").append(device_name).append("' ...");
@@ -85,12 +89,12 @@ bool GuiBluetooth::onSave(const std::string& value)
 	bool action_result = false;
 	Window* window = mWindow;
 	mWindow->pushGui(new GuiLoading<bool>(mWindow, msg, 
-		[this, device_id]
+		[this, device_id, value]
 		{
 			mWaitingLoad = true;
 
 			bool result = false;
-			if (mListPairedDevices)
+			if (mListPairedDevices && isDeviceConnected(value))
 				result = ApiSystem::getInstance()->disconnectBluetoothDevice(device_id);
 			else
 				result = ApiSystem::getInstance()->connectBluetoothDevice(device_id);
@@ -102,9 +106,13 @@ bool GuiBluetooth::onSave(const std::string& value)
 			SystemConf::getInstance()->setBool("bluetooth.audio.connected", sys_btadc);
 			SystemConf::getInstance()->set("bluetooth.audio.device", audio_device);
 
+			LOG(LogDebug) << "GuiBluetooth::onSave() - sys_btadc: " << Utils::String::boolToString(sys_btadc) << ", es_btadc: " << Utils::String::boolToString(es_btadc);
+			Log::flush();
 			// checking if a reset audio configuration is needed
 			if ((sys_btadc && !es_btadc) || (!sys_btadc && es_btadc))
 			{
+				LOG(LogDebug) << "GuiBluetooth::onSave() - Audio BT device changed, restart ES audio components.";
+				Log::flush();
 				AudioManager::getInstance()->deinit();
 				VolumeControl::getInstance()->deinit();
 
@@ -123,31 +131,46 @@ bool GuiBluetooth::onSave(const std::string& value)
 
 			return result;
 		},
-		[this, window, device_name, &action_result](bool result)
+		[this, window, device_name, &action_result, value](bool result)
 		{
 			mWaitingLoad = false;
             action_result = result;
+			bool deleteWindow = false;
             std::string msg;
 			if (result)
  			{
 				if (mListPairedDevices)
-					msg.append("'").append(device_name).append("' ").append(_("DEVICE SUCCESSFULLY UNPAIRED"));
+				{
+					if (isDeviceConnected(value))
+						msg.append("'").append(device_name).append("' ").append(_("DEVICE SUCCESSFULLY DISCONNECTED"));
+					else
+						msg.append("'").append(device_name).append("' ").append(_("DEVICE SUCCESSFULLY CONNECTED"));
+				}
 				else
 					msg.append("'").append(device_name).append("' ").append(_("DEVICE SUCCESSFULLY PAIRED AND CONNECTED"));
+				
+				deleteWindow = true;
 			}
 			else
 			{
 				if (mListPairedDevices)
-					msg.append("'").append(device_name).append("' ").append(_("DEVICE FAILED TO UNPAIR"));
+				{
+					if (isDeviceConnected(value))
+						msg.append("'").append(device_name).append("' ").append(_("DEVICE FAILED TO UNPAIR"));
+					else
+						msg.append("'").append(device_name).append("' ").append(_("DEVICE FAILED TO CONNECT"));
+				}
 				else
 					msg.append("'").append(device_name).append("' ").append(_("DEVICE FAILED TO PAIR AND CONNECT"));
 			}
-			window->pushGui(new GuiMsgBox(window, msg,	_("OK")));
+			LOG(LogDebug) << "GuiBluetooth::onSave() - message: " << msg;
+			Log::flush();
+			window->pushGui(new GuiMsgBox(window, msg,	_("OK"), [this, deleteWindow] { if (deleteWindow) delete this; }));
 
 		}));
 
-	if (action_result)
-		delete this;
+//	if (action_result)
+//		delete this;
 
 	return action_result;
 }
@@ -178,17 +201,26 @@ std::vector<HelpPrompt> GuiBluetooth::getHelpPrompts()
 	std::vector<HelpPrompt> prompts = mMenu.getHelpPrompts();
 	prompts.push_back(HelpPrompt("x", _("REFRESH")));
 
-	if (mListPairedDevices && Utils::String::endsWith(mMenu.getSelected(), Settings::getInstance()->getString("already.connection.exist.flag")))
+	if (mMenuLoaded && mListPairedDevices && isDeviceConnected(mMenu.getSelected()))
+	{
+		LOG(LogDebug) << "GuiBluetooth::getHelpPrompts() - Paired Devices, mMenu.getSelected(): " << mMenu.getSelected();
+		Log::flush();
 		prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
+	}
 	else
-    	prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT")));
-
+	{
+		LOG(LogDebug) << "GuiBluetooth::getHelpPrompts() - Paired Devices, mMenu.getSelected(): " << mMenu.getSelected();
+		Log::flush();
+   		prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT")));
+	}
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	return prompts;
 }
 
 void GuiBluetooth::onRefresh()
 {
+	mMenuLoaded = false;
+
 	Window* window = mWindow;
 
 	std::string msg;
@@ -233,4 +265,9 @@ void GuiBluetooth::onDeleteConnection()
 				}
 			},
         _("CANCEL"), [] {}));
+}
+
+bool GuiBluetooth::isDeviceConnected(const std::string device)
+{
+	return Utils::String::endsWith(device, Settings::getInstance()->getString("already.connection.exist.flag"));
 }
