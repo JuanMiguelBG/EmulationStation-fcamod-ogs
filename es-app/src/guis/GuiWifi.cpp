@@ -1,4 +1,4 @@
-#include "GuiWifi.h"
+#include "guis/GuiWifi.h"
 
 #include "guis/GuiMsgBox.h"
 #include "Window.h"

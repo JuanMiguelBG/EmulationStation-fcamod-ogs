@@ -1824,9 +1824,9 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 	mWindow->pushGui(s);
 }
 
-void GuiMenu::openBluetoothDevicesList(Window* win, std::string title, bool searchPairedDevices)
+void GuiMenu::openBluetoothDevicesList(Window* window, std::string title, bool searchPairedDevices)
 {
-	win->pushGui(new GuiBluetooth(win, title, _("\"(**)\" ALREADY CONNECTED"), searchPairedDevices));
+	window->pushGui(new GuiBluetooth(window, title, (searchPairedDevices ? _("\"(**)\" ALREADY CONNECTED") : ""), searchPairedDevices));
 }
 
 void GuiMenu::openUpdateSettings()

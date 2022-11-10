@@ -53,20 +53,19 @@ enable_bluetooth() {
     if [ $? -eq 1 ]; then
       # inactive
       #print_log $LOG_FILE "INFO" "enable_bluetooth() - Bluetooth is inactive, activing..."
-      bluetoothctl power on
-      sudo systemctl start enable_bluetooth && \
-      sudo systemctl start bluetooth && \
-      sudo systemctl start bluealsa && \
-      sudo systemctl start watchforbtaudio &
-      sudo systemctl enable enable_bluetooth && \
-      sudo systemctl enable bluetooth && \
-      sudo systemctl enable bluealsa && \
-      sudo systemctl enable watchforbtaudio && \
+      sudo systemctl start enable_bluetooth --quiet
+      sudo systemctl start bluetooth --quiet
+      sudo systemctl start bluealsa --quiet
+      sudo systemctl start watchforbtaudio --quiet
+      sudo systemctl enable enable_bluetooth --quiet
+      sudo systemctl enable bluetooth --quiet
+      sudo systemctl enable bluealsa --quiet
+      sudo systemctl enable watchforbtaudio --quiet
       sudo systemctl daemon-reload --quiet &
-      sudo systemctl restart oga_events &
+      sudo systemctl restart oga_events --quiet &
       # security fix
-      bluetoothctl pairable off && \
-      bluetoothctl discoverable off &
+      bluetoothctl pairable off > /dev/null &
+      bluetoothctl discoverable off > /dev/null &
     fi
 }
 
@@ -77,21 +76,20 @@ disable_bluetooth() {
     if [ $? -eq 0 ]; then
       # active
       #print_log $LOG_FILE "INFO" "disable_bluetooth() - Bluetooth is active, inactiving..."
-      sudo systemctl stop watchforbtaudio && \
-      sudo systemctl stop bluetooth && \
-      sudo systemctl stop bluealsa && \
-      sudo systemctl stop enable_bluetooth &
-      sudo systemctl disable watchforbtaudio && \
-      sudo systemctl disable bluetooth && \
-      sudo systemctl disable bluealsa && \
-      sudo systemctl disable enable_bluetooth && \
+      sudo systemctl stop watchforbtaudio --quiet
+      sudo systemctl stop bluetooth --quiet
+      sudo systemctl stop bluealsa --quiet
+      sudo systemctl stop enable_bluetooth --quiet
+      sudo systemctl disable watchforbtaudio --quiet
+      sudo systemctl disable bluetooth --quiet
+      sudo systemctl disable bluealsa --quiet
+      sudo systemctl disable enable_bluetooth --quiet
       sudo systemctl daemon-reload --quiet &
-      sudo systemctl restart oga_events &
-      cp -f /home/ark/.asoundrcbak /home/ark/.asoundrc &
+      sudo systemctl restart oga_event --quiet &
+      cp -f $USER_HOME_PATH/.asoundrcbak $USER_HOME_PATH/.asoundrc &
       # security fix
-      bluetoothctl pairable off && \
-      bluetoothctl discoverable off  && \
-      bluetoothctl power off &
+      bluetoothctl pairable > /dev/null &
+      bluetoothctl discoverable > /dev/null &
     fi
 }
 
@@ -148,7 +146,7 @@ is_bluetooth_audio_device_connected()
 
 get_bluetooth_audio_device_connected()
 {
-    #print_log $LOG_FILE "INFO" "Executing 'get_bluetooth_audio_devices_connected()'"
+    #print_log $LOG_FILE "INFO" "Executing 'get_bluetooth_audio_device_connected()'"
 
     awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep  " A2DP'")
 }
@@ -167,14 +165,14 @@ do_scanlist()
     sleep 1
 
     # security fix
-    bluetoothctl pairable on
-    bluetoothctl discoverable on
+    bluetoothctl pairable on > /dev/null
+    bluetoothctl discoverable on > /dev/null
 
     local bt_devices=`bluetoothctl --timeout 10 scan on | grep -E ".*NEW.* Device "`
 
     # security fix
-    bluetoothctl pairable off && \
-    bluetoothctl discoverable off &
+    bluetoothctl pairable off  > /dev/null &
+    bluetoothctl discoverable off  > /dev/null &
 
     local result=""
 
@@ -274,8 +272,8 @@ do_connect_device()
     local output=`bluetoothctl pair "$DEVICE"`
 
     # security fix
-    bluetoothctl pairable off && \
-    bluetoothctl discoverable off &
+    bluetoothctl pairable off > /dev/null &
+    bluetoothctl discoverable off > /dev/null &
 
     local success=`echo "$output" | grep "Paired: yes"`
 

@@ -1,4 +1,4 @@
-#include "GuiBluetooth.h"
+#include "guis/GuiBluetooth.h"
 
 #include "guis/GuiMsgBox.h"
 #include "Window.h"
@@ -29,7 +29,6 @@ GuiBluetooth::GuiBluetooth(Window* window, const std::string title, const std::s
 	mWindow->postToUiThread([this]() { onRefresh(); });
 
 	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onRefresh(); });
-
 	if (mListPairedDevices)
     	mMenu.addButton(_("DELETE"), _("DELETE"), [&] { onDeleteConnection(); });
 

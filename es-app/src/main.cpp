@@ -554,7 +554,7 @@ int main(int argc, char* argv[])
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
 	{
-		LOG(LogDebug) << "MAIN::main() - Check 'preloa_vlc.lock'";
+		LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock'";
 		std::string preloa_vlc_lock_file_path = Utils::FileSystem::getEsConfigPath() + "/preload_vlc.lock";
 		if (Utils::FileSystem::exists(preloa_vlc_lock_file_path))
 		{

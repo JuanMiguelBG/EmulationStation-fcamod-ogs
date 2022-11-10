@@ -84,9 +84,9 @@ GuiComponent* Window::peekGui()
 	return mGuiStack.back();
 }
 
-bool Window::init(bool initRenderer, bool initInputManager)
+bool Window::init(bool initRenderer)
 {
-	LOG(LogInfo) << "Window::init() - initRenderer: " << Utils::String::boolToString(initRenderer) << ", initInputManager: " << Utils::String::boolToString(initInputManager);
+	LOG(LogInfo) << "Window::init() - initRenderer: " << Utils::String::boolToString(initRenderer);
 
 	if (initRenderer)
 	{
