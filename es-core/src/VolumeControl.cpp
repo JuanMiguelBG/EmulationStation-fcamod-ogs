@@ -59,6 +59,7 @@ void VolumeControl::init()
 		if (SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
 			mixerName = SystemConf::getInstance()->get("bluetooth.audio.device");
 
+		LOG(LogDebug) << "VolumeControl::init() - trying to connect, audio card: '" << audioCard << "', mixer: '" << mixerName << "'";
 		snd_mixer_selem_id_alloca(&mixerSelemId);
 		//sets simple-mixer index and name
 		snd_mixer_selem_id_set_index(mixerSelemId, mixerIndex);

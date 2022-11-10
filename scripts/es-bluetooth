@@ -85,7 +85,7 @@ disable_bluetooth() {
       sudo systemctl disable bluealsa --quiet
       sudo systemctl disable enable_bluetooth --quiet
       sudo systemctl daemon-reload --quiet &
-      sudo systemctl restart oga_event --quiet &
+      sudo systemctl restart oga_events --quiet &
       cp -f $USER_HOME_PATH/.asoundrcbak $USER_HOME_PATH/.asoundrc &
       # security fix
       bluetoothctl pairable > /dev/null &
@@ -173,7 +173,7 @@ do_scanlist()
     # security fix
     bluetoothctl pairable off  > /dev/null &
     bluetoothctl discoverable off  > /dev/null &
-
+pair
     local result=""
 
     # Set space as the delimiter
@@ -210,8 +210,8 @@ get_paired_devices()
       local NAME=${ITEM#* }
       NAME=$(trim "$NAME")
 
-      local exist=`bluetoothctl info $ID | grep "Connected: yes"`
-      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - exist: '$exist'"
+      local exist=`timeout 5s bluetoothctl info $ID | grep "Connected: yes"`
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices()' - exist: '$exist'"
       # skip empty values
       if [ ! -z "$ITEM" ]; then
         if [ ! -z "$exist" ]; then
@@ -284,7 +284,7 @@ do_connect_device()
     if [ ! -z "$success" ]; then
       bluetoothctl trust "$DEVICE" >> /dev/null
       output=`bluetoothctl connect "$DEVICE"`
-      success=`echo "$output" | grep "Successful connected"`
+      success=`echo "$output" | grep "Connection successful"`
       #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' connecting device '$DEVICE' - result: '$output'"
       #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - success: '$success'"
       if [ -z "$success" ]; then

@@ -416,7 +416,11 @@ void GuiMenu::openSoundSettings()
 		s->addGroup(_("VOLUME"));
 
 		// volume
-		auto volume = std::make_shared<SliderComponent>(mWindow, 0.f, 100.f, 1.f, "%");
+		float increment = 1.0f;
+		if (SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
+			increment = 2.0f;
+
+		auto volume = std::make_shared<SliderComponent>(mWindow, 0.f, 100.f, increment, "%");
 		volume->setValue( (float)ApiSystem::getInstance()->getVolume() );
 		s->addWithLabel(_("SYSTEM VOLUME"), volume);
 		volume->setOnValueChanged([window, s](const float &newVal)
