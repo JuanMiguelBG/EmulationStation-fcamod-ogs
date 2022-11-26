@@ -320,6 +320,26 @@ std::string getShOutput(const std::string& mStr);
 std::string stateToString(bool state, const std::string &active_value = "enabled", const std::string &not_active_value = "disabled");
 bool stringToState(const std::string state, const std::string &active_value = "enabled");
 
+struct BluetoothDevice
+{
+	BluetoothDevice()
+	{
+		name = "N/A";
+		id = "N/A";
+		type = "N/A";
+		connected = false;
+		paired = false;
+		isAudioDevice = false;
+	}
+
+	std::string name;
+	std::string id;
+	std::string type;
+	bool connected;
+	bool paired;
+	bool isAudioDevice;
+};
+
 std::string queryBluetoothEnabled();
 
 #endif // ES_CORE_PLATFORM_H

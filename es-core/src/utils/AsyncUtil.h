@@ -2,6 +2,7 @@
 #ifndef ES_CORE_UTILS_ASYNC_UTIL_H
 #define ES_CORE_UTILS_ASYNC_UTIL_H
 
+#include <functional>
 
 namespace Utils
 {
@@ -10,6 +11,10 @@ namespace Utils
 		bool isCanRunAsync();
 
 		void sleep(int milliseconds);
+
+		void run(const std::function<void()>& asyncFunction);
+
+		unsigned int getThreadId();
 	} // Async::
 
 } // Utils::

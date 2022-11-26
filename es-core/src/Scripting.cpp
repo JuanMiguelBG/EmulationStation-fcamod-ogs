@@ -7,7 +7,7 @@ namespace Scripting
 {
 	int fireEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4)
 	{
-		LOG(LogDebug) << "fireEvent: " << eventName << " " << arg1 << " " << arg2 << "' '" << arg3 << "' '" << arg4;
+		LOG(LogDebug) << "Scripting::fireEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
 
 		std::list<std::string> scriptDirList;
 		std::string test;
@@ -17,7 +17,7 @@ namespace Scripting
 		if(Utils::FileSystem::exists(test))
 			scriptDirList.push_back(test);
 
-		// check in Es config path
+		// check in ES config path
 		test = Utils::FileSystem::getEsConfigPath() + "/scripts/" + eventName;
 		if(Utils::FileSystem::exists(test))
 			scriptDirList.push_back(test);

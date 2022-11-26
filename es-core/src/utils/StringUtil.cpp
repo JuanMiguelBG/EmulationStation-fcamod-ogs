@@ -634,26 +634,38 @@ namespace Utils
 			return data;
 		}
 
-		std::vector<std::string> extractStrings(const std::string& _string, const std::string& startDelimiter, const std::string& endDelimiter)
+		std::string extractString(const std::string& _string, const std::string& startDelimiter, const std::string& endDelimiter, bool keepDelimiter)
+		{
+			auto ret = extractStrings(_string, startDelimiter, endDelimiter, keepDelimiter);
+			if (ret.size() > 0)
+				return ret[0];
+
+			return "";
+		}
+
+		std::vector<std::string> extractStrings(const std::string& _string, const std::string& startDelimiter, const std::string& endDelimiter, bool keepDelimiter)
 		{
 			std::vector<std::string> ret;
 
-			size_t pos = 0;
-			while (pos != std::string::npos)
+			if (!startDelimiter.empty() && !endDelimiter.empty())
 			{
-				pos = _string.find(startDelimiter, pos);
-				if (pos == std::string::npos)
-					break;
+				size_t pos = 0;
+				while (pos != std::string::npos)
+				{
+					pos = _string.find(startDelimiter, pos);
+					if (pos == std::string::npos)
+						break;
 
-				auto end = _string.find(endDelimiter, pos+1);
-				if (end == std::string::npos)
-					break;
+					auto end = _string.find(endDelimiter, pos + startDelimiter.size());
+					if (end == std::string::npos)
+						break;
 
-				std::string value = _string.substr(pos + 1, end - pos - 1);
-				if (!value.empty())
-					ret.push_back(value);
+					std::string value = keepDelimiter ? _string.substr(pos, end - pos + endDelimiter.length()) : _string.substr(pos + startDelimiter.size(), end - (pos + startDelimiter.size()));
+					if (!value.empty())
+						ret.push_back(value);
 
-				pos = end;
+					pos = end + endDelimiter.size();
+				}
 			}
 
 			return ret;

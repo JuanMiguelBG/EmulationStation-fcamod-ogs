@@ -41,7 +41,9 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiQuitOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemHotkeyEventsOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiWifi.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetooth.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothScan.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothPaired.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothConnected.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiFileBrowser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiAutoSuspendOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiRetroachievementsOptions.h
@@ -115,7 +117,9 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiQuitOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemHotkeyEventsOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiWifi.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetooth.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothScan.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothPaired.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothConnected.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiFileBrowser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiAutoSuspendOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiRetroachievementsOptions.cpp

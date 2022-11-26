@@ -40,7 +40,7 @@ print_log()
     `aceptable_level $log_level`
     if [ $? -eq 1 ]; then
       mdate=$(date '+%d/%m/%Y %H:%M:%S:%N')
-      echo "$mdate $log_level $log_mesage" >> $log_file
+      echo "$mdate $log_level PID: $$ - $log_mesage" >> $log_file
     fi
   fi
 }

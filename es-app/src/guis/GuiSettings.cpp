@@ -39,6 +39,13 @@ GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) 
 	}
 }
 
+GuiSettings::GuiSettings(Window* window, const std::string title, bool animate, const std::string closeButton, const std::function<void()>& closeButtonFunc) : 
+GuiSettings(window, title, animate)
+{
+	mCloseButton = closeButton;
+	mCloseButtonFunc = closeButtonFunc;
+}
+
 GuiSettings::~GuiSettings()
 {
 
@@ -49,7 +56,11 @@ void GuiSettings::close()
 	save();
 
 	if (mOnFinalizeFunc != nullptr)
-		mOnFinalizeFunc();
+			mOnFinalizeFunc();
+
+
+	if (mCloseButtonFunc != nullptr)
+		mCloseButtonFunc();
 
 	delete this;
 }
@@ -83,6 +94,9 @@ bool GuiSettings::input(InputConfig* config, Input input)
 		{
 			if (!Settings::getInstance()->getBool("wait.process.loading"))
 			{
+				if (mCloseButtonFunc != nullptr)
+						mCloseButtonFunc();
+
 				// close everything
 				Window* window = mWindow;
 				while (window->peekGui() && window->peekGui() != ViewController::get())

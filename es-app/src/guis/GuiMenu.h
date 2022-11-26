@@ -50,7 +50,10 @@ private:
 
 	void preloadBluetoothSettings();
 	void openBluetoothSettings(bool selectBtEnable = false);
-	void openBluetoothDevicesList(Window* win, std::string title, bool searchPairedDevices = false);
+	void openBluetoothScanDevices(Window* win, std::string title);
+	void openBluetoothPairedDevices(Window* win, std::string title);
+	void openBluetoothConnectedDevices(Window* win, std::string title);
+	bool displayBluetoothAudioRestartDialog(Window *window, bool force = false);
 
 	void openUpdateSettings();
 	void openEmulatorSettings();
@@ -58,6 +61,8 @@ private:
 	void openDisplaySettings();
 	void openDisplayAutoDimSettings();
 	void openRemoteServicesSettings();
+
+	void reinitSoundComponentsAndMusic();
 
 	void addStatusBarInfo(Window* window);
 
@@ -70,7 +75,6 @@ private:
 
 	MenuComponent mMenu;
 	TextComponent mVersion;
-
 };
 
 #endif // ES_APP_GUIS_GUI_MENU_H

@@ -11,6 +11,7 @@ class GuiSettings : public GuiComponent
 {
 public:
 	GuiSettings(Window* window, const std::string title, bool animate = false);
+	GuiSettings(Window* window, const std::string title, bool animate, const std::string closeButton, const std::function<void()>& closeButtonFunc = nullptr);
 	virtual ~GuiSettings(); // just calls save();
 
 	void close();
@@ -43,6 +44,8 @@ public:
 
 	MenuComponent& getMenu() { return mMenu; }
 
+
+	// only executed on back button
 	inline void onFinalize(const std::function<void()>& func) { mOnFinalizeFunc = func; };
 
 	bool getVariable(const std::string name)
@@ -53,7 +56,15 @@ public:
 		return mVariableMap[name];
 	}
 
-	void setCloseButton(const std::string name) { mCloseButton = name; }
+	void setCloseButton(const std::string name, const std::function<void()>& func = nullptr)
+	{
+		mCloseButton = name;
+		mCloseButtonFunc = func;
+	}
+
+	// always executed on both back and close buttons
+	void onClose(const std::function<void()>& func) { mCloseButtonFunc = func; }
+
 	void setVariable(const std::string name, bool value) { mVariableMap[name] = value; }
 
 	void setTitle(const std::string title) { mMenu.setTitle(title); }
@@ -71,6 +82,7 @@ private:
 	std::map<std::string, bool> mVariableMap;
 
 	std::string mCloseButton;
+	std::function<void()> mCloseButtonFunc;
 };
 
 #endif // ES_APP_GUIS_GUI_SETTINGS_H

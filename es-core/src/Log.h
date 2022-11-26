@@ -32,6 +32,11 @@ public:
 
 	static inline bool Enabled() { return file != NULL; }
 
+	static bool isErrorLevel();
+	static bool isWarningLevel();
+	static bool isInfoLevel();
+	static bool isDebugLevel();
+
 protected:
 	std::ostringstream os;
 	static FILE* file;

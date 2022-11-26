@@ -164,3 +164,23 @@ void Log::setupReportingLevel()
 
 	setReportingLevel(lvl);
 }
+
+bool Log::isErrorLevel()
+{
+	return reportingLevel == LogError;
+}
+
+bool Log::isWarningLevel()
+{
+	return reportingLevel == LogWarning;
+}
+
+bool Log::isInfoLevel()
+{
+	return reportingLevel == LogInfo;
+}
+
+bool Log::isDebugLevel()
+{
+	return reportingLevel == LogDebug;
+}

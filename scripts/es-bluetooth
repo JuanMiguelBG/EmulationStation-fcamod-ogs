@@ -1,7 +1,9 @@
 #!/bin/bash
 
 do_help() {
-    echo "$0 scanlist" >&2
+    echo "$0 scan_on <TIMEOUT> (default 300 seconds)" >&2
+    echo "$0 scan_off" >&2
+    echo "$0 new_devices" >&2
     echo "$0 enable" >&2
     echo "$0 disable" >&2
     echo "$0 is_enabled" >&2
@@ -9,12 +11,20 @@ do_help() {
     echo "$0 disable_bluetooth" >&2
     echo "$0 is_bluetooth_active" >&2
     echo "$0 is_bluetooth_enabled" >&2
+    echo "$0 is_bluetooth_audio_device <DEVICE_ID>" >&2
     echo "$0 is_bluetooth_audio_device_connected" >&2
     echo "$0 audio_device_connected" >&2
+    echo "$0 info_device <DEVICE_ID>" >&2
+    echo "$0 pair_device <DEVICE_ID>" >&2
     echo "$0 paired_devices" >&2
+    echo "$0 connected_devices" >&2
     echo "$0 connect_device <DEVICE_ID>" >&2
     echo "$0 disconnect_device <DEVICE_ID>" >&2
+    echo "$0 disconnect_all_devices" >&2
     echo "$0 delete_device_connection <DEVICE_ID>" >&2
+    echo "$0 delete_all_device_connections" >&2
+    echo "$0 auto_connect_audio_device_on" >&2
+    echo "$0 auto_connect_audio_device_off" >&2
     echo "$0 test_bluetooth" >&2
 }
 
@@ -63,10 +73,12 @@ enable_bluetooth() {
       sudo systemctl enable watchforbtaudio --quiet
       sudo systemctl daemon-reload --quiet &
       sudo systemctl restart oga_events --quiet &
+
       # security fix
       bluetoothctl pairable off > /dev/null &
       bluetoothctl discoverable off > /dev/null &
     fi
+    sudo rm -f "$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE" > /dev/null &
 }
 
 disable_bluetooth() {
@@ -76,6 +88,11 @@ disable_bluetooth() {
     if [ $? -eq 0 ]; then
       # active
       #print_log $LOG_FILE "INFO" "disable_bluetooth() - Bluetooth is active, inactiving..."
+
+      # security fix
+      bluetoothctl pairable off > /dev/null &
+      bluetoothctl discoverable off > /dev/null &
+
       sudo systemctl stop watchforbtaudio --quiet
       sudo systemctl stop bluetooth --quiet
       sudo systemctl stop bluealsa --quiet
@@ -87,10 +104,8 @@ disable_bluetooth() {
       sudo systemctl daemon-reload --quiet &
       sudo systemctl restart oga_events --quiet &
       cp -f $USER_HOME_PATH/.asoundrcbak $USER_HOME_PATH/.asoundrc &
-      # security fix
-      bluetoothctl pairable > /dev/null &
-      bluetoothctl discoverable > /dev/null &
     fi
+    sudo rm -f "$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE" > /dev/null &
 }
 
 test_bluetooth() {
@@ -119,27 +134,57 @@ do_disable() {
 is_enabled() {
     #print_log $LOG_FILE "INFO" "Executing 'is_enabled()'"
 
-    if [ -z $(pidof rtk_hciattach) ]; then
-      # disaled
-      #print_log $LOG_FILE "INFO" "is_enabled() - Bluetooth is disabled"
+    if [ ! -z $(pidof rtk_hciattach) ]; then
+      # enabled
+      #print_log $LOG_FILE "INFO" "is_enabled() - Bluetooth is enabled"
+      return 0
+    fi
+
+    # disaled
+    #print_log $LOG_FILE "INFO" "is_enabled() - Bluetooth is disabled"
+    return 1
+}
+
+is_bluetooth_audio_device()
+{
+    local DEVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device()' - device '$DEVICE'"
+
+    if [ -z "$DEVICE" ]; then
       return 1
     fi
 
-    # enabled
-    #print_log $LOG_FILE "INFO" "is_enabled() - Bluetooth is enabled"
-    return 0
+    local device_data=`timeout 5s bluetoothctl info $DEVICE`
+    local fail=`echo "$device_data" | grep "not available"`
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'is_bluetooth_audio_device()' - device '$DEVICE' data"
+    #print_log $LOG_FILE "DEBUG" "$device_data"
+    if [ ! -z "$fail" ]; then
+      return 1
+    fi
+
+    local is_audio_devide=`echo "$device_data" | grep "Icon: audio-"`
+    if [ ! -z "$is_audio_devide" ]; then
+      # audio device
+      #print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device()' - device '$DEVICE' is an audio device"
+      return 0
+    fi
+
+    # NO audio device
+    #print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device()' - device '$DEVICE' is NOT an audio device"
+    return 1
 }
 
 is_bluetooth_audio_device_connected()
 {
     #print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device_connected()'"
 
-    if [[ $(amixer scontrols | grep -c " A2DP'") -gt 0 ]] ; then
+    if [[ $(amixer scontrols | grep -c " A2DP'") -gt 0 ]]; then
       # BT audio devices connected
       #print_log $LOG_FILE "INFO" "is_enabled() - A total of $BT_AUDIO_DEVICES_CONNECTED Bluetooth Audio Devices connected"
       return 0
     fi
-    #print_log $LOG_FILE "INFO" "is_enabled() -No Bluetooth Audio Devices connected"
+    #print_log $LOG_FILE "INFO" "is_enabled() - No Bluetooth Audio Devices connected"
     # NO BT audio devices connected
     return 1
 }
@@ -148,43 +193,85 @@ get_bluetooth_audio_device_connected()
 {
     #print_log $LOG_FILE "INFO" "Executing 'get_bluetooth_audio_device_connected()'"
 
-    awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep  " A2DP'")
+    awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'")
 }
 
-do_scanlist()
+do_scan_on()
 {
-    #print_log $LOG_FILE "INFO" "Executing 'do_scanlist()'"
+    local TIMEOUT="$1"
+    # valid natural number greater than 0 and skip non numeric expressions
+    [ "$TIMEOUT" -gt 0 2>/dev/null ] || TIMEOUT="300"
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_scan_on()' - timeout: $TIMEOUT"
 
-    sudo systemctl stop bluetooth
-    sleep 1
-    sudo hciconfig hci0 down
-    sleep 1
-    sudo hciconfig hci0 up
-    sleep 1
-    sudo systemctl start bluetooth
-    sleep 1
+    #print_log $LOG_FILE "INFO" "do_scan_on() - Bluetooth is scanning devices ..."
+    if [ "$(ps -aux | grep -c '[b]luetoothctl .*scan on')" -eq 0 ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_scan_on()' - launching command: bluetoothctl --timeout $TIMEOUT scan on"
+      bluetoothctl discoverable on > /dev/null
+      bluetoothctl --timeout $TIMEOUT scan on > /dev/null &
+    fi
+}
 
-    # security fix
-    bluetoothctl pairable on > /dev/null
-    bluetoothctl discoverable on > /dev/null
+do_scan_off()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_scan_off()'"
 
-    local bt_devices=`bluetoothctl --timeout 10 scan on | grep -E ".*NEW.* Device "`
+    if [ "$(ps -aux | grep -c '[b]luetoothctl .*scan on')" -gt 0 ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_scan_off()' - killing command running 'bluetoothctl scan on'"
+      sudo kill -9 $(pidof bluetoothctl) > /dev/null
+      sudo systemctl restart oga_events --quiet &
 
-    # security fix
-    bluetoothctl pairable off  > /dev/null &
-    bluetoothctl discoverable off  > /dev/null &
-pair
+      # security fix
+      bluetoothctl pairable off > /dev/null &
+      bluetoothctl discoverable off > /dev/null &
+    fi
+}
+
+get_new_devices_list()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'get_new_devices_list()'"
+
+    local bt_devices=`timeout 5s bluetoothctl devices | grep "Device "`
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - devices:"
+    #print_log $LOG_FILE "DEBUG" "$bt_devices"
+
     local result=""
 
     # Set space as the delimiter
-    IFS=' '
-    while IFS= read -r bt_device; do
+    while read -r bt_device; do
       local ITEM=${bt_device#* }
-      ITEM=${ITEM#* }
+
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - device: '$ITEM'"
+
+      # skip empty values
+      if [ -z "$ITEM" ]; then
+        continue
+      fi
+
       local ID=${ITEM%% *}
       local NAME=${ITEM#* }
       NAME=$(trim "$NAME")
-      result="$result\n$ID $NAME"
+
+      local device_data=`timeout 5s bluetoothctl info $ID`
+
+      local is_new_device=`echo "$device_data" | grep -e "Paired: no"`
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - is new device: '$is_new_device'"
+      # skip knowed devices
+      if [ -z "$is_new_device" ]; then
+        continue
+      fi
+
+      local ICON=`echo "$device_data" | grep "Icon:" | cut -d\  -f2- | awk 1 ORS=' '`
+      ICON=$(trim "$ICON")
+      if [ -z "$ICON" ]; then
+        ICON="unknown"
+      elif [ "$ICON" == "audio-card" ]; then
+        local head_phones=`echo "$device_data" | grep -iw "handsfree\|headphones\|headset"`
+        if [ ! -z "$head_phones" ]; then
+          ICON="audio-headphones"
+        fi
+      fi
+
+      result="$result\n<device id=\"$ID\" name=\"$NAME\" type=\"$ICON\" paired=\"false\" connected=\"false\" />"
     done <<< "$bt_devices"
     if [ -z "$result" ]; then
       echo ""
@@ -194,7 +281,7 @@ pair
       echo -e "$result"
     fi
 
-    #print_log $LOG_FILE "DEBUG" "Executing 'do_scanlist()' - result: '$result'"
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - result: '$result'"
 }
 
 get_paired_devices()
@@ -202,24 +289,49 @@ get_paired_devices()
     #print_log $LOG_FILE "INFO" "Executing 'get_paired_devices()'"
 
     local paired_devices=`timeout 5s bluetoothctl paired-devices | grep "Device "`
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices()' - devices:"
+    #print_log $LOG_FILE "DEBUG" "$paired_devices"
     local result=""
 
     while read -r paired_device; do
       local ITEM=${paired_device#* }
+
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices()' - device: '$ITEM'"
+
+      # skip empty values
+      if [ -z "$ITEM" ]; then
+        continue
+      fi
+
       local ID=${ITEM%% *}
       local NAME=${ITEM#* }
       NAME=$(trim "$NAME")
 
-      local exist=`timeout 5s bluetoothctl info $ID | grep "Connected: yes"`
-      #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices()' - exist: '$exist'"
-      # skip empty values
-      if [ ! -z "$ITEM" ]; then
-        if [ ! -z "$exist" ]; then
-          result="$result\n$ID $NAME$EXIST_CONNECTION_FLAG"
-        else
-          result="$result\n$ID $NAME"
+      local device_data=`timeout 5s bluetoothctl info $ID`
+
+      local fail=`echo "$device_data" | grep "not available"`
+      if [ ! -z "$fail" ]; then
+        continue
+      fi
+
+      local ICON=`echo "$device_data" | grep -e "Icon" | cut -d\  -f2- | awk 1 ORS=' '`
+      ICON=$(trim "$ICON")
+      if [ "$ICON" == "audio-card" ]; then
+        local head_phones=`echo "$device_data" | grep -iw "handsfree\|headphones\|headset"`
+        if [ ! -z "$head_phones" ]; then
+          ICON="audio-headphones"
         fi
       fi
+
+      local CONNECTED=`echo "$device_data" | grep "Connected:" | cut -d\  -f2- | awk 1 ORS=' '`
+      CONNECTED=$(trim "$CONNECTED")
+      if [ "$CONNECTED" == "yes" ]; then
+        CONNECTED="true"
+      else
+        CONNECTED="false"
+      fi
+
+      result="$result\n<device id=\"$ID\" name=\"$NAME\" type=\"$ICON\" paired=\"true\" connected=\"$CONNECTED\" />"
     done <<< "$paired_devices"
     if [ -z "$result" ]; then
       echo ""
@@ -232,26 +344,233 @@ get_paired_devices()
     #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices()' - result: '$result'"
 }
 
+get_connected_devices()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'get_connected_devices()'"
+
+    local connected_devices=`timeout 5s bluetoothctl paired-devices | grep "Device "`
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - devices:"
+    #print_log $LOG_FILE "DEBUG" "$connected_devices"
+    local result=""
+
+    while read -r connected_device; do
+      local ITEM=${connected_device#* }
+
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device: '$ITEM'"
+
+      # skip empty values
+      if [ -z "$ITEM" ]; then
+        continue
+      fi
+
+      local ID=${ITEM%% *}
+
+      local device_data=`timeout 5s bluetoothctl info $ID`
+
+      local fail=`echo "$device_data" | grep "not available"`
+      if [ ! -z "$fail" ]; then
+        continue
+      fi
+
+      local is_connected=`echo "$device_data" | grep "Connected: yes"`
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device '$ID' is connected: '$is_connected'"
+      # skip NOT connected
+      if [ -z "$is_connected" ]; then
+        continue
+      fi
+
+      local NAME=${ITEM#* }
+      NAME=$(trim "$NAME")
+      local ICON=`echo "$device_data" | grep "Icon:" | cut -d\  -f2- | awk 1 ORS=' '`
+      ICON=$(trim "$ICON")
+      if [ "$ICON" == "audio-card" ]; then
+        local head_phones=`echo "$device_data" | grep -iw "handsfree\|headphones\|headset"`
+        if [ ! -z "$head_phones" ]; then
+          ICON="audio-headphones"
+        fi
+      fi
+
+      result="$result\n<device id=\"$ID\" name=\"$NAME\" type=\"$ICON\" paired=\"true\" connected=\"true\" />"
+    done <<< "$connected_devices"
+    if [ -z "$result" ]; then
+      echo ""
+    else
+      # remove first \n
+      result="${result:2:${#result}}"
+      echo -e "$result"
+    fi
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - result: '$result'"
+}
+
 do_disconnect_device()
 {
     local DEVICE=$1
     #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' to device '$DEVICE'"
 
-    #bluetoothctl --timeout 5 scan on >> /dev/null
+    if [ -z "$DEVICE" ]; then
+      return 1
+    fi
 
     local output=`bluetoothctl disconnect "$DEVICE"`
     local success=`echo "$output" | grep "Successful disconnected"`
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' to device '$DEVICE' - result: $output"
-    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' to device '$DEVICE' - success: $success"
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_device()' to device '$DEVICE' - result: '$output'"
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_device()' to device '$DEVICE' - success: '$success'"
 
-    if [ -z "$success" ]; then
-      # fail
+    if [ ! -z "$success" ]; then
+      # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' device '$DEVICE' successfully disconnected"
+      return 0
+    fi
+
+    # fail
+    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_device()' failed to discoonet device '$DEVICE'"
+    return 1
+}
+
+do_disconnect_all_devices()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_all_devices()'"
+
+    local paired_devices=`timeout 5s bluetoothctl paired-devices | grep "Device "`
+    local error="false"
+
+    while read -r paired_device; do
+      local ITEM=${paired_device#* }
+
+      # skip empty values
+      if [ -z "$ITEM" ]; then
+        continue
+      fi
+
+      local ID=${ITEM%% *}
+      local NAME=${ITEM#* }
+      NAME=$(trim "$NAME")
+
+      local is_connected=`timeout 5s bluetoothctl info $ID | grep "Connected: yes"`
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device '$ID' is connected: '$is_connected'"
+      # skip NOT connected
+      if [ -z "$is_connected" ]; then
+        continue
+      fi
+
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - disconnecting: '$ID' - '$NAME'"
+      do_disconnect_device "$ID" || error="true"
+    done <<< "$paired_devices"
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - error: $error"
+    if [ "$error" == "false" ]; then
+      # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_all_devices()' disconnected all devices successfully"
+      return 0
+    fi
+
+    # fail
+    #print_log $LOG_FILE "INFO" "Executing 'do_disconnect_all_devices()' fail to disconnected all devices"
+    return 1
+}
+
+get_info_device()
+{
+    local DEVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'get_info_device()' to device '$DEVICE'"
+
+    local result=""
+
+    if [ -z "$DEVICE" ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_info_device()' - return empty device"
+      echo "<device id=\"unknown\" name=\"unknown\" type=\"unknown\" paired=\"false\" connected=\"false\" />"
+      return 0
+    fi
+
+    local device_data=`timeout 5s bluetoothctl info $DEVICE`
+
+    local fail=`echo "$device_data" | grep "not available"`
+    if [ ! -z "$fail" ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_info_device()' - return device not available"
+      echo "<device id=\"$DEVICE\" name=\"unknown\" type=\"unknown\" paired=\"false\" connected=\"false\" />"
+      return 0
+    fi
+
+    local NAME=`echo "$device_data" | grep "Name:" | cut -d\  -f2- | awk 1 ORS=' '`
+    NAME=$(trim "$NAME")
+
+    local ICON=`echo "$device_data" | grep "Icon:" | cut -d\  -f2- | awk 1 ORS=' '`
+    ICON=$(trim "$ICON")
+    if [ -z "$ICON" ]; then
+      ICON="unknown"
+    elif [ "$ICON" == "audio-card" ]; then
+      local head_phones=`echo "$device_data" | grep -iw "handsfree\|headphones\|headset"`
+      if [ ! -z "$head_phones" ]; then
+        ICON="audio-headphones"
+      fi
+    fi
+
+    local PAIRED=`echo "$device_data" | grep "Paired:" | cut -d\  -f2- | awk 1 ORS=' '`
+    PAIRED=$(trim "$PAIRED")
+    if [ "$PAIRED" == "yes" ];then
+      PAIRED="true"
+    else
+      PAIRED="false"
+    fi
+
+    local CONNECTED=`echo "$device_data" | grep "Connected:" | cut -d\  -f2- | awk 1 ORS=' '`
+    CONNECTED=$(trim "$CONNECTED")
+    if [ "$CONNECTED" == "yes" ];then
+      CONNECTED="true"
+    else
+      CONNECTED="false"
+    fi
+
+    result="<device id=\"$DEVICE\" name=\"$NAME\" type=\"$ICON\" paired=\"$PAIRED\" connected=\"$CONNECTED\" />"
+    echo "$result"
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_info_device()' - result: '$result'"
+}
+
+do_pair_device()
+{
+    local DEVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_pair_device()' to device '$DEVICE'"
+
+    if [ -z "$DEVICE" ]; then
       return 1
     fi
 
-    # success
-    return 0
+    local alreadypaired=`bluetoothctl paired-devices | grep "$DEVICE"`
+    local success=""
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_pair_device()' checking already paired device '$DEVICE' - result: '$alreadypaired'"
+
+    if [ -z "$alreadypaired" ]; then
+      # security fix
+      bluetoothctl pairable on > /dev/null
+      bluetoothctl discoverable on > /dev/null
+
+      local output=`timeout 10s bluetoothctl pair "$DEVICE"`
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_pair_device()' pairing device '$DEVICE' - result: '$output'"
+
+      # security fix
+      bluetoothctl pairable off > /dev/null &
+      bluetoothctl discoverable off > /dev/null &
+
+      success=`echo "$output" | grep "Paired: yes"`
+    else
+      #print_log $LOG_FILE "INFO" "Executing 'do_pair_device()' device '$DEVICE' already paired"
+      success="Paired: yes"
+    fi
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_pair_device()' pairing device '$DEVICE' - success: '$success'"
+
+    if [ ! -z "$success" ]; then
+      # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_pair_device()' pairing to device '$DEVICE' - successfully"
+      return 0
+    fi
+
+    # fail
+    local error=`echo "$output" | grep -iw "failed\|error"`
+    #print_log $LOG_FILE "INFO" "Executing 'do_pair_device()' pairing to device '$DEVICE' - failed, cause: '$error'"
+    return 1
 }
 
 do_connect_device()
@@ -259,42 +578,49 @@ do_connect_device()
     local DEVICE=$1
     #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' to device '$DEVICE'"
 
-    local alreadypaired=`bluetoothctl paired-devices | grep "$DEVICE"`
-    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' checking already paired device '$DEVICE' - result: '$alreadypaired'"
-    if [ ! -z "$alreadypaired" ]; then
-      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' removing already paired device '$DEVICE'"
-      bluetoothctl remove "$DEVICE" >> /dev/null
+    if [ -z "$DEVICE" ]; then
+      return 1
     fi
 
-    # security fix
-    bluetoothctl pairable on
-    #bluetoothctl discoverable on
+    local alreadypaired=`bluetoothctl paired-devices | grep "$DEVICE"`
+    local success=""
 
-    local output=`bluetoothctl pair "$DEVICE"`
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_connect_device()' checking already paired device '$DEVICE' - result: '$alreadypaired'"
 
-    # security fix
-    bluetoothctl pairable off > /dev/null &
-    bluetoothctl discoverable off > /dev/null &
-
-    local success=`echo "$output" | grep "Paired: yes"`
-
-    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - result: '$output'"
-    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - success: '$success'"
-
-    if [ ! -z "$success" ]; then
-      bluetoothctl trust "$DEVICE" >> /dev/null
-      output=`bluetoothctl connect "$DEVICE"`
-      success=`echo "$output" | grep "Connection successful"`
-      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' connecting device '$DEVICE' - result: '$output'"
-      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' pairing device '$DEVICE' - success: '$success'"
-      if [ -z "$success" ]; then
+    if [ -z "$alreadypaired" ]; then
+      local paired=$(do_pair_device "$DEVICE")
+      if [ "$paired" == "1" ]; then
         # fail
+        #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' fail to pair the device '$DEVICE"
         return 1
       fi
     fi
 
-    # success
-    return 0
+    local device_data=`timeout 5s bluetoothctl info $DEVICE`
+    local fail=`echo "$device_data" | grep "not available"`
+    if [ ! -z "$fail" ]; then
+      # fail
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' fail to get device info '$DEVICE' - failed, cause: '$fail'"
+      return 1
+    fi
+
+    local ICON=`echo "$device_data" | grep -e "Icon" | cut -d\  -f2-`
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' - device '$DEVICE', type: '$ICON'"
+    bluetoothctl trust "$DEVICE" >> /dev/null
+    output=`timeout 10s bluetoothctl connect "$DEVICE"`
+    success=`echo "$output" | grep "Connection successful"`
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_connect_device()' connecting device '$DEVICE' - result: '$output'"
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_connect_device()' pairing device '$DEVICE' - success: '$success'"
+    if [ ! -z "$success" ]; then
+      # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' connecting to device '$DEVICE' - successfully"
+      return 0
+    fi
+
+    # fail
+    fail=`echo "$output" | grep -iw "failed\|error"`
+    #print_log $LOG_FILE "INFO" "Executing 'do_connect_device()' fail to connect the device '$DEVICE' - failed, cause: '$fail'"
+    return 1
 }
 
 do_delete_device_connection()
@@ -304,17 +630,115 @@ do_delete_device_connection()
 
     bluetoothctl untrust "$1" >> /dev/null
     bluetoothctl remove "$1" >> /dev/null
-    if [ $? != 0 ]; then
-      # fail
-      #print_log $LOG_FILE "INFO" "Executing 'do_delete_device_connection()' fail to delete device '$DEVICE'"
-      return 1
+    if [ $? == 0 ]; then
+      # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_delete_device_connection()' success to delete device '$DEVICE'"
+      return 0
     fi
 
-    # success
-    #print_log $LOG_FILE "INFO" "Executing 'do_delete_device_connection()' success to delete device '$DEVICE'"
-    return 0
+    # fail
+    #print_log $LOG_FILE "INFO" "Executing 'do_delete_device_connection()' fail to delete device '$DEVICE'"
+    return 1
 }
 
+do_delete_all_device_connections()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_delete_all_device_connections()'"
+
+    local paired_devices=`timeout 5s bluetoothctl paired-devices | grep "Device "`
+    local error="false"
+
+    while read -r paired_device; do
+      local ITEM=${paired_device#* }
+
+      # skip empty values
+      if [ -z "$ITEM" ]; then
+        continue
+      fi
+
+      local ID=${ITEM%% *}
+      local NAME=${ITEM#* }
+      NAME=$(trim "$NAME")
+
+      do_delete_device_connection "$ID" || error="true"
+    done <<< "$paired_devices"
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_delete_all_device_connections()' - error: $error"
+    if [ "$error" == "false" ]; then
+      # success
+      return 0
+    fi
+
+    # fail
+    return 1
+}
+
+do_auto_connect_audio_device_on()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_auto_connect_audio_device_on()'"
+
+    if [ -f "$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE" ]; then
+      #print_log $LOG_FILE "INFO" "Executing 'do_auto_connect_audio_device_on()' - skipped"
+      return 0
+    fi
+
+    do_scan_on 10
+
+    while [ "$(ps -aux | grep -c '[b]luetoothctl .*scan on')" -gt 0 ]; do
+
+      local paired_devices=`timeout 5s bluetoothctl paired-devices | grep "Device "`
+
+      while read -r paired_device; do
+        local ITEM=${paired_device#* }
+
+        # skip empty values
+        if [ -z "$ITEM" ]; then
+          #print_log $LOG_FILE "DEBUG" "Executing 'do_auto_connect_audio_device_on()' - device '$ID' empty value, skip"
+          continue
+        fi
+
+        local ID=${ITEM%% *}
+        local NAME=${ITEM#* }
+        NAME=$(trim "$NAME")
+
+        local device_data=`timeout 5s bluetoothctl info $ID`
+        local fail=`echo "$device_data" | grep "not available"`
+        if [ ! -z "$fail" ]; then
+          #print_log $LOG_FILE "DEBUG" "Executing 'do_auto_connect_audio_device_on()' - device '$ID' is NOT available, skip"
+          continue
+        fi
+
+        # skip no audio devices
+        local is_audio_device=`echo "$device_data" | grep "Icon: audio-"`
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_auto_connect_audio_device_on()' - device '$ID' is_audio_device: '$is_audio_device'"
+        if [ -z "$is_audio_device" ]; then
+          #print_log $LOG_FILE "DEBUG" "Executing 'do_auto_connect_audio_device_on()' - device '$ID' NOT audio device, skip"
+          continue
+        fi
+
+        # skip connected devices
+#        local is_connected=`echo "$device_data" | grep "Connected: yes"`
+#        #print_log $LOG_FILE "DEBUG" "Executing 'do_auto_connect_audio_device_on()' - device '$ID' is_connected: '$is_connected'"
+#        if [ ! -z "$is_connected" ]; then
+#          #print_log $LOG_FILE "DEBUG" "Executing 'do_auto_connect_audio_device_on()' - device '$ID' connected, disconnecting"
+#          do_disconnect_device "$ID" || continue
+#        fi
+
+        #print_log $LOG_FILE "INFO" "Executing 'do_auto_connect_audio_device_on()' - connecting: '$ID' - '$NAME'"
+        do_connect_device "$ID" && return 0
+      done <<< "$paired_devices"
+    done
+}
+
+do_auto_connect_audio_device_off()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_auto_connect_audio_device_off()'"
+
+    do_scan_off
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_auto_connect_audio_device_off()' - removing lock file '$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE'"
+    sudo rm -f "$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE" > /dev/null &
+}
 # ******************************************************************************************
 
 # Configure ES commons variables
@@ -339,8 +763,14 @@ shift
 #print_log $LOG_FILE "INFO" "##### Executing operation: $ACTION #####"
 
 case "${ACTION}" in
-    "scanlist")
-        do_scanlist || exit 1
+    "scan_on")
+        do_scan_on || exit 1
+    ;;
+    "scan_off")
+        do_scan_off || exit 1
+    ;;
+    "new_devices")
+        get_new_devices_list || exit 1
     ;;
     "enable")
         do_enable || exit 1
@@ -360,23 +790,47 @@ case "${ACTION}" in
     "is_bluetooth_enabled")
         is_bluetooth_enabled || exit 1
     ;;
+    "is_bluetooth_audio_device")
+        is_bluetooth_audio_device "$1" || exit 1
+    ;;
     "is_bluetooth_audio_device_connected")
         is_bluetooth_audio_device_connected || exit 1
     ;;
     "audio_device_connected")
-        get_bluetooth_audio_device_connected || exit 1
+        get_bluetooth_audio_device_connected
+    ;;
+    "info_device")
+        get_info_device "$1"
+    ;;
+    "pair_device")
+        do_pair_device "$1" || exit 1
     ;;
     "paired_devices")
-        get_paired_devices || exit 1
+        get_paired_devices
+    ;;
+    "connected_devices")
+        get_connected_devices
     ;;
     "disconnect_device")
         do_disconnect_device "$1" || exit 1
+    ;;
+    "disconnect_all_devices")
+        do_disconnect_all_devices || exit 1
     ;;
     "connect_device")
         do_connect_device "$1" || exit 1
     ;;
     "delete_device_connection")
         do_delete_device_connection "$1" || exit 1
+    ;;
+    "delete_all_device_connections")
+        do_delete_all_device_connections || exit 1
+    ;;
+    "auto_connect_audio_device_on")
+        do_auto_connect_audio_device_on || exit 1
+    ;;
+    "auto_connect_audio_device_off")
+        do_auto_connect_audio_device_off || exit 1
     ;;
     "test_bluetooth")
         test_bluetooth || exit 1

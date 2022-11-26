@@ -98,6 +98,7 @@ void AudioManager::deinit()
 
 	//completely tear down SDL audio. else SDL hogs audio resources and emulators might fail to start...
 	Mix_CloseAudio();
+	Mix_Quit();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
 	LOG(LogInfo) << "AudioManager::deinit() - SDL AUDIO Deinitialized";

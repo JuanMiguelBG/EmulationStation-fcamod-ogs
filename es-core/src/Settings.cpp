@@ -89,7 +89,7 @@ void Settings::setDefaults()
 	mBoolMap["SplashScreenProgress"] = true;
 	mBoolMap["PreloadUI"] = false;
 	mBoolMap["PreloadMedias"] = false;
-	mBoolMap["PreloadVLC"] = true;
+	mBoolMap["PreloadVLC"] = false;
 	mBoolMap["StartupOnGameList"] = false;
 	mBoolMap["HideSystemView"] = false;
 	mBoolMap["BrightnessPopup"] = true;
@@ -236,6 +236,7 @@ void Settings::setDefaults()
 	mBoolMap["RestoreVolumeAfterGame"] = true;
 	mIntMap["BrightnessBackup"] = 50;
 	mIntMap["VolumeBackup"] = 75;
+	mBoolMap["bluetooth.audio.device.autoconnect"] = false;
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

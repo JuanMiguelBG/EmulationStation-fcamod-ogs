@@ -343,7 +343,7 @@ std::pair<std::string, int> ApiSystem::installTheme(std::string themeName, const
 	// Storage functions
 unsigned long ApiSystem::getFreeSpaceGB(std::string mountpoint)
 {
-	LOG(LogDebug) << "ApiSystem::getFreeSpaceGB";
+	LOG(LogInfo) << "ApiSystem::getFreeSpaceGB";
 
 	int free = 0;
 
@@ -378,7 +378,7 @@ bool ApiSystem::isUser2Mounted()
 
 std::string ApiSystem::getFreeSpaceUsbDriveInfo(const std::string mountpoint)
 {
-	LOG(LogDebug) << "ApiSystem::getFreeSpaceUsbDriveInfo() - mount point: " << mountpoint;
+	LOG(LogInfo) << "ApiSystem::getFreeSpaceUsbDriveInfo() - mount point: " << mountpoint;
 	if ( isDriveMounted(mountpoint) )
 		return getFreeSpaceInfo(mountpoint);
 
@@ -387,7 +387,7 @@ std::string ApiSystem::getFreeSpaceUsbDriveInfo(const std::string mountpoint)
 
 std::string ApiSystem::getFreeSpaceInfo(const std::string mountpoint)
 {
-	LOG(LogDebug) << "ApiSystem::getFreeSpaceInfo() - mount point: " << mountpoint;
+	LOG(LogInfo) << "ApiSystem::getFreeSpaceInfo() - mount point: " << mountpoint;
 
 	std::ostringstream oss;
 
@@ -469,31 +469,31 @@ bool ApiSystem::isBatteryLimit(float battery_level, int limit) // %
 
 std::string ApiSystem::getVersion()
 {
-	LOG(LogDebug) << "ApiSystem::getVersion()";
+	LOG(LogInfo) << "ApiSystem::getVersion()";
 	return querySoftwareInformation(true).version;
 }
 
 std::string ApiSystem::getApplicationName()
 {
-	LOG(LogDebug) << "ApiSystem::getApplicationName()";
+	LOG(LogInfo) << "ApiSystem::getApplicationName()";
 	return querySoftwareInformation(true).application_name;
 }
 
 std::string ApiSystem::getHostname()
 {
-	LOG(LogDebug) << "ApiSystem::getHostname()";
+	LOG(LogInfo) << "ApiSystem::getHostname()";
 	return queryHostname();
 }
 
 bool ApiSystem::setHostname(std::string hostname)
 {
-	LOG(LogDebug) << "ApiSystem::setHostname()";
+	LOG(LogInfo) << "ApiSystem::setHostname()";
 	return setCurrentHostname(hostname);
 }
 
 std::string ApiSystem::getIpAddress()
 {
-	LOG(LogDebug) << "ApiSystem::getIpAddress()";
+	LOG(LogInfo) << "ApiSystem::getIpAddress()";
 
 	std::string result = queryIPAddress(); // platform.h
 	if (result.empty())
@@ -504,189 +504,189 @@ std::string ApiSystem::getIpAddress()
 
 float ApiSystem::getLoadCpu()
 {
-	LOG(LogDebug) << "ApiSystem::getLoadCpu()";
+	LOG(LogInfo) << "ApiSystem::getLoadCpu()";
 	return queryLoadCpu();
 }
 
 int ApiSystem::getFrequencyCpu()
 {
-	LOG(LogDebug) << "ApiSystem::getFrequencyCpu()";
+	LOG(LogInfo) << "ApiSystem::getFrequencyCpu()";
 	return queryFrequencyCpu();
 }
 
 float ApiSystem::getTemperatureCpu()
 {
-	LOG(LogDebug) << "ApiSystem::getTemperatureCpu()";
+	LOG(LogInfo) << "ApiSystem::getTemperatureCpu()";
 	return queryTemperatureCpu();
 }
 
 float ApiSystem::getTemperatureGpu()
 {
-	LOG(LogDebug) << "ApiSystem::getTemperatureGpu()";
+	LOG(LogInfo) << "ApiSystem::getTemperatureGpu()";
 	return queryTemperatureGpu();
 }
 
 int ApiSystem::getFrequencyGpu()
 {
-	LOG(LogDebug) << "ApiSystem::getFrequencyGpu()";
+	LOG(LogInfo) << "ApiSystem::getFrequencyGpu()";
 	return queryFrequencyGpu();
 }
 
 bool ApiSystem::isNetworkConnected()
 {
-	LOG(LogDebug) << "ApiSystem::isNetworkConnected()";
+	LOG(LogInfo) << "ApiSystem::isNetworkConnected()";
 	return queryNetworkConnected();
 }
 
 NetworkInformation ApiSystem::getNetworkInformation(bool summary)
 {
-	LOG(LogDebug) << "ApiSystem::getNetworkInformation()";
+	LOG(LogInfo) << "ApiSystem::getNetworkInformation()";
 
 	return queryNetworkInformation(summary); // platform.h
 }
 
 BatteryInformation ApiSystem::getBatteryInformation(bool summary)
 {
-	LOG(LogDebug) << "ApiSystem::getBatteryInformation()";
+	LOG(LogInfo) << "ApiSystem::getBatteryInformation()";
 
 	return queryBatteryInformation(summary); // platform.h
 }
 
 CpuAndSocketInformation ApiSystem::getCpuAndChipsetInformation(bool summary)
 {
-	LOG(LogDebug) << "ApiSystem::getCpuAndChipsetInformation()";
+	LOG(LogInfo) << "ApiSystem::getCpuAndChipsetInformation()";
 
 	return queryCpuAndChipsetInformation(summary); // platform.h
 }
 
 RamMemoryInformation ApiSystem::getRamMemoryInformation(bool summary)
 {
-	LOG(LogDebug) << "ApiSystem::getRamMemoryInformation()";
+	LOG(LogInfo) << "ApiSystem::getRamMemoryInformation()";
 
 	return queryRamMemoryInformation(summary); // platform.h
 }
 
 DisplayAndGpuInformation ApiSystem::getDisplayAndGpuInformation(bool summary)
 {
-	LOG(LogDebug) << "ApiSystem::getDisplayAndGpuInformation()";
+	LOG(LogInfo) << "ApiSystem::getDisplayAndGpuInformation()";
 
 	return queryDisplayAndGpuInformation(summary); // platform.h
 }
 
 SoftwareInformation ApiSystem::getSoftwareInformation(bool summary)
 {
-	LOG(LogDebug) << "ApiSystem::getSoftwareInformation()";
+	LOG(LogInfo) << "ApiSystem::getSoftwareInformation()";
 
 	return querySoftwareInformation(summary); // platform.h
 }
 
 DeviceInformation ApiSystem::getDeviceInformation(bool summary)
 {
-	LOG(LogDebug) << "ApiSystem::getDeviceInformation()";
+	LOG(LogInfo) << "ApiSystem::getDeviceInformation()";
 
 	return queryDeviceInformation(summary); // platform.h
 }
 
 int ApiSystem::getBrightnessLevel()
 {
-	LOG(LogDebug) << "ApiSystem::getBrightnessLevel()";
+	LOG(LogInfo) << "ApiSystem::getBrightnessLevel()";
 
 	return queryBrightnessLevel();
 }
 
 void ApiSystem::setBrightnessLevel(int brightnessLevel)
 {
-	LOG(LogDebug) << "ApiSystem::setBrightnessLevel()";
+	LOG(LogInfo) << "ApiSystem::setBrightnessLevel()";
 
 	saveBrightnessLevel(brightnessLevel);
 }
 
 int ApiSystem::getBrightness()
 {
-	LOG(LogDebug) << "ApiSystem::getBrightness()";
+	LOG(LogInfo) << "ApiSystem::getBrightness()";
 
 	return queryBrightness();
 }
 
 void ApiSystem::backupBrightnessLevel()
 {
-	LOG(LogDebug) << "ApiSystem::backupBrightnessLevel()";
+	LOG(LogInfo) << "ApiSystem::backupBrightnessLevel()";
 
 	Settings::getInstance()->setInt("BrightnessBackup", ApiSystem::getInstance()->getBrightnessLevel());
 }
 
 void ApiSystem::restoreBrightnessLevel()
 {
-	LOG(LogDebug) << "ApiSystem::restoreBrightnessLevel()";
+	LOG(LogInfo) << "ApiSystem::restoreBrightnessLevel()";
 
 	ApiSystem::getInstance()->setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
 }
 
 int ApiSystem::getVolume()
 {
-	LOG(LogDebug) << "ApiSystem::getVolume()";
+	LOG(LogInfo) << "ApiSystem::getVolume()";
 
 	return VolumeControl::getInstance()->getVolume();
 }
 
 void ApiSystem::setVolume(int volumeLevel)
 {
-	LOG(LogDebug) << "ApiSystem::setVolume()";
+	LOG(LogInfo) << "ApiSystem::setVolume()";
 
 	VolumeControl::getInstance()->setVolume(volumeLevel);
 }
 
 void ApiSystem::backupVolume()
 {
-	LOG(LogDebug) << "ApiSystem::backupVolume()";
+	LOG(LogInfo) << "ApiSystem::backupVolume()";
 
 	Settings::getInstance()->setInt("VolumeBackup", ApiSystem::getInstance()->getVolume());
 }
 
 void ApiSystem::restoreVolume()
 {
-	LOG(LogDebug) << "ApiSystem::restoreVolume()";
+	LOG(LogInfo) << "ApiSystem::restoreVolume()";
 
 	ApiSystem::getInstance()->setVolume(Settings::getInstance()->getInt("VolumeBackup"));
 }
 
 int ApiSystem::getBatteryLevel()
 {
-	LOG(LogDebug) << "ApiSystem::getBatteryLevel()";
+	LOG(LogInfo) << "ApiSystem::getBatteryLevel()";
 
 	return queryBatteryLevel();
 }
 
 bool ApiSystem::isBatteryCharging()
 {
-	LOG(LogDebug) << "ApiSystem::isBatteryCharging()";
+	LOG(LogInfo) << "ApiSystem::isBatteryCharging()";
 
 	return queryBatteryCharging();
 }
 
 float ApiSystem::getBatteryVoltage()
 {
-	LOG(LogDebug) << "ApiSystem::getBatteryVoltage()";
+	LOG(LogInfo) << "ApiSystem::getBatteryVoltage()";
 
 	return queryBatteryVoltage();
 }
 
 float ApiSystem::getTemperatureBattery()
 {
-	LOG(LogDebug) << "ApiSystem::getTemperatureBattery()";
+	LOG(LogInfo) << "ApiSystem::getTemperatureBattery()";
 	return queryBatteryTemperature();
 }
 
 std::string ApiSystem::getDeviceName()
 {
-	LOG(LogDebug) << "ApiSystem::getDeviceName()";
+	LOG(LogInfo) << "ApiSystem::getDeviceName()";
 
 	return queryDeviceName();
 }
 
 std::string ApiSystem::getTimezones()
 {
-	LOG(LogDebug) << "ApiSystem::getTimezones()";
+	LOG(LogInfo) << "ApiSystem::getTimezones()";
 
 	return queryTimezones();
 }
@@ -1110,7 +1110,7 @@ std::vector<std::string> ApiSystem::getRetroachievementsSoundsList()
 
 	std::vector<std::string> ret;
 
-	LOG(LogDebug) << "ApiSystem::getRetroAchievementsSoundsList";
+	LOG(LogInfo) << "ApiSystem::getRetroAchievementsSoundsList";
 
 	std::vector<std::string> folderList = executeEnumerationScript(R"(es-cheevos get cheevos_sound_folders)");
 
@@ -1253,7 +1253,7 @@ bool ApiSystem::isOverclockSystem()
 
 std::string ApiSystem::getMD5(const std::string fileName, bool fromZipContents)
 {
-	LOG(LogDebug) << "getMD5 >> " << fileName;
+	LOG(LogDebug) << "ApiSystem::getMD5() >> " << fileName;
 
 	// 7za x -so test.7z | md5sum
 	std::string ext = Utils::String::toLower(Utils::FileSystem::getExtension(fileName));
@@ -1319,20 +1319,20 @@ std::string ApiSystem::getMD5(const std::string fileName, bool fromZipContents)
 	if (!tmpZipDirectory.empty())
 		Utils::FileSystem::deleteDirectoryFiles(tmpZipDirectory, true);
 
-	LOG(LogDebug) << "getMD5 << " << ret;
+	LOG(LogDebug) << "ApiSystem::getMD5() << " << ret;
 
 	return ret;
 }
 
 std::string ApiSystem::getCRC32(std::string fileName, bool fromZipContents)
 {
-	LOG(LogDebug) << "getCRC32 >> " << fileName;
+	LOG(LogDebug) << "ApiSystem::getCRC32() >> " << fileName;
 
 	std::string ext = Utils::String::toLower(Utils::FileSystem::getExtension(fileName));
 
 	if (ext == ".7z" && fromZipContents)
 	{
-		LOG(LogDebug) << "getCRC32 is using 7z";
+		LOG(LogDebug) << "ApiSystem::getCRC32() is using 7z";
 
 		std::string fn = Utils::FileSystem::getFileName(fileName);
 		auto cmd = getSevenZipCommand() + " l -slt \"" + fileName + "\"";
@@ -1348,7 +1348,7 @@ std::string ApiSystem::getCRC32(std::string fileName, bool fromZipContents)
 	}
 	else if (ext == ".zip" && fromZipContents)
 	{
-		LOG(LogDebug) << "getCRC32 is using ZipFile";
+		LOG(LogDebug) << "ApiSystem::getCRC32() is using ZipFile";
 
 		Utils::Zip::ZipFile file;
 		if (file.load(fileName))
@@ -1374,20 +1374,20 @@ std::string ApiSystem::getCRC32(std::string fileName, bool fromZipContents)
 		}
 	}
 
-	LOG(LogDebug) << "getCRC32 is using fileBuffer";
+	LOG(LogDebug) << "ApiSystem::getCRC32() is using fileBuffer";
 	return Utils::FileSystem::getFileCrc32(fileName);
 }
 
 bool ApiSystem::unzipFile(const std::string fileName, const std::string destFolder, const std::function<bool(const std::string)>& shouldExtract)
 {
-	LOG(LogDebug) << "unzipFile >> " << fileName << " to " << destFolder;
+	LOG(LogDebug) << "ApiSystem::unzipFile() >> " << fileName << " to " << destFolder;
 
 	if (!Utils::FileSystem::exists(destFolder))
 		Utils::FileSystem::createDirectory(destFolder);
 
 	if (Utils::String::toLower(Utils::FileSystem::getExtension(fileName)) == ".zip")
 	{
-		LOG(LogDebug) << "unzipFile is using ZipFile";
+		LOG(LogDebug) << "ApiSystem::unzipFile() is using ZipFile";
 
 		Utils::Zip::ZipFile file;
 		if (file.load(fileName))
@@ -1406,25 +1406,26 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 				file.extract(name, destFolder);
 			}
 
-			LOG(LogDebug) << "unzipFile << OK";
+			LOG(LogDebug) << "ApiSystem::unzipFile() << OK";
 			return true;
 		}
 
-		LOG(LogDebug) << "unzipFile << KO Bad format ?" << fileName;
+		LOG(LogDebug) << "ApiSystem::unzipFile() << KO Bad format ?" << fileName;
 		return false;
 	}
 
-	LOG(LogDebug) << "unzipFile is using 7z";
+	LOG(LogDebug) << "ApiSystem::unzipFile() is using 7z";
 
 	std::string cmd = getSevenZipCommand() + " x \"" + Utils::FileSystem::getPreferredPath(fileName) + "\" -y -o\"" + Utils::FileSystem::getPreferredPath(destFolder) + "\"";
 	bool ret = executeScript(cmd);
-	LOG(LogDebug) << "unzipFile <<";
+	LOG(LogDebug) << "ApiSystem::unzipFile() <<";
 	return ret;
 }
 
 
 void ApiSystem::preloadVLC()
 {
+	LOG(LogInfo) << "ApiSystem::preloadVLC()";
 	executeScript("/usr/local/bin/es-preload_vlc &");
 }
 
@@ -1567,7 +1568,7 @@ bool ApiSystem::launchBluetoothConfigurator(Window *window)
 
 bool ApiSystem::isBluetoothEnabled()
 {
-	LOG(LogDebug) << "ApiSystem::isBluetoothEnabled()";
+	LOG(LogInfo) << "ApiSystem::isBluetoothEnabled()";
 
 	return stringToState(queryBluetoothEnabled());
 }
@@ -1586,6 +1587,13 @@ bool ApiSystem::disableBluetooth()
 	return executeScript("es-bluetooth disable");
 }
 
+bool ApiSystem::isBluetoothAudioDevice(const std::string id)
+{
+	LOG(LogInfo) << "ApiSystem::isBluetoothAudioDevice() - ID: " << id;
+
+	return executeScript("es-bluetooth is_bluetooth_audio_device \"" + id + "\"" );
+}
+
 bool ApiSystem::isBluetoothAudioDeviceConnected()
 {
 	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
@@ -1593,18 +1601,85 @@ bool ApiSystem::isBluetoothAudioDeviceConnected()
 	return executeScript("es-bluetooth is_bluetooth_audio_device_connected");
 }
 
-std::vector<std::string> ApiSystem::getBluetoothDevices()
+std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std::string> btDevices)
 {
 	LOG(LogInfo) << "ApiSystem::getBluetoothDevices()";
 
-	return executeEnumerationScript("es-bluetooth scanlist");
+	std::vector<BluetoothDevice> result;
+	for (auto btDevice : btDevices)
+	{
+		BluetoothDevice bt_device;
+
+		if (Utils::String::startsWith(btDevice, "<device "))
+		{
+			bt_device.id = Utils::String::extractString(btDevice, "id=\"", "\"", false);
+			bt_device.name = Utils::String::extractString(btDevice, "name=\"", "\"", false);
+			bt_device.type = Utils::String::extractString(btDevice, "type=\"", "\"", false);
+			bt_device.connected = Utils::String::toBool( Utils::String::extractString(btDevice, "connected=\"", "\"", false) );
+			bt_device.paired = Utils::String::toBool( Utils::String::extractString(btDevice, "paired=\"", "\"", false) );
+
+			if (Utils::String::startsWith(bt_device.type, "audio-"))
+				bt_device.isAudioDevice = true;
+		}
+		else
+			bt_device.id = btDevice;
+
+		result.push_back(bt_device);
+	}
+	return result;
 }
 
-std::vector<std::string> ApiSystem::getBluetoothPairedDevices()
+std::vector<BluetoothDevice> ApiSystem::getBluetoothNewDevices()
+{
+	LOG(LogInfo) << "ApiSystem::getBluetoothNewDevices()";
+
+	return toBluetoothDevicesVector( executeEnumerationScript("es-bluetooth new_devices") );
+}
+
+std::vector<BluetoothDevice> ApiSystem::getBluetoothPairedDevices()
 {
 	LOG(LogInfo) << "ApiSystem::getBluetoothPairedDevices()";
 
-	return executeEnumerationScript("es-bluetooth paired_devices");
+	return toBluetoothDevicesVector( executeEnumerationScript("es-bluetooth paired_devices") );
+}
+
+std::vector<BluetoothDevice> ApiSystem::getBluetoothConnectedDevices()
+{
+	LOG(LogInfo) << "ApiSystem::getBluetoothConnectedDevices()";
+
+	return toBluetoothDevicesVector( executeEnumerationScript("es-bluetooth connected_devices") );
+}
+
+bool ApiSystem::pairBluetoothDevice(const std::string id)
+{
+	LOG(LogInfo) << "ApiSystem::pairBluetoothDevice() - ID: " << id;
+
+	return executeScript("es-bluetooth pair_device \"" + id + "\"" );
+}
+
+BluetoothDevice ApiSystem::getBluetoothDeviceInfo(const std::string id)
+{
+	LOG(LogInfo) << "ApiSystem::getBluetoothDeviceInfo() - ID: " << id;
+
+	std::string device_info = getShOutput("es-bluetooth info_device \"" + id + "\"" );
+
+	BluetoothDevice bt_device;
+
+	if (Utils::String::startsWith(device_info, "<device "))
+	{
+		bt_device.id = Utils::String::extractString(device_info, "id=\"", "\"", false);
+		bt_device.name = Utils::String::extractString(device_info, "name=\"", "\"", false);
+		bt_device.type = Utils::String::extractString(device_info, "type=\"", "\"", false);
+		bt_device.connected = Utils::String::toBool( Utils::String::extractString(device_info, "connected=\"", "\"", false) );
+		bt_device.paired = Utils::String::toBool( Utils::String::extractString(device_info, "paired=\"", "\"", false) );
+
+		if (Utils::String::startsWith(bt_device.type, "audio-"))
+			bt_device.isAudioDevice = true;
+	}
+	else
+		bt_device.id = id;
+
+	return bt_device;
 }
 
 bool ApiSystem::connectBluetoothDevice(const std::string id)
@@ -1621,11 +1696,25 @@ bool ApiSystem::disconnectBluetoothDevice(const std::string id)
 	return executeScript("es-bluetooth disconnect_device \"" + id + "\"" );
 }
 
-bool ApiSystem::deleteBluetoothDeviceConnection(const std::string id)
+bool ApiSystem::disconnectAllBluetoothDevices()
 {
-	LOG(LogInfo) << "ApiSystem::deleteBluetoothDeviceConnection() - ID: " << id;
+	LOG(LogInfo) << "ApiSystem::disconnectAllBluetoothDevices() ";
+
+	return executeScript("es-bluetooth disconnect_all_devices" );
+}
+
+bool ApiSystem::deleteBluetoothDevice(const std::string id)
+{
+	LOG(LogInfo) << "ApiSystem::deleteBluetoothDevice() - ID: " << id;
 
 	return executeScript("es-bluetooth delete_device_connection \"" + id + "\"" );
+}
+
+bool ApiSystem::deleteAllBluetoothDevices()
+{
+	LOG(LogInfo) << "ApiSystem::deleteAllBluetoothDevices()";
+
+	return executeScript("es-bluetooth delete_all_device_connections" );
 }
 
 std::string ApiSystem::getBluetoothAudioDevice()
@@ -1633,6 +1722,34 @@ std::string ApiSystem::getBluetoothAudioDevice()
 	LOG(LogInfo) << "ApiSystem::getBluetoothAudioDevice()";
 
 	return getShOutput(R"(es-bluetooth audio_device_connected)");
+}
+
+bool ApiSystem::startBluetoothLiveScan()
+{
+	LOG(LogInfo) << "ApiSystem::startBluetoothLiveScan()";
+
+	return executeScript("es-bluetooth scan_on &");
+}
+
+bool ApiSystem::stopBluetoothLiveScan()
+{
+	LOG(LogInfo) << "ApiSystem::stopBluetoothLiveScan()";
+
+	return executeScript("es-bluetooth scan_off &");
+}
+
+bool ApiSystem::startAutoConnectBluetoothAudioDevice()
+{
+	LOG(LogInfo) << "ApiSystem::startAutoConnectBluetoothAudioDevice()";
+
+	return executeScript("es-bluetooth auto_connect_audio_device_on &");
+}
+
+bool ApiSystem::stopAutoConnectBluetoothAudioDevice()
+{
+	LOG(LogInfo) << "ApiSystem::stopAutoConnectBluetoothAudioDevice()";
+
+	return executeScript("es-bluetooth auto_connect_audio_device_off &");
 }
 
 void ApiSystem::backupAfterGameValues()

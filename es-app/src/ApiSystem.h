@@ -27,6 +27,9 @@ struct ThemeDownloadInfo
 
 class ApiSystem 
 {
+private:
+	std::vector<BluetoothDevice> toBluetoothDevicesVector(std::vector<std::string> btDevices);
+
 protected:
 	ApiSystem();
 
@@ -255,13 +258,23 @@ public:
 	bool isBluetoothEnabled();
 	bool enableBluetooth();
 	bool disableBluetooth();
+	bool isBluetoothAudioDevice(const std::string id);
 	bool isBluetoothAudioDeviceConnected();
-	std::vector<std::string> getBluetoothDevices();
-	std::vector<std::string> getBluetoothPairedDevices();
+	std::vector<BluetoothDevice> getBluetoothNewDevices();
+	std::vector<BluetoothDevice> getBluetoothPairedDevices();
+	std::vector<BluetoothDevice> getBluetoothConnectedDevices();
+	bool pairBluetoothDevice(const std::string id);
+	BluetoothDevice getBluetoothDeviceInfo(const std::string id);
 	bool connectBluetoothDevice(const std::string id);
 	bool disconnectBluetoothDevice(const std::string id);
-	bool deleteBluetoothDeviceConnection(const std::string id);
+	bool disconnectAllBluetoothDevices();
+	bool deleteBluetoothDevice(const std::string id);
+	bool deleteAllBluetoothDevices();
 	std::string getBluetoothAudioDevice();
+	bool startBluetoothLiveScan();
+	bool stopBluetoothLiveScan();
+	bool startAutoConnectBluetoothAudioDevice();
+	bool stopAutoConnectBluetoothAudioDevice();
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();

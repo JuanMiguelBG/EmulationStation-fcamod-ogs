@@ -790,6 +790,20 @@ namespace Utils
 
 		} // resolveSymlink
 
+		bool createFile(const std::string& _path)
+		{
+			std::string path = getGenericPath(_path);
+
+			// don't remove if it doesn't exists
+			if(exists(path))
+				return true;
+
+			// try to remove file
+			std::ofstream file(path);
+			return (file ? true : false);
+
+		} // createFile
+
 		bool removeFile(const std::string& _path)
 		{
 			std::string path = getGenericPath(_path);

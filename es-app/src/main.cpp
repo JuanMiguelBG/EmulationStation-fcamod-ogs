@@ -38,11 +38,11 @@
 #include "ImageIO.h"
 #include "ApiSystem.h"
 
-#include <future>
 #include "utils/AsyncUtil.h"
 
 #include <thread>
 #include <chrono>
+#include <csignal>
 
 const std::string INVALID_HOME_PATH = "Invalid home path supplied.";
 const std::string INVALID_CONFIG_PATH = "Invalid config path supplied.";
@@ -400,71 +400,146 @@ void processAudioTitles(Window* window)
 	}
 }
 
+void playMusic()
+{
+	// Play music
+	if (ViewController::get()->getState().viewing == ViewController::GAME_LIST || ViewController::get()->getState().viewing == ViewController::SYSTEM_SELECT)
+		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
+	else
+		AudioManager::getInstance()->playRandomMusic();
+}
+
+
+void checkPreloadVlc()
+{
+	Utils::Async::run( [] (void)
+		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
+				ApiSystem::getInstance()->preloadVLC();
+		});
+}
+
+void waitPreloadVlc(Window *window)
+{
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
+	{
+		//LOG(LogDebug) << "MAIN::waitPreloadVlc() - Check 'preload_vlc.lock'";
+		std::string preloa_vlc_lock_file_path = Utils::FileSystem::getEsConfigPath() + "/preload_vlc.lock";
+		if (Utils::FileSystem::exists(preloa_vlc_lock_file_path))
+		{
+			bool exit = false;
+			auto start = std::chrono::high_resolution_clock::now();
+			while (!exit)
+			{
+				//LOG(LogDebug) << "MAIN::waitPreloadVlc() - Check 'preload_vlc.lock' - while()";
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+				auto actual_time = std::chrono::high_resolution_clock::now();
+				auto elapsed = actual_time - start;
+				auto f_secs = std::chrono::duration_cast<std::chrono::duration<float>>(elapsed);
+				//LOG(LogDebug) << "MAIN::waitPreloadVlc() - Check 'preload_vlc.lock' - while() - f_secs: " << std::to_string(f_secs.count());
+				window->renderLoadingScreen(_("Preload VLC..."), (f_secs.count() * 3.3 / 100));
+				exit = !Utils::FileSystem::exists(preloa_vlc_lock_file_path);
+				if (!exit && (f_secs.count() > 30))
+				{
+					//LOG(LogDebug) << "MAIN::waitPreloadVlc() - Check 'preload_vlc.lock' - while() - exit by time";
+					Utils::FileSystem::removeFile(preloa_vlc_lock_file_path);
+					exit = true;
+				}
+			}
+			window->renderLoadingScreen(_("Preload VLC..."), 1);
+		}
+	}
+}
+
+void startAutoConnectBluetoothAudioDevice(std::string &log)
+{
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		&& Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
+	{
+		log.append("MAIN::startAutoConnectBluetoothAudioDevice()\n");
+		ApiSystem::getInstance()->startAutoConnectBluetoothAudioDevice();
+	}
+}
+
+void stopAutoConnectBluetoothAudioDevice()
+{
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		&& Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
+	{
+		LOG(LogInfo) << "MAIN::stopAutoConnectBluetoothAudioDevice()";
+		ApiSystem::getInstance()->stopAutoConnectBluetoothAudioDevice();
+	}
+}
+
 void removeLockFiles()
 {
 	Utils::FileSystem::removeFile( Utils::FileSystem::getEsConfigPath() + "/brightness.lock" );
 }
 
+void addLogs(std::string &logs)
+{
+	if (!logs.empty())
+	{
+		for (auto log_entry : Utils::String::split(logs, '\n', true))
+			LOG(LogInfo) << log_entry;
+
+		logs.clear();
+	}
+}
+
+void signalHandler(int signum) 
+{
+	if (signum == SIGSEGV)
+		LOG(LogError) << "Interrupt signal SIGSEGV received.\n";
+	else if (signum == SIGFPE)
+		LOG(LogError) << "Interrupt signal SIGFPE received.\n";
+	else if (signum == SIGFPE)
+		LOG(LogError) << "Interrupt signal SIGFPE received.\n";
+	else
+		LOG(LogError) << "Interrupt signal (" << signum << ") received.\n";
+
+	// cleanup and close up stuff here  
+	exit(signum);
+}
+
 int main(int argc, char* argv[])
 {
+	// signal(SIGABRT, signalHandler);
+	signal(SIGFPE, signalHandler);
+	signal(SIGILL, signalHandler);
+	signal(SIGINT, signalHandler);
+	signal(SIGSEGV, signalHandler);
+	// signal(SIGTERM, signalHandler);
+
 	srand((unsigned int)time(NULL));
 
 	std::locale::global(std::locale("C"));
 
+	// to store the log prior to starting the logger
+	std::string init_log;
+	
+	init_log.append("MAIN::main(), MAIN : ") .append(std::to_string(Utils::Async::getThreadId())).append("\n");
 
-	std::string async_log;
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
-	{
-		if (Utils::Async::isCanRunAsync())
-		{
-			async_log.append("MAIN::main() - preload VLC - Asynchronous");
-			auto dummy= std::async(std::launch::async, [] {
-					ApiSystem::getInstance()->preloadVLC();
-			});
-		}
-		else
-		{
-			async_log.append("MAIN::main() - preload VLC");
-			ApiSystem::getInstance()->preloadVLC();
-		}
-	}
-
+	startAutoConnectBluetoothAudioDevice(init_log);
+	checkPreloadVlc();
 
 	if(!parseArgs(argc, argv))
 		return 0;
 
-	//start the logger
+	// start the logger
 	Log::setupReportingLevel();
 	Log::init();
 	LOG(LogInfo) << "MAIN::main() - EmulationStation - v" << PROGRAM_VERSION_STRING << ", built " << PROGRAM_BUILT_STRING;
 
-	if (!async_log.empty())
-	{
-		LOG(LogInfo) << async_log;
-		async_log.clear();
-	}
+	addLogs(init_log);
+
 	// remove special lock files
 	removeLockFiles();
-
-	if (Utils::Async::isCanRunAsync())
-	{
-		LOG(LogDebug) << "MAIN::main() - Asynchronous execution of 'loadOtherSettings()'!";
-		auto dummy= std::async(std::launch::async, loadOtherSettings);
-		LOG(LogDebug) << "MAIN::main() - exit Asynchronous executionof 'loadOtherSettings()'!";
-	}
-	else
-	{
-		LOG(LogDebug) << "MAIN::main() - normal execution of 'loadOtherSettings()'!";
-		loadOtherSettings();
-	}
-
 /*
 	ApiSystem::getInstance()->checkUpdateVersion();
 	ApiSystem::getInstance()->updateSystem(nullptr);
 	return 0;
-	*/
-	// only show the console on Windows if HideConsole is false
-
+*/
 	// call this ONLY when linking with FreeImage as a static library
 #ifdef FREEIMAGE_LIB
 	FreeImage_Initialise();
@@ -552,34 +627,7 @@ int main(int argc, char* argv[])
 	// this makes for no delays when accessing content, but a longer startup time
 	ViewController::get()->preload();
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC) && Settings::getInstance()->getBool("PreloadVLC"))
-	{
-		LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock'";
-		std::string preloa_vlc_lock_file_path = Utils::FileSystem::getEsConfigPath() + "/preload_vlc.lock";
-		if (Utils::FileSystem::exists(preloa_vlc_lock_file_path))
-		{
-			bool exit = false;
-			auto start = std::chrono::high_resolution_clock::now();
-			while (!exit)
-			{
-				LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock' - while()";
-				std::this_thread::sleep_for(std::chrono::milliseconds(500));
-				auto actual_time = std::chrono::high_resolution_clock::now();
-				auto elapsed = actual_time - start;
-				auto f_secs = std::chrono::duration_cast<std::chrono::duration<float>>(elapsed);
-				LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock' - while() - f_secs: " << std::to_string(f_secs.count());
-				window.renderLoadingScreen(_("Preload VLC..."), (f_secs.count() * 3.3 / 100));
-				exit = !Utils::FileSystem::exists(preloa_vlc_lock_file_path);
-				if (!exit && (f_secs.count() > 30))
-				{
-					LOG(LogDebug) << "MAIN::main() - Check 'preload_vlc.lock' - while() - exit by time";
-					Utils::FileSystem::removeFile(preloa_vlc_lock_file_path);
-					exit = true;
-				}
-			}
-			window.renderLoadingScreen(_("Preload VLC..."), 1);
-		}
-	}
+	waitPreloadVlc(&window);
 
 	// Initialize input
 	InputConfig::AssignActionButtons();
@@ -596,11 +644,11 @@ int main(int argc, char* argv[])
 
 	window.endRenderLoadingScreen();
 
-	// Play music
-	if (ViewController::get()->getState().viewing == ViewController::GAME_LIST || ViewController::get()->getState().viewing == ViewController::SYSTEM_SELECT)
-		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
-	else
-		AudioManager::getInstance()->playRandomMusic();
+	stopAutoConnectBluetoothAudioDevice();
+
+	Utils::Async::run(loadOtherSettings);
+
+	playMusic();
 
 	unsigned int lastTime = SDL_GetTicks(),
 							 ps_time = lastTime;
@@ -610,7 +658,6 @@ int main(int argc, char* argv[])
 
 	while(running)
 	{
-
 		SDL_Event event;
 		bool ps_standby = PowerSaver::getState() && (int) SDL_GetTicks() - ps_time > PowerSaver::getMode();
 

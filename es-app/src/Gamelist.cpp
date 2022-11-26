@@ -11,7 +11,6 @@
 
 #include <unistd.h>
 
-#include <future>
 #include "utils/AsyncUtil.h"
 
 FileData* findOrCreateFile(SystemData* system, const std::string& path, FileType type, std::unordered_map<std::string, FileData*>& fileMap)
@@ -299,15 +298,13 @@ bool saveToGamelistRecovery(FileData* file)
 	if (!Settings::getInstance()->getBool("SaveGamelistsOnExit") || !file->getSourceFileData()->getSystem()->isVisible())
 		return false;
 
-	if (Utils::Async::isCanRunAsync())
-	{
-		LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - Asynchronous execution!";
-		auto dummy= std::async(std::launch::async, saveToGamelistRecoveryInternal, file);
-		LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - exit Asynchronous execution!";
-		return false;
-	}
-	LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - normal execution!";
-	return saveToGamelistRecoveryInternal(file);
+	Utils::Async::run([file] (void)
+		{
+			LOG(LogDebug) << "Gamelist::saveToGamelistRecovery() - inside 'Utils::Async::run()', file name: " << file->getName() << '!';
+			saveToGamelistRecoveryInternal(file);
+		});
+	
+	return false;
 }
 
 bool hasDirtyFile(SystemData* system)

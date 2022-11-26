@@ -1,14 +1,33 @@
 #!/bin/bash
 
+# ******************************************************************************************
+
 # Configure ES commons variables
-. es-commons
+. es-log_scripts
 
-	if [ ! -f $ES_PRELOAD_VLC_LOCK_FILE ]; then
-		echo "#--" | sudo tee "$ES_PRELOAD_VLC_LOCK_FILE" > /dev/null
-	fi
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-preload_vlc.log"
 
+#print_log $LOG_FILE "INFO" "##### Executing operation: #####"
+
+if [ "$(cat /etc/fstab | grep '/roms' | grep -c vfat)" -eq "0" ]; then
+	#print_log $LOG_FILE "INFO" "NO partitions '/roms' with FAT format, skipping"
+	exit 0
+fi
+
+#print_log $LOG_FILE "INFO" "Partitions '/roms' with FAT format, continue"
+
+if [ ! -f $ES_PRELOAD_VLC_LOCK_FILE ]; then
+	#print_log $LOG_FILE "DEBUG" "Creating file '$ES_PRELOAD_VLC_LOCK_FILE'"
+	echo "#--" | sudo tee "$ES_PRELOAD_VLC_LOCK_FILE" > /dev/null
+fi
+
+#print_log $LOG_FILE "DEBUG" "Execute command: /usr/bin/find $ROMS_DIR -type f -name '*.mp4' -exec /bin/cat \"{}\" > /dev/null  \; -quit"
 /usr/bin/find $ROMS_DIR -type f -name '*.mp4' -exec /bin/cat "{}" > /dev/null  \; -quit
 
-	if [ -f $ES_PRELOAD_VLC_LOCK_FILE ]; then
-		sudo rm -f "$ES_PRELOAD_VLC_LOCK_FILE" > /dev/null
-	fi
+if [ -f $ES_PRELOAD_VLC_LOCK_FILE ]; then
+	#print_log $LOG_FILE "DEBUG" "Removing file '$ES_PRELOAD_VLC_LOCK_FILE'"
+	sudo rm -f "$ES_PRELOAD_VLC_LOCK_FILE" > /dev/null
+fi
+
+#print_log $LOG_FILE "INFO" "##### Exit executing operation #####"
+exit 0

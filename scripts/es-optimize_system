@@ -10,10 +10,8 @@ do_help() {
 rsyslogConfigFile="/etc/rsyslog.d/50-default.conf"
 
 rsyslog_config () {
-	cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
+	local valPresent=`cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler"`
+	if [ -z "$valPresent" ]; then
 		sudo chmod 644 "$rsyslogConfigFile"
 		sudo sed -i -e '4 i\if $msg contains "rtl8723b_c2h_packet_handler" then { stop }\nif $msg contains "_btmpoper_cmd: C2H status" then { stop }\nif $msg contains "IsBtDisabled" then { stop }\nif $msg contains "rtl8723b_fill_default_txdesc" then { stop }\n' -e "s/#\?\*\.\*;auth,authpriv\.none/\*\.\*;auth\.none,authpriv\.none,kern\.none/g" -e "s/#\?mail\.\*/#mail\.\*/g" -e "s/#\?mail.err/#mail.err/g" "$rsyslogConfigFile" > /dev/null
 
@@ -22,13 +20,8 @@ rsyslog_config () {
 }
 
 rsyslog_restore() {
-	cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
-		# ignore
-		echo "" > /dev/null
-	else
+	local valPresent=`cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler"`
+	if [ ! -z "$valPresent" ]; then
 		sudo chmod 644 "$rsyslogConfigFile"
 		sudo sed -i -e 4,8d -e "s/#\?\*\.\*;auth\.none,authpriv\.none,kern\.none/\*\.\*;auth,authpriv\.none/g" "$rsyslogConfigFile" > /dev/null
 		sudo systemctl restart rsyslog.service
@@ -55,47 +48,38 @@ sysctl_restore() {
 
 
 #****************** journald *************************
-journaldConfigFile="/etc/systemd/journald.conf"
+#journaldConfigFile="/etc/systemd/journald.conf"
 
 journald_config () {
-	cat "$journaldConfigFile" | grep -iw "Compress=no" > /dev/null
-	valPresent=$?
+#	local valPresent=`cat "$journaldConfigFile" | grep -iw "Compress=no"`
+#	if [ -z "$valPresent" ]; then
+#		sudo chmod 644 "$journaldConfigFile"
+#		sudo sed -i -e '17 i\Compress=no' -e '19 i\SplitMode=none' -e '23 i\SystemMaxUse=10M' -e '27 i\RuntimeMaxUse=2M' -e '29 i\RuntimeMaxFileSize=128K' -e '32 i\MaxFileSec=2day' -e '38 i\MaxLevelStore=warning' -e '39 i\MaxLevelSyslog=warning' -e '40 i\MaxLevelKMsg=warning' -e '41 i\MaxLevelConsole=warning' -e '43 i\ReadKMsg=no' "$journaldConfigFile" > /dev/null
+#		sudo systemctl restart systemd-journald
+#	fi
 
-	if [ "$valPresent" != "0" ]; then
-		sudo chmod 644 "$journaldConfigFile"
-		sudo sed -i -e '17 i\Compress=no' -e '19 i\SplitMode=none' -e '23 i\SystemMaxUse=10M' -e '27 i\RuntimeMaxUse=2M' -e '29 i\RuntimeMaxFileSize=128K' -e '32 i\MaxFileSec=2day' -e '38 i\MaxLevelStore=warning' -e '39 i\MaxLevelSyslog=warning' -e '40 i\MaxLevelKMsg=warning' -e '41 i\MaxLevelConsole=warning' -e '43 i\ReadKMsg=no' "$journaldConfigFile" > /dev/null
-		sudo systemctl restart systemd-journald
-	fi
+	sudo systemctl stop systemd-journald.service --quiet
+	sudo systemctl stop systemd-journal-flush.service --quiet
 
+	sudo systemctl mask systemd-journald.service --quiet
+	sudo systemctl mask systemd-journal-flush.service --quiet
+	sudo systemctl daemon-reload --quiet &
 }
 
 journald_restore () {
-	cat "$journaldConfigFile" | grep -iw "Compress=no" > /dev/null
-	valPresent=$?
+#	local valPresent=`cat "$journaldConfigFile" | grep -iw "Compress=no"`
+#	if [ ! -z "$valPresent" ]; then
+#		sudo chmod 644 "$journaldConfigFile"
+#		sudo sed -i -e '53d;50d;48d;46d;44d;37d;33d;30d;25d;20d;17d' "$journaldConfigFile" > /dev/null
+#		sudo systemctl restart systemd-journald
+#	fi
 
-	if [ "$valPresent" != "0" ]; then
-		# ignore
-		echo "" > /dev/null
-	else
-		sudo chmod 644 "$journaldConfigFile"
-		sudo sed -i -e '53d;50d;48d;46d;44d;37d;33d;30d;25d;20d;17d' "$journaldConfigFile" > /dev/null
-		sudo systemctl restart systemd-journald
-	fi
-}
+	sudo systemctl unmask systemd-journald.service --quiet
+	sudo systemctl unmask systemd-journal-flush.service --quiet
 
-
-#****************** bluetooth *************************
-bluetooth_config () {
-	sudo systemctl stop bluetooth.service
-	sudo systemctl disable bluetooth.service
-	sudo systemctl daemon-reload
-}
-
-bluetooth__restore () {
-	sudo systemctl stop bluetooth.service
-	sudo systemctl enable bluetooth.service
-	sudo systemctl daemon-reload
-	sudo systemctl start bluetooth.service
+	sudo systemctl start systemd-journald.service --quiet
+	sudo systemctl start systemd-journal-flush.service --quiet
+	sudo systemctl daemon-reload --quiet &
 }
 
 
@@ -110,13 +94,8 @@ logrotate_config () {
 	sudo sed -i -e "s/#\?weekly/daily/g" -e "s/#\?#dateext/dateext/g" "$logrotateConfigFile" > /dev/null
 	sudo logrotate -v -f "$logrotateConfigFile"
 
-	cat "$logrotateRsyslogConfigFile" | grep -iw "compress" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
-		# ignore
-		echo "" > /dev/null
-	else
+	local valPresent=`cat "$logrotateRsyslogConfigFile" | grep -iw "compress"`
+	if [ ! -z "$valPresent" ]; then
 		sudo chmod 644 "$logrotateRsyslogConfigFile"
 		sudo sed -i -e "s/#\?rotate 7/rotate 4/g" -e "s/#\?weekly/daily/g" -e '7,8d;31,32d' "$logrotateRsyslogConfigFile" > /dev/null
 		sudo logrotate -v -f "$logrotateRsyslogConfigFile" > /dev/null
@@ -129,10 +108,8 @@ logrotate_restore () {
 	sudo sed -i -e "s/#\?daily/weekly/g" -e "s/#\?dateext/#dateext/g" "$logrotateConfigFile" > /dev/null
 	sudo logrotate -v -f "$logrotateConfigFile"
 
-	cat "$logrotateRsyslogConfigFile" | grep -iw "compress" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
+	local valPresent=`cat "$logrotateRsyslogConfigFile" | grep -iw "compress"`
+	if [ -z "$valPresent" ]; then
 		sudo chmod 644 "$logrotateRsyslogConfigFile"
 		sudo sed -i -e '3d;26d' "$logrotateRsyslogConfigFile" > /dev/null
 		sudo sed -i -e '3 i\	rotate 7' -e '6 i\	delaycompress' -e '6 i\	compress' -e '25 i\	weekly' -e '27 i\	compress' -e '27 i\	delaycompress' "$logrotateRsyslogConfigFile" > /dev/null
@@ -146,25 +123,18 @@ logrotate_restore () {
 fstabConfigFile="/etc/fstab"
 
 fstab_config () {
-	cat "$fstabConfigFile" | grep -iw "nodiratime" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
+	local valPresent=`cat "$fstabConfigFile" | grep -iw "nodiratime"`
+	if [ -z "$valPresent" ]; then
 		sudo chmod 644 "$fstabConfigFile"
-		sudo sed -i -e "s/#\?defaults /defaults,noatime,nodiratime /g" -e "s/#\?noatime /nodiratime,noatime /g" "$fstabConfigFile" > /dev/null
+		sudo sed -i -e "s/#\?noatime /nodiratime,noatime /g" "$fstabConfigFile" -e "s/#\?defaults /defaults,noatime,nodiratime /g" > /dev/null
 	fi
 }
 
 fstab_restore () {
-	cat "$fstabConfigFile" | grep -iw "nodiratime" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
-		# ignore
-		echo "" > /dev/null
-	else
+	local valPresent=`cat "$fstabConfigFile" | grep -iw "nodiratime"`
+	if [ ! -z "$valPresent" ]; then
 		sudo chmod 644 "$fstabConfigFile"
-		sudo sed -i -e "s/#\?defaults,noatime,nodiratime /defaults /g" -e "s/#\?nodiratime,noatime /noatime /g" "$fstabConfigFile" > /dev/null
+		sudo sed -i -e "s/#\?nodiratime,noatime /noatime /g" -e "s/#\?defaults,noatime,nodiratime /defaults /g" "$fstabConfigFile" > /dev/null
 	fi
 }
 
@@ -173,22 +143,15 @@ fstab_restore () {
 bootConfigFile="/boot/extlinux/extlinux.conf"
 
 boot_config () {
-	cat "$bootConfigFile" | grep -iw "elevator=noop" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
+	local valPresent=`cat "$bootConfigFile" | grep -iw "elevator=noop"`
+	if [ -z "$valPresent" ]; then
 		sudo sed -i -e "s/#\?consoleblank=0/consoleblank=0 elevator=noop/g" "$bootConfigFile" > /dev/null
 	fi
 }
 
 boot_restore () {
-	cat "$bootConfigFile" | grep -iw "elevator=noop" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
-		# ignore
-		echo "" > /dev/null
-	else
+	local valPresent=`cat "$bootConfigFile" | grep -iw "elevator=noop"`
+	if [ ! -z "$valPresent" ]; then
 		sudo sed -i -e "s/#\?[ ]\+elevator=noop//g" "$bootConfigFile" > /dev/null
 	fi
 }
@@ -216,7 +179,6 @@ optimize_system () {
 	rsyslog_config
 	sysctl_config
 	journald_config
-	#bluetooth_config
 	logrotate_config
 	fstab_config
 	boot_config
@@ -227,7 +189,6 @@ normal_system () {
 	rsyslog_restore
 	sysctl_restore
 	journald_restore
-	#bluetooth__restore
 	logrotate_restore
 	fstab_restore
 	boot_restore
