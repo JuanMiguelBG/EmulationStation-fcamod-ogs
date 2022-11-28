@@ -251,7 +251,7 @@ public:
 
 	~OptionListComponent()
 	{		
-		if (mPopup)
+		if (mPopup != nullptr)
 			delete mPopup;
 	}
 
@@ -523,7 +523,7 @@ private:
 	{
 		LOG(LogDebug) << "OptionListComponent::open() - mLoading: " << Utils::String::boolToString(mLoading);
 		Log::flush();
-		if (mPopup)
+		if (mPopup != nullptr)
 		{
 			delete mPopup;
 			mPopup = nullptr;
