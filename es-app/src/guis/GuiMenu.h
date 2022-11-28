@@ -28,7 +28,7 @@ private:
 	void addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName = "");
 
 	void addVersionInfo();
-	void openCollectionSystemSettings();
+	void openCollectionSystemSettings(bool cursor = false);
 	void openConfigInput();
 	void openAdvancedSettings();
 	void openQuitMenu();

@@ -17,6 +17,7 @@
 #include "guis/GuiMsgBox.h"
 #include "scrapers/ThreadedScraper.h"
 #include "guis/GuiMenu.h"
+#include "SystemConf.h"
 
 std::vector<std::string> GuiGamelistOptions::gridSizes {
 	"automatic",
@@ -84,8 +85,8 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 		addTextFilterToMenu();
 
 	// check it's not a placeholder folder - if it is, only show "Filter Options"
-	FileData* file = getGamelist()->getCursor();
-	fromPlaceholder = file->isPlaceHolder();
+	FileData* fileData = getGamelist()->getCursor();
+	fromPlaceholder = fileData->isPlaceHolder();
 	ComponentListRow row;
 
 	if (!fromPlaceholder)
@@ -263,19 +264,19 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
-		std::map<std::string, CollectionSystemData> customCollections = CollectionSystemManager::get()->getCustomCollectionSystems();
+		std::map<std::string, CollectionSystemData> customCollections = CollectionSystemManager::getInstance()->getCustomCollectionSystems();
 
-		if ((customCollections.find(system->getName()) != customCollections.cend() && CollectionSystemManager::get()->getEditingCollection() != system->getName()) ||
-			CollectionSystemManager::get()->getCustomCollectionsBundle()->getName() == system->getName())
+		if ((customCollections.find(system->getName()) != customCollections.cend() && CollectionSystemManager::getInstance()->getEditingCollection() != system->getName()) ||
+			CollectionSystemManager::getInstance()->getCustomCollectionsBundle()->getName() == system->getName())
 		{
 			mMenu.addGroup(_("EDITING COLLECTION"));
 			mMenu.addEntry(_("ADD/REMOVE GAMES TO THIS GAME COLLECTION"), false, [this] { startEditMode(); });
 		}
 
-		if (CollectionSystemManager::get()->isEditing())
+		if (CollectionSystemManager::getInstance()->isEditing())
 		{
 			mMenu.addGroup(_("EDITING COLLECTION"));
-			std::string collectionName = CollectionSystemManager::get()->getEditingCollection();
+			std::string collectionName = CollectionSystemManager::getInstance()->getEditingCollection();
 			addCustomCollectionLongName(collectionName);
 
 			char fecstrbuf[64];
@@ -283,23 +284,46 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 			mMenu.addEntry(fecstrbuf, false, [this] { exitEditMode(); });
 		}
 
-		if (!fromPlaceholder && !(mSystem->isCollection() && file->getType() == FOLDER))
+		if (!fromPlaceholder && !(mSystem->isCollection() && fileData->getType() == FOLDER))
 		{
 			mMenu.addGroup(_("GAME OPTIONS"));
 			// edit game metadata
 			mMenu.addEntry(_("EDIT THIS GAME'S METADATA"), true, [this] { openMetaDataEd(); });
 
 			// delete game
-			mMenu.addEntry(_("DELETE GAME"), false, [this, file]
+			mMenu.addEntry(_("DELETE GAME"), false, [this, fileData]
 			{
 				mWindow->pushGui(new GuiMsgBox(mWindow, _("THIS WILL DELETE THE ACTUAL GAME FILE(S)!\nARE YOU SURE?"),
-					_("YES"), [this, file]
+					_("YES"), [this, fileData]
 						{
-							deleteGame(file);
+							deleteGame(fileData);
 							close();
 						},
 					_("NO"), nullptr));
 			});
+
+			// Set as boot game 
+			if (fileData->getType() == GAME)
+			{
+				std::string gamePath = fileData->getFullPath();
+
+				auto bootgame = std::make_shared<SwitchComponent>(mWindow, (SystemConf::getInstance()->get("global.bootgame.path") == gamePath));
+
+				bootgame->setOnChangedCallback([bootgame, fileData, gamePath]
+				{ 
+					SystemConf::getInstance()->set("global.bootgame.path", bootgame->getState() ? gamePath : "");
+					SystemConf::getInstance()->set("global.bootgame.cmd", bootgame->getState() ? fileData->getlaunchCommand() : "");
+					std::string game_info("");
+					if (bootgame->getState())
+					{
+						game_info.append(fileData->getSystem()->getName()).append(";").append(fileData->getName());
+					}
+					SystemConf::getInstance()->set("global.bootgame.info",  game_info);
+					LOG(LogDebug) << "GuiGamelistOptions::GuiGamelistOptions() - setted boot game, state: '" << Utils::String::boolToString(bootgame->getState()) << "', game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
+					Log::flush();
+				});
+				mMenu.addWithLabel(_("LAUNCH THIS GAME AT STARTUP"), bootgame);
+			}
 		}
 	}
 
@@ -372,8 +396,8 @@ GuiGamelistOptions::~GuiGamelistOptions()
 	}
 	else if (mReloadSystems)
 	{
-		CollectionSystemManager::get()->loadEnabledListFromSettings();
-		CollectionSystemManager::get()->updateSystemsList();
+		CollectionSystemManager::getInstance()->loadEnabledListFromSettings();
+		CollectionSystemManager::getInstance()->updateSystemsList();
 		ViewController::get()->goToStart();
 		ViewController::get()->reloadAll(mWindow);
 		mWindow->endRenderLoadingScreen();
@@ -503,27 +527,27 @@ void GuiGamelistOptions::startEditMode()
 {
 	std::string editingSystem = mSystem->getName();
 	// need to check if we're editing the collections bundle, as we will want to edit the selected collection within
-	if(editingSystem == CollectionSystemManager::get()->getCustomCollectionsBundle()->getName())
+	if(editingSystem == CollectionSystemManager::getInstance()->getCustomCollectionsBundle()->getName())
 	{
-		FileData* file = getGamelist()->getCursor();
+		FileData* fileData = getGamelist()->getCursor();
 		// do we have the cursor on a specific collection?
-		if (file->getType() == FOLDER)
+		if (fileData->getType() == FOLDER)
 		{
-			editingSystem = file->getName();
+			editingSystem = fileData->getName();
 		}
 		else
 		{
 			// we are inside a specific collection. We want to edit that one.
-			editingSystem = file->getSystem()->getName();
+			editingSystem = fileData->getSystem()->getName();
 		}
 	}
-	CollectionSystemManager::get()->setEditMode(editingSystem);
+	CollectionSystemManager::getInstance()->setEditMode(editingSystem);
 	delete this;
 }
 
 void GuiGamelistOptions::exitEditMode()
 {
-	CollectionSystemManager::get()->exitEditMode();
+	CollectionSystemManager::getInstance()->exitEditMode();
 	delete this;
 }
 
@@ -537,18 +561,18 @@ void GuiGamelistOptions::openMetaDataEd()
 
 	// open metadata editor
 	// get the FileData that hosts the original metadata
-	FileData* file = getGamelist()->getCursor()->getSourceFileData();
+	FileData* fileData = getGamelist()->getCursor()->getSourceFileData();
 	ScraperSearchParams p;
-	p.game = file;
-	p.system = file->getSystem();
+	p.game = fileData;
+	p.system = fileData->getSystem();
 
 	std::function<void()> deleteBtnFunc = nullptr;
 
-	if (file->getType() == GAME)
-		deleteBtnFunc = [file] { GuiGamelistOptions::deleteGame(file); };
+	if (fileData->getType() == GAME)
+		deleteBtnFunc = [fileData] { GuiGamelistOptions::deleteGame(fileData); };
 
-	mWindow->pushGui(new GuiMetaDataEd(mWindow, &file->getMetadata(), file->getMetadata().getMDD(), p, Utils::FileSystem::getFileName(file->getPath()),
-		std::bind(&IGameListView::onFileChanged, ViewController::get()->getGameListView(file->getSystem()).get(), file, FILE_METADATA_CHANGED), deleteBtnFunc, file));
+	mWindow->pushGui(new GuiMetaDataEd(mWindow, &fileData->getMetadata(), fileData->getMetadata().getMDD(), p, Utils::FileSystem::getFileName(fileData->getPath()),
+		std::bind(&IGameListView::onFileChanged, ViewController::get()->getGameListView(fileData->getSystem()).get(), fileData, FILE_METADATA_CHANGED), deleteBtnFunc, fileData));
 }
 
 void GuiGamelistOptions::jumpToLetter()
@@ -616,23 +640,41 @@ IGameListView* GuiGamelistOptions::getGamelist()
 	return ViewController::get()->getGameListView(mSystem).get();
 }
 
-void GuiGamelistOptions::deleteGame(FileData* file)
+void GuiGamelistOptions::deleteGame(FileData* fileData)
 {
-	if (file->getType() != GAME)
+	if (fileData->getType() != GAME)
 		return;
 
-	auto sourceFile = file->getSourceFileData();
+	auto sourceFile = fileData->getSourceFileData();
 
 	auto sys = sourceFile->getSystem();
 	if (sys->isGroupChildSystem())
 		sys = sys->getParentGroupSystem();
 
-	CollectionSystemManager::get()->deleteCollectionFiles(sourceFile);
+	CollectionSystemManager::getInstance()->deleteCollectionFiles(sourceFile);
 	sourceFile->deleteGameFiles();
 
 	auto view = ViewController::get()->getGameListView(sys, false);
 	if (view != nullptr)
 		view.get()->remove(sourceFile);
+
+	// updating boot game configuration
+	std::string gameInfo = SystemConf::getInstance()->get("global.bootgame.info");
+	if (!gameInfo.empty())
+	{				
+		std::vector<std::string> gameData = Utils::String::split(gameInfo, ';'); // "system_name;game_name"
+		std::string game = gameData[1];
+
+		LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - FileData game name: " << fileData->getName() << ", game '" << game << "'";
+		if (game == fileData->getName())
+		{
+			LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - game '" << game << "' is deleted, removing boot game info";
+			SystemConf::getInstance()->set("global.bootgame.path", "");
+			SystemConf::getInstance()->set("global.bootgame.cmd", "");
+			SystemConf::getInstance()->set("global.bootgame.info", "");
+		}
+		Log::flush();
+	}
 }
 
 void GuiGamelistOptions::close()

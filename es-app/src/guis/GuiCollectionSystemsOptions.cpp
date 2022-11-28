@@ -11,14 +11,15 @@
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
 #include "Window.h"
+#include "SystemConf.h"
 
-GuiCollectionSystemsOptions::GuiCollectionSystemsOptions(Window* window)
+GuiCollectionSystemsOptions::GuiCollectionSystemsOptions(Window* window, bool cursor)
 	: GuiSettings(window, _("GAME COLLECTION SETTINGS").c_str())
 {
-	initializeMenu();
+	initializeMenu(cursor);
 }
 
-void GuiCollectionSystemsOptions::initializeMenu()
+void GuiCollectionSystemsOptions::initializeMenu(bool cursor)
 {
 	addGroup(_("COLLECTIONS TO DISPLAY"));
 
@@ -53,9 +54,30 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 		if (hiddenSystems != Settings::getInstance()->getString("HiddenSystems"))
 		{
-			LOG(LogDebug) << "GuiMenu::openUISettings() - hiddenSystems changed, new value: " << hiddenSystems;
+			LOG(LogDebug) << "GuiMenu::openUISettings() - hiddenSystems changed, new value: '" << hiddenSystems << "'";
 			Settings::getInstance()->setString("HiddenSystems", hiddenSystems);
 			Settings::getInstance()->saveFile();
+
+			// updating boot game configuration
+			std::string gameInfo = SystemConf::getInstance()->get("global.bootgame.info");
+			if (!gameInfo.empty())
+			{				
+				std::vector<std::string> gameData = Utils::String::split(gameInfo, ';'); // "system_name;game_name"
+				std::string boot_game_system = gameData[0];
+
+				for (std::string vsystem : Utils::String::split(Settings::getInstance()->getString("HiddenSystems"), ';'))
+				{
+					LOG(LogDebug) << "GuiCollectionSystemsOptions::initializeMenu() - vsystem: " << vsystem << ", game '" << boot_game_system << "'";
+					if (boot_game_system == vsystem)
+					{
+						LOG(LogDebug) << "GuiCollectionSystemsOptions::initializeMenu() - system '" << boot_game_system << "' is hidden, removing boot game info";
+						SystemConf::getInstance()->set("global.bootgame.path", "");
+						SystemConf::getInstance()->set("global.bootgame.cmd", "");
+						SystemConf::getInstance()->set("global.bootgame.info", "");
+					}
+					Log::flush();
+				}
+			}
 
 			setVariable("reloadSystems", true);
 		}
@@ -98,7 +120,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	addGroup(_("CREATE CUSTOM COLLECTION"));
 
 	// add "Create New Custom Collection from Theme"
-	std::vector<std::string> unusedFolders = CollectionSystemManager::get()->getUnusedSystemsFromTheme();
+	std::vector<std::string> unusedFolders = CollectionSystemManager::getInstance()->getUnusedSystemsFromTheme();
 	if (unusedFolders.size() > 0)
 	{
 		addEntry(_("CREATE NEW CUSTOM COLLECTION FROM THEME").c_str(), true,
@@ -142,7 +164,6 @@ void GuiCollectionSystemsOptions::initializeMenu()
 			mWindow->pushGui(new GuiTextEditPopup(mWindow, _("New Collection Name"), "", createCustomCollection, false));
 		}
 	});
-
 
 
 	addGroup(_("SORT OPTIONS"));
@@ -255,8 +276,26 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 	// Open gamelist at start
 	auto bootOnGamelist = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("StartupOnGameList"));
-	addWithLabel(_("START ON GAMELIST"), bootOnGamelist);
+	addWithLabel(_("START ON GAMELIST"), bootOnGamelist, cursor);
 	addSaveFunc([bootOnGamelist] { Settings::getInstance()->setBool("StartupOnGameList", bootOnGamelist->getState()); });
+
+	// GAME AT STARTUP
+	if (!SystemConf::getInstance()->get("global.bootgame.path").empty())
+	{
+		std::string gameInfo = SystemConf::getInstance()->get("global.bootgame.info"); // "system_name;game_name"
+		std::vector<std::string> gameData = Utils::String::split(gameInfo, ';');
+		std::string gamelabel = gameData[1] + " [" + gameData[0] + "]";
+
+		addWithDescription(_("STOP LAUNCHING THIS GAME AT STARTUP"), gamelabel, nullptr, [this]
+		{
+			LOG(LogDebug) << "GuiCollectionSystemsOptions::initializeMenu() - cleaning boot game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
+			Log::flush();
+			SystemConf::getInstance()->set("global.bootgame.path", "");
+			SystemConf::getInstance()->set("global.bootgame.cmd", "");
+			SystemConf::getInstance()->set("global.bootgame.info", "");
+			setVariable("reloadMenu", true);
+		});
+	}
 
 	std::shared_ptr<SwitchComponent> bundleCustomCollections = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("UseCustomCollectionsSystem"));
 	addWithLabel(_("GROUP UNTHEMED CUSTOM COLLECTIONS"), bundleCustomCollections);
@@ -297,8 +336,8 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 	addEntry(_("UPDATE GAMES LISTS"), false, [this] { GuiMenu::updateGameLists(mWindow); }); // Game List Update
 
-	if (CollectionSystemManager::get()->isEditing())
-		addEntry((_("FINISH EDITING COLLECTION") + " : " + Utils::String::toUpper(CollectionSystemManager::get()->getEditingCollection())).c_str(), false, std::bind(&GuiCollectionSystemsOptions::exitEditMode, this));
+	if (CollectionSystemManager::getInstance()->isEditing())
+		addEntry((_("FINISH EDITING COLLECTION") + " : " + Utils::String::toUpper(CollectionSystemManager::getInstance()->getEditingCollection())).c_str(), false, std::bind(&GuiCollectionSystemsOptions::exitEditMode, this));
 
 	addSaveFunc([this]
 	{
@@ -342,8 +381,8 @@ void GuiCollectionSystemsOptions::initializeMenu()
 		{
 			Settings::getInstance()->saveFile();
 
-			CollectionSystemManager::get()->loadEnabledListFromSettings();
-			CollectionSystemManager::get()->updateSystemsList();
+			CollectionSystemManager::getInstance()->loadEnabledListFromSettings();
+			CollectionSystemManager::getInstance()->updateSystemsList();
 			ViewController::get()->goToStart();
 			ViewController::get()->reloadAll(mWindow);
 			mWindow->endRenderLoadingScreen();
@@ -353,8 +392,8 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 void GuiCollectionSystemsOptions::createCollection(std::string inName)
 {
-	std::string name = CollectionSystemManager::get()->getValidNewCollectionName(inName);
-	SystemData* newSys = CollectionSystemManager::get()->addNewCustomCollection(name);
+	std::string name = CollectionSystemManager::getInstance()->getValidNewCollectionName(inName);
+	SystemData* newSys = CollectionSystemManager::getInstance()->addNewCustomCollection(name);
 	customOptionList->add(name, name, true);
 
 	std::string outAuto = Utils::String::vectorToCommaString(autoOptionList->getSelectedObjects());
@@ -364,7 +403,7 @@ void GuiCollectionSystemsOptions::createCollection(std::string inName)
 	ViewController::get()->goToSystemView(newSys);
 
 	Window* window = mWindow;
-	CollectionSystemManager::get()->setEditMode(name);
+	CollectionSystemManager::getInstance()->setEditMode(name);
 	while (window->peekGui() && window->peekGui() != ViewController::get())
 		delete window->peekGui();
 
@@ -373,7 +412,7 @@ void GuiCollectionSystemsOptions::createCollection(std::string inName)
 
 void GuiCollectionSystemsOptions::exitEditMode()
 {
-	CollectionSystemManager::get()->exitEditMode();
+	CollectionSystemManager::getInstance()->exitEditMode();
 	close();
 }
 
@@ -385,7 +424,7 @@ GuiCollectionSystemsOptions::~GuiCollectionSystemsOptions()
 void GuiCollectionSystemsOptions::addSystemsToMenu()
 {
 	// add Auto Systems && preserve order
-	std::map<std::string, CollectionSystemData> &autoSystems = CollectionSystemManager::get()->getAutoCollectionSystems();
+	std::map<std::string, CollectionSystemData> &autoSystems = CollectionSystemManager::getInstance()->getAutoCollectionSystems();
 	autoOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, _("SELECT COLLECTIONS"), true);
 	bool hasGroup = false;
 
@@ -400,7 +439,7 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 		else
 		{
 			if (!it->second.isPopulated)
-				CollectionSystemManager::get()->populateAutoCollection(&(it->second));
+				CollectionSystemManager::getInstance()->populateAutoCollection(&(it->second));
 
 			if (it->second.system->getRootFolder()->getChildren().size() == 0)
 				continue;
@@ -418,7 +457,7 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 		addWithLabel(_("AUTOMATIC GAME COLLECTIONS"), autoOptionList);
 
 	// add Custom Systems
-	std::map<std::string, CollectionSystemData> customSystems = CollectionSystemManager::get()->getCustomCollectionSystems();
+	std::map<std::string, CollectionSystemData> customSystems = CollectionSystemManager::getInstance()->getCustomCollectionSystems();
 	customOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, _("SELECT COLLECTIONS"), true);
 	for (std::map<std::string, CollectionSystemData>::const_iterator it = customSystems.cbegin(); it != customSystems.cend(); it++)
 	{
@@ -437,8 +476,8 @@ void GuiCollectionSystemsOptions::updateSettings(std::string newAutoSettings, st
 	if (dirty)
 	{
 		Settings::getInstance()->saveFile();
-		CollectionSystemManager::get()->loadEnabledListFromSettings();
-		CollectionSystemManager::get()->updateSystemsList();
+		CollectionSystemManager::getInstance()->loadEnabledListFromSettings();
+		CollectionSystemManager::getInstance()->updateSystemsList();
 		ViewController::get()->goToStart();
 		ViewController::get()->reloadAll();
 	}

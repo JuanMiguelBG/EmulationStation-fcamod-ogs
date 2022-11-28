@@ -268,7 +268,7 @@ bool systemByReleaseDate(SystemData* sys1, SystemData* sys2)
 	return name1.compare(name2) < 0;
 }
 
-CollectionSystemManager* CollectionSystemManager::get()
+CollectionSystemManager* CollectionSystemManager::getInstance()
 {
 	assert(sInstance);
 	return sInstance;
@@ -1511,4 +1511,37 @@ std::string getCustomCollectionConfigPath(std::string collectionName)
 std::string getCollectionsFolder()
 {
 	return Utils::FileSystem::getGenericPath(Utils::FileSystem::getEsConfigPath() + "/collections");
+}
+
+void CollectionSystemManager::updateBootGameMetadata(const std::string system, const std::string game, long timePlayed, time_t lastPlayed)
+{
+	LOG(LogDebug) << "CollectionSystemManager::updateBootGameMetadata() - system: " << system << ", game: " << game << ", time played: " << std::to_string(timePlayed);
+
+	SystemData* systemData = SystemData::getSystem(system);
+
+	LOG(LogDebug) << "CollectionSystemManager::updateBootGameMetadata() - find system: '" << systemData->getFullName() << "'";
+	Log::flush();
+
+
+	FileData *gameFileData = systemData->getGame(game);
+
+	if (!gameFileData)
+		return;
+
+	FileData* gameToUpdate = gameFileData->getSourceFileData();
+
+	int timesPlayed = gameToUpdate->getMetadata().getInt(MetaDataId::PlayCount) + 1;
+	gameToUpdate->setMetadata(MetaDataId::PlayCount, std::to_string(static_cast<long long>(timesPlayed)));
+
+	//update game time played
+	if (timePlayed >= 10)
+	{
+		long gameTime = gameToUpdate->getMetadata().getInt(MetaDataId::GameTime) + timePlayed;
+		gameToUpdate->setMetadata(MetaDataId::GameTime, std::to_string(static_cast<long>(gameTime)));
+	}
+
+	//update last played time
+	gameToUpdate->setMetadata(MetaDataId::LastPlayed, Utils::Time::DateTime(lastPlayed));
+	refreshCollectionSystems(gameToUpdate);
+	saveToGamelistRecovery(gameToUpdate);
 }

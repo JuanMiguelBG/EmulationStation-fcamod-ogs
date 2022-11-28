@@ -13,11 +13,11 @@ class SystemData;
 class GuiCollectionSystemsOptions : public GuiSettings
 {
 public:
-	GuiCollectionSystemsOptions(Window* window);
+	GuiCollectionSystemsOptions(Window* window, bool cursor = false);
 	~GuiCollectionSystemsOptions();
 
 private:
-	void initializeMenu();
+	void initializeMenu(bool cursor);
 	void addSystemsToMenu();
 
 	void updateSettings(std::string newAutoSettings, std::string newCustomSettings);

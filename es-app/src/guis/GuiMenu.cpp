@@ -843,7 +843,7 @@ void GuiMenu::openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shar
 		{
 			if (systemTheme.empty())
 			{
-				CollectionSystemManager::get()->updateSystemsList();
+				CollectionSystemManager::getInstance()->updateSystemsList();
 				ViewController::get()->reloadAll(window);
 				window->endRenderLoadingScreen();
 
@@ -1185,7 +1185,7 @@ void GuiMenu::openUISettings()
 	s->onFinalize([s, pthis, window]
 	{
 		if (s->getVariable("reloadCollections"))
-			CollectionSystemManager::get()->updateSystemsList();
+			CollectionSystemManager::getInstance()->updateSystemsList();
 
 		if (s->getVariable("forceReloadGames"))
 			ViewController::reloadAllGames(window, false);
@@ -1377,10 +1377,10 @@ void GuiMenu::preloadNetworkSettings()
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)
 {
 	const bool baseWifiEnabled = SystemConf::getInstance()->getBool("wifi.enabled"),
-						 baseManualDns = SystemConf::getInstance()->getBool("wifi.manual_dns");
+			   baseManualDns = SystemConf::getInstance()->getBool("wifi.manual_dns");
 	const std::string baseHostname = SystemConf::getInstance()->get("system.hostname"),
-										baseDnsOne = SystemConf::getInstance()->get("wifi.dns1"),
-										baseDnsTwo = SystemConf::getInstance()->get("wifi.dns2");
+					  baseDnsOne = SystemConf::getInstance()->get("wifi.dns1"),
+					  baseDnsTwo = SystemConf::getInstance()->get("wifi.dns2");
 
 	auto theme = ThemeData::getMenuTheme();
 	std::shared_ptr<Font> font = theme->Text.font;
@@ -1495,7 +1495,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			}
 		});
 
-	s->addSaveFunc([this, window, baseWifiEnabled, baseSSID, baseKEY, baseHostname, enable_wifi, baseManualDns, baseDnsOne, baseDnsTwo]
+	s->addSaveFunc([this, s, window, baseWifiEnabled, baseSSID, baseKEY, baseHostname, enable_wifi, baseManualDns, baseDnsOne, baseDnsTwo]
 		{
 			bool wifienabled = enable_wifi->getState();
 
@@ -1523,11 +1523,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 							Settings::getInstance()->setBool("wait.process.loading", true);
 							return ApiSystem::getInstance()->connectWifi(newSSID, newKey);
 						},
-						[this, window, newSSID](bool success)
+						[this, s, window, newSSID](bool success)
 						{
 							Settings::getInstance()->setBool("wait.process.loading", false);
 							if (success)
+							{
 								window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI ENABLED")));
+								s->setVariable("reloadGuiMenu", true);
+							}
 							else
 								window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 						}));
@@ -1541,10 +1544,12 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						Settings::getInstance()->setBool("wait.process.loading", true);
 						return ApiSystem::getInstance()->disableWifi(false);
 					},
-					[this, window, baseSSID](bool success)
+					[this, s, window, baseSSID](bool success)
 					{
 						Settings::getInstance()->setBool("wait.process.loading", false);
-						if (!success)
+						if (success)
+							s->setVariable("reloadGuiMenu", true);
+						else
 							window->pushGui(new GuiMsgBox(window, "'" + baseSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 					}));
 			}
@@ -1579,7 +1584,10 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						{
 							Settings::getInstance()->setBool("wait.process.loading", false);
 							if (success)
+							{
 								window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
+								s->setVariable("reloadGuiMenu", true);
+							}
 							else
 								window->pushGui(new GuiMsgBox(window, "'" + ssid + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 
@@ -1605,7 +1613,9 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						[this, s, window, ssid](bool success)
 						{
 							Settings::getInstance()->setBool("wait.process.loading", false);
-							if (!success)
+							if (success)
+								s->setVariable("reloadGuiMenu", true);
+							else
 								window->pushGui(new GuiMsgBox(window, "'" + ssid + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 
 							delete s;
@@ -1683,6 +1693,17 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		s->addUpdatableComponent(ip.get());
 	}
 
+	auto pthis = this;
+
+	s->onClose([s, pthis, window]
+	{
+		if (s->getVariable("reloadGuiMenu"))
+		{
+			delete pthis;
+			window->pushGui(new GuiMenu(window, false));
+		}
+	});
+
 	window->pushGui(s);
 }
 
@@ -1757,6 +1778,9 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 						Settings::getInstance()->setBool("wait.process.loading", false);
 						SystemConf::getInstance()->setBool("bluetooth.enabled", result);
 
+						if (result)
+							s->setVariable("reloadGuiMenu", true);
+
 						delete s;
 						openBluetoothSettings(true);
 					}));
@@ -1786,6 +1810,8 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 								displayBluetoothAudioRestartDialog(window, true);
 								return;
 							}
+
+							s->setVariable("reloadGuiMenu", true);
 						}
 						if (!result || !baseBtAudioConnected)
 						{
@@ -1844,6 +1870,13 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 
 		if (s->getVariable("reinitSoundComponents"))
 			pthis->reinitSoundComponentsAndMusic();
+
+		if (s->getVariable("reloadGuiMenu"))
+		{
+			delete pthis;
+			window->pushGui(new GuiMenu(window, false));
+		}
+
 	});
 
 	window->pushGui(s);
@@ -1976,7 +2009,7 @@ void GuiMenu::openAdvancedSettings()
 	auto theme = ThemeData::getMenuTheme();
 
 	//Timezone - Adapted from emuelec
-	auto es_timezones = std::make_shared<OptionListComponent<std::string> >(window, _("SELECT YOUR TIMEZONE"), false);
+	auto es_timezones = std::make_shared<OptionListComponent<std::string>>(window, _("SELECT YOUR TIMEZONE"), false, true);
 
 	std::string currentTimezone = SystemConf::getInstance()->get("system.timezone");
 	if (currentTimezone.empty())
@@ -2706,7 +2739,7 @@ void GuiMenu::openScreensaverOptions() {
 	window->pushGui(new GuiGeneralScreensaverOptions(window, _("SCREENSAVER SETTINGS")));
 }
 
-void GuiMenu::openCollectionSystemSettings() 
+void GuiMenu::openCollectionSystemSettings(bool cursor)
 {
 	Window *window = mWindow;
 	if (ThreadedScraper::isRunning())
@@ -2715,7 +2748,23 @@ void GuiMenu::openCollectionSystemSettings()
 		return;
 	}
 
-	window->pushGui(new GuiCollectionSystemsOptions(window));
+	//window->pushGui(new GuiCollectionSystemsOptions(window));
+
+	auto s = new GuiCollectionSystemsOptions(window, cursor);
+	auto pthis = this;
+
+	s->onFinalize([s, pthis, window]
+	{
+		if (s->getVariable("reloadMenu"))
+		{
+			Settings::getInstance()->saveFile();
+			delete s;
+			pthis->openCollectionSystemSettings(true);
+		}
+
+	});
+
+	window->pushGui(s);
 }
 
 void GuiMenu::onSizeChanged()

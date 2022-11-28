@@ -78,6 +78,8 @@ public:
 	// As above, but also remove parenthesis
 	std::string getCleanName() const;
 
+	std::string getlaunchCommand();
+
 	void launchGame(Window* window);
 
 	static void resetSettings();
