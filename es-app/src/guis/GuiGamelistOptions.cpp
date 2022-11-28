@@ -144,74 +144,64 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 
 	mMenu.addWithLabel(_("SORT GAMES BY"), mListSort);
 
-
-
 	auto glv = ViewController::get()->getGameListView(system);
-	
 	std::string viewName = glv->getName();
 
-	
+	// GameList view style
+	mViewMode = std::make_shared< OptionListComponent<std::string> >(mWindow, _("GAMELIST VIEW STYLE"), false);
+	std::vector<std::pair<std::string, std::string>> styles;
+	styles.push_back(std::pair<std::string, std::string>("automatic", _("automatic")));
 
-	//else
+	auto mViews = system->getTheme()->getViewsOfTheme();
+	for (auto it = mViews.cbegin(); it != mViews.cend(); ++it)
 	{
-		// GameList view style
-		mViewMode = std::make_shared< OptionListComponent<std::string> >(mWindow, _("GAMELIST VIEW STYLE"), false);
-		std::vector<std::pair<std::string, std::string>> styles;
-		styles.push_back(std::pair<std::string, std::string>("automatic", _("automatic")));
+		if (it->first == "basic" || it->first == "detailed" || it->first == "grid")
+			styles.push_back(std::pair<std::string, std::string>(it->first, _(it->first.c_str())));
+		else
+			styles.push_back(*it);
+	}
 
-		auto mViews = system->getTheme()->getViewsOfTheme();
-		for (auto it = mViews.cbegin(); it != mViews.cend(); ++it)
+	std::string viewMode = system->getSystemViewMode();
+
+	bool found = false;
+	for (auto it = styles.cbegin(); it != styles.cend(); it++)
+	{
+		bool sel = (viewMode.empty() && it->first == "automatic") || viewMode == it->first;
+		if (sel)
+			found = true;
+
+		mViewMode->add(_(it->second.c_str()), it->first, sel);
+	}
+
+	if (!found)
+		mViewMode->selectFirstItem();
+
+	mMenu.addWithLabel(_("GAMELIST VIEW STYLE"), mViewMode);
+
+	auto subsetNames = system->getTheme()->getSubSetNames(viewName);
+	if (subsetNames.size() > 0)
+		mMenu.addEntry(_("VIEW CUSTOMISATION"), true, [this, system]() { GuiMenu::openThemeConfiguration(mWindow, this, nullptr, system->getThemeFolder()); });
+	else if (showGridFeatures)		// Grid size override
+	{
+		auto gridOverride = system->getGridSizeOverride();
+		auto ovv = std::to_string((int)gridOverride.x()) + "x" + std::to_string((int)gridOverride.y());
+
+		mGridSize = std::make_shared<OptionListComponent<std::string>>(mWindow, _("GRID SIZE"), false);
+
+		found = false;
+		for (auto it = gridSizes.cbegin(); it != gridSizes.cend(); it++)
 		{
-			if (it->first == "basic" || it->first == "detailed" || it->first == "grid")
-				styles.push_back(std::pair<std::string, std::string>(it->first, _(it->first.c_str())));
-			else
-				styles.push_back(*it);
-		}
-
-		std::string viewMode = system->getSystemViewMode();
-
-		bool found = false;
-		for (auto it = styles.cbegin(); it != styles.cend(); it++)
-		{
-			bool sel = (viewMode.empty() && it->first == "automatic") || viewMode == it->first;
+			bool sel = (gridOverride == Vector2f(0, 0) && *it == "automatic") || ovv == *it;
 			if (sel)
 				found = true;
 
-			mViewMode->add(_(it->second.c_str()), it->first, sel);
+			mGridSize->add(_(*it), *it, sel);
 		}
 
 		if (!found)
-			mViewMode->selectFirstItem();
+			mGridSize->selectFirstItem();
 
-		mMenu.addWithLabel(_("GAMELIST VIEW STYLE"), mViewMode);
-
-		auto subsetNames = system->getTheme()->getSubSetNames(viewName);
-		if (subsetNames.size() > 0)
-		{
-			mMenu.addEntry(_("VIEW CUSTOMISATION"), true, [this, system]() { GuiMenu::openThemeConfiguration(mWindow, this, nullptr, system->getThemeFolder()); });
-		}
-		else if (showGridFeatures)		// Grid size override
-		{
-			auto gridOverride = system->getGridSizeOverride();
-			auto ovv = std::to_string((int)gridOverride.x()) + "x" + std::to_string((int)gridOverride.y());
-
-			mGridSize = std::make_shared<OptionListComponent<std::string>>(mWindow, _("GRID SIZE"), false);
-
-			found = false;
-			for (auto it = gridSizes.cbegin(); it != gridSizes.cend(); it++)
-			{
-				bool sel = (gridOverride == Vector2f(0, 0) && *it == "automatic") || ovv == *it;
-				if (sel)
-					found = true;
-
-				mGridSize->add(_(*it), *it, sel);
-			}
-
-			if (!found)
-				mGridSize->selectFirstItem();
-
-			mMenu.addWithLabel(_("GRID SIZE"), mGridSize);
-		}
+		mMenu.addWithLabel(_("GRID SIZE"), mGridSize);
 	}
 
 	// show filtered menu
@@ -503,7 +493,7 @@ void GuiGamelistOptions::addTextFilterToMenu()
 			if (!index->isFiltered())
 				mSystem->deleteIndex();
 
-			delete this;
+			close();
 		}
 		return true;
 	};
@@ -542,13 +532,13 @@ void GuiGamelistOptions::startEditMode()
 		}
 	}
 	CollectionSystemManager::getInstance()->setEditMode(editingSystem);
-	delete this;
+	close();
 }
 
 void GuiGamelistOptions::exitEditMode()
 {
 	CollectionSystemManager::getInstance()->exitEditMode();
-	delete this;
+	close();
 }
 
 void GuiGamelistOptions::openMetaDataEd()
@@ -607,14 +597,14 @@ void GuiGamelistOptions::jumpToLetter()
 
 	gamelist->setCursor(files.at(mid));
 
-	delete this;
+	close();
 }
 
 bool GuiGamelistOptions::input(InputConfig* config, Input input)
 {
 	if((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("select", input)) && input.value)
 	{
-		delete this;
+		close();
 		return true;
 	}
 
