@@ -766,6 +766,13 @@ bool ApiSystem::isSystemHotkeyBluetoothEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get bluetooth)"));
 }
 
+bool ApiSystem::isSystemHotkeySpeakerEvent()
+{
+	LOG(LogInfo) << "ApiSystem::isSystemHotkeySpeakerEvent()";
+
+	return stringToState(getShOutput(R"(es-system_hotkey get speaker)"));
+}
+
 bool ApiSystem::isSystemHotkeySuspendEvent()
 {
 	LOG(LogInfo) << "ApiSystem::isSystemHotkeySuspendEvent()";
@@ -773,7 +780,8 @@ bool ApiSystem::isSystemHotkeySuspendEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get suspend)"));
 }
 
-bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool bluetooth_state, bool suspend_state)
+bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state,
+										bool bluetooth_state, bool speaker_state, bool suspend_state)
 {
 	LOG(LogInfo) << "ApiSystem::setSystemHotkeysValues()";
 
@@ -787,7 +795,9 @@ bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_ste
 	else if (volume_step > 25)
 		volume_step = 25;
 
-	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + std::to_string(brightness_step) + " " + stateToString(volume_state) + " " + std::to_string(volume_step) + " " + stateToString(wifi_state) + " " + stateToString(bluetooth_state) + " " + stateToString(suspend_state) + " &");
+	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + std::to_string(brightness_step)
+			+ " " + stateToString(volume_state) + " " + std::to_string(volume_step) + " " + stateToString(wifi_state)
+			+ " " + stateToString(bluetooth_state) + " " + stateToString(speaker_state) + " " + stateToString(suspend_state) + " &");
 }
 
 bool ApiSystem::isDeviceAutoSuspendByTime()

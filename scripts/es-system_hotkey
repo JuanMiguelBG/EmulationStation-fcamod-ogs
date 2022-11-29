@@ -1,20 +1,25 @@
 #!/bin/sh
 
-if [ ! "$1" ];then
-	printf "usage : es-system_hotkey [set key value|get key]\n"
-	printf "Valid keys: brightness, volume, wifi, bluetooth and suspend\n"
-	printf "Valid values: enabled and disabled\n"
-	printf "or\n"
-	printf "usage : es-system_hotkey set_all_values [brightness_value] [brightness_step_value] [volume_value] [volume_step_value] [wifi_value] [bluetooth_value] [suspend_value]\n"
-	printf "Valid values: enabled and disabled\n"
-	exit 1
-fi
+do_help()
+{
+	echo "usage : $0 [set key value|get key]\n"
+	echo "Valid keys: brightness, volume, wifi, bluetooth, speaker and suspend"
+	echo "Valid values: enabled and disabled"
+	echo ""
+	echo "or"
+	echo ""
+	echo "usage : es-system_hotkey set_all_values [brightness_value] [brightness_step_value] [volume_value] [volume_step_value] [wifi_value] [bluetooth_value] [speaker_value] [suspend_value]"
+	echo "Valid values: enabled and disabled"
+}
 
 configFile="/usr/local/etc/ogage.conf"
 
-config_set_value () {
-	key=$1
-	value=$2
+config_set_value()
+{
+	local key=$1
+	local value=$2
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()', key: '$key', value: '$value'"
 
 	[ -z "$value" ] && value=0
 	cat "$configFile" | grep -iw "$key" > /dev/null
@@ -26,56 +31,75 @@ config_set_value () {
 		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$configFile" > /dev/null
 	fi
 
-	sudo systemctl restart oga_events.service
+	#print_log $LOG_FILE "DEBUG" "config_set_value() - restarting 'oga_events' service"
+	sudo systemctl restart oga_events.service --quiet &
 }
 
-config_get_value () {
-	key=$1
-	sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"
+config_get_value()
+{
+	local key=$1
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()', key: '$key'"
+
+	local value =`sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"`
+	#print_log $LOG_FILE "DEBUG" "Executing 'config_get_value()', key: '$key', value: '$value'"
+	echo "$value"
 }
 
-config_set_all_values () {
-	config_file $1 $2 $3 $4 $5 $6 $7
+config_set_all_values()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()', brightness: '$1', brightness_step: '$2', volume: '$3', volume_step: '$4', wifi: '$5', bluetooth: '$6', speaker: '$7', suspend: '$8'"
+	config_file $1 $2 $3 $4 $5 $6 $7 $8
 
-	sudo systemctl restart oga_events.service
+	#print_log $LOG_FILE "DEBUG" "config_set_value() - restarting 'oga_events' service"
+	sudo systemctl restart oga_events.service --quiet &
 }
 
-config_file () {
-	echo "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nbluetooth=$6\nsuspend=$7\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
+config_file()
+{
+	echo "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nbluetooth=$6\nspeaker=$7\nsuspend=$8\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
 }
-
 
 # ******************************************************************************************
 
-
 # Configure ES commons variables
-. es-commons
+. es-log_scripts
 
-if [ ! -f "$configFile" ]; then
-	#echo "The system hotkey events configuration file '$configFile' doesn't exist, creating it."
-	# config with default values: brightness brightness_step volume volume_step wifi bluetooth suspend
-	config_file "enabled" "1" "enabled" "1" "enabled" "enabled" "enabled"
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-system_hotkey.log"
+
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
 fi
 
-command="$1"
+ACTION=$1
+shift
 
-if [ "$#" -eq 3 ]; then
-	pkey="$2"
-	pvalue="$3"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1' #####"
 
-	if [ "$command" = "set" ]; then
-		config_set_value $pkey $pvalue
-		exit 0
-	fi
-elif [ "$#" -eq 2 ]; then
-	pkey="$2"
+case "${ACTION}" in
+    "set")
+        config_set_value "$1" "$2" || exit 1
+    ;;
+    "get")
+        config_get_value "$1"
+    ;;
+    "set_all_values")
+        config_set_all_values "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8" || exit 1
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
 
-	if [ "$command" = "get" ]; then
-		config_get_value $pkey
-	fi
-elif [ "$#" -eq 8 ]; then
-	if [ "$command" = "set_all_values" ]; then
-		config_set_all_values "$2" "$3" "$4" "$5" "$6" "$7" "$8"
-	fi
-	exit 0
-fi
+#print_log $LOG_FILE "INFO" "##### Exit executing operation: '${ACTION} $1' #####"
+
+exit 0

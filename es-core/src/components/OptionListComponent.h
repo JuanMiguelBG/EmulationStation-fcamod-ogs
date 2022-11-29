@@ -222,6 +222,7 @@ public:
 		mLoading = loading;
 		mWaitingLoad = false;
 		mPopup = nullptr;
+		mPopupRendered = false;
 
 		mText.setFont(theme->Text.font);
 		mText.setColor(theme->Text.color);
@@ -248,12 +249,6 @@ public:
 		}
 
 		setSize(mLeftArrow.getSize().x() + mRightArrow.getSize().x(), theme->Text.font->getHeight());
-	}
-
-	~OptionListComponent()
-	{
-		if (mPopup != nullptr)
-			delete mPopup;
 	}
 
 	virtual void setColor(unsigned int color)
@@ -525,16 +520,19 @@ private:
 		LOG(LogDebug) << "OptionListComponent::open() - mLoading: " << Utils::String::boolToString(mLoading);
 		Log::flush();
 		if (mPopup != nullptr)
-		{
-			delete mPopup;
 			mPopup = nullptr;
+
+		if (mPopupRendered)
+		{
+			mWindow->pushGui(mPopup);
+			return;
 		}
 
 		if (mLoading)
 		{
 			LOG(LogDebug) << "OptionListComponent::open() - GuiLoading";
 			Log::flush();
-			mWindow->pushGui(new GuiLoading<bool>(mWindow, _("PLEASE WAIT..."), 
+			mWindow->pushGui(new GuiLoading<bool>(mWindow, _("PLEASE WAIT..."),
 				[this]
 				{
 					LOG(LogDebug) << "OptionListComponent::open() - loading";
@@ -549,12 +547,14 @@ private:
 					Log::flush();
 					mWaitingLoad = false;
 					mWindow->pushGui(mPopup);
+					mPopupRendered = true;
 				}));
 		}
 		else
 		{
 			mPopup = new OptionListPopup(mWindow, this, mName, mAddRowCallback);
 			mWindow->pushGui(mPopup);
+			mPopupRendered = true;
 		}
 	}
 
@@ -620,6 +620,7 @@ private:
 	bool mLoading;
 	bool mWaitingLoad;
 	OptionListPopup *mPopup;
+	bool mPopupRendered;
 
 	std::string mName;
 	std::string mGroup;

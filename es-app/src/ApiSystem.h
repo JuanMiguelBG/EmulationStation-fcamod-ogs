@@ -160,8 +160,10 @@ public:
 	int getSystemHotkeyVolumeStep();
 	bool isSystemHotkeyWifiEvent();
 	bool isSystemHotkeyBluetoothEvent();
+	bool isSystemHotkeySpeakerEvent();
 	bool isSystemHotkeySuspendEvent();
-	bool setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool bluetooth, bool suspend_state);
+	bool setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state,
+								bool bluetooth_state, bool speaker_state, bool suspend_state);
 
 	bool isDeviceAutoSuspend();
 	bool isDeviceAutoSuspendStayAwakeCharging();
