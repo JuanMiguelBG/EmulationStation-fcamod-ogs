@@ -6,6 +6,7 @@ do_help() {
     echo "$0 new_devices" >&2
     echo "$0 enable" >&2
     echo "$0 disable" >&2
+    echo "$0 toggle" >&2
     echo "$0 is_enabled" >&2
     echo "$0 enable_bluetooth" >&2
     echo "$0 disable_bluetooth" >&2
@@ -140,9 +141,24 @@ is_enabled() {
       return 0
     fi
 
-    # disaled
+    # disabled
     #print_log $LOG_FILE "INFO" "is_enabled() - Bluetooth is disabled"
     return 1
+}
+
+do_toggle_bluetooth()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_toggle_bluetooth()'"
+    is_bluetooth_active
+    if [ $? -eq 0 ]; then
+      # active
+      #print_log $LOG_FILE "INFO" "do_toggle_bluetooth() - Bluetooth is active, inactiving..."
+      do_disable
+    else
+      # active
+      #print_log $LOG_FILE "INFO" "do_toggle_bluetooth() - Bluetooth is inactive, activing..."
+      do_enable
+    fi
 }
 
 is_bluetooth_audio_device()
@@ -783,6 +799,9 @@ case "${ACTION}" in
     ;;
     "disable_bluetooth")
         disable_bluetooth || exit 1
+    ;;
+    "toggle")
+        do_toggle_bluetooth || exit 1
     ;;
     "is_bluetooth_active")
         is_bluetooth_active || exit 1

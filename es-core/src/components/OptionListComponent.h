@@ -548,12 +548,14 @@ private:
 					LOG(LogDebug) << "OptionListComponent::open() - returning";
 					Log::flush();
 					mWaitingLoad = false;
+					mWindow->pushGui(mPopup);
 				}));
 		}
 		else
+		{
 			mPopup = new OptionListPopup(mWindow, this, mName, mAddRowCallback);
-
-		mWindow->pushGui(mPopup);
+			mWindow->pushGui(mPopup);
+		}
 	}
 
 	unsigned int getSelectedId()
