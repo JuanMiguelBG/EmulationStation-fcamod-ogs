@@ -221,6 +221,7 @@ public:
 		mAddRowCallback = nullptr;
 		mLoading = loading;
 		mWaitingLoad = false;
+		mPopup = nullptr;
 
 		mText.setFont(theme->Text.font);
 		mText.setColor(theme->Text.color);
@@ -250,7 +251,7 @@ public:
 	}
 
 	~OptionListComponent()
-	{		
+	{
 		if (mPopup != nullptr)
 			delete mPopup;
 	}
