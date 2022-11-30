@@ -666,11 +666,6 @@ int main(int argc, char* argv[])
 	ViewController::init(&window);
 	CollectionSystemManager::init(&window);
 
-	if (bootGame.enable_startup_game) {
-		// update game metadata info
-		updateMetadataStartupGame();
-	}
-
 	MameNames::init();
 	window.pushGui(ViewController::get());
 
@@ -717,6 +712,11 @@ int main(int argc, char* argv[])
 				Log::flush();
 				SDL_PushEvent(quit);
 			}));
+	}
+
+	if (bootGame.enable_startup_game) {
+		// update game metadata info
+		updateMetadataStartupGame();
 	}
 
 	//run the command line scraper then quit
