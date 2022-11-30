@@ -221,8 +221,6 @@ public:
 		mAddRowCallback = nullptr;
 		mLoading = loading;
 		mWaitingLoad = false;
-		mPopup = nullptr;
-		mPopupRendered = false;
 
 		mText.setFont(theme->Text.font);
 		mText.setColor(theme->Text.color);
@@ -517,45 +515,22 @@ private:
 
 	void open()
 	{
-		LOG(LogDebug) << "OptionListComponent::open() - mLoading: " << Utils::String::boolToString(mLoading);
-		Log::flush();
-		if (mPopup != nullptr)
-			mPopup = nullptr;
-
-		if (mPopupRendered)
-		{
-			mWindow->pushGui(mPopup);
-			return;
-		}
-
 		if (mLoading)
 		{
-			LOG(LogDebug) << "OptionListComponent::open() - GuiLoading";
-			Log::flush();
-			mWindow->pushGui(new GuiLoading<bool>(mWindow, _("PLEASE WAIT..."),
+			mWindow->pushGui(new GuiLoading<OptionListPopup*>(mWindow, _("PLEASE WAIT..."),
 				[this]
 				{
-					LOG(LogDebug) << "OptionListComponent::open() - loading";
-					Log::flush();
 					mWaitingLoad = true;
-					mPopup = new OptionListPopup(mWindow, this, mName, mAddRowCallback);
-					return true;
+					return new OptionListPopup(mWindow, this, mName, mAddRowCallback);
 				},
-				[this](bool result)
+				[this](OptionListPopup *popUp)
 				{
-					LOG(LogDebug) << "OptionListComponent::open() - returning";
-					Log::flush();
 					mWaitingLoad = false;
-					mWindow->pushGui(mPopup);
-					mPopupRendered = true;
+					mWindow->pushGui(popUp);
 				}));
 		}
 		else
-		{
-			mPopup = new OptionListPopup(mWindow, this, mName, mAddRowCallback);
-			mWindow->pushGui(mPopup);
-			mPopupRendered = true;
-		}
+			mWindow->pushGui(new OptionListPopup(mWindow, this, mName, mAddRowCallback));
 	}
 
 	unsigned int getSelectedId()
@@ -619,8 +594,6 @@ private:
 	bool mMultiSelect;
 	bool mLoading;
 	bool mWaitingLoad;
-	OptionListPopup *mPopup;
-	bool mPopupRendered;
 
 	std::string mName;
 	std::string mGroup;
