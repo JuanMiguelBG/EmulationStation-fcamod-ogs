@@ -216,6 +216,7 @@ void Settings::setDefaults()
 	mStringMap["UserMusicDirectory"] = "";
 
 	mBoolMap["updates.enabled"] = false;
+	mBoolMap["wifi.enabled"] = false;
 	mStringMap["wifi.ssid"] = "";
 	mBoolMap["wifi.manual_dns"] = false;
 	mStringMap["already.connection.exist.flag"] = " (**)";

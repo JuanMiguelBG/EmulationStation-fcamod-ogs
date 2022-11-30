@@ -280,18 +280,6 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 			// edit game metadata
 			mMenu.addEntry(_("EDIT THIS GAME'S METADATA"), true, [this] { openMetaDataEd(); });
 
-			// delete game
-			mMenu.addEntry(_("DELETE GAME"), false, [this, fileData]
-			{
-				mWindow->pushGui(new GuiMsgBox(mWindow, _("THIS WILL DELETE THE ACTUAL GAME FILE(S)!\nARE YOU SURE?"),
-					_("YES"), [this, fileData]
-						{
-							deleteGame(fileData);
-							close();
-						},
-					_("NO"), nullptr));
-			});
-
 			// Set as boot game 
 			if (fileData->getType() == GAME)
 			{
@@ -309,11 +297,22 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 						game_info.append(fileData->getSystem()->getName()).append(";").append(fileData->getName());
 					}
 					SystemConf::getInstance()->set("global.bootgame.info",  game_info);
-					LOG(LogDebug) << "GuiGamelistOptions::GuiGamelistOptions() - setted boot game, state: '" << Utils::String::boolToString(bootgame->getState()) << "', game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
-					Log::flush();
+					//LOG(LogDebug) << "GuiGamelistOptions::GuiGamelistOptions() - setted boot game, state: '" << Utils::String::boolToString(bootgame->getState()) << "', game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
 				});
 				mMenu.addWithLabel(_("LAUNCH THIS GAME AT STARTUP"), bootgame);
 			}
+
+			// delete game
+			mMenu.addEntry(_("DELETE GAME"), false, [this, fileData]
+			{
+				mWindow->pushGui(new GuiMsgBox(mWindow, _("THIS WILL DELETE THE ACTUAL GAME FILE(S)!\nARE YOU SURE?"),
+					_("YES"), [this, fileData]
+						{
+							deleteGame(fileData);
+							close();
+						},
+					_("NO"), nullptr));
+			});
 		}
 	}
 
@@ -649,16 +648,12 @@ void GuiGamelistOptions::deleteGame(FileData* fileData)
 		view.get()->remove(sourceFile);
 
 	// updating boot game configuration
-	std::string gameInfo = SystemConf::getInstance()->get("global.bootgame.info");
-	if (!gameInfo.empty())
-	{				
-		std::vector<std::string> gameData = Utils::String::split(gameInfo, ';'); // "system_name;game_name"
-		std::string game = gameData[1];
-
-		LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - FileData game name: " << fileData->getName() << ", game '" << game << "'";
-		if (game == fileData->getName())
+	if (!SystemConf::getInstance()->get("global.bootgame.path").empty())
+	{
+		LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - updating boot game configuration, game name: " << fileData->getName() << "'";
+		if (SystemConf::getInstance()->get("global.bootgame.path") == fileData->getFullPath())
 		{
-			LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - game '" << game << "' is deleted, removing boot game info";
+			LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - game '" << fileData->getName() << "' is deleted, removing boot game info";
 			SystemConf::getInstance()->set("global.bootgame.path", "");
 			SystemConf::getInstance()->set("global.bootgame.cmd", "");
 			SystemConf::getInstance()->set("global.bootgame.info", "");

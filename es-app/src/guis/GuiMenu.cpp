@@ -1366,10 +1366,13 @@ void GuiMenu::preloadNetworkSettings()
 	SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
 	SystemConf::getInstance()->set("system.hostname", ApiSystem::getInstance()->getHostname());
 
-	if (SystemConf::getInstance()->get("wifi.ssid").empty())
-		SystemConf::getInstance()->set("wifi.ssid", ApiSystem::getInstance()->getWifiSsid());
+	std::string ssid = ApiSystem::getInstance()->getWifiSsid();
+	if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
+		SystemConf::getInstance()->set("wifi.ssid", ssid);
 
-	SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(SystemConf::getInstance()->get("wifi.ssid")));
+	if (!SystemConf::getInstance()->get("wifi.ssid").empty())
+		SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(ssid));
+
 	SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
 	SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
 }
@@ -2748,8 +2751,8 @@ void GuiMenu::openCollectionSystemSettings(bool cursor)
 		return;
 	}
 
-	//window->pushGui(new GuiCollectionSystemsOptions(window));
-
+	window->pushGui(new GuiCollectionSystemsOptions(window));
+/*
 	auto s = new GuiCollectionSystemsOptions(window, cursor);
 	auto pthis = this;
 
@@ -2765,6 +2768,7 @@ void GuiMenu::openCollectionSystemSettings(bool cursor)
 	});
 
 	window->pushGui(s);
+*/
 }
 
 void GuiMenu::onSizeChanged()

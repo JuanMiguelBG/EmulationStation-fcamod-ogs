@@ -1515,13 +1515,12 @@ std::string getCollectionsFolder()
 
 void CollectionSystemManager::updateBootGameMetadata(const std::string system, const std::string game, long timePlayed, time_t lastPlayed)
 {
-	LOG(LogDebug) << "CollectionSystemManager::updateBootGameMetadata() - system: " << system << ", game: " << game << ", time played: " << std::to_string(timePlayed);
+//	LOG(LogDebug) << "CollectionSystemManager::updateBootGameMetadata() - system: " << system << ", game: " << game << ", time played: " << std::to_string(timePlayed);
 
 	SystemData* systemData = SystemData::getSystem(system);
 
-	LOG(LogDebug) << "CollectionSystemManager::updateBootGameMetadata() - find system: '" << systemData->getFullName() << "'";
-	Log::flush();
-
+	if (!systemData)
+		return;
 
 	FileData *gameFileData = systemData->getGame(game);
 

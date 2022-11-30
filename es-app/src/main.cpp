@@ -338,7 +338,10 @@ void loadOtherSettings()
 	Utils::Async::run( [] (void)
 		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-				Settings::getInstance()->setString("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+			{
+				SystemConf::getInstance()->set("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+				SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
+			}
 
 			bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
 			SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);

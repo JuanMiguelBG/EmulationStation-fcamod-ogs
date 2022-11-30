@@ -17,7 +17,7 @@ public:
 	~GuiCollectionSystemsOptions();
 
 private:
-	void initializeMenu(bool cursor);
+	void initializeMenu(Window* window, bool cursor);
 	void addSystemsToMenu();
 
 	void updateSettings(std::string newAutoSettings, std::string newCustomSettings);

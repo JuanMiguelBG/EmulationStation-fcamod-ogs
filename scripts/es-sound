@@ -31,7 +31,8 @@ is_bluetooth_audio_device_connected()
 	return 1
 }
 
-get_output_device() {
+get_output_device()
+{
 	#print_log $LOG_FILE "INFO" "Executing 'get_output_device()'"
 
 	local output_device=""
@@ -56,7 +57,8 @@ get_output_device() {
 	echo "$output_device"
 }
 
-get_volume_level() {
+get_volume_level()
+{
 	#print_log $LOG_FILE "INFO" "Executing 'get_volume_level()'"
 	local audio_device="Master"
 
@@ -68,14 +70,15 @@ get_volume_level() {
 	fi
 
 	local volume=`awk -F'[][%]' '/Left:/ { print $2 }' <(amixer sget "$audio_device")`
-	#print_log $LOG_FILE "DEBUG" "get_volume_level() - volume: $volume"
+	#print_log $LOG_FILE "DEBUG" "get_volume_level() - volume: $volume%"
 	echo "$volume"
 }
 
-set_volume_level() {
+set_volume_level()
+{
 	local value=$1
 	local audio_device="Master"
-	#print_log $LOG_FILE "INFO" "Executing 'set_volume_level()' - volume: $value"
+	#print_log $LOG_FILE "INFO" "Executing 'set_volume_level()' - volume: $value%"
 
 	is_bluetooth_audio_device_connected
 	if [ $? -eq 0 ]; then
@@ -89,7 +92,8 @@ set_volume_level() {
 	amixer sset "$audio_device" "$value%" > /dev/null
 }
 
-config_set_value () {
+config_set_value ()
+{
 	local key=$1
 	local value=$2
 
@@ -115,7 +119,7 @@ config_set_value () {
 				fi
 				volume=$(($volume+$step))
 				set_volume_level $volume
-				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'SPK', volume: $volume"
+				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'SPK', volume: $volume%"
 			fi
 		elif [ "$output_device" = "SPK" ]; then
 			if [[ "$value" = *"HP" ]]; then
@@ -127,7 +131,7 @@ config_set_value () {
 				fi
 				volume=$(($volume-$step))
 				set_volume_level $volume
-				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'HP', volume: $volume"
+				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'HP', volume: $volume%"
 			fi
 		fi
 		amixer cset name='Playback Path' $value > /dev/null
@@ -136,7 +140,8 @@ config_set_value () {
 	fi
 }
 
-config_get_value () {
+config_get_value ()
+{
 	local key=$1
 
 	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()', key: '$key"
