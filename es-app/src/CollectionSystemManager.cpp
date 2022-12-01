@@ -1520,12 +1520,18 @@ void CollectionSystemManager::updateBootGameMetadata(const std::string system, c
 	SystemData* systemData = SystemData::getSystem(system);
 
 	if (!systemData)
+	{
+		LOG(LogWarning) << "CollectionSystemManager::updateBootGameMetadata() - system 'system' not found, skipping";
 		return;
+	}
 
 	FileData *gameFileData = systemData->getGame(game);
 
 	if (!gameFileData)
+	{
+		LOG(LogWarning) << "CollectionSystemManager::updateBootGameMetadata() - game 'game' not found, skipping";
 		return;
+	}
 
 	FileData* gameToUpdate = gameFileData->getSourceFileData();
 

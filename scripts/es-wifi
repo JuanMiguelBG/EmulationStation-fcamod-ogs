@@ -165,7 +165,20 @@ do_connect() {
       output=`sudo nmcli con up "$SSID"`
     else
       # try to connect
+
+      # Fix WPA3 networks
+      local is_WPA3=`sudo nmcli -f ALL --mode tabular --terse --fields SSID,SECURITY dev wifi | grep "$SSID" | grep WPA3`
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()' - is WPA3 network: '$is_WPA3'"
+      
       output=`sudo nmcli device wifi connect "$SSID" password "$PSK"`
+
+      if [ ! -z "$is_WPA3" ]; then
+          # workaround for wpa3 connectivity
+          #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - apply workaround for WPA3 networks"
+          sudo sed -i '/key-mgmt\=sae/s//key-mgmt\=wpa-psk/' /etc/NetworkManager/system-connections/"$SSID".nmconnection
+          sudo systemctl restart NetworkManager
+          output=`sudo nmcli con up "$SSID"`
+      fi
     fi
 
     success=`echo "$output" | grep successfully`
