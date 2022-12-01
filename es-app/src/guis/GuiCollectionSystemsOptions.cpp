@@ -287,15 +287,13 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 
 		addWithDescription(_("STOP LAUNCHING THIS GAME AT STARTUP"), gamelabel, nullptr, [this, window]
 		{
-			LOG(LogDebug) << "GuiCollectionSystemsOptions::initializeMenu() - cleaning boot game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
-			Log::flush();
 			SystemConf::getInstance()->set("global.bootgame.path", "");
 			SystemConf::getInstance()->set("global.bootgame.cmd", "");
 			SystemConf::getInstance()->set("global.bootgame.info", "");
 
 			Settings::getInstance()->saveFile();
-			delete this;
-			window->pushGui(new GuiCollectionSystemsOptions(window, true));
+			close();
+			GuiCollectionSystemsOptions::openGui(window, true);
 		});
 	}
 
@@ -483,4 +481,9 @@ void GuiCollectionSystemsOptions::updateSettings(std::string newAutoSettings, st
 		ViewController::get()->goToStart();
 		ViewController::get()->reloadAll();
 	}
+}
+
+void GuiCollectionSystemsOptions::openGui(Window* window, bool cursor)
+{
+	window->pushGui(new GuiCollectionSystemsOptions(window, true));
 }

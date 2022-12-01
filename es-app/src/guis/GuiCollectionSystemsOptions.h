@@ -26,6 +26,8 @@ private:
 	std::shared_ptr< OptionListComponent<std::string> > autoOptionList;
 	std::shared_ptr< OptionListComponent<std::string> > customOptionList;
 
+	static void openGui(Window* window, bool cursor);
+
 	SystemData* mSystem;
 };
 
