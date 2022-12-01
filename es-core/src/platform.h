@@ -342,4 +342,28 @@ struct BluetoothDevice
 
 std::string queryBluetoothEnabled();
 
+struct SystemHotkeyValues
+{
+	SystemHotkeyValues()
+	{
+		brightness = false;
+		brightness_step = 1;
+		volume = false;
+		volume_step = 1;
+		wifi = false;
+		bluetooth = false;
+		speaker = false;
+		suspend = false;
+	}
+
+	bool brightness;
+	int brightness_step;
+	bool volume;
+	int volume_step;
+	bool wifi;
+	bool bluetooth;
+	bool speaker;
+	bool suspend;
+};
+
 #endif // ES_CORE_PLATFORM_H

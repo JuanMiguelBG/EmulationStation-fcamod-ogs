@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 do_help()
 {
@@ -19,11 +19,11 @@ config_set_value()
 	local key=$1
 	local value=$2
 
-	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()', key: '$key', value: '$value'"
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()' - key: '$key', value: '$value'"
 
 	[ -z "$value" ] && value=0
 	cat "$configFile" | grep -iw "$key" > /dev/null
-	valPresent=$?
+	local valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
 		echo "$key=$value" | sudo tee -a "$configFile" > /dev/null
@@ -31,7 +31,7 @@ config_set_value()
 		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$configFile" > /dev/null
 	fi
 
-	#print_log $LOG_FILE "DEBUG" "config_set_value() - restarting 'oga_events' service"
+	#print_log $LOG_FILE "DEBUG" "Executing 'config_set_value()' - restarting 'oga_events' service"
 	sudo systemctl restart oga_events.service --quiet &
 }
 
@@ -39,25 +39,36 @@ config_get_value()
 {
 	local key=$1
 
-	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()', key: '$key'"
+	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()' - key: '$key'"
 
-	local value =`sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"`
-	#print_log $LOG_FILE "DEBUG" "Executing 'config_get_value()', key: '$key', value: '$value'"
+	local value=`sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"`
+	#print_log $LOG_FILE "DEBUG" "Executing 'config_get_value()' - key: '$key', value: '$value'"
 	echo "$value"
 }
 
 config_set_all_values()
 {
-	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()', brightness: '$1', brightness_step: '$2', volume: '$3', volume_step: '$4', wifi: '$5', bluetooth: '$6', speaker: '$7', suspend: '$8'"
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_all_values()' - brightness: '$1', brightness_step: '$2', volume: '$3', volume_step: '$4', wifi: '$5', bluetooth: '$6', speaker: '$7', suspend: '$8'"
 	config_file $1 $2 $3 $4 $5 $6 $7 $8
 
-	#print_log $LOG_FILE "DEBUG" "config_set_value() - restarting 'oga_events' service"
+	#print_log $LOG_FILE "DEBUG" "Executing 'config_set_all_values()' - restarting 'oga_events' service"
 	sudo systemctl restart oga_events.service --quiet &
 }
 
 config_file()
 {
 	echo "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nbluetooth=$6\nspeaker=$7\nsuspend=$8\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
+}
+
+do_get_all_values()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_all_values()'"
+
+	source $configFile
+	local result="$brightness;$brightness_step;$volume;$volume_step;$wifi;$bluetooth;$speaker;$suspend"
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_get_all_values()' - values: $result"
+	echo "$result"
 }
 
 # ******************************************************************************************
@@ -81,7 +92,7 @@ fi
 ACTION=$1
 shift
 
-#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1' #####"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1 $2 $3 $4 $5 $6 $7 $8' #####"
 
 case "${ACTION}" in
     "set")
@@ -93,6 +104,9 @@ case "${ACTION}" in
     "set_all_values")
         config_set_all_values "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8" || exit 1
     ;;
+    "get_all_values")
+        do_get_all_values
+    ;;
     *)
         do_help
         >&2 echo "error: invalid command ${ACTION}"
@@ -100,6 +114,6 @@ case "${ACTION}" in
         exit 1
 esac
 
-#print_log $LOG_FILE "INFO" "##### Exit executing operation: '${ACTION} $1' #####"
+#print_log $LOG_FILE "INFO" "##### Exit executing operation: '${ACTION} $1 $2 $3 $4 $5 $6 $7 $8' #####"
 
 exit 0

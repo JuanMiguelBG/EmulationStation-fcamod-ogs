@@ -780,24 +780,41 @@ bool ApiSystem::isSystemHotkeySuspendEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get suspend)"));
 }
 
-bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state,
-										bool bluetooth_state, bool speaker_state, bool suspend_state)
+bool ApiSystem::setSystemHotkeysValues(SystemHotkeyValues values)
 {
 	LOG(LogInfo) << "ApiSystem::setSystemHotkeysValues()";
 
-	if (brightness_step <= 0)
-		brightness_step = 1;
-	else if (brightness_step > 25)
-		brightness_step = 25;
+	if (values.brightness_step <= 0)
+		values.brightness_step = 1;
+	else if (values.brightness_step > 25)
+		values.brightness_step = 25;
 
-	if (volume_step <= 0)
-		volume_step = 1;
-	else if (volume_step > 25)
-		volume_step = 25;
+	if (values.volume_step <= 0)
+		values.volume_step = 1;
+	else if (values.volume_step > 25)
+		values.volume_step = 25;
 
-	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + std::to_string(brightness_step)
-			+ " " + stateToString(volume_state) + " " + std::to_string(volume_step) + " " + stateToString(wifi_state)
-			+ " " + stateToString(bluetooth_state) + " " + stateToString(speaker_state) + " " + stateToString(suspend_state) + " &");
+	return executeScript("es-system_hotkey set_all_values " + stateToString(values.brightness) + " " + std::to_string(values.brightness_step)
+			+ " " + stateToString(values.volume) + " " + std::to_string(values.volume_step) + " " + stateToString(values.wifi)
+			+ " " + stateToString(values.bluetooth) + " " + stateToString(values.speaker) + " " + stateToString(values.suspend) + " &");
+}
+
+SystemHotkeyValues ApiSystem::getSystemHotkeyValues()
+{
+	LOG(LogInfo) << "ApiSystem::isDeviceAutoSuspendByTime()";
+
+	std::vector<std::string> values = Utils::String::split( getShOutput(R"(es-system_hotkey get_all_values)"), ';' );
+	SystemHotkeyValues result;
+	if (values.size() > 0)
+		result.brightness = stringToState(values[0]);
+		result.brightness_step = std::atoi(values[1].c_str());
+		result.volume = stringToState(values[2]);
+		result.volume_step = std::atoi(values[3].c_str());
+		result.wifi = stringToState(values[4]);
+		result.bluetooth = stringToState(values[5]);
+		result.speaker = stringToState(values[6]);
+		result.suspend = stringToState(values[7]);
+	return result;
 }
 
 bool ApiSystem::isDeviceAutoSuspendByTime()

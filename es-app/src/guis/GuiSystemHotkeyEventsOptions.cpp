@@ -19,58 +19,53 @@ GuiSystemHotkeyEventsOptions::~GuiSystemHotkeyEventsOptions()
 
 void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 {
+	SystemHotkeyValues hk_values = ApiSystem::getInstance()->getSystemHotkeyValues();
+
 	// brightness events
-	bool brightness_value = ApiSystem::getInstance()->isSystemHotkeyBrightnessEvent();
-	auto brightness = std::make_shared<SwitchComponent>(window, brightness_value);
+	auto brightness = std::make_shared<SwitchComponent>(window, hk_values.brightness);
 	addWithLabel(_("BRIGHTNESS"), brightness);
 
 	// brightness step
 	auto brightness_step = std::make_shared<SliderComponent>(mWindow, 1.0f, 25.f, 1.0f, "%");
-	int brightness_step_value = ApiSystem::getInstance()->getSystemHotkeyBrightnessStep();
-	brightness_step->setValue((float) brightness_step_value);
+	brightness_step->setValue((float) hk_values.brightness_step);
 	addWithLabel(_("BRIGHTNESS STEP"), brightness_step);
 
 	// volume events
-	bool volume_value = ApiSystem::getInstance()->isSystemHotkeyVolumeEvent();
-	auto volume = std::make_shared<SwitchComponent>(window, volume_value);
+	auto volume = std::make_shared<SwitchComponent>(window, hk_values.volume);
 	addWithLabel(_("VOLUME"), volume);
 
 	// volume step
 	float volume_start = 1.0f;
-	int volume_step_value = ApiSystem::getInstance()->getSystemHotkeyVolumeStep();
+	int volume_step_value = hk_values.volume_step;
 	if (Settings::getInstance()->getBool("BluetoothAudioConnected"))
 	{
 		volume_start = 2.0f;
-		if (volume_step_value == 1)
-			volume_step_value = 2;
+		if (hk_values.volume_step == 1)
+			hk_values.volume_step = 2;
 	}
 
 	auto volume_step = std::make_shared<SliderComponent>(mWindow, volume_start, 25.f, 1.0f, "%");
 	
-	volume_step->setValue((float) volume_step_value);
+	volume_step->setValue((float) hk_values.volume_step);
 	addWithLabel(_("VOLUME STEP"), volume_step);
 
 	// wifi events
-	bool wifi_value = ApiSystem::getInstance()->isSystemHotkeyWifiEvent();
-	auto wifi = std::make_shared<SwitchComponent>(window, wifi_value);
+	auto wifi = std::make_shared<SwitchComponent>(window, hk_values.wifi);
 	addWithLabel(_("WIFI"), wifi);
 
 	// bluetooth events
-	bool bluetooth_value = ApiSystem::getInstance()->isSystemHotkeyBluetoothEvent();
-	auto bluetooth = std::make_shared<SwitchComponent>(window, bluetooth_value);
+	auto bluetooth = std::make_shared<SwitchComponent>(window, hk_values.bluetooth);
 	addWithLabel(_("BLUETOOTH"), bluetooth);
 
 	// speaker events
-	bool speaker_value = ApiSystem::getInstance()->isSystemHotkeySpeakerEvent();
-	auto speaker = std::make_shared<SwitchComponent>(window, speaker_value);
+	auto speaker = std::make_shared<SwitchComponent>(window, hk_values.speaker);
 	addWithLabel(_("SPEAKER"), speaker);
 
 	// suspend events
-	bool suspend_value = ApiSystem::getInstance()->isSystemHotkeySuspendEvent();
-	auto suspend = std::make_shared<SwitchComponent>(window, suspend_value);
+	auto suspend = std::make_shared<SwitchComponent>(window, hk_values.suspend);
 	addWithLabel(_("SUSPEND"), suspend);
 
-	addSaveFunc([brightness, brightness_value, brightness_step, brightness_step_value, volume, volume_value, volume_step, volume_step_value, wifi, wifi_value, bluetooth, bluetooth_value, speaker, speaker_value, suspend, suspend_value]
+	addSaveFunc([&hk_values, brightness, brightness_step, volume, volume_step, wifi, bluetooth, speaker, suspend]
 		{
 			bool brightness_new_value = brightness->getState();
 			int brightness_step_new_value = (int)Math::round( brightness_step->getValue() );
@@ -81,12 +76,21 @@ void GuiSystemHotkeyEventsOptions::initializeMenu(Window* window)
 			bool speaker_new_value = speaker->getState();
 			bool suspend_new_value = suspend->getState();
 
-			if ( (brightness_value != brightness_new_value) || (brightness_step_value != brightness_step_new_value)
-				|| (volume_value != volume_new_value) || (volume_step_value != volume_step_new_value)
-				|| (wifi_value != wifi_new_value) || (bluetooth_value != bluetooth_new_value) || (speaker_value != speaker_new_value)
-				|| (suspend_value != suspend_new_value) )
+			if ( (hk_values.brightness != brightness_new_value) || (hk_values.brightness_step != brightness_step_new_value)
+				|| (hk_values.volume != volume_new_value) || (hk_values.volume_step != volume_step_new_value)
+				|| (hk_values.wifi != wifi_new_value) || (hk_values.bluetooth != bluetooth_new_value)
+				|| (hk_values.speaker != speaker_new_value) || (hk_values.suspend != suspend_new_value) )
 			{
-				ApiSystem::getInstance()->setSystemHotkeysValues( brightness_new_value, brightness_step_new_value, volume_new_value, volume_step_new_value, wifi_new_value, bluetooth_new_value, speaker_new_value, suspend_new_value );
+				hk_values.brightness = brightness_new_value;
+				hk_values.brightness_step = brightness_step_new_value;
+				hk_values.volume = volume_new_value;
+				hk_values.volume_step = volume_step_new_value;
+				hk_values.wifi = wifi_new_value;
+				hk_values.bluetooth = bluetooth_new_value;
+				hk_values.speaker = speaker_new_value;
+				hk_values.suspend = suspend_new_value;
+
+				ApiSystem::getInstance()->setSystemHotkeysValues( hk_values );
 			}
 		});
 }
