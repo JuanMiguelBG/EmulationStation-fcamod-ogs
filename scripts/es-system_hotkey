@@ -57,7 +57,7 @@ config_set_all_values()
 
 config_file()
 {
-	echo "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nbluetooth=$6\nspeaker=$7\nsuspend=$8\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
+	echo -e "#The powerkey configuration file\nbrightness=$1\nbrightness_step=$2\nvolume=$3\nvolume_step=$4\nwifi=$5\nbluetooth=$6\nspeaker=$7\nsuspend=$8\nes_home_path=$ES_HOME_PATH\nes_brigthness_lock_file=$ES_BRIGTHNESS_LOCK_FILE\n" | sudo tee "$configFile" > /dev/null
 }
 
 do_get_all_values()

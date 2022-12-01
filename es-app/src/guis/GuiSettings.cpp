@@ -58,7 +58,6 @@ void GuiSettings::close()
 	if (mOnFinalizeFunc != nullptr)
 			mOnFinalizeFunc();
 
-
 	if (mCloseButtonFunc != nullptr)
 		mCloseButtonFunc();
 

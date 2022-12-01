@@ -292,6 +292,7 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 			SystemConf::getInstance()->set("global.bootgame.info", "");
 
 			Settings::getInstance()->saveFile();
+			setVariable("fastClose", true);
 			close();
 			GuiCollectionSystemsOptions::openGui(window, true);
 		});
@@ -353,7 +354,9 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 
 	onFinalize([this, window]
 	{
-		if (getVariable("reloadSystems"))
+		if (getVariable("fastClose"))
+			return;
+		else if (getVariable("reloadSystems"))
 		{
 			window->renderLoadingScreen(_("Loading..."));
 
