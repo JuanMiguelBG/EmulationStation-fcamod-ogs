@@ -634,19 +634,6 @@ void GuiGamelistOptions::deleteGame(FileData* fileData)
 	if (fileData->getType() != GAME)
 		return;
 
-	auto sourceFile = fileData->getSourceFileData();
-
-	auto sys = sourceFile->getSystem();
-	if (sys->isGroupChildSystem())
-		sys = sys->getParentGroupSystem();
-
-	CollectionSystemManager::getInstance()->deleteCollectionFiles(sourceFile);
-	sourceFile->deleteGameFiles();
-
-	auto view = ViewController::get()->getGameListView(sys, false);
-	if (view != nullptr)
-		view.get()->remove(sourceFile);
-
 	// updating boot game configuration
 	if (!SystemConf::getInstance()->get("global.bootgame.path").empty())
 	{
@@ -660,6 +647,19 @@ void GuiGamelistOptions::deleteGame(FileData* fileData)
 		}
 		Log::flush();
 	}
+
+	auto sourceFile = fileData->getSourceFileData();
+
+	auto sys = sourceFile->getSystem();
+	if (sys->isGroupChildSystem())
+		sys = sys->getParentGroupSystem();
+
+	CollectionSystemManager::getInstance()->deleteCollectionFiles(sourceFile);
+	sourceFile->deleteGameFiles();
+
+	auto view = ViewController::get()->getGameListView(sys, false);
+	if (view != nullptr)
+		view.get()->remove(sourceFile);
 }
 
 void GuiGamelistOptions::close()
