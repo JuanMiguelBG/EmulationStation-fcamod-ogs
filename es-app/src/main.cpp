@@ -557,15 +557,11 @@ void launchStartupGame()
 					  rom = Utils::FileSystem::getEscapedPath(path),
 					  basename = Utils::FileSystem::getStem(path);
 
-	LOG(LogInfo) << "MAIN::launchStartupGame() - game: '" << basename << "' command: '" << command << "'";
-	LOG(LogDebug) << "MAIN::launchStartupGame() - bootGame.system: '" << bootGame.system << "', bootGame.name: '" << bootGame.name << "'";
-	Log::flush();
+	LOG(LogInfo) << "MAIN::launchStartupGame() - game: '" << bootGame.name << "', system: '" << bootGame.system << "', command: '" << command << "'";
 
 	bootGame.launched = true;
 	Scripting::fireEvent("game-start", rom, basename, bootGame.name);
 	time_t tstart = time(NULL);
-	//InputManager::getInstance()->init();
-	//command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", InputManager::getInstance()->configureEmulators());
 	exitCode = runSystemCommand(command, gamePath, nullptr);
 
 	Scripting::fireEvent("game-end");
@@ -583,8 +579,7 @@ void launchStartupGame()
 
 void updateMetadataStartupGame()
 {
-	LOG(LogDebug) << "MAIN::updateMetadataStartupGame() - system: '" << bootGame.system << "', game: '" << bootGame.name << "', launched: '" << Utils::String::boolToString(bootGame.launched) << "'";
-	Log::flush();
+	//LOG(LogDebug) << "MAIN::updateMetadataStartupGame() - system: '" << bootGame.system << "', game: '" << bootGame.name << "', launched: '" << Utils::String::boolToString(bootGame.launched) << "'";
 	if (!bootGame.launched)
 		return;
 

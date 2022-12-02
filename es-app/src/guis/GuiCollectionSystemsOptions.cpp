@@ -54,7 +54,7 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 
 		if (hiddenSystems != Settings::getInstance()->getString("HiddenSystems"))
 		{
-			LOG(LogDebug) << "GuiMenu::openUISettings() - hiddenSystems changed, new value: '" << hiddenSystems << "'";
+			LOG(LogInfo) << "GuiCollectionSystemsOptions::initializeMenu() - hiddenSystems changed, new value: '" << hiddenSystems << "'";
 			Settings::getInstance()->setString("HiddenSystems", hiddenSystems);
 			Settings::getInstance()->saveFile();
 
@@ -67,15 +67,12 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 
 				for (std::string vsystem : Utils::String::split(Settings::getInstance()->getString("HiddenSystems"), ';'))
 				{
-					LOG(LogDebug) << "GuiCollectionSystemsOptions::initializeMenu() - vsystem: " << vsystem << ", game '" << boot_game_system << "'";
 					if (boot_game_system == vsystem)
 					{
-						LOG(LogDebug) << "GuiCollectionSystemsOptions::initializeMenu() - system '" << boot_game_system << "' is hidden, removing boot game info";
 						SystemConf::getInstance()->set("global.bootgame.path", "");
 						SystemConf::getInstance()->set("global.bootgame.cmd", "");
 						SystemConf::getInstance()->set("global.bootgame.info", "");
 					}
-					Log::flush();
 				}
 			}
 

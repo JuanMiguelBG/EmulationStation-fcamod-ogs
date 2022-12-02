@@ -297,7 +297,7 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 						game_info.append(fileData->getSystem()->getName()).append(";").append(fileData->getName());
 					}
 					SystemConf::getInstance()->set("global.bootgame.info",  game_info);
-					//LOG(LogDebug) << "GuiGamelistOptions::GuiGamelistOptions() - setted boot game, state: '" << Utils::String::boolToString(bootgame->getState()) << "', game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
+					//LOG(LogDebug) << "GuiGamelistOptions::GuiGamelistOptions() - changed boot game, state: '" << Utils::String::boolToString(bootgame->getState()) << "', game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
 				});
 				mMenu.addWithLabel(_("LAUNCH THIS GAME AT STARTUP"), bootgame);
 			}
@@ -633,19 +633,19 @@ void GuiGamelistOptions::deleteGame(FileData* fileData)
 {
 	if (fileData->getType() != GAME)
 		return;
+	
+	LOG(LogInfo) << "GuiGamelistOptions::deleteGame() - deleting game: '" << fileData->getName()
+				 << "', system: '" << fileData->getSystem() << "', path: '" << fileData->getFullPath() << "'";
 
 	// updating boot game configuration
 	if (!SystemConf::getInstance()->get("global.bootgame.path").empty())
 	{
-		LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - updating boot game configuration, game name: " << fileData->getName() << "'";
 		if (SystemConf::getInstance()->get("global.bootgame.path") == fileData->getFullPath())
 		{
-			LOG(LogDebug) << "GuiGamelistOptions::deleteGame() - game '" << fileData->getName() << "' is deleted, removing boot game info";
 			SystemConf::getInstance()->set("global.bootgame.path", "");
 			SystemConf::getInstance()->set("global.bootgame.cmd", "");
 			SystemConf::getInstance()->set("global.bootgame.info", "");
 		}
-		Log::flush();
 	}
 
 	auto sourceFile = fileData->getSourceFileData();
