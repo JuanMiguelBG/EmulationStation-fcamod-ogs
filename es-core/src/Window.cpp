@@ -78,7 +78,7 @@ void Window::removeGui(GuiComponent* gui)
 
 GuiComponent* Window::peekGui()
 {
-	if(mGuiStack.size() == 0)
+	if(mGuiStack.size() < 1)
 		return NULL;
 
 	return mGuiStack.back();

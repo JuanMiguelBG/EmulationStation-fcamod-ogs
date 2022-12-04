@@ -293,9 +293,8 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 					SystemConf::getInstance()->set("global.bootgame.cmd", bootgame->getState() ? fileData->getlaunchCommand() : "");
 					std::string game_info("");
 					if (bootgame->getState())
-					{
-						game_info.append(fileData->getSystem()->getName()).append(";").append(fileData->getName());
-					}
+						game_info.append(fileData->getSystemName()).append(";").append(fileData->getName());
+
 					SystemConf::getInstance()->set("global.bootgame.info",  game_info);
 					//LOG(LogDebug) << "GuiGamelistOptions::GuiGamelistOptions() - changed boot game, state: '" << Utils::String::boolToString(bootgame->getState()) << "', game info: '" << SystemConf::getInstance()->get("global.bootgame.info") << "'";
 				});
