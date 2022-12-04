@@ -20,6 +20,9 @@ public:
 	bool getBool(const std::string &name, bool defaultValue = false);
 	bool setBool(const std::string &name, bool value);
 
+	int getInt(const std::string &name, bool defaultValue = false);
+	bool setInt(const std::string &name, int value);
+
 private:
 	SystemConf();
 	static SystemConf* sInstance;

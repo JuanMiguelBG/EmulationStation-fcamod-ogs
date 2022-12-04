@@ -2,7 +2,6 @@
 #define API_SYSTEM
 
 #include <string>
-#include <functional>
 #include <vector>
 #include "platform.h"
 
@@ -36,6 +35,7 @@ protected:
 	virtual bool executeScript(const std::string command);
 	virtual std::pair<std::string, int> executeScript(const std::string command, const std::function<void(const std::string)>& func);
 	virtual std::vector<std::string> executeEnumerationScript(const std::string command);
+	virtual bool executeBoolScript(const std::string command);
 
 	static ApiSystem* instance;
 
@@ -257,6 +257,7 @@ public:
 	virtual bool launchKodi(Window *window);
 	virtual bool launchBluetoothConfigurator(Window *window);
 
+	bool isBluetoothActive();
 	bool isBluetoothEnabled();
 	bool enableBluetooth();
 	bool disableBluetooth();

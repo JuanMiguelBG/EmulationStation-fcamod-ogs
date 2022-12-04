@@ -323,7 +323,7 @@ std::string FileData::getMessageFromExitCode(int exitCode)
 
 std::string FileData::getlaunchCommand()
 {
-	LOG(LogDebug) << "FileData::getlaunchCommand() - name: " << getName();
+//	LOG(LogDebug) << "FileData::getlaunchCommand() - name: " << getName();
 
 	FileData* gameToUpdate = getSourceFileData();
 	if (gameToUpdate == nullptr)
@@ -362,8 +362,31 @@ std::string FileData::getlaunchCommand()
 		command = Utils::String::replace(command, "%SYSTEM%", getSystemName());
 		command = Utils::String::replace(command, "%HOME%", Utils::FileSystem::getHomePath());
 	}
-	LOG(LogDebug) << "FileData::getlaunchCommand() - name: '" << getName() << "', command line: '" << command << "'";
+//	LOG(LogDebug) << "FileData::getlaunchCommand() - name: '" << getName() << "', command line: '" << command << "'";
 	return command;
+}
+
+void FileData::updateBootGameMetadata(long timePlayed, time_t lastPlayed)
+{
+//	LOG(LogDebug) << "FileData::updateBootGameMetadata() - time played: " << std::to_string(timePlayed) << ", update times pleyd: " << Utils::String::boolToString(updateTimesPlayed);
+
+	FileData* gameToUpdate = getSourceFileData();
+
+	//update game times played
+	int timesPlayed = gameToUpdate->getMetadata().getInt(MetaDataId::PlayCount) + 1;
+	gameToUpdate->setMetadata(MetaDataId::PlayCount, std::to_string(static_cast<long long>(timesPlayed)));
+
+	// update game time played
+	if (timePlayed >= 10)
+	{
+		long gameTime = gameToUpdate->getMetadata().getInt(MetaDataId::GameTime) + timePlayed;
+		gameToUpdate->setMetadata(MetaDataId::GameTime, std::to_string(static_cast<long>(gameTime)));
+	}
+
+	// update last played time
+	gameToUpdate->setMetadata(MetaDataId::LastPlayed, Utils::Time::DateTime(lastPlayed));
+	CollectionSystemManager::getInstance()->refreshCollectionSystems(gameToUpdate);
+	saveToGamelistRecovery(gameToUpdate);
 }
 
 void FileData::launchGame(Window* window)
@@ -426,22 +449,9 @@ void FileData::launchGame(Window* window)
 	//update number of times the game has been launched
 	if (exitCode == 0)
 	{
-		FileData* gameToUpdate = getSourceFileData();
-
-		int timesPlayed = gameToUpdate->getMetadata().getInt(MetaDataId::PlayCount) + 1;
-		gameToUpdate->setMetadata(MetaDataId::PlayCount, std::to_string(static_cast<long long>(timesPlayed)));
-
 		//update game time played
 		time_t tend = time(NULL);
-		long elapsedSeconds = difftime(tend, tstart);
-		long gameTime = gameToUpdate->getMetadata().getInt(MetaDataId::GameTime) + elapsedSeconds;
-		if (elapsedSeconds >= 10)
-			gameToUpdate->setMetadata(MetaDataId::GameTime, std::to_string(static_cast<long>(gameTime)));
-
-		//update last played time
-		gameToUpdate->setMetadata(MetaDataId::LastPlayed, Utils::Time::DateTime(Utils::Time::now()));
-		CollectionSystemManager::getInstance()->refreshCollectionSystems(gameToUpdate);
-		saveToGamelistRecovery(gameToUpdate);
+		updateBootGameMetadata((long) difftime(tend, tstart), Utils::Time::now());
 	}
 
 	// music

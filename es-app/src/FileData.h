@@ -97,6 +97,8 @@ public:
 	bool hasContentFiles();
 	std::set<std::string> getContentFiles();
 
+	void updateBootGameMetadata(long timePlayed, time_t lastPlayed);
+
 private:
 	std::string getMessageFromExitCode(int exitCode);
 

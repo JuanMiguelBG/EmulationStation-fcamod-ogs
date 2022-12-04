@@ -425,11 +425,19 @@ set_wifi_power_safe()
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-wifi.log"
 
-
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
 #fi
 
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    local param3=$4
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2 $param3', exit code: '$return' #####"
+    exit $return
+}
 
 if [ $# -eq 0 ]; then
   do_help
@@ -439,7 +447,7 @@ fi
 ACTION=$1
 shift
 
-#print_log $LOG_FILE "INFO" "##### Executing operation: $ACTION #####"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1 $2 $3' #####"
 
 case "${ACTION}" in
     "list")
@@ -452,31 +460,31 @@ case "${ACTION}" in
         do_start
     ;;
     "connect")
-        do_connect "$1" "$2" || exit 1
+        do_connect "$1" "$2" || exit_execution 1 "$1" "$2"
     ;;
     "disconnect")
-        do_disconnect "$1" || exit 1
+        do_disconnect "$1" || exit_execution 1 "$1"
     ;;
     "remove")
-        do_remove "$1" || exit 1
+        do_remove "$1" || exit_execution 1 "$1"
     ;;
     "reset")
-        do_reset "$1" || exit 1
+        do_reset "$1" || exit_execution 1 "$1"
     ;;
     "enable")
-        do_enable || exit 1
+        do_enable || exit_execution 1
     ;;
     "disable")
-        do_disable || exit 1
+        do_disable || exit_execution 1
     ;;
     "internet_status")
-        do_test_internet || exit 1
+        do_test_internet || exit_execution 1
     ;;
     "is_connected")
-        is_connected || exit 1
+        is_connected || exit_execution 1
     ;;
     "is_enabled")
-        is_enabled || exit 1
+        is_enabled || exit_execution 1
     ;;
     "get_ssid")
         get_ssid
@@ -491,22 +499,22 @@ case "${ACTION}" in
         get_dns2
     ;;
     "enable_manual_dns")
-        enable_manual_dns "$1" "$2" "$3" || exit 1
+        enable_manual_dns "$1" "$2" "$3" || exit_execution 1 "$1" "$2" "$3"
     ;;
     "disable_manual_dns")
-        disable_manual_dns "$1" || exit 1
+        disable_manual_dns "$1" || exit_execution 1
     ;;
     "enable_network_manager")
-        enable_network_manager || exit 1
+        enable_network_manager || exit_execution 1
     ;;
     "disable_network_manager")
-        disable_network_manager || exit 1
+        disable_network_manager || exit_execution 1
     ;;
     "is_network_manager_active")
-        is_network_manager_active || exit 1
+        is_network_manager_active || exit_execution 1
     ;;
     "is_network_manager_enabled")
-        is_network_manager_enabled || exit 1
+        is_network_manager_enabled || exit_execution 1
     ;;
     "test_network_manager")
         test_network_manager
@@ -518,10 +526,10 @@ case "${ACTION}" in
         get_network_exist_flag
     ;;
     "is_wifi_power_safe_enabled")
-        is_wifi_power_safe_enabled || exit 1
+        is_wifi_power_safe_enabled || exit_execution 1
     ;;
     "set_wifi_power_safe")
-        set_wifi_power_safe "$1" || exit 1
+        set_wifi_power_safe "$1" || exit_execution 1 "$1"
     ;;
     *)
         do_help
@@ -530,5 +538,4 @@ case "${ACTION}" in
         exit 1
 esac
 
-#print_log $LOG_FILE "INFO" "##### Exit executing operation: $ACTION #####"
-exit 0
+exit_execution 0 "$1" "$2" "$3"

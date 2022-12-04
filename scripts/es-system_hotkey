@@ -8,11 +8,13 @@ do_help()
 	echo ""
 	echo "or"
 	echo ""
-	echo "usage : es-system_hotkey set_all_values [brightness_value] [brightness_step_value] [volume_value] [volume_step_value] [wifi_value] [bluetooth_value] [speaker_value] [suspend_value]"
+	echo "usage : $0 set_all_values [brightness_value] [brightness_step_value] [volume_value] [volume_step_value] [wifi_value] [bluetooth_value] [speaker_value] [suspend_value]"
 	echo "Valid values: enabled and disabled"
+	echo ""
+	echo "or"
+	echo ""
+	echo "usage :$0 get_all_values"
 }
-
-configFile="/usr/local/etc/ogage.conf"
 
 config_set_value()
 {
@@ -78,31 +80,51 @@ do_get_all_values()
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-system_hotkey.log"
 
-
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
 #fi
 
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    local param3=$4
+    local param4=$5
+    local param5=$6
+    local param6=$7
+    local param7=$8
+    local param8=$9
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2 $param3 $param4 $param5 $param6 $param7 $param8', result: '$return' #####"
+    exit $return
+}
 
 if [ $# -eq 0 ]; then
   do_help
   exit 1
 fi
 
+configFile="/usr/local/etc/ogage.conf"
+
 ACTION=$1
 shift
 
 #print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1 $2 $3 $4 $5 $6 $7 $8' #####"
 
+if [ ! -f "$configFile" ]; then
+  #print_log $LOG_FILE "WARNING" "OGAGE configuration file '$configFile' doesn't exist, creating it with default values"
+  config_set_all_values enabled 1 enabled 1 enabled enabled enabled enabled
+fi
+
 case "${ACTION}" in
     "set")
-        config_set_value "$1" "$2" || exit 1
+        config_set_value "$1" "$2" || exit_execution 1 "$1" "$2"
     ;;
     "get")
         config_get_value "$1"
     ;;
     "set_all_values")
-        config_set_all_values "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8" || exit 1
+        config_set_all_values "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8" || exit_execution 1 "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8"
     ;;
     "get_all_values")
         do_get_all_values
@@ -114,6 +136,4 @@ case "${ACTION}" in
         exit 1
 esac
 
-#print_log $LOG_FILE "INFO" "##### Exit executing operation: '${ACTION} $1 $2 $3 $4 $5 $6 $7 $8' #####"
-
-exit 0
+exit_execution 0 "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8"

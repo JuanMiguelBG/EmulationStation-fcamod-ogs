@@ -1533,20 +1533,5 @@ void CollectionSystemManager::updateBootGameMetadata(const std::string system, c
 		return;
 	}
 
-	FileData* gameToUpdate = gameFileData->getSourceFileData();
-
-	int timesPlayed = gameToUpdate->getMetadata().getInt(MetaDataId::PlayCount) + 1;
-	gameToUpdate->setMetadata(MetaDataId::PlayCount, std::to_string(static_cast<long long>(timesPlayed)));
-
-	//update game time played
-	if (timePlayed >= 10)
-	{
-		long gameTime = gameToUpdate->getMetadata().getInt(MetaDataId::GameTime) + timePlayed;
-		gameToUpdate->setMetadata(MetaDataId::GameTime, std::to_string(static_cast<long>(gameTime)));
-	}
-
-	//update last played time
-	gameToUpdate->setMetadata(MetaDataId::LastPlayed, Utils::Time::DateTime(lastPlayed));
-	refreshCollectionSystems(gameToUpdate);
-	saveToGamelistRecovery(gameToUpdate);
+	gameFileData->updateBootGameMetadata(timePlayed, lastPlayed);
 }

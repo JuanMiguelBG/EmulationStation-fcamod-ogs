@@ -762,11 +762,17 @@ do_auto_connect_audio_device_off()
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-bluetooth.log"
 
-
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
 #fi
 
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1', exit code: '$return' #####"
+    exit $return
+}
 
 if [ $# -eq 0 ]; then
   do_help
@@ -776,44 +782,44 @@ fi
 ACTION=$1
 shift
 
-#print_log $LOG_FILE "INFO" "##### Executing operation: $ACTION #####"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1' #####"
 
 case "${ACTION}" in
     "scan_on")
-        do_scan_on || exit 1
+        do_scan_on || exit_execution 1
     ;;
     "scan_off")
-        do_scan_off || exit 1
+        do_scan_off || exit_execution 1
     ;;
     "new_devices")
-        get_new_devices_list || exit 1
+        get_new_devices_list || exit_execution 1
     ;;
     "enable")
-        do_enable || exit 1
+        do_enable || exit_execution 1
     ;;
     "disable")
-        do_disable || exit 1
+        do_disable || exit_execution 1
     ;;
     "enable_bluetooth")
-        enable_bluetooth || exit 1
+        enable_bluetooth || exit_execution 1
     ;;
     "disable_bluetooth")
-        disable_bluetooth || exit 1
+        disable_bluetooth || exit_execution 1
     ;;
     "toggle")
-        do_toggle_bluetooth || exit 1
+        do_toggle_bluetooth || exit_execution 1
     ;;
     "is_bluetooth_active")
-        is_bluetooth_active || exit 1
+        is_bluetooth_active || exit_execution 1
     ;;
     "is_bluetooth_enabled")
-        is_bluetooth_enabled || exit 1
+        is_bluetooth_enabled || exit_execution 1
     ;;
     "is_bluetooth_audio_device")
-        is_bluetooth_audio_device "$1" || exit 1
+        is_bluetooth_audio_device "$1" || exit_execution 1 "$1"
     ;;
     "is_bluetooth_audio_device_connected")
-        is_bluetooth_audio_device_connected || exit 1
+        is_bluetooth_audio_device_connected || exit_execution 1
     ;;
     "audio_device_connected")
         get_bluetooth_audio_device_connected
@@ -822,7 +828,7 @@ case "${ACTION}" in
         get_info_device "$1"
     ;;
     "pair_device")
-        do_pair_device "$1" || exit 1
+        do_pair_device "$1" || exit_execution 1 "$1"
     ;;
     "paired_devices")
         get_paired_devices
@@ -831,28 +837,28 @@ case "${ACTION}" in
         get_connected_devices
     ;;
     "disconnect_device")
-        do_disconnect_device "$1" || exit 1
+        do_disconnect_device "$1" || exit_execution 1 "$1"
     ;;
     "disconnect_all_devices")
-        do_disconnect_all_devices || exit 1
+        do_disconnect_all_devices || exit_execution 1
     ;;
     "connect_device")
-        do_connect_device "$1" || exit 1
+        do_connect_device "$1" || exit_execution 1 "$1"
     ;;
     "delete_device_connection")
-        do_delete_device_connection "$1" || exit 1
+        do_delete_device_connection "$1" || exit_execution 1 "$1"
     ;;
     "delete_all_device_connections")
-        do_delete_all_device_connections || exit 1
+        do_delete_all_device_connections || exit_execution 1
     ;;
     "auto_connect_audio_device_on")
-        do_auto_connect_audio_device_on || exit 1
+        do_auto_connect_audio_device_on || exit_execution 1
     ;;
     "auto_connect_audio_device_off")
-        do_auto_connect_audio_device_off || exit 1
+        do_auto_connect_audio_device_off || exit_execution 1
     ;;
     "test_bluetooth")
-        test_bluetooth || exit 1
+        test_bluetooth || exit_execution 1
     ;;
     *)
         do_help
@@ -861,5 +867,4 @@ case "${ACTION}" in
         exit 1
 esac
 
-#print_log $LOG_FILE "INFO" "##### Exit executing operation: $ACTION #####"
-exit 0
+exit_execution 0 "$1"

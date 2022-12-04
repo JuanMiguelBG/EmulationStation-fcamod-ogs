@@ -209,11 +209,18 @@ do_toggle_output()
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-sound.log"
 
-
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
 #fi
 
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2', result: '$return' #####"
+    exit $return
+}
 
 if [ $# -eq 0 ]; then
   do_help
@@ -223,17 +230,17 @@ fi
 ACTION=$1
 shift
 
-#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1' #####"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1 $2' #####"
 
 case "${ACTION}" in
     "set")
-        config_set_value "$1" "$2" || exit 1
+        config_set_value "$1" "$2" || exit_execution 1 "$1" "$2"
     ;;
     "get")
         config_get_value "$1"
     ;;
     "toggle")
-        do_toggle_output || exit 1
+        do_toggle_output || exit_execution 1
     ;;
     *)
         do_help
@@ -242,6 +249,4 @@ case "${ACTION}" in
         exit 1
 esac
 
-#print_log $LOG_FILE "INFO" "##### Exit executing operation: '${ACTION} $1' #####"
-
-exit 0
+exit_execution 0 "$1" "$2"

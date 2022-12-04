@@ -216,23 +216,27 @@ LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-optimize_system.log"
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
 #fi
 
-
 if [ $# -eq 0 ]; then
   do_help
   exit 1
 fi
 
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1', exit code: '$return' #####"
+    exit $return
+}
 
 ACTION=$1
-VALUE=$2
-VALUE2=$3
 shift
 
-#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION', value: $VALUE, value2: $VALUE2 #####"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1' #####"
 
 case "${ACTION}" in
     "active_optimize_system")
-        do_active_optimize_system "$VALUE"
+        do_active_optimize_system "$1"
         remove_log
         remove_journal
     ;;
@@ -243,5 +247,4 @@ case "${ACTION}" in
         exit 1
 esac
 
-#print_log $LOG_FILE "INFO" "##### Exit executing operation: $ACTION #####"
-exit 0
+exit_execution 0 "$1"

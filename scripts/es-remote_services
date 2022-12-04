@@ -381,11 +381,19 @@ do_set_status()
 EXIST_CONNECTION_FLAG=" (**)"
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-remote_services.log"
 
-
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
 #fi
 
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    local param3=$4
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2 $param3', exit code: '$return' #####"
+    exit $return
+}
 
 if [ $# -eq 0 ]; then
   do_help
@@ -395,26 +403,26 @@ fi
 ACTION=$1
 shift
 
-#print_log $LOG_FILE "INFO" "##### Executing operation: $ACTION #####"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1 $2 $3' #####"
 
 case "${ACTION}" in
     "enable")
-        do_enable "$1" || exit 1
+        do_enable "$1" || exit_execution 1 "$1"
     ;;
     "disable")
-        do_disable "$1" || exit 1
+        do_disable "$1" || exit_execution 1 "$1"
     ;;
     "active")
-        do_active "$1" || exit 1
+        do_active "$1" || exit_execution 1 "$1"
     ;;
     "inactive")
-        do_inactive "$1" || exit 1
+        do_inactive "$1" || exit_execution 1 "$1"
     ;;
     "is_enabled")
-        is_enabled "$1" || exit 1
+        is_enabled "$1" || exit_execution 1 "$1"
     ;;
     "is_actived")
-        is_actived "$1" || exit 1
+        is_actived "$1" || exit_execution 1 "$1"
     ;;
     "get_status")
         do_get_status "$1"
@@ -423,7 +431,7 @@ case "${ACTION}" in
         do_get_status_detail "$1"
     ;;
     "set_status")
-        do_set_status "$1" "$2" "$3" || exit 1
+        do_set_status "$1" "$2" "$3" || exit_execution 1 "$1" "$2" "$3"
     ;;
     *)
         do_help
@@ -432,5 +440,4 @@ case "${ACTION}" in
         exit 1
 esac
 
-#print_log $LOG_FILE "INFO" "##### Exit executing operation: $ACTION #####"
-exit 0
+exit_execution 0 "$1" "$2" "$3"

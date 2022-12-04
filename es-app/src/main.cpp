@@ -340,7 +340,14 @@ void loadOtherSettings()
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 			{
 				SystemConf::getInstance()->set("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
-				SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
+				bool wifi_enabled = ApiSystem::getInstance()->isWifiEnabled();
+				if (wifi_enabled)
+				{
+					SystemConf::getInstance()->setBool("wifi.enabled", wifi_enabled);
+//					std::string ssid = ApiSystem::getInstance()->getWifiSsid();
+//					if (SystemConf::getInstance()->setBool("wifi.ssid") != ssid)
+//						SystemConf::getInstance()->setBool("wifi.ssid", ssid);
+				}
 			}
 
 			bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
@@ -485,22 +492,35 @@ void waitPreloadVlc(Window *window)
 
 void startAutoConnectBluetoothAudioDevice(std::string &log)
 {
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
-		&& Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
-	{
-		log.append("MAIN::startAutoConnectBluetoothAudioDevice()\n");
-		ApiSystem::getInstance()->startAutoConnectBluetoothAudioDevice();
-	}
+	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		|| !SystemConf::getInstance()->getBool("bluetooth.enabled")
+		|| !Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
+		return;
+
+	log.append("MAIN::startAutoConnectBluetoothAudioDevice()\n");
+	ApiSystem::getInstance()->startAutoConnectBluetoothAudioDevice();
 }
 
 void stopAutoConnectBluetoothAudioDevice()
 {
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
-		&& Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
-	{
-		LOG(LogInfo) << "MAIN::stopAutoConnectBluetoothAudioDevice()";
-		ApiSystem::getInstance()->stopAutoConnectBluetoothAudioDevice();
-	}
+	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		|| !SystemConf::getInstance()->getBool("bluetooth.enabled")
+		|| !Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
+		return;
+
+	LOG(LogInfo) << "MAIN::stopAutoConnectBluetoothAudioDevice()";
+	ApiSystem::getInstance()->stopAutoConnectBluetoothAudioDevice();
+}
+
+void waitForBluetoothDevices()
+{
+	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		|| !SystemConf::getInstance()->getBool("bluetooth.enabled"))
+		return;
+
+	int bt_timeout = Settings::getInstance()->getInt("bluetooth.boot.game.timeout");
+	if (bt_timeout > 0)
+		Utils::Async::sleep(bt_timeout * 1000);
 }
 
 void removeLockFiles()
@@ -561,7 +581,7 @@ void launchStartupGame()
 
 	bootGame.launched = true;
 	Scripting::fireEvent("game-start", rom, basename, bootGame.name);
-	time_t tstart = time(NULL);
+	time_t game_tstart = time(NULL);
 	exitCode = runSystemCommand(command, gamePath, nullptr);
 
 	Scripting::fireEvent("game-end");
@@ -569,8 +589,8 @@ void launchStartupGame()
 	if (exitCode == 0)
 	{
 		//update game time played
-		time_t tend = time(NULL);
-		bootGame.time_played = difftime(tend, tstart);
+		time_t game_tend = time(NULL);
+		bootGame.time_played = difftime(game_tend, game_tstart);
 		bootGame.date = Utils::Time::now();
 	}
 	else
@@ -650,6 +670,7 @@ int main(int argc, char* argv[])
 	atexit(&onExit);
 
 	if (bootGame.enable_startup_game) {
+		waitForBluetoothDevices();
 		// Run boot game, before Window Create for linux
 		launchStartupGame();
 	}
