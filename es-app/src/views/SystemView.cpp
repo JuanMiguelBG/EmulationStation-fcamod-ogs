@@ -852,7 +852,7 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 			std::stringstream ss;
 			char strbuf[256];
 
-			if (getSelected() == CollectionSystemManager::get()->getCustomCollectionsBundle())
+			if (getSelected() == CollectionSystemManager::getInstance()->getCustomCollectionsBundle())
 			{
 				int collectionCount = getSelected()->getRootFolder()->getChildren().size();
 				snprintf(strbuf, 256, EsLocale::nGetText("%i COLLECTION", "%i COLLECTIONS", collectionCount).c_str(), collectionCount);

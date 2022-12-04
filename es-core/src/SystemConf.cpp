@@ -253,3 +253,30 @@ bool SystemConf::setBool(const std::string &name, bool value)
 
 	return set(name, value  ? "1" : "0");
 }
+
+int SystemConf::getInt(const std::string &name, bool defaultValue)
+{
+#ifdef NOBATOCERACONF
+	return Settings::getInstance()->getInt(mapSettingsName(name));
+#endif
+
+	std::string value = get(name);
+	if (defaultValue)
+	{
+		auto map_value = defaults.find(name);
+		if (map_value == defaults.end())
+			value = "0";
+		else
+			value = map_value->second;
+	}
+	return std::atoi(value.c_str());
+}
+
+bool SystemConf::setInt(const std::string &name, int value)
+{
+#ifdef NOBATOCERACONF
+	return Settings::getInstance()->setInt(mapSettingsName(name), value);
+#endif
+
+	return set(name, std::to_string(value));
+}

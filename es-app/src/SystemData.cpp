@@ -560,7 +560,7 @@ bool SystemData::loadConfig(Window* window)
 		for (int i = 0; i < systemCount; i++)
 			systems[i] = nullptr;
 
-		pThreadPool->queueWorkItem([] { CollectionSystemManager::get()->loadCollectionSystems(true); });
+		pThreadPool->queueWorkItem([] { CollectionSystemManager::getInstance()->loadCollectionSystems(true); });
 	}
 
 	int processedSystem = 0;
@@ -625,7 +625,7 @@ bool SystemData::loadConfig(Window* window)
 		if (window != NULL)
 			window->renderLoadingScreen(_("Collections"), systemCount == 0 ? 0 : currentSystem / systemCount);
 
-		CollectionSystemManager::get()->loadCollectionSystems();
+		CollectionSystemManager::getInstance()->loadCollectionSystems();
 	}
 
 	if (SystemData::sSystemVector.size() > 0)
@@ -635,7 +635,7 @@ bool SystemData::loadConfig(Window* window)
 		// Load features before creating collections
 		//loadFeatures();
 
-		CollectionSystemManager::get()->updateSystemsList();
+		CollectionSystemManager::getInstance()->updateSystemsList();
 
 		for (auto sys : SystemData::sSystemVector)
 		{
@@ -1099,4 +1099,26 @@ bool SystemData::shouldExtractHashesFromArchives()
 		!hasPlatformId(PlatformIds::SEGA_DREAMCAST) &&
 		!hasPlatformId(PlatformIds::ATOMISWAVE) &&
 		!hasPlatformId(PlatformIds::NAOMI);
+}
+
+FileData* SystemData::getGame(const std::string game)
+{
+	LOG(LogDebug) << "SystemData::getGame() - searching the game:'" << game << "'";
+	Log::flush();
+	if (game.empty())
+		return nullptr;
+
+	FileData *gameFileData;	
+	for (FileData *vFileData : mRootFolder->getFilesRecursive(GAME, true))
+	{
+		if ( vFileData->getName() == game)
+		{
+			LOG(LogDebug) << "SystemData::getGame() - game: " << game << "' found";
+			Log::flush();
+			return vFileData;
+		}
+	}
+	LOG(LogDebug) << "SystemData::getGame() - game: " << game << "' NOT found";
+	Log::flush();
+	return nullptr;
 }

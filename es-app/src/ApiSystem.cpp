@@ -115,37 +115,17 @@ std::vector<std::string> ApiSystem::executeEnumerationScript(const std::string c
 
 std::pair<std::string, int> ApiSystem::executeScript(const std::string command, const std::function<void(const std::string)>& func)
 {
-	LOG(LogInfo) << "ApiSystem::executeScript() - Running -> " << command;
-
-	FILE *pipe = popen(command.c_str(), "r");
-	if (pipe == NULL)
-	{
-		LOG(LogError) << "ApiSystem::executeScript() - Error executing " << command;
-		return std::pair<std::string, int>("Error starting command : " + command, -1);
-	}
-
-	char line[1024];
-	while (fgets(line, 1024, pipe))
-	{
-		strtok(line, "\n");
-
-		// Long theme names/URL can crash the GUI MsgBox
-		// "48" found by trials and errors. Ideally should be fixed
-		// in es-core MsgBox -- FIXME
-		if (strlen(line) > 48)
-			line[47] = '\0';
-
-		if (func != nullptr)
-			func(std::string(line));
-	}
-
-	int exitCode = WEXITSTATUS(pclose(pipe));
-	return std::pair<std::string, int>(line, exitCode);
+	return executeSystemScript(command, func);
 }
 
 bool ApiSystem::executeScript(const std::string command)
 {
 	return executeSystemScript(command);
+}
+
+bool ApiSystem::executeBoolScript(const std::string command)
+{
+	return executeSystemBoolScript(command);
 }
 
 bool ApiSystem::isScriptingSupported(ScriptId script)
@@ -709,7 +689,7 @@ bool ApiSystem::setDisplayBlinkLowBattery(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setDisplayBlinkLowBattery()";
 
-	return executeScript("es-display set blink_low_battery " + stateToString(state) + " &");
+	return executeSystemScript("es-display set blink_low_battery " + stateToString(state) + " &");
 }
 
 bool ApiSystem::isSystemHotkeyBrightnessEvent()
@@ -766,6 +746,13 @@ bool ApiSystem::isSystemHotkeyBluetoothEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get bluetooth)"));
 }
 
+bool ApiSystem::isSystemHotkeySpeakerEvent()
+{
+	LOG(LogInfo) << "ApiSystem::isSystemHotkeySpeakerEvent()";
+
+	return stringToState(getShOutput(R"(es-system_hotkey get speaker)"));
+}
+
 bool ApiSystem::isSystemHotkeySuspendEvent()
 {
 	LOG(LogInfo) << "ApiSystem::isSystemHotkeySuspendEvent()";
@@ -773,21 +760,41 @@ bool ApiSystem::isSystemHotkeySuspendEvent()
 	return stringToState(getShOutput(R"(es-system_hotkey get suspend)"));
 }
 
-bool ApiSystem::setSystemHotkeysValues(bool brightness_state, int brightness_step, bool volume_state, int volume_step, bool wifi_state, bool bluetooth_state, bool suspend_state)
+bool ApiSystem::setSystemHotkeysValues(SystemHotkeyValues values)
 {
 	LOG(LogInfo) << "ApiSystem::setSystemHotkeysValues()";
 
-	if (brightness_step <= 0)
-		brightness_step = 1;
-	else if (brightness_step > 25)
-		brightness_step = 25;
+	if (values.brightness_step <= 0)
+		values.brightness_step = 1;
+	else if (values.brightness_step > 25)
+		values.brightness_step = 25;
 
-	if (volume_step <= 0)
-		volume_step = 1;
-	else if (volume_step > 25)
-		volume_step = 25;
+	if (values.volume_step <= 0)
+		values.volume_step = 1;
+	else if (values.volume_step > 25)
+		values.volume_step = 25;
 
-	return executeScript("es-system_hotkey set_all_values " + stateToString(brightness_state) + " " + std::to_string(brightness_step) + " " + stateToString(volume_state) + " " + std::to_string(volume_step) + " " + stateToString(wifi_state) + " " + stateToString(bluetooth_state) + " " + stateToString(suspend_state) + " &");
+	return executeSystemScript("es-system_hotkey set_all_values " + stateToString(values.brightness) + " " + std::to_string(values.brightness_step)
+			+ " " + stateToString(values.volume) + " " + std::to_string(values.volume_step) + " " + stateToString(values.wifi)
+			+ " " + stateToString(values.bluetooth) + " " + stateToString(values.speaker) + " " + stateToString(values.suspend) + " &");
+}
+
+SystemHotkeyValues ApiSystem::getSystemHotkeyValues()
+{
+	LOG(LogInfo) << "ApiSystem::isDeviceAutoSuspendByTime()";
+
+	std::vector<std::string> values = Utils::String::split( getShOutput(R"(es-system_hotkey get_all_values)"), ';' );
+	SystemHotkeyValues result;
+	if (values.size() > 0)
+		result.brightness = stringToState(values[0]);
+		result.brightness_step = std::atoi(values[1].c_str());
+		result.volume = stringToState(values[2]);
+		result.volume_step = std::atoi(values[3].c_str());
+		result.wifi = stringToState(values[4]);
+		result.bluetooth = stringToState(values[5]);
+		result.speaker = stringToState(values[6]);
+		result.suspend = stringToState(values[7]);
+	return result;
 }
 
 bool ApiSystem::isDeviceAutoSuspendByTime()
@@ -858,7 +865,7 @@ bool ApiSystem::setDeviceAutoSuspendValues(bool stay_awake_charging_state, bool 
 	else if (battery_level > 100)
 		battery_level = 100;
 
-	return executeScript("es-auto_suspend set_all_values " + stateToString(stay_awake_charging_state) + " " + stateToString(time_state) + " " + std::to_string(timeout) + " " + stateToString(battery_state) + " " + std::to_string(battery_level) + " &");
+	return executeSystemScript("es-auto_suspend set_all_values " + stateToString(stay_awake_charging_state) + " " + stateToString(time_state) + " " + std::to_string(timeout) + " " + stateToString(battery_state) + " " + std::to_string(battery_level) + " &");
 
 }
 
@@ -916,13 +923,13 @@ bool ApiSystem::setDisplayAutoDimValues(bool stay_awake_charging_state, bool tim
 	else if (brightness_level > 100)
 		brightness_level = 100;
 
-	return executeScript("es-display set_auto_dim_all_values " + stateToString(stay_awake_charging_state) + " " + stateToString(time_state) + " " + std::to_string(timeout) + " " + std::to_string(brightness_level) + " &");
+	return executeSystemScript("es-display set_auto_dim_all_values " + stateToString(stay_awake_charging_state) + " " + stateToString(time_state) + " " + std::to_string(timeout) + " " + std::to_string(brightness_level) + " &");
 }
 
 bool ApiSystem::ping()
 {
-	if (!executeScript("timeout 1 ping -c 1 -t 255 8.8.8.8")) // ping Google DNS
-		return executeScript("timeout 2 ping -c 1 -t 255 8.8.4.4"); // ping Google secondary DNS & give 2 seconds
+	if (!executeSystemScript("timeout 1 ping -c 1 -t 255 8.8.8.8")) // ping Google DNS
+		return executeSystemScript("timeout 2 ping -c 1 -t 255 8.8.4.4"); // ping Google secondary DNS & give 2 seconds
 
 	return true;
 }
@@ -933,7 +940,7 @@ bool ApiSystem::getInternetStatus()
 	if (ping())
 		return true;
 
-	return executeScript("es-wifi internet_status");
+	return executeSystemBoolScript("es-wifi internet_status");
 }
 
 std::vector<std::string> ApiSystem::getWifiNetworks(bool scan)
@@ -947,14 +954,14 @@ bool ApiSystem::connectWifi(const std::string ssid, const std::string key)
 {
 	LOG(LogInfo) << "ApiSystem::connectWifi() - SSID: '" << ssid << "'";
 
-	return executeScript("es-wifi connect \"" + ssid + "\" \"" + key + '"');
+	return executeSystemScript("es-wifi connect \"" + ssid + "\" \"" + key + '"');
 }
 
 bool ApiSystem::disconnectWifi(const std::string ssid)
 {
 	LOG(LogInfo) << "ApiSystem::disconnectWifi() - SSID: '" << ssid << "'";
 
-	return executeScript("es-wifi disconnect \"" + ssid + '"');
+	return executeSystemScript("es-wifi disconnect \"" + ssid + '"');
 }
 
 bool ApiSystem::enableWifi(bool background)
@@ -964,7 +971,7 @@ bool ApiSystem::enableWifi(bool background)
 	std::string commnad("es-wifi enable");
 	commnad.append(background ? " &" : "");
 
-	return executeScript(commnad);
+	return executeSystemScript(commnad);
 }
 
 bool ApiSystem::disableWifi(bool background)
@@ -974,14 +981,14 @@ bool ApiSystem::disableWifi(bool background)
 	std::string commnad("es-wifi disable");
 	commnad.append(background ? " &" : "");
 
-	return executeScript(commnad);
+	return executeSystemScript(commnad);
 }
 
 bool ApiSystem::resetWifi(const std::string ssid)
 {
 	LOG(LogInfo) << "ApiSystem::resetWifi() - SSID: '" << ssid << "'";
 
-	return executeScript("es-wifi reset \"" + ssid + '"');
+	return executeSystemScript("es-wifi reset \"" + ssid + '"');
 }
 
 bool ApiSystem::isWifiEnabled()
@@ -995,14 +1002,14 @@ bool ApiSystem::enableManualWifiDns(const std::string ssid, const std::string dn
 {
 	LOG(LogInfo) << "ApiSystem::enableManualWifiDns() - SSID: '" << ssid << "', DNS1: " << dnsOne << ", DNS2: " << dnsTwo;
 
-	return executeScript("es-wifi enable_manual_dns \"" + ssid + "\" \"" + dnsOne + "\" \"" + dnsTwo + '"');
+	return executeSystemScript("es-wifi enable_manual_dns \"" + ssid + "\" \"" + dnsOne + "\" \"" + dnsTwo + '"');
 }
 
 bool ApiSystem::disableManualWifiDns(const std::string ssid)
 {
 	LOG(LogInfo) << "ApiSystem::disableManualWifiDns() - SSID: '" << ssid << "'";
 
-	return executeScript("es-wifi disable_manual_dns \"" + ssid + '"');
+	return executeSystemScript("es-wifi disable_manual_dns \"" + ssid + '"');
 }
 
 std::string ApiSystem::getWifiSsid()
@@ -1044,14 +1051,14 @@ bool ApiSystem::isWifiPowerSafeEnabled()
 {
 	LOG(LogInfo) << "ApiSystem::isWifiPowerSafeEnabled()";
 
-	return executeSystemScript("es-wifi is_wifi_power_safe_enabled");
+	return executeSystemBoolScript("es-wifi is_wifi_power_safe_enabled");
 }
 
 void ApiSystem::setWifiPowerSafe(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setWifiPowerSafe()";
 
-	executeScript("es-wifi set_wifi_power_safe " + Utils::String::boolToString(state) + " &");
+	executeSystemScript("es-wifi set_wifi_power_safe " + Utils::String::boolToString(state) + " &");
 }
 
 
@@ -1059,7 +1066,7 @@ bool ApiSystem::setLanguage(std::string language)
 {
 	LOG(LogInfo) << "ApiSystem::setLanguage()";
 
-	return executeScript("es-language set " + language + " &");
+	return executeSystemScript("es-language set " + language + " &");
 }
 
 bool ApiSystem::getRetroachievementsEnabled()
@@ -1191,14 +1198,14 @@ bool  ApiSystem::setRetroachievementsValues(bool retroachievements_state, bool h
 {
 	LOG(LogInfo) << "ApiSystem::setRetroachievementsValues()";
 
-	return executeScript("es-cheevos set_all_values " + Utils::String::boolToString(retroachievements_state) + " " + Utils::String::boolToString(hardcore_state) + " " + Utils::String::boolToString(leaderboards_state) + " " + Utils::String::boolToString(verbose_state) + " " + Utils::String::boolToString(automatic_screenshot_state) + " " + Utils::String::boolToString(challenge_indicators_state) + " " + Utils::String::boolToString(richpresence_state) + " " + Utils::String::boolToString(badges_state) + " " + Utils::String::boolToString(test_unofficial_state) + " " + Utils::String::boolToString(start_active_state) + " \"" + sound + "\" \"" + username + "\" \"" + password + "\" &");
+	return executeSystemScript("es-cheevos set_all_values " + Utils::String::boolToString(retroachievements_state) + " " + Utils::String::boolToString(hardcore_state) + " " + Utils::String::boolToString(leaderboards_state) + " " + Utils::String::boolToString(verbose_state) + " " + Utils::String::boolToString(automatic_screenshot_state) + " " + Utils::String::boolToString(challenge_indicators_state) + " " + Utils::String::boolToString(richpresence_state) + " " + Utils::String::boolToString(badges_state) + " " + Utils::String::boolToString(test_unofficial_state) + " " + Utils::String::boolToString(start_active_state) + " \"" + sound + "\" \"" + username + "\" \"" + password + "\" &");
 }
 
 bool ApiSystem::setOptimizeSystem(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
 
-	return executeScript("es-optimize_system active_optimize_system " + Utils::String::boolToString(state));
+	return executeSystemScript("es-optimize_system active_optimize_system " + Utils::String::boolToString(state));
 }
 
 bool ApiSystem::isEsScriptsLoggingActivated()
@@ -1212,21 +1219,21 @@ bool ApiSystem::setEsScriptsLoggingActivated(bool state, const std::string level
 {
 	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingActivated()";
 
-	return executeScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " &");
+	return executeSystemScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " &");
 }
 
 bool ApiSystem::setEsScriptsLoggingLevel(const std::string level)
 {
 	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingLevel()";
 
-	return executeScript("es-log_scripts set_es_scripts_log_level " + level + " &");
+	return executeSystemScript("es-log_scripts set_es_scripts_log_level " + level + " &");
 }
 
 bool ApiSystem::setShowRetroarchFps(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setShowRetroarchFps()";
 
-	return executeScript("es-show_fps set fps_show " + Utils::String::boolToString(state) + " &");
+	return executeSystemScript("es-show_fps set fps_show " + Utils::String::boolToString(state) + " &");
 }
 
 bool ApiSystem::isShowRetroarchFps()
@@ -1240,7 +1247,7 @@ bool ApiSystem::setOverclockSystem(bool state)
 {
 	LOG(LogInfo) << "ApiSystem::setOverclockSystem()";
 
-	return executeScript("es-overclock_system set " + Utils::String::boolToString(state));
+	return executeSystemScript("es-overclock_system set " + Utils::String::boolToString(state));
 }
 
 bool ApiSystem::isOverclockSystem()
@@ -1417,7 +1424,7 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 	LOG(LogDebug) << "ApiSystem::unzipFile() is using 7z";
 
 	std::string cmd = getSevenZipCommand() + " x \"" + Utils::FileSystem::getPreferredPath(fileName) + "\" -y -o\"" + Utils::FileSystem::getPreferredPath(destFolder) + "\"";
-	bool ret = executeScript(cmd);
+	bool ret = executeSystemScript(cmd);
 	LOG(LogDebug) << "ApiSystem::unzipFile() <<";
 	return ret;
 }
@@ -1426,7 +1433,7 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 void ApiSystem::preloadVLC()
 {
 	LOG(LogInfo) << "ApiSystem::preloadVLC()";
-	executeScript("/usr/local/bin/es-preload_vlc &");
+	executeSystemScript("/usr/local/bin/es-preload_vlc &");
 }
 
 std::vector<std::string> ApiSystem::getAudioCards()
@@ -1461,7 +1468,7 @@ bool ApiSystem::setOutputDevice(const std::string device)
 {
 	LOG(LogInfo) << "ApiSystem::setOutputDevice()";
 
-	return executeScript("es-sound set output_device \"" + device + '"');
+	return executeSystemScript("es-sound set output_device \"" + device + '"');
 }
 
 RemoteServiceInformation ApiSystem::getRemoteServiceStatus(RemoteServicesId id)
@@ -1566,6 +1573,13 @@ bool ApiSystem::launchBluetoothConfigurator(Window *window)
 	return exitCode == 0;
 }
 
+bool ApiSystem::isBluetoothActive()
+{
+	LOG(LogInfo) << "ApiSystem::isBluetoothActive()";
+
+	return executeSystemBoolScript("es-bluetooth is_bluetooth_active");
+}
+
 bool ApiSystem::isBluetoothEnabled()
 {
 	LOG(LogInfo) << "ApiSystem::isBluetoothEnabled()";
@@ -1577,28 +1591,28 @@ bool ApiSystem::enableBluetooth()
 {
 	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
 
-	return executeScript("es-bluetooth enable");
+	return executeSystemScript("es-bluetooth enable");
 }
 
 bool ApiSystem::disableBluetooth()
 {
 	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
 
-	return executeScript("es-bluetooth disable");
+	return executeSystemScript("es-bluetooth disable");
 }
 
 bool ApiSystem::isBluetoothAudioDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::isBluetoothAudioDevice() - ID: " << id;
 
-	return executeScript("es-bluetooth is_bluetooth_audio_device \"" + id + "\"" );
+	return executeSystemBoolScript("es-bluetooth is_bluetooth_audio_device \"" + id + "\"" );
 }
 
 bool ApiSystem::isBluetoothAudioDeviceConnected()
 {
 	LOG(LogInfo) << "ApiSystem::disableBluetooth()";
 
-	return executeScript("es-bluetooth is_bluetooth_audio_device_connected");
+	return executeSystemBoolScript("es-bluetooth is_bluetooth_audio_device_connected");
 }
 
 std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std::string> btDevices)
@@ -1654,7 +1668,7 @@ bool ApiSystem::pairBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::pairBluetoothDevice() - ID: " << id;
 
-	return executeScript("es-bluetooth pair_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth pair_device \"" + id + "\"" );
 }
 
 BluetoothDevice ApiSystem::getBluetoothDeviceInfo(const std::string id)
@@ -1686,35 +1700,35 @@ bool ApiSystem::connectBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::connectBluetoothDevice() - ID: " << id;
 
-	return executeScript("es-bluetooth connect_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth connect_device \"" + id + "\"" );
 }
 
 bool ApiSystem::disconnectBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::disconnectBluetoothDevice() - ID: " << id;
 
-	return executeScript("es-bluetooth disconnect_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth disconnect_device \"" + id + "\"" );
 }
 
 bool ApiSystem::disconnectAllBluetoothDevices()
 {
 	LOG(LogInfo) << "ApiSystem::disconnectAllBluetoothDevices() ";
 
-	return executeScript("es-bluetooth disconnect_all_devices" );
+	return executeSystemScript("es-bluetooth disconnect_all_devices" );
 }
 
 bool ApiSystem::deleteBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::deleteBluetoothDevice() - ID: " << id;
 
-	return executeScript("es-bluetooth delete_device_connection \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth delete_device_connection \"" + id + "\"" );
 }
 
 bool ApiSystem::deleteAllBluetoothDevices()
 {
 	LOG(LogInfo) << "ApiSystem::deleteAllBluetoothDevices()";
 
-	return executeScript("es-bluetooth delete_all_device_connections" );
+	return executeSystemScript("es-bluetooth delete_all_device_connections" );
 }
 
 std::string ApiSystem::getBluetoothAudioDevice()
@@ -1728,28 +1742,28 @@ bool ApiSystem::startBluetoothLiveScan()
 {
 	LOG(LogInfo) << "ApiSystem::startBluetoothLiveScan()";
 
-	return executeScript("es-bluetooth scan_on &");
+	return executeSystemScript("es-bluetooth scan_on &");
 }
 
 bool ApiSystem::stopBluetoothLiveScan()
 {
 	LOG(LogInfo) << "ApiSystem::stopBluetoothLiveScan()";
 
-	return executeScript("es-bluetooth scan_off &");
+	return executeSystemScript("es-bluetooth scan_off &");
 }
 
 bool ApiSystem::startAutoConnectBluetoothAudioDevice()
 {
 	LOG(LogInfo) << "ApiSystem::startAutoConnectBluetoothAudioDevice()";
 
-	return executeScript("es-bluetooth auto_connect_audio_device_on &");
+	return executeSystemScript("es-bluetooth auto_connect_audio_device_on &");
 }
 
 bool ApiSystem::stopAutoConnectBluetoothAudioDevice()
 {
 	LOG(LogInfo) << "ApiSystem::stopAutoConnectBluetoothAudioDevice()";
 
-	return executeScript("es-bluetooth auto_connect_audio_device_off &");
+	return executeSystemScript("es-bluetooth auto_connect_audio_device_off &");
 }
 
 void ApiSystem::backupAfterGameValues()

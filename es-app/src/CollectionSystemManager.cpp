@@ -268,7 +268,7 @@ bool systemByReleaseDate(SystemData* sys1, SystemData* sys2)
 	return name1.compare(name2) < 0;
 }
 
-CollectionSystemManager* CollectionSystemManager::get()
+CollectionSystemManager* CollectionSystemManager::getInstance()
 {
 	assert(sInstance);
 	return sInstance;
@@ -1511,4 +1511,27 @@ std::string getCustomCollectionConfigPath(std::string collectionName)
 std::string getCollectionsFolder()
 {
 	return Utils::FileSystem::getGenericPath(Utils::FileSystem::getEsConfigPath() + "/collections");
+}
+
+void CollectionSystemManager::updateBootGameMetadata(const std::string system, const std::string game, long timePlayed, time_t lastPlayed)
+{
+//	LOG(LogDebug) << "CollectionSystemManager::updateBootGameMetadata() - system: " << system << ", game: " << game << ", time played: " << std::to_string(timePlayed);
+
+	SystemData* systemData = SystemData::getSystem(system);
+
+	if (!systemData)
+	{
+		LOG(LogWarning) << "CollectionSystemManager::updateBootGameMetadata() - system 'system' not found, skipping";
+		return;
+	}
+
+	FileData *gameFileData = systemData->getGame(game);
+
+	if (!gameFileData)
+	{
+		LOG(LogWarning) << "CollectionSystemManager::updateBootGameMetadata() - game 'game' not found, skipping";
+		return;
+	}
+
+	gameFileData->updateBootGameMetadata(timePlayed, lastPlayed);
 }

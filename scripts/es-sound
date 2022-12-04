@@ -1,88 +1,252 @@
 #!/bin/bash
 
-if [ ! "$1" ]; then
-	printf "usage : es-sound [set key value|get key]\n"
-	printf "Valid keys: audio_cards, audio_devices, output_devices, output_device\n"
-	exit 1
-fi
-
-get_output_device() {
-		output_device=$(awk -F'[=]' '/values=/ { print $2 }' <(amixer cget name='Playback Path' | grep ": values="))
-		output_device=$(awk -F"['\'']" '{ print $2 }' <(amixer cget name='Playback Path' | grep "#$output_device"))
-		if [ "$output_device" = "" ]; then
-			output_device="SPK"
-		fi
-		echo "$output_device"
+do_help()
+{
+	echo "Usage:" >&2
+	echo "" >&2
+	echo "$0 set [key] [value]" >&2
+	echo "Valid keys: output_device, volume_level" >&2
+	echo "" >&2
+	echo "or" >&2
+	echo "" >&2
+	echo "$0 get [key]" >&2
+	echo "Valid keys: audio_cards, audio_devices, output_devices, volume_level" >&2
+	echo "" >&2
+	echo "or" >&2
+	echo "" >&2
+	echo "$0 toggle (between Speaker or Headphone)" >&2
 }
 
-get_volume_level() {
-	awk -F'[][%]' '/Left:/ { print $2 }' <(amixer sget Master)
+is_bluetooth_audio_device_connected()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device_connected()'"
+
+	if [[ $(amixer scontrols | grep -c " A2DP'") -gt 0 ]]; then
+		# BT audio devices connected
+		#print_log $LOG_FILE "INFO" "is_enabled() - A total of $BT_AUDIO_DEVICES_CONNECTED Bluetooth Audio Devices connected"
+		return 0
+	fi
+	#print_log $LOG_FILE "INFO" "is_enabled() - No Bluetooth Audio Devices connected"
+	# NO BT audio devices connected
+	return 1
 }
 
-config_set_value () {
-	key=$1
-	value=$2
+get_output_device()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_output_device()'"
+
+	local output_device=""
+
+	is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device
+		output_device=$(awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'"))
+		#print_log $LOG_FILE "DEBUG" "get_output_device() - Getting Bluetooth output device: '$output_device'"
+	else
+		output_device=`awk -F'[=]' '/values=/ { print $2 }' <(amixer cget name='Playback Path' | grep ": values=")`
+		output_device=`awk -F"['\'']" '{ print $2 }' <(amixer cget name='Playback Path' | grep "#$output_device")`
+		#print_log $LOG_FILE "DEBUG" "get_output_device() - Getting output device: '$output_device'"
+	fi
+
+	if [ -z "$output_device" ]; then
+		#print_log $LOG_FILE "DEBUG" "get_output_device() - Output device is empty, setting default value 'SPK'"
+		output_device="SPK"
+	fi
+
+	#print_log $LOG_FILE "INFO" "get_output_device() - device: '$output_device'"
+	echo "$output_device"
+}
+
+get_volume_level()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_volume_level()'"
+	local audio_device="Master"
+
+	is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device, skip
+		#print_log $LOG_FILE "DEBUG" "get_volume_level() - bluetooth audio device"
+		audio_device=$(awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'"))
+	fi
+
+	local volume=`awk -F'[][%]' '/Left:/ { print $2 }' <(amixer sget "$audio_device")`
+	#print_log $LOG_FILE "DEBUG" "get_volume_level() - volume: $volume%"
+	echo "$volume"
+}
+
+set_volume_level()
+{
+	local value=$1
+	local audio_device="Master"
+	#print_log $LOG_FILE "INFO" "Executing 'set_volume_level()' - volume: $value%"
+
+	is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device, skip
+		#print_log $LOG_FILE "DEBUG" "config_set_value() - bluetooth audio device"
+		audio_device=$(awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'"))
+	fi
+
+	#print_log $LOG_FILE "DEBUG" "set_volume_level() - audio device: '$audio_device', volume: $value%"
+
+	amixer sset "$audio_device" "$value%" > /dev/null
+}
+
+config_set_value ()
+{
+	local key=$1
+	local value=$2
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()', key: '$key', value: '$value'"
 
 	if [ "$key" = "output_device" ]; then
-		output_device=$(get_output_device)
+
+		is_bluetooth_audio_device_connected
+		if [ $? -eq 0 ]; then
+			# bluetooth audio device, skip
+			#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', bluetooth audio device, skip"
+			return;
+		fi
+
+		local output_device=$(get_output_device)
 		if [[ "$output_device" = *"HP" ]]; then
 			if [ "$value" = "SPK" ]; then
 				amixer cset name='Playback Path' "OFF" > /dev/null
-				volume=$(get_volume_level)
-				volume=$(($volume+8))
-				amixer sset Playback "$volume%" > /dev/null
+				local volume=$(get_volume_level)
+				local step=10
+				if [ $volume -lt 50 ]; then
+					step=5
+				fi
+				volume=$(($volume+$step))
+				set_volume_level $volume
+				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'SPK', volume: $volume%"
+			fi
+		elif [ "$output_device" = "SPK" ]; then
+			if [[ "$value" = *"HP" ]]; then
+				amixer cset name='Playback Path' "OFF" > /dev/null
+				local volume=$(get_volume_level)
+				local step=10
+				if [ $volume -lt 50 ]; then
+					step=5
+				fi
+				volume=$(($volume-$step))
+				set_volume_level $volume
+				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'HP', volume: $volume%"
 			fi
 		fi
 		amixer cset name='Playback Path' $value > /dev/null
+	elif [ "$key" = "volume_level" ]; then
+		set_volume_level $value
 	fi
 }
 
-config_get_value () {
-	key=$1
+config_get_value ()
+{
+	local key=$1
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()', key: '$key"
 
 	if [ "$key" = "audio_cards" ]; then
-		#audio_cards=$(awk -F'[][]' '/\[/ { print $2 }' <(aplay --list-devices | egrep "card [[:digit:]]:"))
-		#if [ "$audio_cards" = "" ]; then
-			#audio_cards="default"
-		#fi
-		#echo "$audio_cards"
 		echo "default"
 	elif [ "$key" = "audio_devices" ]; then
-		#audio_devices=$(awk -F"['\'' ]" '/ / { print $2 }' <(amixer controls | grep -i volume))
-		#if [ "$audio_devices" = "" ]; then
-			#audio_devices="Master"
-		#fi
-		#echo "$audio_devices"
-		echo "Master"
+		is_bluetooth_audio_device_connected
+		if [ $? -eq 0 ]; then
+			# bluetooth audio device
+			#print_log $LOG_FILE "DEBUG" "config_get_value() - bluetooth audio device, value: 'Bluetooth Audio'"
+			echo "Bluetooth Audio"
+		else
+			#print_log $LOG_FILE "DEBUG" "config_get_value() - audio device, value: 'Master'"
+			echo "Master"
+		fi
 	elif [ "$key" = "output_devices" ]; then
-		#output_devices=$(awk -F"['\'']" '{ print $2 }' <(amixer cget name='Playback Path' | grep "#"))
-		#if [ "$output_devices" = "" ]; then
-			#output_devices="SPK"
-		#fi
-		#echo "$output_devices"
-		echo -e "OFF\nSPK\nHP\nSPK_HP"
+		is_bluetooth_audio_device_connected
+		if [ $? -eq 0 ]; then
+			# bluetooth audio device
+			local bt_value=`awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'")`
+			#print_log $LOG_FILE "DEBUG" "config_get_value() - bluetooth output devices, value: '$bt_value'"
+			echo "$bt_value"
+		else
+			#print_log $LOG_FILE "DEBUG" "config_get_value() - output devices, value: 'OFF\nSPK\nHP\nSPK_HP'"
+			echo -e "OFF\nSPK\nHP\nSPK_HP"
+		fi
 	elif [ "$key" = "output_device" ]; then
+		#print_log $LOG_FILE "DEBUG" "config_get_value() - calling 'get_output_device()'"
 		get_output_device
+	elif [ "$key" = "volume_level" ]; then
+		#print_log $LOG_FILE "DEBUG" "config_get_value() - calling 'get_volume_level()'"
+		get_volume_level
 	fi
+}
+
+do_toggle_output()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_toggle_output()"
+
+	is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device, skip
+		#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Is bluetooth audio device, skip"
+		return 0
+	fi
+	local output_device=$(get_output_device)
+	#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Output device: '$output_device'"
+
+	if [[ "$output_device" = *"HP" ]]; then
+		#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Changing from '$output_device' to 'SPK'"
+		config_set_value "output_device" "SPK"
+	elif [ "$output_device" = "SPK" ]; then
+		#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Changing from '$output_device' to 'HP'"
+		config_set_value "output_device" "HP"
+	fi
+
+	return 0
 }
 
 # ******************************************************************************************
 
-command="$1"
+# Configure ES commons variables
+. es-log_scripts
 
-if [ "$#" -eq 3 ]; then
-	pkey="$2"
-	pvalue="$3"
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-sound.log"
 
-	if [ "$command" = "set" ]; then
-			config_set_value $pkey $pvalue
-	fi
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
 
-	exit 0
-elif [ "$#" -eq 2 ]; then
-	pkey="$2"
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2', result: '$return' #####"
+    exit $return
+}
 
-	if [ "$command" = "get" ]; then
-		config_get_value $pkey
-	fi
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
 fi
+
+ACTION=$1
+shift
+
+#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1 $2' #####"
+
+case "${ACTION}" in
+    "set")
+        config_set_value "$1" "$2" || exit_execution 1 "$1" "$2"
+    ;;
+    "get")
+        config_get_value "$1"
+    ;;
+    "toggle")
+        do_toggle_output || exit_execution 1
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
+
+exit_execution 0 "$1" "$2"

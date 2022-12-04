@@ -40,7 +40,7 @@ std::vector<const char*> settings_dont_save {
 	{ "wifi.dns1" },
 	{ "wifi.dns2" },
 	{ "wait.process.loading" },
-	{ "bluetooth.enabled" },
+//	{ "bluetooth.enabled" },
 	{ "bluetooth.audio.connected" },
 	{ "bluetooth.audio.device" },
 	{ "BrightnessBackup" },
@@ -216,6 +216,7 @@ void Settings::setDefaults()
 	mStringMap["UserMusicDirectory"] = "";
 
 	mBoolMap["updates.enabled"] = false;
+	mBoolMap["wifi.enabled"] = false;
 	mStringMap["wifi.ssid"] = "";
 	mBoolMap["wifi.manual_dns"] = false;
 	mStringMap["already.connection.exist.flag"] = " (**)";
@@ -236,7 +237,7 @@ void Settings::setDefaults()
 	mBoolMap["RestoreVolumeAfterGame"] = true;
 	mIntMap["BrightnessBackup"] = 50;
 	mIntMap["VolumeBackup"] = 75;
-	mBoolMap["bluetooth.audio.device.autoconnect"] = false;
+	mIntMap["bluetooth.boot.game.timeout"] = 10; // seconds
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

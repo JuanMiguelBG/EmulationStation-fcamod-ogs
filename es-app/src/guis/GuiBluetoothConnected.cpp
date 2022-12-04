@@ -3,7 +3,6 @@
 #include "guis/GuiMsgBox.h"
 #include "Window.h"
 #include <string>
-#include "Settings.h"
 #include "ApiSystem.h"
 #include "EsLocale.h"
 #include "guis/GuiTextEditPopup.h"

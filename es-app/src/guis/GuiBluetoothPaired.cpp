@@ -3,7 +3,7 @@
 #include "guis/GuiMsgBox.h"
 #include "Window.h"
 #include <string>
-#include "Settings.h"
+#include "SystemConf.h"
 #include "ApiSystem.h"
 #include "EsLocale.h"
 #include "guis/GuiTextEditPopup.h"
@@ -46,7 +46,7 @@ void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 		{
 			std::string device_name(btDevice.name);
 			if (btDevice.connected)
-				device_name.append(Settings::getInstance()->getString("already.connection.exist.flag"));
+				device_name.append(SystemConf::getInstance()->get("already.connection.exist.flag"));
 
 			mMenu.addWithDescription(device_name, btDevice.id, nullptr, [this, btDevice]() { GuiBluetoothPaired::onAction(btDevice); }, btDevice.type);
 		}

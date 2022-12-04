@@ -8,6 +8,7 @@
 #include "EsLocale.h"
 #include "ThemeData.h"
 #include "components/MultiLineMenuEntry.h"
+#include "guis/GuiLoading.h"
 
 //Used to display a list of options.
 //Can select one or multiple options.
@@ -64,6 +65,7 @@ private:
 		}
 		mParent->onSelectedChanged();
 	}
+
 
 	public:
 		OptionListPopup(Window* window, OptionListComponent<T>* parent, const std::string& title, 
@@ -176,8 +178,9 @@ private:
 		{
 			if(config->isMappedTo(BUTTON_BACK, input) && input.value != 0)
 			{
-				delete this;
-				return true;
+				if (!mParent->mWaitingLoad)
+					delete this;
+					return true;
 			}
 			else if (mParent->isMultiSelect())
 			{
@@ -210,12 +213,14 @@ private:
 	};
 
 public:
-	OptionListComponent(Window* window, const std::string& name, bool multiSelect = false) : GuiComponent(window), mMultiSelect(multiSelect), mName(name),
+	OptionListComponent(Window* window, const std::string& name, bool multiSelect = false, bool loading = false) : GuiComponent(window), mMultiSelect(multiSelect), mName(name),
 		 mText(window), mLeftArrow(window), mRightArrow(window)
 	{
 		auto theme = ThemeData::getMenuTheme();
 		
 		mAddRowCallback = nullptr;
+		mLoading = loading;
+		mWaitingLoad = false;
 
 		mText.setFont(theme->Text.font);
 		mText.setColor(theme->Text.color);
@@ -243,7 +248,6 @@ public:
 
 		setSize(mLeftArrow.getSize().x() + mRightArrow.getSize().x(), theme->Text.font->getHeight());
 	}
-
 
 	virtual void setColor(unsigned int color)
 	{
@@ -511,7 +515,22 @@ private:
 
 	void open()
 	{
-		mWindow->pushGui(new OptionListPopup(mWindow, this, mName, mAddRowCallback));
+		if (mLoading)
+		{
+			mWindow->pushGui(new GuiLoading<OptionListPopup*>(mWindow, _("PLEASE WAIT..."),
+				[this]
+				{
+					mWaitingLoad = true;
+					return new OptionListPopup(mWindow, this, mName, mAddRowCallback);
+				},
+				[this](OptionListPopup *popUp)
+				{
+					mWaitingLoad = false;
+					mWindow->pushGui(popUp);
+				}));
+		}
+		else
+			mWindow->pushGui(new OptionListPopup(mWindow, this, mName, mAddRowCallback));
 	}
 
 	unsigned int getSelectedId()
@@ -573,6 +592,8 @@ private:
 	}
 
 	bool mMultiSelect;
+	bool mLoading;
+	bool mWaitingLoad;
 
 	std::string mName;
 	std::string mGroup;

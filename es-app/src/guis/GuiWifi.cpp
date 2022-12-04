@@ -4,12 +4,12 @@
 #include "Window.h"
 #include <string>
 #include "Settings.h"
+#include "SystemConf.h"
 #include "ApiSystem.h"
 #include "EsLocale.h"
 #include "guis/GuiTextEditPopup.h"
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiLoading.h"
-#include "Settings.h"
 
 
 GuiWifi::GuiWifi(Window* window, const std::string title, const std::string subtitle, std::string data, const std::function<bool(std::string)>& onsave)
@@ -74,7 +74,7 @@ bool GuiWifi::onSave(const std::string& value)
 	if (mWaitingLoad)
 		return false;
 
-	std::string rep_value = Utils::String::replace(value, Settings::getInstance()->getString("already.connection.exist.flag"), "");
+	std::string rep_value = Utils::String::replace(value, SystemConf::getInstance()->get("already.connection.exist.flag"), "");
 	if (mSaveFunction(rep_value))
 	{
 		delete this;

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 
 class Window;
 
@@ -32,8 +33,10 @@ enum QuitMode
 
 int runSystemCommand(const std::string& cmd_utf8, const std::string& name, Window* window); // run a utf-8 encoded in the shell (requires wstring conversion on Windows)
 bool executeSystemScript(const std::string command);
+std::pair<std::string, int> executeSystemScript(const std::string command, const std::function<void(const std::string)>& func);
 std::vector<std::string> executeSystemEnumerationScript(const std::string command);
 std::map<std::string,std::string> executeSystemMapScript(const std::string command, const char separator = ';');
+bool executeSystemBoolScript(const std::string command);
 int quitES(QuitMode mode = QuitMode::QUIT);
 bool isFastShutdown();
 void processQuitMode();
@@ -341,5 +344,29 @@ struct BluetoothDevice
 };
 
 std::string queryBluetoothEnabled();
+
+struct SystemHotkeyValues
+{
+	SystemHotkeyValues()
+	{
+		brightness = false;
+		brightness_step = 1;
+		volume = false;
+		volume_step = 1;
+		wifi = false;
+		bluetooth = false;
+		speaker = false;
+		suspend = false;
+	}
+
+	bool brightness;
+	int brightness_step;
+	bool volume;
+	int volume_step;
+	bool wifi;
+	bool bluetooth;
+	bool speaker;
+	bool suspend;
+};
 
 #endif // ES_CORE_PLATFORM_H

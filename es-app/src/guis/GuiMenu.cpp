@@ -843,7 +843,7 @@ void GuiMenu::openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shar
 		{
 			if (systemTheme.empty())
 			{
-				CollectionSystemManager::get()->updateSystemsList();
+				CollectionSystemManager::getInstance()->updateSystemsList();
 				ViewController::get()->reloadAll(window);
 				window->endRenderLoadingScreen();
 
@@ -1185,7 +1185,7 @@ void GuiMenu::openUISettings()
 	s->onFinalize([s, pthis, window]
 	{
 		if (s->getVariable("reloadCollections"))
-			CollectionSystemManager::get()->updateSystemsList();
+			CollectionSystemManager::getInstance()->updateSystemsList();
 
 		if (s->getVariable("forceReloadGames"))
 			ViewController::reloadAllGames(window, false);
@@ -1366,10 +1366,13 @@ void GuiMenu::preloadNetworkSettings()
 	SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
 	SystemConf::getInstance()->set("system.hostname", ApiSystem::getInstance()->getHostname());
 
-	if (SystemConf::getInstance()->get("wifi.ssid").empty())
-		SystemConf::getInstance()->set("wifi.ssid", ApiSystem::getInstance()->getWifiSsid());
+	std::string ssid = ApiSystem::getInstance()->getWifiSsid();
+	if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
+		SystemConf::getInstance()->set("wifi.ssid", ssid);
 
-	SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(SystemConf::getInstance()->get("wifi.ssid")));
+	if (!SystemConf::getInstance()->get("wifi.ssid").empty())
+		SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(ssid));
+
 	SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
 	SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
 }
@@ -1377,10 +1380,10 @@ void GuiMenu::preloadNetworkSettings()
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)
 {
 	const bool baseWifiEnabled = SystemConf::getInstance()->getBool("wifi.enabled"),
-						 baseManualDns = SystemConf::getInstance()->getBool("wifi.manual_dns");
+			   baseManualDns = SystemConf::getInstance()->getBool("wifi.manual_dns");
 	const std::string baseHostname = SystemConf::getInstance()->get("system.hostname"),
-										baseDnsOne = SystemConf::getInstance()->get("wifi.dns1"),
-										baseDnsTwo = SystemConf::getInstance()->get("wifi.dns2");
+					  baseDnsOne = SystemConf::getInstance()->get("wifi.dns1"),
+					  baseDnsTwo = SystemConf::getInstance()->get("wifi.dns2");
 
 	auto theme = ThemeData::getMenuTheme();
 	std::shared_ptr<Font> font = theme->Text.font;
@@ -1495,7 +1498,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			}
 		});
 
-	s->addSaveFunc([this, window, baseWifiEnabled, baseSSID, baseKEY, baseHostname, enable_wifi, baseManualDns, baseDnsOne, baseDnsTwo]
+	s->addSaveFunc([this, s, window, baseWifiEnabled, baseSSID, baseKEY, baseHostname, enable_wifi, baseManualDns, baseDnsOne, baseDnsTwo]
 		{
 			bool wifienabled = enable_wifi->getState();
 
@@ -1523,11 +1526,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 							Settings::getInstance()->setBool("wait.process.loading", true);
 							return ApiSystem::getInstance()->connectWifi(newSSID, newKey);
 						},
-						[this, window, newSSID](bool success)
+						[this, s, window, newSSID](bool success)
 						{
 							Settings::getInstance()->setBool("wait.process.loading", false);
 							if (success)
+							{
 								window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI ENABLED")));
+								s->setVariable("reloadGuiMenu", true);
+							}
 							else
 								window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 						}));
@@ -1541,10 +1547,12 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						Settings::getInstance()->setBool("wait.process.loading", true);
 						return ApiSystem::getInstance()->disableWifi(false);
 					},
-					[this, window, baseSSID](bool success)
+					[this, s, window, baseSSID](bool success)
 					{
 						Settings::getInstance()->setBool("wait.process.loading", false);
-						if (!success)
+						if (success)
+							s->setVariable("reloadGuiMenu", true);
+						else
 							window->pushGui(new GuiMsgBox(window, "'" + baseSSID + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 					}));
 			}
@@ -1579,7 +1587,10 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						{
 							Settings::getInstance()->setBool("wait.process.loading", false);
 							if (success)
+							{
 								window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
+								s->setVariable("reloadGuiMenu", true);
+							}
 							else
 								window->pushGui(new GuiMsgBox(window, "'" + ssid + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 
@@ -1605,7 +1616,9 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						[this, s, window, ssid](bool success)
 						{
 							Settings::getInstance()->setBool("wait.process.loading", false);
-							if (!success)
+							if (success)
+								s->setVariable("reloadGuiMenu", true);
+							else
 								window->pushGui(new GuiMsgBox(window, "'" + ssid + "' - " + _("WIFI CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 
 							delete s;
@@ -1683,6 +1696,17 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		s->addUpdatableComponent(ip.get());
 	}
 
+	auto pthis = this;
+
+	s->onClose([s, pthis, window]
+	{
+		if (s->getVariable("reloadGuiMenu"))
+		{
+			delete pthis;
+			window->pushGui(new GuiMenu(window, false));
+		}
+	});
+
 	window->pushGui(s);
 }
 
@@ -1715,7 +1739,7 @@ void GuiMenu::preloadBluetoothSettings()
 	SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 }
 
-void GuiMenu::openBluetoothSettings(bool selectBtEnable)
+void GuiMenu::openBluetoothSettings()
 {
 	const bool baseBtEnabled = SystemConf::getInstance()->getBool("bluetooth.enabled");
 	const bool baseBtAudioConnected = SystemConf::getInstance()->getBool("bluetooth.audio.connected");
@@ -1735,7 +1759,7 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 
 	// Bluetooth enable
 	auto enable_bt = std::make_shared<SwitchComponent>(window, baseBtEnabled);
-	s->addWithLabel(_("ENABLE BLUETOOTH"), enable_bt, selectBtEnable);
+	s->addWithLabel(_("ENABLE BLUETOOTH"), enable_bt);
 	enable_bt->setOnChangedCallback([this, window, s, baseBtEnabled, baseBtAudioConnected, enable_bt]()
 		{
 			bool bt_enabled = enable_bt->getState();
@@ -1747,18 +1771,23 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 					{
 						Settings::getInstance()->setBool("wait.process.loading", true);
 						bool result = ApiSystem::getInstance()->enableBluetooth();
+						SystemConf::getInstance()->setBool("bluetooth.enabled", result);
 						if (result)
+						{
 							ApiSystem::getInstance()->startBluetoothLiveScan();
-						
+							Settings::getInstance()->saveFile();
+						}
 						return result;
 					},
 					[this, window, s](bool result)
 					{
 						Settings::getInstance()->setBool("wait.process.loading", false);
-						SystemConf::getInstance()->setBool("bluetooth.enabled", result);
+
+						if (result)
+							s->setVariable("reloadGuiMenu", true);
 
 						delete s;
-						openBluetoothSettings(true);
+						openBluetoothSettings();
 					}));
 			}
 			else
@@ -1768,15 +1797,18 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 					{
 						Settings::getInstance()->setBool("wait.process.loading", true);
 						ApiSystem::getInstance()->stopBluetoothLiveScan();
-						return ApiSystem::getInstance()->disableBluetooth();
+						bool result = ApiSystem::getInstance()->disableBluetooth();
+						SystemConf::getInstance()->setBool("bluetooth.enabled", !result);
+						if (result)
+							Settings::getInstance()->saveFile();
+						
+						return result;
 					},
 					[this, window, s, baseBtAudioConnected](bool result)
 					{
 						Settings::getInstance()->setBool("wait.process.loading", false);
-						SystemConf::getInstance()->setBool("bluetooth.enabled", !result);
 						if (result)
 						{ // successfully disabled
-							SystemConf::getInstance()->setBool("bluetooth.enabled", false);
 							SystemConf::getInstance()->setBool("bluetooth.audio.connected", false);
 							SystemConf::getInstance()->set("bluetooth.audio.device", "");
 
@@ -1786,11 +1818,13 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 								displayBluetoothAudioRestartDialog(window, true);
 								return;
 							}
+
+							s->setVariable("reloadGuiMenu", true);
 						}
 						if (!result || !baseBtAudioConnected)
 						{
 							delete s;
-							openBluetoothSettings(true);
+							openBluetoothSettings();
 						}
 					}));
 			}
@@ -1817,13 +1851,21 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 		}
 
 		// autoconnect audio device on boot
-		auto auto_connect = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
+		auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
 		s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
-		s->addSaveFunc([auto_connect]
+		auto_connect->setOnChangedCallback([this, s, auto_connect]
 		{
 			SystemConf::getInstance()->setBool("bluetooth.audio.device.autoconnect", auto_connect->getState());
 		});
 
+		auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
+		auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
+		s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
+		auto_connect_timeout->setOnValueChanged([window, s](const float &newVal)
+			{
+				int timeout = (int)Math::round(newVal);
+				Settings::getInstance()->setInt("bluetooth.boot.game.timeout", timeout);
+			});
 	}
 
 	auto pthis = this;
@@ -1844,6 +1886,13 @@ void GuiMenu::openBluetoothSettings(bool selectBtEnable)
 
 		if (s->getVariable("reinitSoundComponents"))
 			pthis->reinitSoundComponentsAndMusic();
+
+		if (s->getVariable("reloadGuiMenu"))
+		{
+			delete pthis;
+			window->pushGui(new GuiMenu(window, false));
+		}
+
 	});
 
 	window->pushGui(s);
@@ -1881,6 +1930,7 @@ bool GuiMenu::displayBluetoothAudioRestartDialog(Window *window, bool force)
 {
 	bool restart = true;
 	std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
+	Settings::getInstance()->saveFile();
 	if (force)
 	{
 		window->pushGui(new GuiMsgBox(window, msg,
@@ -1904,7 +1954,7 @@ bool GuiMenu::displayBluetoothAudioRestartDialog(Window *window, bool force)
 				}, _("NO"),
 				[&restart]
 				{
-					LOG(LogDebug) << "GuiMenu::displayBluetoothAudioRestartDialog() - NO restarting Emulationstation!";
+					//LOG(LogDebug) << "GuiMenu::displayBluetoothAudioRestartDialog() - NO restarting Emulationstation!";
 					restart = false;
 				}));
 	}
@@ -1976,7 +2026,7 @@ void GuiMenu::openAdvancedSettings()
 	auto theme = ThemeData::getMenuTheme();
 
 	//Timezone - Adapted from emuelec
-	auto es_timezones = std::make_shared<OptionListComponent<std::string> >(window, _("SELECT YOUR TIMEZONE"), false);
+	auto es_timezones = std::make_shared<OptionListComponent<std::string>>(window, _("SELECT YOUR TIMEZONE"), false, true);
 
 	std::string currentTimezone = SystemConf::getInstance()->get("system.timezone");
 	if (currentTimezone.empty())
@@ -2706,7 +2756,7 @@ void GuiMenu::openScreensaverOptions() {
 	window->pushGui(new GuiGeneralScreensaverOptions(window, _("SCREENSAVER SETTINGS")));
 }
 
-void GuiMenu::openCollectionSystemSettings() 
+void GuiMenu::openCollectionSystemSettings(bool cursor)
 {
 	Window *window = mWindow;
 	if (ThreadedScraper::isRunning())
@@ -2716,6 +2766,23 @@ void GuiMenu::openCollectionSystemSettings()
 	}
 
 	window->pushGui(new GuiCollectionSystemsOptions(window));
+/*
+	auto s = new GuiCollectionSystemsOptions(window, cursor);
+	auto pthis = this;
+
+	s->onFinalize([s, pthis, window]
+	{
+		if (s->getVariable("reloadMenu"))
+		{
+			Settings::getInstance()->saveFile();
+			delete s;
+			pthis->openCollectionSystemSettings(true);
+		}
+
+	});
+
+	window->pushGui(s);
+*/
 }
 
 void GuiMenu::onSizeChanged()

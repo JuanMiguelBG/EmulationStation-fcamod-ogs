@@ -39,6 +39,7 @@
 #include "ApiSystem.h"
 
 #include "utils/AsyncUtil.h"
+#include "Scripting.h"
 
 #include <thread>
 #include <chrono>
@@ -57,6 +58,27 @@ bool scrape_cmdline = false;
 
 static std::string gPlayVideo;
 static int gPlayVideoDuration = 0;
+
+struct BootGameInfo
+{
+	BootGameInfo()
+	{
+		name = "N/A";
+		system = "N/A";
+		enable_startup_game = true;
+		launched = false;
+		time_played = 0;
+		date = Utils::Time::now();
+	}
+
+	std::string name;
+	std::string system;
+	bool enable_startup_game;
+	bool launched;
+	long time_played;
+	time_t date;
+};
+static BootGameInfo bootGame;
 
 void playVideo()
 {
@@ -223,6 +245,10 @@ bool parseArgs(int argc, char* argv[])
 		{
 			Settings::getInstance()->setBool("SplashScreen", false);
 		}
+		else if(strcmp(argv[i], "--no-startup-game") == 0)
+		{
+			bootGame.enable_startup_game = false;
+		}
 		else if (strcmp(argv[i], "--debug") == 0)
 		{
 			Settings::getInstance()->setBool("Debug", true);
@@ -309,17 +335,30 @@ bool parseArgs(int argc, char* argv[])
 
 void loadOtherSettings()
 {
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-		Settings::getInstance()->setString("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+	Utils::Async::run( [] (void)
+		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
+			{
+				SystemConf::getInstance()->set("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
+				bool wifi_enabled = ApiSystem::getInstance()->isWifiEnabled();
+				if (wifi_enabled)
+				{
+					SystemConf::getInstance()->setBool("wifi.enabled", wifi_enabled);
+//					std::string ssid = ApiSystem::getInstance()->getWifiSsid();
+//					if (SystemConf::getInstance()->setBool("wifi.ssid") != ssid)
+//						SystemConf::getInstance()->setBool("wifi.ssid", ssid);
+				}
+			}
 
-	bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
-	SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
-	if (btEnabled)
-	{
-		std::string btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
-		SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
-		SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
-	}
+			bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
+			SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
+			if (btEnabled)
+			{
+				std::string btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
+				SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
+				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
+			}
+		});
 }
 
 bool verifyHomeFolderExists()
@@ -453,22 +492,35 @@ void waitPreloadVlc(Window *window)
 
 void startAutoConnectBluetoothAudioDevice(std::string &log)
 {
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
-		&& Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
-	{
-		log.append("MAIN::startAutoConnectBluetoothAudioDevice()\n");
-		ApiSystem::getInstance()->startAutoConnectBluetoothAudioDevice();
-	}
+	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		|| !SystemConf::getInstance()->getBool("bluetooth.enabled")
+		|| !Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
+		return;
+
+	log.append("MAIN::startAutoConnectBluetoothAudioDevice()\n");
+	ApiSystem::getInstance()->startAutoConnectBluetoothAudioDevice();
 }
 
 void stopAutoConnectBluetoothAudioDevice()
 {
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
-		&& Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
-	{
-		LOG(LogInfo) << "MAIN::stopAutoConnectBluetoothAudioDevice()";
-		ApiSystem::getInstance()->stopAutoConnectBluetoothAudioDevice();
-	}
+	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		|| !SystemConf::getInstance()->getBool("bluetooth.enabled")
+		|| !Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"))
+		return;
+
+	LOG(LogInfo) << "MAIN::stopAutoConnectBluetoothAudioDevice()";
+	ApiSystem::getInstance()->stopAutoConnectBluetoothAudioDevice();
+}
+
+void waitForBluetoothDevices()
+{
+	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
+		|| !SystemConf::getInstance()->getBool("bluetooth.enabled"))
+		return;
+
+	int bt_timeout = Settings::getInstance()->getInt("bluetooth.boot.game.timeout");
+	if (bt_timeout > 0)
+		Utils::Async::sleep(bt_timeout * 1000);
 }
 
 void removeLockFiles()
@@ -500,6 +552,61 @@ void signalHandler(int signum)
 
 	// cleanup and close up stuff here  
 	exit(signum);
+}
+
+void launchStartupGame()
+{
+	auto gamePath = SystemConf::getInstance()->get("global.bootgame.path");
+	if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
+		return;
+
+	auto command = SystemConf::getInstance()->get("global.bootgame.cmd");
+	if (command.empty())
+		return;
+
+	std::string gameInfo = SystemConf::getInstance()->get("global.bootgame.info");
+	if (!gameInfo.empty())
+	{
+		std::vector<std::string> gameData = Utils::String::split(gameInfo, ';');
+		bootGame.system = gameData[0];
+		bootGame.name = gameData[1];
+	}
+
+	int exitCode = -1;
+	const std::string path = SystemConf::getInstance()->get("global.bootgame.path"),
+					  rom = Utils::FileSystem::getEscapedPath(path),
+					  basename = Utils::FileSystem::getStem(path);
+
+	LOG(LogInfo) << "MAIN::launchStartupGame() - game: '" << bootGame.name << "', system: '" << bootGame.system << "', command: '" << command << "'";
+
+	bootGame.launched = true;
+	Scripting::fireEvent("game-start", rom, basename, bootGame.name);
+	time_t game_tstart = time(NULL);
+	exitCode = runSystemCommand(command, gamePath, nullptr);
+
+	Scripting::fireEvent("game-end");
+
+	if (exitCode == 0)
+	{
+		//update game time played
+		time_t game_tend = time(NULL);
+		bootGame.time_played = difftime(game_tend, game_tstart);
+		bootGame.date = Utils::Time::now();
+	}
+	else
+		LOG(LogWarning) << "MAIN::launchStartupGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
+}
+
+void updateMetadataStartupGame()
+{
+	//LOG(LogDebug) << "MAIN::updateMetadataStartupGame() - system: '" << bootGame.system << "', game: '" << bootGame.name << "', launched: '" << Utils::String::boolToString(bootGame.launched) << "'";
+	if (!bootGame.launched)
+		return;
+
+	Utils::Async::run( [] (void)
+		{
+			CollectionSystemManager::getInstance()->updateBootGameMetadata(bootGame.system, bootGame.name, bootGame.time_played, bootGame.date);
+		});
 }
 
 int main(int argc, char* argv[])
@@ -545,13 +652,6 @@ int main(int argc, char* argv[])
 	FreeImage_Initialise();
 #endif
 
-	if (!gPlayVideo.empty())
-	{
-		playVideo();
-		Log::flush();
-		return 0;
-	}
-
 	//if ~/.emulationstation doesn't exist and cannot be created, bail
 	if(!verifyHomeFolderExists())
 	{
@@ -559,8 +659,21 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	if (!gPlayVideo.empty())
+	{
+		playVideo();
+		Log::flush();
+		return 0;
+	}
+
 	//always close the log on exit
 	atexit(&onExit);
+
+	if (bootGame.enable_startup_game) {
+		waitForBluetoothDevices();
+		// Run boot game, before Window Create for linux
+		launchStartupGame();
+	}
 
 	// metadata init
 	//Genres::init();
@@ -571,6 +684,7 @@ int main(int argc, char* argv[])
 	PowerSaver::init();
 	ViewController::init(&window);
 	CollectionSystemManager::init(&window);
+
 	MameNames::init();
 	window.pushGui(ViewController::get());
 
@@ -619,6 +733,11 @@ int main(int argc, char* argv[])
 			}));
 	}
 
+	if (bootGame.enable_startup_game) {
+		// update game metadata info
+		updateMetadataStartupGame();
+	}
+
 	//run the command line scraper then quit
 	if (scrape_cmdline)
 		return run_scraper_cmdline();
@@ -646,7 +765,7 @@ int main(int argc, char* argv[])
 
 	stopAutoConnectBluetoothAudioDevice();
 
-	Utils::Async::run(loadOtherSettings);
+	loadOtherSettings();
 
 	playMusic();
 

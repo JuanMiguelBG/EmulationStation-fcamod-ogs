@@ -321,6 +321,74 @@ std::string FileData::getMessageFromExitCode(int exitCode)
 	return _("UKNOWN ERROR") + " : " + std::to_string(exitCode);
 }
 
+std::string FileData::getlaunchCommand()
+{
+//	LOG(LogDebug) << "FileData::getlaunchCommand() - name: " << getName();
+
+	FileData* gameToUpdate = getSourceFileData();
+	if (gameToUpdate == nullptr)
+		return "";
+
+	SystemData* system = gameToUpdate->getSystem();
+	if (system == nullptr)
+		return "";
+
+	std::string command = getSystemEnvData()->mLaunchCommand;
+
+	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
+	const std::string basename = Utils::FileSystem::getStem(getPath());
+	const std::string rom_raw = Utils::FileSystem::getPreferredPath(getPath());
+
+	std::string emulator = getEmulator();
+	if (emulator.length() == 0)
+		emulator = getSystemEnvData()->getDefaultEmulator();
+
+	std::string core = getCore();
+	if (core.length() == 0)
+		core = getSystemEnvData()->getDefaultCore(emulator);
+
+	std::string customCommandLine = getSystemEnvData()->getEmulatorCommandLine(emulator);
+	if (customCommandLine.length() > 0)
+		command = customCommandLine;
+
+	if (!command.empty())
+	{
+		command = Utils::String::replace(command, "%EMULATOR%", emulator);
+		command = Utils::String::replace(command, "%CORE%", core);
+
+		command = Utils::String::replace(command, "%ROM%", rom);
+		command = Utils::String::replace(command, "%BASENAME%", basename);
+		command = Utils::String::replace(command, "%ROM_RAW%", rom_raw);
+		command = Utils::String::replace(command, "%SYSTEM%", getSystemName());
+		command = Utils::String::replace(command, "%HOME%", Utils::FileSystem::getHomePath());
+	}
+//	LOG(LogDebug) << "FileData::getlaunchCommand() - name: '" << getName() << "', command line: '" << command << "'";
+	return command;
+}
+
+void FileData::updateBootGameMetadata(long timePlayed, time_t lastPlayed)
+{
+//	LOG(LogDebug) << "FileData::updateBootGameMetadata() - time played: " << std::to_string(timePlayed) << ", update times pleyd: " << Utils::String::boolToString(updateTimesPlayed);
+
+	FileData* gameToUpdate = getSourceFileData();
+
+	//update game times played
+	int timesPlayed = gameToUpdate->getMetadata().getInt(MetaDataId::PlayCount) + 1;
+	gameToUpdate->setMetadata(MetaDataId::PlayCount, std::to_string(static_cast<long long>(timesPlayed)));
+
+	// update game time played
+	if (timePlayed >= 10)
+	{
+		long gameTime = gameToUpdate->getMetadata().getInt(MetaDataId::GameTime) + timePlayed;
+		gameToUpdate->setMetadata(MetaDataId::GameTime, std::to_string(static_cast<long>(gameTime)));
+	}
+
+	// update last played time
+	gameToUpdate->setMetadata(MetaDataId::LastPlayed, Utils::Time::DateTime(lastPlayed));
+	CollectionSystemManager::getInstance()->refreshCollectionSystems(gameToUpdate);
+	saveToGamelistRecovery(gameToUpdate);
+}
+
 void FileData::launchGame(Window* window)
 {
 	LOG(LogInfo) << "FileData::launchGame() - Attempting to launch game...";
@@ -343,46 +411,25 @@ void FileData::launchGame(Window* window)
 	bool hideWindow = Settings::getInstance()->getBool("HideWindow");
 	window->deinit(hideWindow);
 
-	std::string command = getSystemEnvData()->mLaunchCommand;
-
-	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
-	const std::string basename = Utils::FileSystem::getStem(getPath());
-	const std::string rom_raw = Utils::FileSystem::getPreferredPath(getPath());
-
-	std::string emulator = getEmulator();
-	if (emulator.length() == 0)
-		emulator = getSystemEnvData()->getDefaultEmulator();
-
-	std::string core = getCore();
-	if (core.length() == 0)
-		core = getSystemEnvData()->getDefaultCore(emulator);
-
-	std::string customCommandLine = getSystemEnvData()->getEmulatorCommandLine(emulator);
-	if (customCommandLine.length() > 0)
-		command = customCommandLine;
+	std::string command = getlaunchCommand();
 
 	int exitCode = -1;
 	time_t tstart;
+	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
+	const std::string basename = Utils::FileSystem::getStem(getPath());
+
+	Scripting::fireEvent("game-start", rom, basename, getName());
+
 	if (command.empty())
 	{
+		LOG(LogInfo) << "FileData::launchGame() - command is empty, skipping game start";
 		exitCode = -206;
 	}
 	else
 	{
-		command = Utils::String::replace(command, "%EMULATOR%", emulator);
-		command = Utils::String::replace(command, "%CORE%", core);
-
-		command = Utils::String::replace(command, "%ROM%", rom);
-		command = Utils::String::replace(command, "%BASENAME%", basename);
-		command = Utils::String::replace(command, "%ROM_RAW%", rom_raw);
-		command = Utils::String::replace(command, "%SYSTEM%", getSystemName());
-		command = Utils::String::replace(command, "%HOME%", Utils::FileSystem::getHomePath());
-
-		Scripting::fireEvent("game-start", rom, basename, getName());
-
 		tstart = time(NULL);
 
-		LOG(LogInfo) << "	" << command;
+		LOG(LogInfo) << "FileData::launchGame() - command: '" << command << "'";
 
 		exitCode = runSystemCommand(command, getDisplayName(), hideWindow ? NULL : window);
 		if (exitCode != 0)
@@ -402,22 +449,9 @@ void FileData::launchGame(Window* window)
 	//update number of times the game has been launched
 	if (exitCode == 0)
 	{
-		FileData* gameToUpdate = getSourceFileData();
-
-		int timesPlayed = gameToUpdate->getMetadata().getInt(MetaDataId::PlayCount) + 1;
-		gameToUpdate->setMetadata(MetaDataId::PlayCount, std::to_string(static_cast<long long>(timesPlayed)));
-
 		//update game time played
 		time_t tend = time(NULL);
-		long elapsedSeconds = difftime(tend, tstart);
-		long gameTime = gameToUpdate->getMetadata().getInt(MetaDataId::GameTime) + elapsedSeconds;
-		if (elapsedSeconds >= 10)
-			gameToUpdate->setMetadata(MetaDataId::GameTime, std::to_string(static_cast<long>(gameTime)));
-
-		//update last played time
-		gameToUpdate->setMetadata(MetaDataId::LastPlayed, Utils::Time::DateTime(Utils::Time::now()));
-		CollectionSystemManager::get()->refreshCollectionSystems(gameToUpdate);
-		saveToGamelistRecovery(gameToUpdate);
+		updateBootGameMetadata((long) difftime(tend, tstart), Utils::Time::now());
 	}
 
 	// music
@@ -509,7 +543,7 @@ const std::vector<FileData*> FolderData::getChildrenListToDisplay()
 			filterKidGame = true;
 	}
 
-	auto sys = CollectionSystemManager::get()->getSystemToView(mSystem);
+	auto sys = CollectionSystemManager::getInstance()->getSystemToView(mSystem);
 
 	FileFilterIndex* idx = sys->getIndex(false);
 	if (idx != nullptr && !idx->isFiltered())

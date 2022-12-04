@@ -97,6 +97,22 @@ get_soc_name() {
 
 # ******************************************************************************************
 
+# Configure ES commons variables
+. es-log_scripts
+
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-system_inf.log"
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+exit_execution()
+{
+    local return=$1
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION', exit code: '$return' #####"
+    exit $return
+}
+
 
 if [ $# -eq 0 ]; then
 	do_help
@@ -105,6 +121,8 @@ fi
 
 ACTION=$1
 shift
+
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION' #####"
 
 case "${ACTION}" in
     "get_system_name")
@@ -131,6 +149,8 @@ case "${ACTION}" in
     *)
         do_help
         >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
         exit 1
 esac
-exit 0
+
+exit_execution 0

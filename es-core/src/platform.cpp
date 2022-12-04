@@ -130,6 +130,43 @@ bool executeSystemScript(const std::string command)
 	return false;
 }
 
+std::pair<std::string, int> executeSystemScript(const std::string command, const std::function<void(const std::string)>& func)
+{
+	LOG(LogInfo) << "Platform::executeSystemScript() - Running -> " << command;
+
+	FILE *pipe = popen(command.c_str(), "r");
+	if (pipe == NULL)
+	{
+		LOG(LogError) << "Platform::executeSystemScript() - Error executing " << command;
+		return std::pair<std::string, int>("Error starting command : " + command, -1);
+	}
+
+	char line[1024];
+	while (fgets(line, 1024, pipe))
+	{
+		strtok(line, "\n");
+
+		// Long theme names/URL can crash the GUI MsgBox
+		// "48" found by trials and errors. Ideally should be fixed
+		// in es-core MsgBox -- FIXME
+		if (strlen(line) > 48)
+			line[47] = '\0';
+
+		if (func != nullptr)
+			func(std::string(line));
+	}
+
+	int exitCode = WEXITSTATUS(pclose(pipe));
+	return std::pair<std::string, int>(line, exitCode);
+}
+
+bool executeSystemBoolScript(const std::string command)
+{
+	LOG(LogInfo) << "Platform::executeSystemBoolScript() - Running -> " << command;
+
+	return (system(command.c_str()) == 0);
+}
+
 void touch(const std::string& filename)
 {
 	int fd = open(filename.c_str(), O_CREAT|O_WRONLY, 0644);
@@ -519,12 +556,12 @@ std::string queryIPAddress()
 
 bool queryNetworkConnected()
 {
-	return executeSystemScript("es-wifi is_connected");
+	return executeSystemBoolScript("es-wifi is_connected");
 }
 
 bool queryWifiEnabled()
 {
-	return executeSystemScript("es-wifi is_enabled");
+	return executeSystemBoolScript("es-wifi is_enabled");
 }
 
 std::string queryWifiSsid()
@@ -1137,4 +1174,3 @@ std::string queryBluetoothEnabled()
 {
 	return getShOutput(R"(if [ -z $(pidof rtk_hciattach) ]; then echo "disabled"; else echo "enabled"; fi)");
 }
-

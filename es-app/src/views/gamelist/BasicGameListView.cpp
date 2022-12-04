@@ -242,7 +242,7 @@ std::vector<HelpPrompt> BasicGameListView::getHelpPrompts()
 
 	if(mRoot->getSystem()->isGameSystem() && !UIModeController::getInstance()->isUIModeKid())
 	{
-		std::string prompt = CollectionSystemManager::get()->getEditingCollection();
+		std::string prompt = CollectionSystemManager::getInstance()->getEditingCollection();
 		if (prompt == "Favorites")
 			prompt = "FAVORITE";
 

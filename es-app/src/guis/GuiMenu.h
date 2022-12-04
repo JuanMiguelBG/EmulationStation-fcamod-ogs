@@ -28,7 +28,7 @@ private:
 	void addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName = "");
 
 	void addVersionInfo();
-	void openCollectionSystemSettings();
+	void openCollectionSystemSettings(bool cursor = false);
 	void openConfigInput();
 	void openAdvancedSettings();
 	void openQuitMenu();
@@ -49,7 +49,7 @@ private:
 	static void openWifiSettings(Window* win, std::string title, std::string data, const std::function<bool(std::string)>& onsave);
 
 	void preloadBluetoothSettings();
-	void openBluetoothSettings(bool selectBtEnable = false);
+	void openBluetoothSettings();
 	void openBluetoothScanDevices(Window* win, std::string title);
 	void openBluetoothPairedDevices(Window* win, std::string title);
 	void openBluetoothConnectedDevices(Window* win, std::string title);

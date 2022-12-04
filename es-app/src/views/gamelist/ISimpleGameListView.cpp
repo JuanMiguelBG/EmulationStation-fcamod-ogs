@@ -161,7 +161,7 @@ bool ISimpleGameListView::input(InputConfig* config, Input input)
 				if (systemToView->isGroupChildSystem())
 					systemToView = systemToView->getParentGroupSystem();
 				else if (systemToView->isCollection())
-					systemToView = CollectionSystemManager::get()->getSystemToView(systemToView);
+					systemToView = CollectionSystemManager::getInstance()->getSystemToView(systemToView);
 
 				ViewController::get()->goToSystemView(systemToView);
 			}
@@ -204,7 +204,7 @@ bool ISimpleGameListView::input(InputConfig* config, Input input)
 		else if (config->isMappedTo("y", input) && !UIModeController::getInstance()->isUIModeKid())
 		{
 			if (mRoot->getSystem()->isGameSystem() || mRoot->getSystem()->isGroupSystem())
-				if (CollectionSystemManager::get()->toggleGameInCollection(getCursor()))
+				if (CollectionSystemManager::getInstance()->toggleGameInCollection(getCursor()))
 					return true;
 		}
 	}

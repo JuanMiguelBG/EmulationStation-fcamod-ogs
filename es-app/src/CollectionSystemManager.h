@@ -82,7 +82,7 @@ public:
 	CollectionSystemManager(Window* window);
 	~CollectionSystemManager();
 
-	static CollectionSystemManager* get();
+	static CollectionSystemManager* getInstance();
 	static void init(Window* window);
 	static void deinit();
 	void saveCustomCollection(SystemData* sys);
@@ -116,6 +116,8 @@ public:
 	void populateAutoCollection(CollectionSystemData* sysData);
 
 	SystemData* getArcadeCollection();
+
+	void updateBootGameMetadata(const std::string system, const std::string game, long timePlayed, time_t lastPlayed);
 
 private:
 	static CollectionSystemManager* sInstance;

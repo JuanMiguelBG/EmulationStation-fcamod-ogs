@@ -39,7 +39,7 @@ namespace Utils
 						LOG(LogDebug) << "Utils::Async::run() - INSIDE Asynchronous execution, thread: '" << std::to_string(Utils::Async::getThreadId()) << "'!";
 						asyncFunction();
 					});
-				LOG(LogDebug) << "Utils::Async::run() - exit Asynchronous excution, thread: '" << threadId << "'!";
+				LOG(LogDebug) << "Utils::Async::run() - exit Asynchronous execution, thread: '" << threadId << "'!";
 			}
 			else
 			{

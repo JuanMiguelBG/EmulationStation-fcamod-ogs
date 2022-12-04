@@ -399,7 +399,7 @@ void GuiMetaDataEd::save()
 	saveToGamelistRecovery(mScraperParams.game);
 
 	// update respective Collection Entries
-	CollectionSystemManager::get()->refreshCollectionSystems(mScraperParams.game);
+	CollectionSystemManager::getInstance()->refreshCollectionSystems(mScraperParams.game);
 }
 
 void GuiMetaDataEd::fetch()

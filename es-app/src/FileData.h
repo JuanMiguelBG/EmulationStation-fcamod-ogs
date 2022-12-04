@@ -78,6 +78,8 @@ public:
 	// As above, but also remove parenthesis
 	std::string getCleanName() const;
 
+	std::string getlaunchCommand();
+
 	void launchGame(Window* window);
 
 	static void resetSettings();
@@ -94,6 +96,8 @@ public:
 
 	bool hasContentFiles();
 	std::set<std::string> getContentFiles();
+
+	void updateBootGameMetadata(long timePlayed, time_t lastPlayed);
 
 private:
 	std::string getMessageFromExitCode(int exitCode);

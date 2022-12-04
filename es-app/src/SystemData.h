@@ -225,6 +225,8 @@ public:
 
 	bool shouldExtractHashesFromArchives();
 
+	FileData* getGame(const std::string game);
+
 private:
 	static SystemData* loadSystem(pugi::xml_node system);
 	static void createGroupedSystems();

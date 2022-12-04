@@ -13,11 +13,11 @@ class SystemData;
 class GuiCollectionSystemsOptions : public GuiSettings
 {
 public:
-	GuiCollectionSystemsOptions(Window* window);
+	GuiCollectionSystemsOptions(Window* window, bool cursor = false);
 	~GuiCollectionSystemsOptions();
 
 private:
-	void initializeMenu();
+	void initializeMenu(Window* window, bool cursor);
 	void addSystemsToMenu();
 
 	void updateSettings(std::string newAutoSettings, std::string newCustomSettings);
@@ -25,6 +25,8 @@ private:
 	void exitEditMode();
 	std::shared_ptr< OptionListComponent<std::string> > autoOptionList;
 	std::shared_ptr< OptionListComponent<std::string> > customOptionList;
+
+	static void openGui(Window* window, bool cursor);
 
 	SystemData* mSystem;
 };
