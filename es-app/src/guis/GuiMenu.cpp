@@ -94,10 +94,40 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		}
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-			addEntry(_("NETWORK SETTINGS").c_str(), true, [this] { preloadNetworkSettings(); openNetworkSettings(); }, "iconNetwork");
+			addEntry(_("NETWORK SETTINGS").c_str(), true,
+				[this, window]
+				{
+					window->pushGui(new GuiLoading<bool>(window, _("PLEASE WAIT..."),
+						[this]
+						{
+							Settings::getInstance()->setBool("wait.process.loading", true);
+							preloadNetworkSettings();
+							openNetworkSettings();
+							return true;
+						},
+						[](bool result)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+						}));
+				}, "iconNetwork");
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
-			addEntry(_("BLUETOOTH SETTINGS").c_str(), true, [this] { preloadBluetoothSettings(); openBluetoothSettings(); }, "iconBluetooth");
+			addEntry(_("BLUETOOTH SETTINGS").c_str(), true,
+				[this, window]
+				{
+					window->pushGui(new GuiLoading<bool>(window, _("PLEASE WAIT..."),
+						[this]
+						{
+							Settings::getInstance()->setBool("wait.process.loading", true);
+							preloadBluetoothSettings();
+							openBluetoothSettings();
+							return true;
+						},
+						[](bool result)
+						{
+							Settings::getInstance()->setBool("wait.process.loading", false);
+						}));
+				}, "iconBluetooth");
 
 		addEntry(_("SCRAPER"), true, [this] { openScraperSettings(); }, "iconScraper");
 
