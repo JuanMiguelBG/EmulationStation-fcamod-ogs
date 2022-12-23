@@ -1737,6 +1737,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		}
 	});
 
+	Settings::getInstance()->setBool("wait.process.loading", false);
 	window->pushGui(s);
 }
 
@@ -1925,6 +1926,7 @@ void GuiMenu::openBluetoothSettings()
 
 	});
 
+	Settings::getInstance()->setBool("wait.process.loading", false);
 	window->pushGui(s);
 }
 
