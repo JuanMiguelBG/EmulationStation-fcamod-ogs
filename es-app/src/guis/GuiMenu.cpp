@@ -1737,6 +1737,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		}
 	});
 
+	Settings::getInstance()->setBool("wait.process.loading", false);
 	window->pushGui(s);
 }
 
@@ -1925,6 +1926,7 @@ void GuiMenu::openBluetoothSettings()
 
 	});
 
+	Settings::getInstance()->setBool("wait.process.loading", false);
 	window->pushGui(s);
 }
 
@@ -2638,7 +2640,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				else
 					restartEsFunction();
 			}, "iconRestartEmulationstaion");
-
+/*
 		if(Settings::getInstance()->getBool("ShowExit"))
 		{
 			s->addEntry(_("QUIT EMULATIONSTATION"), false, [window]
@@ -2650,9 +2652,9 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 					else
 						quitEsFunction();
 				}, "iconQuit");
-		}
+		}*/
 	}
-
+/*
 	if (isUIModeFull)
 	{
 		s->addEntry(_("SUSPEND SYSTEM"), false, [window]
@@ -2665,7 +2667,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 					suspendDeviceFunction();
 			}, "iconSuspend");
 	}
-
+*/
 	s->addEntry(_("RESTART SYSTEM"), false, [window]
 		{
 			if (Settings::getInstance()->getBool("ConfirmToExit"))

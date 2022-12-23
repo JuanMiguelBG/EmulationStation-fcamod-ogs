@@ -72,8 +72,8 @@ void GuiQuitOptions::initializeMenu()
 	auto only_exit_action_list = std::make_shared< OptionListComponent< std::string > >(mWindow, _("ACTION TO EXECUTE"), false);
 
 	only_exit_action_list->add(_("shutdown"), "shutdown", only_exit_action == "shutdown");
-	only_exit_action_list->add(_("suspend"), "suspend", only_exit_action == "suspend");
-	only_exit_action_list->add(_("QUIT EMULATIONSTATION"), "exit_es", only_exit_action == "exit_es");
+	//only_exit_action_list->add(_("suspend"), "suspend", only_exit_action == "suspend");
+	//only_exit_action_list->add(_("QUIT EMULATIONSTATION"), "exit_es", only_exit_action == "exit_es");
 
 	addWithLabel(_("ACTION TO EXECUTE"), only_exit_action_list);
 	addSaveFunc([this, only_exit_action_list]
