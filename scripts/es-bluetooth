@@ -67,10 +67,10 @@ enable_bluetooth() {
       sudo systemctl start enable_bluetooth --quiet
       sudo systemctl start bluetooth --quiet
       sudo systemctl start bluealsa --quiet
-      sudo systemctl start watchforbtaudio --quiet
-      sudo systemctl enable enable_bluetooth --quiet
-      sudo systemctl enable bluetooth --quiet
-      sudo systemctl enable bluealsa --quiet
+      sudo systemctl start watchforbtaudio --quiet &
+      sudo systemctl enable enable_bluetooth --quiet &
+      sudo systemctl enable bluetooth --quiet &
+      sudo systemctl enable bluealsa --quiet &
       sudo systemctl enable watchforbtaudio --quiet
       sudo systemctl daemon-reload --quiet &
       sudo systemctl restart oga_events --quiet &
@@ -97,10 +97,10 @@ disable_bluetooth() {
       sudo systemctl stop watchforbtaudio --quiet
       sudo systemctl stop bluetooth --quiet
       sudo systemctl stop bluealsa --quiet
-      sudo systemctl stop enable_bluetooth --quiet
-      sudo systemctl disable watchforbtaudio --quiet
-      sudo systemctl disable bluetooth --quiet
-      sudo systemctl disable bluealsa --quiet
+      sudo systemctl stop enable_bluetooth --quiet &
+      sudo systemctl disable watchforbtaudio --quiet &
+      sudo systemctl disable bluetooth --quiet &
+      sudo systemctl disable bluealsa --quiet &
       sudo systemctl disable enable_bluetooth --quiet
       sudo systemctl daemon-reload --quiet &
       sudo systemctl restart oga_events --quiet &
