@@ -140,7 +140,7 @@ void DetailedGameListView::createVideo()
 
 	// video
 	// Create the correct type of video window
-	mVideo = new VideoVlcComponent(mWindow, "");
+	mVideo = new VideoVlcComponent(mWindow);
 
 	// Default is IMAGE in Recalbox themes -> video view does not exist
 	mVideo->setSnapshotSource(IMAGE);

@@ -25,7 +25,7 @@ VideoGameListView::VideoGameListView(Window* window, FolderData* root) :
 	const float padding = 0.01f;
 
 	// Create the correct type of video window
-	mVideo = new VideoVlcComponent(window, "");
+	mVideo = new VideoVlcComponent(window);
 	
 	mVideo->setSnapshotSource(IMAGE);
 
