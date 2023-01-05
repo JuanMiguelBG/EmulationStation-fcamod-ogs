@@ -14,6 +14,11 @@
 
 #define BUTTON_GRID_HORIZ_PADDING (Renderer::getScreenWidth()*0.0052083333)
 
+std::vector<const char*> keyb_last_line_small = { "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "-colspan-", "CANCEL", "-colspan-", "-colspan-" };
+std::vector<const char*> keyb_last_line_big = { "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" };
+
+std::vector<const char*> keyb_last_line = Renderer::isSmallScreen() ? keyb_last_line_small : keyb_last_line_big;
+
 std::vector<std::vector<const char*>> kbUs {
 
 	{ "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "_", "+", "DEL" },
@@ -32,9 +37,9 @@ std::vector<std::vector<const char*>> kbUs {
 	{ "`", "Z", "X", "C", "V", "B", "N", "M", "<", ">", "/", "ALT", "-colspan-" },
 	{ "€", "", "", "", "", "", "", "", "", "", "", "ALT", "-colspan-" },
 
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" }
+	keyb_last_line,
+	keyb_last_line,
+	keyb_last_line
 };
 
 std::vector<std::vector<const char*>> kbFr {
@@ -54,9 +59,9 @@ std::vector<std::vector<const char*>> kbFr {
 	{ ">", "W", "X", "C", "V", "B", "N", "?", ".", "/", "+", "ALT", "-colspan-" },
 	{ "€", "", "", "", "", "", "", "", "", "", "", "ALT", "-colspan-" },
 
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" }
+	keyb_last_line,
+	keyb_last_line,
+	keyb_last_line
 };
 
 std::vector<std::vector<const char*>> kbEs {
@@ -76,9 +81,9 @@ std::vector<std::vector<const char*>> kbEs {
 	{ ">", "Z", "X", "C", "V", "B", "N", "M", "~", "`", "\\", "ALT", "-colspan-" },
 	{ "£", "$", "¨", "/", "º", "ª", "@", "#", "*", "", "", "ALT", "-colspan-" },
 
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" }
+	keyb_last_line,
+	keyb_last_line,
+	keyb_last_line
 };
 
 
