@@ -195,7 +195,7 @@ void GuiMenu::openDisplaySettings()
 	auto pthis = this;
 	Window* window = mWindow;
 
-	auto s = new GuiSettings(window, _("DISPLAY"));
+	auto s = new GuiSettings(window, _("DISPLAY SETTINGS"));
 
 	// Brightness
 	auto brightness = std::make_shared<SliderComponent>(window, 1.0f, 100.f, 1.0f, "%");
