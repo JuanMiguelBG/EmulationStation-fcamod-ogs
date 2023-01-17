@@ -9,7 +9,7 @@
 VideoGameListView::VideoGameListView(Window* window, FolderData* root) :
 	BasicGameListView(window, root),
 	mDescContainer(window), mDescription(window),
-	mMarquee(window),
+	mMarquee(nullptr),
 	mImage(nullptr),
 	mVideo(nullptr),
 	mVideoPlaying(false),
@@ -35,11 +35,12 @@ VideoGameListView::VideoGameListView(Window* window, FolderData* root) :
 	mList.setCursorChangedCallback([&](const CursorState& /*state*/) { updateInfoPanel(); });
 
 	// Marquee
-	mMarquee.setOrigin(0.5f, 0.5f);
-	mMarquee.setPosition(mSize.x() * 0.25f, mSize.y() * 0.10f);
-	mMarquee.setMaxSize(mSize.x() * (0.5f - 2*padding), mSize.y() * 0.18f);
-	mMarquee.setDefaultZIndex(35);
-	addChild(&mMarquee);
+	mMarquee = new ImageComponent(window);
+	mMarquee->setOrigin(0.5f, 0.5f);
+	mMarquee->setPosition(mSize.x() * 0.25f, mSize.y() * 0.10f);
+	mMarquee->setMaxSize(mSize.x() * (0.5f - 2*padding), mSize.y() * 0.18f);
+	mMarquee->setDefaultZIndex(35);
+	addChild(mMarquee);
 
 	// video
 	mVideo->setOrigin(0.5f, 0.5f);
@@ -107,6 +108,9 @@ VideoGameListView::~VideoGameListView()
 	if (mImage != nullptr)
 		delete mImage;
 
+	if (mMarquee != nullptr)
+		delete mMarquee;
+
 	if (mVideo != nullptr)
 		delete mVideo;
 
@@ -151,7 +155,7 @@ void VideoGameListView::onThemeChanged(const std::shared_ptr<ThemeData>& theme)
 	BasicGameListView::onThemeChanged(theme);
 
 	using namespace ThemeFlags;
-	mMarquee.applyTheme(theme, getName(), "md_marquee", ALL ^ (PATH));
+	mMarquee->applyTheme(theme, getName(), "md_marquee", ALL ^ (PATH));
 
 	if (theme->getElement(getName(), "md_image", "image"))
 	{
@@ -294,15 +298,15 @@ void VideoGameListView::updateInfoPanel()
 		mVideo->setVideo("");
 		mVideo->setImage("");
 		mVideoPlaying = false;
-		//mMarquee.setImage("");
+		//mMarquee->setImage("");
 		//mDescription.setText("");
 		fadingOut = true;
-
-	}else{
+	}
+	else
+	{
 		if (!mVideo->setVideo(file->getVideoPath()))
-		{
 			mVideo->setDefaultVideo();
-		}
+
 		mVideoPlaying = true;
 		
 		std::string snapShot = file->getThumbnailPath();
@@ -315,7 +319,7 @@ void VideoGameListView::updateInfoPanel()
 
 		mVideo->setImage(snapShot);
 
-		mMarquee.setImage(file->getMarqueePath()/*, false, mMarquee.getMaxSizeInfo()*/); // Too slow on pi
+		mMarquee->setImage(file->getMarqueePath()/*, false, mMarquee->getMaxSizeInfo()*/); // Too slow on pi
 
 		if (mThumbnail != nullptr)
 		{
@@ -359,7 +363,7 @@ void VideoGameListView::updateInfoPanel()
 		return;
 
 	std::vector<GuiComponent*> comps = getMDValues();
-	comps.push_back(&mMarquee);
+	comps.push_back(mMarquee);
 	comps.push_back(mVideo);
 	comps.push_back(&mDescription);
 	
@@ -397,7 +401,7 @@ void VideoGameListView::updateInfoPanel()
 					if (mThumbnail != nullptr) mThumbnail->setImage("");
 					if (mImage != nullptr) mImage->setImage("");
 
-					mMarquee.setImage("");
+					mMarquee->setImage("");
 				}
 			}, fadingOut);
 		}
@@ -411,11 +415,11 @@ void VideoGameListView::launch(FileData* game)
 
 	Vector3f target(screenWidth / 2.0f, screenHeight / 2.0f, 0);
 
-	if(mMarquee.hasImage() &&
-		(mMarquee.getPosition().x() < screenWidth && mMarquee.getPosition().x() > 0.0f &&
-		 mMarquee.getPosition().y() < screenHeight && mMarquee.getPosition().y() > 0.0f))
+	if(mMarquee->hasImage() &&
+		(mMarquee->getPosition().x() < screenWidth && mMarquee->getPosition().x() > 0.0f &&
+		 mMarquee->getPosition().y() < screenHeight && mMarquee->getPosition().y() > 0.0f))
 	{
-		target = Vector3f(mMarquee.getCenter().x(), mMarquee.getCenter().y(), 0);
+		target = Vector3f(mMarquee->getCenter().x(), mMarquee->getCenter().y(), 0);
 	}
 	else if(mImage != nullptr && mImage->hasImage() &&
 		(mImage->getPosition().x() < screenWidth && mImage->getPosition().x() > 2.0f &&
