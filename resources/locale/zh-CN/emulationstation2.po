@@ -1042,7 +1042,7 @@ msgstr "快速关机"
 msgid "ON SCREEN KEYBOARD"
 msgstr "屏幕键盘"
 
-msgid "SHIFTS FOR UPPER,LOWER, AND SPECIAL"
+msgid "SHIFTS FOR UPPER, LOWER, AND SPECIAL"
 msgstr "SHIFT 可切换大小写和特殊字符"
 
 msgid "SPACE"
