@@ -77,8 +77,6 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 	// resize & position
 	float width_ratio = 0.95f,
 		  height_ratio = 0.85f,
-		  width_max = Renderer::getScreenWidth(),
-		  height_max = (Renderer::getScreenHeight() - mWindow->getHelpComponentHeight()),
 		  width = Renderer::getScreenWidth(),
 		  height = Renderer::getScreenHeight(),
 		  new_x = 0.f,
@@ -89,10 +87,7 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 		width_ratio = 1.0f;
 		height_ratio = 1.0f;
 	}
-
-	width = (float)Math::min((int)(width * width_ratio), (int)width_max);
-	height = (float)Math::min((int)(height * height_ratio), (int)height_max);
-	setSize(width, height);
+	setSize(width * width_ratio, height * height_ratio);
 
 	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
 	{

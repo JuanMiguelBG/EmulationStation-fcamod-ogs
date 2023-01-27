@@ -273,15 +273,14 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 
 
 	// If multiline, set all diminsions back to default, else draw size for keyboard.
-	float height_max = (Renderer::getScreenHeight() - mWindow->getHelpComponentHeight()),
-		  new_x = 0.f,
+	float new_x = 0.f,
 		  new_y = 0.f,
 		  width = OSK_WIDTH,
 		  height = !mMultiLine ? OSK_HEIGHT : mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40,
 		  width_ratio = 1.0f;
 
 	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
-		setSize(Renderer::getScreenWidth(), height_max);
+		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 	else
 	{  // !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
 		if (Settings::getInstance()->getBool("AutoMenuWidth"))
@@ -297,7 +296,6 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 				width_ratio = 2.0f;
 		}
 
-		height = (float)Math::min((int)height, (int)height_max);
 		width = (float)Math::min((int)(width * width_ratio), Renderer::getScreenWidth());
 
 		setSize(width, height);
@@ -326,7 +324,7 @@ void GuiTextEditPopupKeyboard::onSizeChanged()
 	auto pos = mKeyboardGrid->getPosition();
 	auto sz = mKeyboardGrid->getSize();
 
-	mKeyboardGrid->setSize(mSize.x() - OSK_PADDINGX - OSK_PADDINGX, sz.y() - OSK_PADDINGY); // Small margin between buttons
+	mKeyboardGrid->setSize(mSize.x() - OSK_PADDINGX - OSK_PADDINGX, sz.y() - OSK_PADDINGY - mWindow->getHelpComponentHeight()); // Small margin between buttons
 	mKeyboardGrid->setPosition(OSK_PADDINGX, pos.y());
 }
 

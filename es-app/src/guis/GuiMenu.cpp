@@ -156,9 +156,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	addVersionInfo();
 
 	// resize & position
-	float width_max = Renderer::getScreenWidth(),
-		  height_max = (Renderer::getScreenHeight() - mWindow->getHelpComponentHeight()),
-		  width = mSize.x(),
+	float width = mSize.x(),
 		  height = mSize.y();
 
 //	setSize(mMenu.getSize());
@@ -167,8 +165,6 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		width = Renderer::getScreenWidth();
 		height = Renderer::getScreenHeight();
 	}
-	width = (float)Math::min((int)width, (int)width_max);
-	height = (float)Math::min((int)height, (int)height_max);
 	setSize(width, height);
 
 	float x_end = 0.f,

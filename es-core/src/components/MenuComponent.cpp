@@ -249,7 +249,7 @@ void MenuComponent::setSubTitle(const std::string text)
 float MenuComponent::getButtonGridHeight() const
 {
 	auto menuTheme = ThemeData::getMenuTheme();
-	return (mButtonGrid ? mButtonGrid->getSize().y() : menuTheme->Text.font->getHeight() + BUTTON_GRID_VERT_PADDING);
+	return (mButtonGrid ? mButtonGrid->getSize().y() : menuTheme->Text.font->getHeight() + BUTTON_GRID_VERT_PADDING + mWindow->getHelpComponentHeight());
 }
 /*
 void MenuComponent::setPosition(float x, float y, float z)
@@ -265,7 +265,8 @@ void MenuComponent::updateSize()
 {
 	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
 	{
-		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() - mWindow->getHelpComponentHeight());
+		//setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() - mWindow->getHelpComponentHeight());
+		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 		return;
 	}
 
@@ -368,7 +369,7 @@ std::shared_ptr<ComponentGrid> makeMultiDimButtonGrid(Window* window, const std:
 	const int sizeX = (int)buttons.at(0).size();
 	const int sizeY = (int)buttons.size();
 	const float buttonHeight = buttons.at(0).at(0)->getSize().y();
-	const float gridHeight = (buttonHeight + BUTTON_GRID_VERT_PADDING + 2) * sizeY;
+	const float gridHeight = (buttonHeight + BUTTON_GRID_VERT_PADDING + 2 + window->getHelpComponentHeight()) * sizeY;
 
 	float horizPadding = (float)BUTTON_GRID_HORIZ_PADDING;
 	float gridWidth, buttonWidth;
@@ -414,8 +415,12 @@ std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector<
 		buttonGrid->setColWidthPerc(i, (buttons.at(i)->getSize().x() + BUTTON_GRID_HORIZ_PADDING) / buttonGridWidth);
 	}
 
-	buttonGrid->setSize(buttonGridWidth, buttons.at(0)->getSize().y() + BUTTON_GRID_VERT_PADDING + 2);
-	buttonGrid->setRowHeightPerc(1, 2 / buttonGrid->getSize().y()); // spacer row to deal with dropshadow to make buttons look centered
+	buttonGrid->setSize(buttonGridWidth, buttons.at(0)->getSize().y() + BUTTON_GRID_VERT_PADDING + 2 + window->getHelpComponentHeight());
+	// spacer row to deal with dropshadow to make buttons look centered
+	LOG(LogDebug) << "MenuComponent::makeButtonGrid() - button grid height: " << std::to_string(buttonGrid->getSize().y());
+	LOG(LogDebug) << "MenuComponent::makeButtonGrid() - set row height percent: [1, " << std::to_string(2 / buttonGrid->getSize().y()) << "]";
+	Log::flush();
+	buttonGrid->setRowHeightPerc(1, 2 / buttonGrid->getSize().y() );
 
 	return buttonGrid;
 }
@@ -428,6 +433,5 @@ std::shared_ptr<ImageComponent> makeArrow(Window* window)
 	bracket->setImage(ThemeData::getMenuTheme()->Icons.arrow); // ":/arrow.svg");
 	bracket->setColorShift(menuTheme->Text.color);
 	bracket->setResize(0, round(menuTheme->Text.font->getLetterHeight()));
-	//bracket->setResize(0, Math::round(Font::get(FONT_SIZE_MEDIUM)->getLetterHeight()));
 	return bracket;
 }
