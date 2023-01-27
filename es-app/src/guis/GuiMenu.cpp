@@ -1215,6 +1215,8 @@ void GuiMenu::openUISettings()
 		{
 			ViewController::get()->reloadAll(window);
 			window->endRenderLoadingScreen();
+			delete pthis;
+			window->pushGui(new GuiMenu(window, false));
 		}
 
 		if (s->getVariable("reloadGuiMenu"))
