@@ -1215,18 +1215,11 @@ bool ApiSystem::isEsScriptsLoggingActivated()
 	return Utils::String::toBool( getShOutput(R"(es-log_scripts is_actived_scripts_log)") );
 }
 
-bool ApiSystem::setEsScriptsLoggingActivated(bool state, const std::string level)
+bool ApiSystem::setEsScriptsLoggingActivated(bool state, const std::string level, bool logWithNanoSeconds)
 {
 	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingActivated()";
 
-	return executeSystemScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " &");
-}
-
-bool ApiSystem::setEsScriptsLoggingLevel(const std::string level)
-{
-	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingLevel()";
-
-	return executeSystemScript("es-log_scripts set_es_scripts_log_level " + level + " &");
+	return executeSystemScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " " + Utils::String::boolToString(logWithNanoSeconds) + " &");
 }
 
 bool ApiSystem::setShowRetroarchFps(bool state)

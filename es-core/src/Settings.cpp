@@ -239,6 +239,10 @@ void Settings::setDefaults()
 	mIntMap["VolumeBackup"] = 75;
 	mIntMap["bluetooth.boot.game.timeout"] = 10; // seconds
 
+	mBoolMap["AutoscrollMenuEntries"] = true;
+	mBoolMap["CenterMenus"] = false;
+	mBoolMap["AutoMenuWidth"] = false;
+
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;
 	mDefaultFloatMap = mFloatMap;

@@ -218,9 +218,8 @@ public:
 
 	bool setOptimizeSystem(bool state);
 	bool isEsScriptsLoggingActivated();
-	bool setEsScriptsLoggingActivated(bool state, const std::string level = "default");
-	bool setEsScriptsLoggingLevel(const std::string level = "default");
-
+	bool setEsScriptsLoggingActivated(bool state, const std::string level = "default", bool logWithNanoSeconds = false);
+	
 	bool setShowRetroarchFps(bool state);
 	bool isShowRetroarchFps();
 

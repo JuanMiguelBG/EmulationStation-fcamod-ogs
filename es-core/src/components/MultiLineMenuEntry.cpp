@@ -15,6 +15,9 @@ MultiLineMenuEntry::MultiLineMenuEntry(Window* window, const std::string& text, 
 	auto theme = ThemeData::getMenuTheme();
 
 	mText = std::make_shared<TextComponent>(mWindow, text.c_str(), theme->Text.font, theme->Text.color);
+	if (!mMultiLine)
+		mText->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+
 	mText->setVerticalAlignment(ALIGN_TOP);
 
 	mSubstring = std::make_shared<TextComponent>(mWindow, substring.c_str(), theme->TextSmall.font, theme->Text.color);		

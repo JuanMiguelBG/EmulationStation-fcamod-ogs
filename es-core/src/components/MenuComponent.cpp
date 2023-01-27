@@ -2,8 +2,11 @@
 
 #include "components/ButtonComponent.h"
 #include "components/MultiLineMenuEntry.h"
+#include "components/HelpComponent.h"
 #include "Settings.h"
 #include "resources/Font.h"
+#include "Window.h"
+#include "Log.h"
 
 #define BUTTON_GRID_VERT_PADDING  (Renderer::getScreenHeight()*0.0296296) //32
 #define BUTTON_GRID_HORIZ_PADDING (Renderer::getScreenWidth()*0.0052083333) //10
@@ -79,6 +82,8 @@ MenuComponent::MenuComponent(Window* window,
 void MenuComponent::addWithLabel(const std::string& label, const std::shared_ptr<GuiComponent>& comp, const std::string iconName, bool setCursorHere, bool invert_when_selected)
 {
 	auto theme = ThemeData::getMenuTheme();
+	std::shared_ptr<Font> font = theme->Text.font;
+	unsigned int color = theme->Text.color;
 	
 	ComponentListRow row;
 
@@ -90,8 +95,8 @@ void MenuComponent::addWithLabel(const std::string& label, const std::shared_ptr
 			// icon
 			auto icon = std::make_shared<ImageComponent>(mWindow);
 			icon->setImage(iconPath);
-			icon->setColorShift(theme->Text.color);
-			icon->setResize(0, theme->Text.font->getLetterHeight() * 1.25f);
+			icon->setColorShift(color);
+			icon->setResize(0, font->getLetterHeight() * 1.25f);
 			row.addElement(icon, false);
 
 			// spacer between icon and text
@@ -101,7 +106,9 @@ void MenuComponent::addWithLabel(const std::string& label, const std::shared_ptr
 		}
 	}
 
-	row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), theme->Text.font, theme->Text.color), true);
+	auto text_comp = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), font, color);
+	text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+	row.addElement(text_comp, true);
 	row.addElement(comp, false, invert_when_selected);
 	addRow(row, setCursorHere);
 }
@@ -109,6 +116,8 @@ void MenuComponent::addWithLabel(const std::string& label, const std::shared_ptr
 void MenuComponent::addWithDescription(const std::string& label, const std::string& description, const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func, const std::string iconName, bool setCursorHere, bool invert_when_selected, bool multiLine)
 {
 	auto theme = ThemeData::getMenuTheme();
+	std::shared_ptr<Font> font = theme->Text.font;
+	unsigned int color = theme->Text.color;
 
 	ComponentListRow row;
 
@@ -120,8 +129,8 @@ void MenuComponent::addWithDescription(const std::string& label, const std::stri
 			// icon
 			auto icon = std::make_shared<ImageComponent>(mWindow, true);
 			icon->setImage(iconPath);
-			icon->setColorShift(theme->Text.color);
-			icon->setResize(0, theme->Text.font->getLetterHeight() * 1.25f);
+			icon->setColorShift(color);
+			icon->setResize(0, font->getLetterHeight() * 1.25f);
 			row.addElement(icon, false);
 
 			// spacer between icon and text
@@ -134,7 +143,11 @@ void MenuComponent::addWithDescription(const std::string& label, const std::stri
 	if (!description.empty())
 		row.addElement(std::make_shared<MultiLineMenuEntry>(mWindow, Utils::String::toUpper(label), description, multiLine), true);
 	else
-		row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), theme->Text.font, theme->Text.color), true);
+	{
+		auto text_comp = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), font, color);
+		text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+		row.addElement(text_comp, true);
+	}
 
 	if (comp != nullptr)
 		row.addElement(comp, false, invert_when_selected);
@@ -162,8 +175,8 @@ void MenuComponent::addEntry(const std::string name, bool add_arrow, const std::
 			// icon
 			auto icon = std::make_shared<ImageComponent>(mWindow);
 			icon->setImage(iconPath);
-			icon->setColorShift(theme->Text.color);
-			icon->setResize(0, theme->Text.font->getLetterHeight() * 1.25f);
+			icon->setColorShift(color);
+			icon->setResize(0, font->getLetterHeight() * 1.25f);
 			row.addElement(icon, false);
 
 			// spacer between icon and text
@@ -173,7 +186,9 @@ void MenuComponent::addEntry(const std::string name, bool add_arrow, const std::
 		}
 	}
 
-	row.addElement(std::make_shared<TextComponent>(mWindow, name, font, color), true, invert_when_selected);
+	auto text_comp = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(name), font, color);
+	text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+	row.addElement(text_comp, true, invert_when_selected);
 
 	if (add_arrow)
 		row.addElement(makeArrow(mWindow), false);
@@ -235,32 +250,72 @@ float MenuComponent::getButtonGridHeight() const
 {
 	auto menuTheme = ThemeData::getMenuTheme();
 	return (mButtonGrid ? mButtonGrid->getSize().y() : menuTheme->Text.font->getHeight() + BUTTON_GRID_VERT_PADDING);
-	//return (mButtonGrid ? mButtonGrid->getSize().y() : Font::get(FONT_SIZE_MEDIUM)->getHeight() + BUTTON_GRID_VERT_PADDING);
 }
-
+/*
 void MenuComponent::setPosition(float x, float y, float z)
 {
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts"),
-			 new_y = y;
-
-	if ( change_height )
+	float new_y = y;
+	if (Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts"))
 		new_y = 0.f;
 
 	GuiComponent::setPosition(x, new_y, z);
 }
-
+*/
 void MenuComponent::updateSize()
 {
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height,
-				height_ratio = 1.0f;
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() - mWindow->getHelpComponentHeight());
+		return;
+	}
 
-	if (change_height)
-		height_ratio = 0.95f;
+	// !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
+	float width, height;
+	const float maxHeight = mMaxHeight <= 0 ? Renderer::getScreenHeight() * 0.75f : mMaxHeight;
 
-	height = (float)Math::min((int)Renderer::getScreenHeight(), (int)(Renderer::getScreenHeight() * height_ratio));
+	height = TITLE_HEIGHT + mList->getTotalRowHeight() + getButtonGridHeight() + 2;
+	if (height > maxHeight)
+	{
+		height = TITLE_HEIGHT + getButtonGridHeight();
+		int i = 0;
+		while(i < mList->size())
+		{
+			float rowHeight = mList->getRowHeight(i);
+			if(height + rowHeight < maxHeight)
+				height += rowHeight;
+			else
+				break;
+			i++;
+		}
+	}
 
-	setSize(Renderer::getScreenWidth(), height);
+	LOG(LogDebug) << "MenuComponent::updateSize() - Help Component Height: " << std::to_string(mWindow->getHelpComponentHeight());
+	float height_max = (Renderer::getScreenHeight() - mWindow->getHelpComponentHeight());
+	LOG(LogDebug) << "MenuComponent::updateSize() - screen height: " << std::to_string(Renderer::getScreenHeight()) << ", height_max: " << std::to_string(height_max) << ", height: " << std::to_string(height);
+	Log::flush();
+	if (height > height_max)
+		height = height_max;
+
+	width = Renderer::getScreenWidth() * 0.90f;
+	if (Settings::getInstance()->getBool("AutoMenuWidth"))
+	{
+		float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
+			  ratio = 1.2f;
+
+		width = (float)Math::min((int)width, Renderer::getScreenWidth());
+
+		if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
+			ratio = 1.4f;
+		else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
+			ratio = 1.7f;
+		else if ((font_size >= FONT_SIZE_LARGE))
+			ratio = 2.0f;
+
+		width = width * ratio;
+	}
+
+	width = (float)Math::min((int)width, Renderer::getScreenWidth());
+	setSize(width, height);
 }
 
 void MenuComponent::onSizeChanged()

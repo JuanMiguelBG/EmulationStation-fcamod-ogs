@@ -893,3 +893,15 @@ void Window::onThemeChanged(const std::shared_ptr<ThemeData>& theme)
 		mBrightnessInfo = std::make_shared<BrightnessInfoComponent>(this);
 
 }
+
+float Window::getHelpComponentHeight()
+{
+	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
+	{
+		if (mHelp->isVisible())
+		{
+			return mHelp->getGrid()->getSize().y();
+		}
+	}
+	return 0.f;
+}

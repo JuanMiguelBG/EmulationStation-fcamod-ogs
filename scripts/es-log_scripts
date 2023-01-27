@@ -38,9 +38,14 @@ print_log()
 
   if [ $ES_LOGGING_ENABLED -eq 1 ]; then
     `aceptable_level $log_level`
-    if [ $? -eq 1 ]; then
-      mdate=$(date '+%d/%m/%Y %H:%M:%S:%N')
-      echo "$mdate $log_level PID: $$ - $log_mesage" >> $log_file
+    if [ $? -eq 0 ]; then
+      if [ $ES_LOG_WITH_NANO -eq 1 ]; then
+        mdate=$(date '+%d/%m/%Y %H:%M:%S:%N')
+      else
+        mdate=$(date '+%d/%m/%Y %H:%M:%S')
+      fi
+      local msg="$mdate $log_level $log_mesage"
+      echo "$msg" >> $log_file
     fi
   fi
 }
@@ -83,13 +88,13 @@ active_es_scripts_log_feature()
 
   log_level="$(get_compatible_es_log_level $log_level)"
 
-  sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$log_level"'/' $ES_SCRIPTS_PATH/es-log_scripts
+  sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$log_level"'/; /ES_LOG_WITH_NANO\=0/s//ES_LOG_WITH_NANO\=1/' $ES_SCRIPTS_PATH/es-log_scripts
   grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/#print_log/print_log/g'
 }
 
 inactive_es_scripts_log_feature()
 {
-  sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$LOG_LEVEL_DISABLED"'/' $ES_SCRIPTS_PATH/es-log_scripts
+  sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$LOG_LEVEL_DISABLED"'/; /ES_LOG_WITH_NANO\=1/s//ES_LOG_WITH_NANO\=0/' $ES_SCRIPTS_PATH/es-log_scripts
   grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/print_log/#print_log/g'
 }
 
@@ -101,12 +106,19 @@ remove_es_scripts_log()
 do_active_es_scripts_log() {
 	local log_status="$1"
 	local log_level="$2"
+	local log_with_nano="$3"
 
 	if [ "$log_status" = "true" ]; then
 		active_es_scripts_log_feature "$log_level"
 	else
 		inactive_es_scripts_log_feature
 	fi
+
+  if [ "$log_with_nano" = "true" ]; then
+    do_enable_log_with_nano
+  else
+    do_disable_log_with_nano
+  fi
 }
 
 set_es_scripts_log_level()
@@ -124,6 +136,17 @@ is_actived_scripts_log() {
     echo "true"
   fi
 }
+
+do_enable_log_with_nano()
+{
+  sudo sed -i '/ES_LOG_WITH_NANO\=0/s//ES_LOG_WITH_NANO\=1/' $ES_SCRIPTS_PATH/es-log_scripts
+}
+
+do_disable_log_with_nano()
+{
+  sudo sed -i '/ES_LOG_WITH_NANO\=1/s//ES_LOG_WITH_NANO\=0/' $ES_SCRIPTS_PATH/es-log_scripts
+}
+
 
 # ******************************************************************************************
 
@@ -147,11 +170,12 @@ LOG_LEVEL_DISABLED=4
 ES_LOGGING_ENABLED=0
 ES_DEFAULT_LOGGING_LEVEL=$LOG_LEVEL_INFO
 ES_LOGGING_LEVEL=4
+ES_LOG_WITH_NANO=0
 
 
 case "${1}" in
     "active_es_scripts_log")
-        do_active_es_scripts_log "$2" "$3"
+        do_active_es_scripts_log "$2" "$3" "$4"
         remove_es_scripts_log
     ;;
     "set_es_scripts_log_level")
@@ -159,5 +183,11 @@ case "${1}" in
     ;;
     "is_actived_scripts_log")
         is_actived_scripts_log
+    ;;
+    "enable_log_with_nano")
+        do_enable_log_with_nano
+    ;;
+    "disable_log_with_nano")
+        do_disable_log_with_nano
     ;;
 esac

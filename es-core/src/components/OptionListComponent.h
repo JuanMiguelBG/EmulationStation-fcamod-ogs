@@ -112,7 +112,11 @@ private:
 					if (!it->description.empty())
 						row.addElement(std::make_shared<MultiLineMenuEntry>(mWindow, Utils::String::toUpper(it->name), it->description), true);
 					else
-						row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(it->name), font, color), true);
+					{
+						auto text_comp = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(it->name), font, color);
+						text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+						row.addElement(text_comp, true);
+					}
 
 					if (mParent->isMultiSelect())
 					{

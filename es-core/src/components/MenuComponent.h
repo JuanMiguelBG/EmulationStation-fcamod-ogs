@@ -61,7 +61,7 @@ public:
 		updateSize();
 	}
 
-	void setPosition(float x, float y, float z = 0.0f) override;
+//	void setPosition(float x, float y, float z = 0.0f) override;
 
 	void updateSize();
 	void clearButtons();

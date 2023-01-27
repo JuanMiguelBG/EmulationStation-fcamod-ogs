@@ -24,6 +24,7 @@
 #include "guis/GuiRetroachievementsOptions.h"
 #include "guis/GuiDisplayAutoDimOptions.h"
 #include "guis/GuiRemoteServicesOptions.h"
+#include "guis/GuiMenusOptions.h"
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
@@ -154,40 +155,40 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	addChild(&mMenu);
 	addVersionInfo();
 
-	// resize
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height_ratio = 1.0f;
-	if ( change_height )
-		height_ratio = 0.95f;
+	// resize & position
+	float width_max = Renderer::getScreenWidth(),
+		  height_max = (Renderer::getScreenHeight() - mWindow->getHelpComponentHeight()),
+		  width = mSize.x(),
+		  height = mSize.y();
 
-	//setSize(mMenu.getSize());
-	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
+//	setSize(mMenu.getSize());
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		width = Renderer::getScreenWidth();
+		height = Renderer::getScreenHeight();
+	}
+	width = (float)Math::min((int)width, (int)width_max);
+	height = (float)Math::min((int)height, (int)height_max);
+	setSize(width, height);
+
+	float x_end = 0.f,
+		  y_end = 0.f;
+
+	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
+	{
+		x_end = (Renderer::getScreenWidth() - mSize.x()) / 2;  // center
+		y_end = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
+	}
 
 	if (animate)
 	{
-		float x_start = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					x_end = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					y_start = Renderer::getScreenHeight() * 0.95f,
-					y_end = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if ( change_height )
-			y_end = 0.f;
-
-		animateTo(
-			Vector2f(x_start, y_start),
-			Vector2f(x_end, y_end)
-		);
+		float x_start = x_end,
+			  y_start = Renderer::getScreenHeight() * 0.9f;
+		
+		animateTo(Vector2f(x_start, y_start), Vector2f(x_end, y_end));
 	}
 	else
-	{
-		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if ( change_height )
-			new_y = 0.f;
-
-		setPosition(new_x, new_y);
-	}
+		setPosition(x_end, y_end);
 }
 
 void GuiMenu::openDisplaySettings()
@@ -1093,17 +1094,7 @@ void GuiMenu::openUISettings()
 	});
 
 	// menus configurations
-	// animated main menu
-	auto animated_main_menu = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("AnimatedMainMenu"));
-	s->addWithLabel(_("OPEN MAIN MENU WITH ANIMATION"), animated_main_menu);
-	s->addSaveFunc([animated_main_menu]
-		{
-			bool old_value = Settings::getInstance()->getBool("AnimatedMainMenu");
-			if (old_value != animated_main_menu->getState())
-			{
-				Settings::getInstance()->setBool("AnimatedMainMenu", animated_main_menu->getState());
-			}
-		});
+	s->addEntry(_("MENUS SETTINGS"), true, [this] { openMenusSettings(); });
 
 	// Hide system view
 	auto hideSystemView = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("HideSystemView"));
@@ -2370,14 +2361,13 @@ void GuiMenu::openAdvancedSettings()
 		//s->setVariable("reloadAll", true);
 	});
 
-	// Battery Indicator
+	// Close with select the game metadata edit gui
 	auto gui_metadata_select = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("GuiEditMetadataCloseAllWindows"));
 	s->addWithLabel(_("GAME METADATA EDIT - \"SELECT\" CLOSE MENU"), gui_metadata_select);
 	s->addSaveFunc([s, gui_metadata_select]
 	{
 		Settings::getInstance()->setBool("GuiEditMetadataCloseAllWindows", gui_metadata_select->getState());
 	});
-
 
 	s->addGroup(_("OTHERS"));
 
@@ -2416,18 +2406,14 @@ void GuiMenu::openAdvancedSettings()
 		{
 			Log::setupReportingLevel();
 			Log::init();
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS) && ApiSystem::getInstance()->isEsScriptsLoggingActivated())
-				ApiSystem::getInstance()->setEsScriptsLoggingLevel(logLevel->getSelected());
 		}
 	});
 
 	auto logWithMilliseconds = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("LogWithMilliseconds"));
 	s->addWithLabel(_("LOG WITH MILLISECONDS"), logWithMilliseconds);
 	s->addSaveFunc([logWithMilliseconds] {
-		bool old_value = Settings::getInstance()->getBool("LogWithMilliseconds");
-		if (old_value != logWithMilliseconds->getState())
+		if (Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState()))
 		{
-			Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState());
 			Log::setupReportingLevel();
 			Log::init();
 		}
@@ -2435,12 +2421,11 @@ void GuiMenu::openAdvancedSettings()
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS))
 	{
-		bool scripts_log_activated_value = ApiSystem::getInstance()->isEsScriptsLoggingActivated();
-		auto scripts_log_activated = std::make_shared<SwitchComponent>(window, scripts_log_activated_value);
+		auto scripts_log_activated = std::make_shared<SwitchComponent>(window, ApiSystem::getInstance()->isEsScriptsLoggingActivated());
 		s->addWithLabel(_("ACTIVATE ES SCRIPTS LOGGING"), scripts_log_activated);
-		s->addSaveFunc([scripts_log_activated_value, scripts_log_activated] {
-			if (scripts_log_activated_value != scripts_log_activated->getState())
-				ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState(), Settings::getInstance()->getString("LogLevel"));
+		s->addSaveFunc([scripts_log_activated] {
+			ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState(), Settings::getInstance()->getString("LogLevel"),
+																   Settings::getInstance()->getBool("LogWithMilliseconds"));
 		});
 	}
 
@@ -2496,6 +2481,27 @@ void GuiMenu::openRetroAchievementsSettings()
 	window->pushGui(new GuiRetroachievementsOptions(window));
 }
 
+void GuiMenu::openMenusSettings()
+{
+	Window* window = mWindow;
+	auto pthis = this;
+	auto s = new GuiMenusOptions(mWindow);
+
+	s->onFinalize([s, pthis, window]
+	{
+		if (s->getVariable("reloadGuiMenu"))
+		{
+			delete pthis;
+			auto main_menu = new GuiMenu(window, false);
+			window->pushGui(main_menu);
+			main_menu->openUISettings();
+		}
+
+	});
+
+	mWindow->pushGui(s);
+}
+
 void GuiMenu::openSystemInformation()
 {
 	Window *window = mWindow;
@@ -2505,7 +2511,6 @@ void GuiMenu::openSystemInformation()
 void GuiMenu::openConfigInput()
 {
 	Window* window = mWindow;
-//	window->pushGui(new GuiDetectDevice(window, false, nullptr));
 		
 	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO CONFIGURE INPUT?"), _("YES"),
 		[window] {
@@ -2854,7 +2859,9 @@ void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<voi
 		}
 	}
 
-	row.addElement(std::make_shared<TextComponent>(window, name, font, color), true);
+	auto text_comp = std::make_shared<TextComponent>(window, name, font, color);
+	text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+	row.addElement(text_comp, true);
 
 	if (add_arrow)
 	{
@@ -3004,11 +3011,10 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
 		row.addElement(icon, false, false);
 		row.addElement(spacer, false);
-}
-	else
-	{
-		text.append("BAT: ");
 	}
+	else
+		text.append("BAT: ");
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Sound Information
@@ -3016,7 +3022,7 @@ void GuiMenu::addStatusBarInfo(Window* window)
 	iconPath = getIconSound(level);
 	text.clear();
 	if (!iconPath.empty())
-{
+	{
 		// icon
 		auto icon = std::make_shared<ImageComponent>(window);
 		icon->setImage(iconPath);
@@ -3026,9 +3032,8 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		text.append("SND: ");
-	}
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Brightness Information
@@ -3044,11 +3049,10 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
 		row.addElement(icon, false, false);
 		row.addElement(spacer, false);
-}
-	else
-	{
-		text.append("BRT: ");
 	}
+	else
+		text.append("BRT: ");
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Bluetooth Information
@@ -3066,9 +3070,8 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		text.append("BT: ").append(( status ? "ON" : "OFF" ));
-	}
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(" | "), font, color), false);
 
 	// Network Information
@@ -3085,9 +3088,8 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		row.addElement(std::make_shared<TextComponent>(window, text.append("NTW: "), font, color), false);
-	}
+
 	status = ApiSystem::getInstance()->isNetworkConnected();
 	iconPath = getIconNetwork(status);
 	text.clear();
@@ -3102,9 +3104,7 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		row.addElement(std::make_shared<TextComponent>(window, text.append(formatNetworkStatus(status)), font, color), false);
-	}
 
 	mMenu.addRow(row);
 }
