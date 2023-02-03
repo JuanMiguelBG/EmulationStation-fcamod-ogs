@@ -898,7 +898,7 @@ float Window::getHelpComponentHeight()
 {
 	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
 	{
-		if (mHelp && mHelp->isVisible())
+		if (mHelp && mHelp->isVisible() && mHelp->getGrid())
 		{
 			return mHelp->getGrid()->getSize().y();
 		}

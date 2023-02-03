@@ -54,7 +54,6 @@
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), true), mVersion(window)
 {
-	mWaitingLoad = false;
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
 	{
 		addEntry(_("KODI MEDIA CENTER").c_str(), false, [this]
@@ -915,7 +914,7 @@ void GuiMenu::openUISettings()
 				s->setVariable("reloadAll", true);
 				s->setVariable("reloadGuiMenu", true);
 
-					// if theme is manual set, disable random theme selection
+				// if theme is manual set, disable random theme selection
 				if (Settings::getInstance()->getBool("ThemeRandom"))
 				{
 					Settings::getInstance()->setBool("ThemeRandom", Settings::getInstance()->getBool("ThemeRandom"));
@@ -1123,6 +1122,7 @@ void GuiMenu::openUISettings()
 				window->getHelpComponent()->setVisible(show_help->getState());
 
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
 		}
 	});
 
@@ -1150,6 +1150,7 @@ void GuiMenu::openUISettings()
 			FileData::resetSettings();
 			s->setVariable("reloadCollections", true);
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
 		}
 	});
 
@@ -1159,7 +1160,10 @@ void GuiMenu::openUISettings()
 	s->addSaveFunc([enable_filter, s] { 
 		bool filter_is_enabled = !Settings::getInstance()->getBool("ForceDisableFilters");
 		if (Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState()))
+		{
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
+		}
 	});
 
 	// ignore articles when sorting
@@ -1170,6 +1174,7 @@ void GuiMenu::openUISettings()
 		if (Settings::getInstance()->setBool("IgnoreLeadingArticles", ignoreArticles->getState()))
 		{
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
 		}
 	});
 
@@ -1185,8 +1190,6 @@ void GuiMenu::openUISettings()
 		{
 			ViewController::get()->reloadAll(window);
 			window->endRenderLoadingScreen();
-			delete pthis;
-			window->pushGui(new GuiMenu(window, false));
 		}
 
 		if (s->getVariable("reloadGuiMenu"))
@@ -2841,9 +2844,7 @@ bool GuiMenu::input(InputConfig* config, Input input)
 
 	if ((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("start", input)) && input.value != 0)
 	{
-		if (!mWaitingLoad)
-			delete this;
-
+		delete this;
 		return true;
 	}
 

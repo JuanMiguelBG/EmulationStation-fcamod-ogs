@@ -74,7 +74,6 @@ private:
 
 	MenuComponent mMenu;
 	TextComponent mVersion;
-	bool		  mWaitingLoad;
 };
 
 #endif // ES_APP_GUIS_GUI_MENU_H
