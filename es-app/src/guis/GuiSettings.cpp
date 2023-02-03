@@ -12,10 +12,11 @@
 #include "components/SwitchComponent.h"
 
 
-GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) : GuiComponent(window), mMenu(window, title)
+GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) : GuiComponent(window), mMenu(window, title, true)
 {
 	addChild(&mMenu);
 
+	mWaitingLoad = false;
 	mCloseButton = "start";
 	mMenu.addButton(_("BACK"), _("BACK"), [this] { close(); });
 
@@ -82,14 +83,14 @@ bool GuiSettings::input(InputConfig* config, Input input)
 	{
 		if (config->isMappedTo(BUTTON_BACK, input))
 		{
-			if (!Settings::getInstance()->getBool("wait.process.loading"))
+			if (!mWaitingLoad)
 				close();
 
 			return true;
 		}
 		else if (config->isMappedTo(mCloseButton, input))
 		{
-			if (!Settings::getInstance()->getBool("wait.process.loading"))
+			if (!mWaitingLoad)
 			{
 				if (mCloseButtonFunc != nullptr)
 						mCloseButtonFunc();

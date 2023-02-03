@@ -10,7 +10,7 @@
 #include "scrapers/ThreadedScraper.h"
 
 GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
-	mMenu(window, _("SCRAPE NOW"))
+	mMenu(window, _("SCRAPE NOW"), true)
 {
 	mOverwriteMedias = true;
 

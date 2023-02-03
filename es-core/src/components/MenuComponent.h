@@ -11,7 +11,8 @@
 class ButtonComponent;
 class ImageComponent;
 
-std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector< std::shared_ptr<ButtonComponent> >& buttons);
+float getHelpComponentHeight(Window* window, bool addHelpComponentHeight);
+std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector< std::shared_ptr<ButtonComponent> >& buttons, bool addHelpComponentHeight = true);
 std::shared_ptr<ComponentGrid> makeMultiDimButtonGrid(Window* window, const std::vector< std::vector< std::shared_ptr<ButtonComponent> > >& buttons, float outerWidth);
 std::shared_ptr<ImageComponent> makeArrow(Window* window);
 
@@ -23,8 +24,11 @@ class MenuComponent : public GuiComponent
 {
 public:
 	MenuComponent(Window* window, 
+		const std::string title, bool computeHelpComponentSize);
+
+	MenuComponent(Window* window, 
 		const std::string title, const std::shared_ptr<Font>& titleFont = Font::get(FONT_SIZE_LARGE),
-		const std::string subTitle = "");
+		const std::string subTitle = "", bool computeHelpComponentSize = true);
 
 	void onSizeChanged() override;
 
@@ -68,6 +72,8 @@ public:
 
 	std::shared_ptr<ComponentList> getList() { return mList; };
 
+	bool isComputeHelpComponentSize() { return mComputeHelpComponentSize; };
+
 private:
 	void updateGrid();
 
@@ -82,6 +88,7 @@ private:
 	std::vector< std::shared_ptr<ButtonComponent> > mButtons;
 
 	float mMaxHeight;
+	bool mComputeHelpComponentSize;
 };
 
 #endif // ES_CORE_COMPONENTS_MENU_COMPONENT_H

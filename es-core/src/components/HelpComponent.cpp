@@ -149,6 +149,9 @@ void HelpComponent::setOpacity(unsigned char opacity)
 
 void HelpComponent::render(const Transform4x4f& parentTrans)
 {
+	if (!isVisible() )
+		return;
+
 	Transform4x4f trans = parentTrans * getTransform();
 
 	if(mGrid)

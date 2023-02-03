@@ -43,13 +43,11 @@ private:
 	void openAutoSuspendSettings();
 	void openSystemHotkeyEventsSettings();
 	void openRetroAchievementsSettings();
-	void preloadNetworkSettings();
 	void openNetworkSettings(bool selectWifiEnable = false, bool selectManualWifiDnsEnable = false);
 	void resetNetworkSettings(GuiSettings *gui);
 
 	static void openWifiSettings(Window* win, std::string title, std::string data, const std::function<bool(std::string)>& onsave);
 
-	void preloadBluetoothSettings();
 	void openBluetoothSettings();
 	void openBluetoothScanDevices(Window* win, std::string title);
 	void openBluetoothPairedDevices(Window* win, std::string title);
@@ -76,6 +74,7 @@ private:
 
 	MenuComponent mMenu;
 	TextComponent mVersion;
+	bool		  mWaitingLoad;
 };
 
 #endif // ES_APP_GUIS_GUI_MENU_H

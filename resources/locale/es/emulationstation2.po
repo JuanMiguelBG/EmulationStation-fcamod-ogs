@@ -171,6 +171,10 @@ msgid "disabled"
 msgstr "desactivado"
 
 #:
+msgid "DISABLED"
+msgstr "DESACTIVADO"
+
+#:
 msgid "default"
 msgstr "por defecto"
 
@@ -477,6 +481,18 @@ msgstr "SOLO LISTA XML DE JUEGOS"
 #:
 msgid "POWER SAVER MODES"
 msgstr "MODOS AHORRO DE ENERGÍA"
+
+#:
+msgid "SUSPEND MODES"
+msgstr "MODOS DE SUSPENSIÓN"
+
+#:
+msgid "DEEP"
+msgstr "PROFUNDO / EN MEMORIA"
+
+#:
+msgid "LIGHT"
+msgstr "LIGERO / CONGELAR"
 
 #:
 msgid "GAME LIST"
@@ -3435,3 +3451,7 @@ msgstr "SHIFT PARA MAYÚSCULAS, MINÚSCULAS Y ESPECIALES"
 #, c-format
 msgid "THE VALUE '%s' ISN'T VALID."
 msgstr "EL VALOR '%s' NO ES VÁLIDO."
+
+#:
+msgid "BUILT"
+msgstr "CREADO EL"

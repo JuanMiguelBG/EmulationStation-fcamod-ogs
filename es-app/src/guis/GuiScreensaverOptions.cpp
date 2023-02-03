@@ -7,7 +7,7 @@
 #include "SystemData.h"
 #include "Window.h"
 
-GuiScreensaverOptions::GuiScreensaverOptions(Window* window, std::string title) : GuiComponent(window), mMenu(window, title)
+GuiScreensaverOptions::GuiScreensaverOptions(Window* window, std::string title) : GuiComponent(window), mMenu(window, title, true)
 {
 	addChild(&mMenu);
 

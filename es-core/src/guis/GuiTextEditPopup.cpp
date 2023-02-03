@@ -37,13 +37,13 @@ GuiTextEditPopup::GuiTextEditPopup(Window* window, const std::string& title, con
 	mGrid.setEntry(mButtonGrid, Vector2i(0, 2), true, false);
 
 	float textHeight = mText->getFont()->getHeight();
-	if(multiLine)
+	if (multiLine)
 		textHeight *= 6;
 	mText->setSize(0, textHeight);
 
 	setSize(Renderer::getScreenWidth() * 0.5f, mTitle->getFont()->getHeight() + textHeight + mButtonGrid->getSize().y() + 40);
 	float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-				new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+		  new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
 
 	setPosition(new_x, new_y);
 }

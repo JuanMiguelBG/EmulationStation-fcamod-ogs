@@ -692,7 +692,7 @@ void SystemView::showNavigationBar(const std::string& title, const std::function
 	w = Math::max(w, Renderer::getScreenWidth() / 3.0f);
 
 	// resize
-	gs->getMenu().setSize(w, Renderer::getScreenHeight() - mWindow->getHelpComponentHeight());
+	gs->getMenu().setSize(w, Renderer::getScreenHeight());
 
 	gs->getMenu().animateTo(
 		Vector2f(-w, 0),

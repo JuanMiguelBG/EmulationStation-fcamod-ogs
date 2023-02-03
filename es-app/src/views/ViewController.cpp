@@ -569,7 +569,6 @@ bool ViewController::input(InputConfig* config, Input input)
 		if(!UIModeController::getInstance()->isUIModeKid() && config->isMappedTo("start", input))
 		{
 			// open menu
-			Settings::getInstance()->setBool("wait.process.loading", false);
 			mWindow->pushGui(new GuiMenu(mWindow, Settings::getInstance()->getBool("AnimatedMainMenu")));
 			return true;
 		}

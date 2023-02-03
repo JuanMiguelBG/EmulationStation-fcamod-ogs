@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "guis/GuiMsgBox.h"
 #include "Scripting.h"
+#include "EmulationStation.h"
 
 UpdateState::State ApiSystem::state = UpdateState::State::NO_UPDATE;
 
@@ -446,7 +447,6 @@ bool ApiSystem::isBatteryLimit(float battery_level, int limit) // %
 	return battery_level < limit;
 }
 
-
 std::string ApiSystem::getVersion()
 {
 	LOG(LogInfo) << "ApiSystem::getVersion()";
@@ -557,7 +557,10 @@ SoftwareInformation ApiSystem::getSoftwareInformation(bool summary)
 {
 	LOG(LogInfo) << "ApiSystem::getSoftwareInformation()";
 
-	return querySoftwareInformation(summary); // platform.h
+	SoftwareInformation si = querySoftwareInformation(summary); // platform.h
+	si.es_version = Utils::String::toUpper(PROGRAM_VERSION_STRING);
+	si.es_built = PROGRAM_BUILT_STRING;
+	return si;
 }
 
 DeviceInformation ApiSystem::getDeviceInformation(bool summary)
@@ -1206,6 +1209,27 @@ bool ApiSystem::setOptimizeSystem(bool state)
 	LOG(LogInfo) << "ApiSystem::setOptimizeSystem()";
 
 	return executeSystemScript("es-optimize_system active_optimize_system " + Utils::String::boolToString(state));
+}
+
+std::vector<std::string> ApiSystem::getSuspendModes()
+{
+	LOG(LogInfo) << "ApiSystem::getSuspendModes()";
+
+	return executeEnumerationScript("es-optimize_system get_sleep_modes");
+}
+
+std::string ApiSystem::getSuspendMode()
+{
+	LOG(LogInfo) << "ApiSystem::getSuspendMode()";
+
+	return getShOutput(R"(es-optimize_system get_sleep_mode)");
+}
+
+bool ApiSystem::setSuspendMode(const std::string suspend_mode)
+{
+	LOG(LogInfo) << "ApiSystem::setSuspendMode() - " << suspend_mode;
+
+	return executeSystemScript("es-optimize_system set_sleep_mode " + suspend_mode);
 }
 
 bool ApiSystem::isEsScriptsLoggingActivated()

@@ -39,7 +39,6 @@ std::vector<const char*> settings_dont_save {
 //	{ "wifi.ssid" },
 	{ "wifi.dns1" },
 	{ "wifi.dns2" },
-	{ "wait.process.loading" },
 //	{ "bluetooth.enabled" },
 	{ "bluetooth.audio.connected" },
 	{ "bluetooth.audio.device" },
@@ -231,14 +230,13 @@ void Settings::setDefaults()
 
 	mBoolMap["GuiEditMetadataCloseAllWindows"] = false;
 
-	mBoolMap["wait.process.loading"] = false;
-
 	mBoolMap["RestoreBrightnesAfterGame"] = true;
 	mBoolMap["RestoreVolumeAfterGame"] = true;
 	mIntMap["BrightnessBackup"] = 50;
 	mIntMap["VolumeBackup"] = 75;
 	mIntMap["bluetooth.boot.game.timeout"] = 10; // seconds
 
+	// Menus settings
 	mBoolMap["AutoscrollMenuEntries"] = true;
 	mBoolMap["CenterMenus"] = false;
 	mBoolMap["AutoMenuWidth"] = false;
