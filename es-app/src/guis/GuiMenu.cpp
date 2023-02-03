@@ -2730,8 +2730,11 @@ void GuiMenu::addVersionInfo()
 	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 
-	if (mWindow->getHelpComponentHeight() > 0)
+	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
+	{
+		mVersion.setVisible(false);
 		return;
+	}
 
 	std::string  buildDate = getBuildTime();
 	auto theme = ThemeData::getMenuTheme();
@@ -2745,6 +2748,7 @@ void GuiMenu::addVersionInfo()
 	mVersion.setHorizontalAlignment(ALIGN_CENTER);	
 	mVersion.setVerticalAlignment(ALIGN_CENTER);
 	mVersion.setAutoScroll(true);
+	mVersion.setVisible(true);
 
 	addChild(&mVersion);
 }
@@ -2785,13 +2789,17 @@ void GuiMenu::openCollectionSystemSettings(bool cursor)
 
 void GuiMenu::onSizeChanged()
 {
-	if (mWindow->getHelpComponentHeight() > 0)
+	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
+	{
+		mVersion.setVisible(false);
 		return;
+	}
 
 	float h = mMenu.getButtonGridHeight();
 
 	mVersion.setSize(mSize.x(), h);
 	mVersion.setPosition(0, mSize.y() - h); //  mVersion.getSize().y()
+	mVersion.setVisible(true);
 }
 
 void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName)

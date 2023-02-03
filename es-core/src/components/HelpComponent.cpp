@@ -59,14 +59,12 @@ void HelpComponent::setStyle(const HelpStyle& style)
 
 void HelpComponent::updateGrid()
 {
-	if(!Settings::getInstance()->getBool("ShowHelpPrompts") || mPrompts.empty())
+	if (!Settings::getInstance()->getBool("ShowHelpPrompts") || mPrompts.empty())
 	{
 		mGrid.reset();
 		setVisible(false);
 		return;
 	}
-
-	setVisible(true);
 
 	std::shared_ptr<Font>& font = mStyle.font;
 
@@ -78,7 +76,7 @@ void HelpComponent::updateGrid()
 
 	float width = 0;
 	const float height = Math::round(font->getLetterHeight() * 1.25f);
-	for(auto it = mPrompts.cbegin(); it != mPrompts.cend(); it++)
+	for (auto it = mPrompts.cbegin(); it != mPrompts.cend(); it++)
 	{
 		auto icon = std::make_shared<ImageComponent>(mWindow);
 
@@ -98,7 +96,7 @@ void HelpComponent::updateGrid()
 	}
 
 	mGrid->setSize(width, height);
-	for(unsigned int i = 0; i < icons.size(); i++)
+	for (unsigned int i = 0; i < icons.size(); i++)
 	{
 		const int col = i*4;
 		mGrid->setColWidthPerc(col, icons.at(i)->getSize().x() / width);
@@ -112,21 +110,23 @@ void HelpComponent::updateGrid()
 	mGrid->setPosition(Vector3f(mStyle.position.x(), mStyle.position.y(), 0.0f));
 	//mGrid->setPosition(OFFSET_X, Renderer::getScreenHeight() - mGrid->getSize().y() - OFFSET_Y);
 	mGrid->setOrigin(mStyle.origin);
+
+	setVisible(true);
 }
 
 std::shared_ptr<TextureResource> HelpComponent::getIconTexture(const char* name)
 {
 	auto it = mIconCache.find(name);
-	if(it != mIconCache.cend())
+	if (it != mIconCache.cend())
 		return it->second;
 
 	auto pathLookup = ICON_PATH_MAP.find(name);
-	if(pathLookup == ICON_PATH_MAP.cend())
+	if (pathLookup == ICON_PATH_MAP.cend())
 	{
 		LOG(LogError) << "HelpComponent::getIconTexture():119 - Unknown help icon \"" << name << "\"!";
 		return nullptr;
 	}
-	if(!ResourceManager::getInstance()->fileExists(pathLookup->second))
+	if (!ResourceManager::getInstance()->fileExists(pathLookup->second))
 	{
 		LOG(LogError) << "HelpComponent::getIconTexture():124 - Help icon \"" << name << "\" - corresponding image file \"" << pathLookup->second << "\" misisng!";
 		return nullptr;
@@ -141,7 +141,7 @@ void HelpComponent::setOpacity(unsigned char opacity)
 {
 	GuiComponent::setOpacity(opacity);
 
-	for(unsigned int i = 0; i < mGrid->getChildCount(); i++)
+	for (unsigned int i = 0; i < mGrid->getChildCount(); i++)
 	{
 		mGrid->getChild(i)->setOpacity(opacity);
 	}
@@ -156,4 +156,13 @@ void HelpComponent::render(const Transform4x4f& parentTrans)
 
 	if(mGrid)
 		mGrid->render(trans);
+}
+
+float HelpComponent::getHeight()
+{
+	if (isVisible() && mGrid)
+	{
+		return mGrid->getSize().y();
+	}
+	return 0.f;
 }
