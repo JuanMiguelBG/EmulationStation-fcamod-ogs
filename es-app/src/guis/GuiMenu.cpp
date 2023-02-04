@@ -2075,6 +2075,8 @@ void GuiMenu::openAdvancedSettings()
 					language_label = "PORTUGUESE PORTUGAL";
 				else if (*it == "zh-CN")
 					language_label = "SIMPLIFIED CHINESE";
+				else if (*it == "it")
+					language_label = "ITALIAN";
 				else
 					language_label = *it;
 
@@ -2131,10 +2133,18 @@ void GuiMenu::openAdvancedSettings()
 			suspend_mode->add(_(it->c_str()), *it, sm_value == *it);
 		
 		s->addWithLabel(_("SUSPEND MODES"), suspend_mode);
-		s->addSaveFunc([this, suspend_mode, sm_value]
+		s->addSaveFunc([this, s, suspend_mode]
 			{
-				if (sm_value != suspend_mode->getSelected())
+				if (SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected()))
+				{
 					ApiSystem::getInstance()->setSuspendMode(suspend_mode->getSelected());
+					if (suspend_mode->getSelected() == "DISABLED")
+					{
+						if (Settings::getInstance()->setString("OnlyExitAction", "shutdown")
+							&& Settings::getInstance()->getBool("ShowOnlyExit"))
+							s->setVariable("reloadGuiMenu", true);
+					}
+				}
 			});
 
 	}
@@ -2603,7 +2613,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				else
 					restartEsFunction();
 			}, "iconRestartEmulationstaion");
-/*
+
 		if(Settings::getInstance()->getBool("ShowExit"))
 		{
 			s->addEntry(_("QUIT EMULATIONSTATION"), false, [window]
@@ -2615,9 +2625,9 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 					else
 						quitEsFunction();
 				}, "iconQuit");
-		}*/
+		}
 	}
-/*
+
 	if (isUIModeFull)
 	{
 		s->addEntry(_("SUSPEND SYSTEM"), false, [window]
@@ -2630,7 +2640,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 					suspendDeviceFunction();
 			}, "iconSuspend");
 	}
-*/
+
 	s->addEntry(_("RESTART SYSTEM"), false, [window]
 		{
 			if (Settings::getInstance()->getBool("ConfirmToExit"))

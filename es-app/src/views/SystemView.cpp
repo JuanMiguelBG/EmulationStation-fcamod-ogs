@@ -595,8 +595,7 @@ bool SystemView::input(InputConfig* config, Input input)
 			}
 			else if (config->isMappedTo("select", input) && Settings::getInstance()->getBool("ScreenSaverControls"))
 			{
-				std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-				if (mWindow->isScreenSaverEnabled() && (screensaver_behavior != "suspend"))
+				if (mWindow->isScreenSaverEnabled())
 				{
 					mWindow->startScreenSaver();
 					mWindow->renderScreenSaver(true);
@@ -1030,8 +1029,7 @@ std::vector<HelpPrompt> SystemView::getHelpPrompts()
 	}
 	else
 	{
-		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-		if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && ((screensaver_behavior != "suspend") && mWindow->isScreenSaverEnabled()))
+		if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && mWindow->isScreenSaverEnabled() )
 			prompts.push_back(HelpPrompt("select", _("LAUNCH SCREENSAVER")));
 	}
 

@@ -5,6 +5,7 @@
 #include "components/OptionListComponent.h"
 #include "Window.h"
 #include "ApiSystem.h"
+#include "SystemConf.h"
 
 
 GuiQuitOptions::GuiQuitOptions(Window* window) : GuiSettings(window, _("\"QUIT\" SETTINGS").c_str())
@@ -71,19 +72,19 @@ void GuiQuitOptions::initializeMenu()
 	std::string only_exit_action = Settings::getInstance()->getString("OnlyExitAction");
 	auto only_exit_action_list = std::make_shared< OptionListComponent< std::string > >(mWindow, _("ACTION TO EXECUTE"), false);
 
+	if ((only_exit_action == "suspend") && (SystemConf::getInstance()->get("suspend.device.mode") == "DISABLED"))
+		only_exit_action = "shutdown"; // default value
+
 	only_exit_action_list->add(_("shutdown"), "shutdown", only_exit_action == "shutdown");
-	//only_exit_action_list->add(_("suspend"), "suspend", only_exit_action == "suspend");
-	//only_exit_action_list->add(_("QUIT EMULATIONSTATION"), "exit_es", only_exit_action == "exit_es");
+	if (SystemConf::getInstance()->get("suspend.device.mode") != "DISABLED")
+		only_exit_action_list->add(_("suspend"), "suspend", only_exit_action == "suspend");
+	only_exit_action_list->add(_("QUIT EMULATIONSTATION"), "exit_es", only_exit_action == "exit_es");
 
 	addWithLabel(_("ACTION TO EXECUTE"), only_exit_action_list);
 	addSaveFunc([this, only_exit_action_list]
 		{
-			std::string old_value = Settings::getInstance()->getString("OnlyExitAction");
-			if (old_value != only_exit_action_list->getSelected())
-			{
-				Settings::getInstance()->setString("OnlyExitAction", only_exit_action_list->getSelected());
+			if (Settings::getInstance()->setString("OnlyExitAction", only_exit_action_list->getSelected()))
 				setVariable("reloadGuiMenu", true);
-			}
 		});
 
 	if (!only_exit_action_list->hasSelection())

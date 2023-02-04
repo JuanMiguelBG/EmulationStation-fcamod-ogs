@@ -648,7 +648,7 @@ void GuiGamelistOptions::addSelectionInfo()
 
 	mSelection.setLineSpacing(0);
 
-	mSelection.setText(Utils::String::toUpper(mSystem->getName()) + " - " + Utils::String::toUpper(getGamelist()->getCursor()->getName()));
+	mSelection.setText(Utils::String::toUpper( _(mSystem->getFullName()) ) + " - " + Utils::String::toUpper(getGamelist()->getCursor()->getName()));
 
 	mSelection.setHorizontalAlignment(ALIGN_CENTER);	
 	mSelection.setVerticalAlignment(ALIGN_CENTER);

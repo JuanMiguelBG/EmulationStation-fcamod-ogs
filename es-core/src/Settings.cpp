@@ -39,11 +39,12 @@ std::vector<const char*> settings_dont_save {
 //	{ "wifi.ssid" },
 	{ "wifi.dns1" },
 	{ "wifi.dns2" },
-//	{ "bluetooth.enabled" },
+	{ "bluetooth.enabled" },
 	{ "bluetooth.audio.connected" },
 	{ "bluetooth.audio.device" },
 	{ "BrightnessBackup" },
-	{ "VolumeBackup" }
+	{ "VolumeBackup" },
+	{ "suspend.device.mode" }
 };
 
 Settings::Settings()
@@ -240,6 +241,8 @@ void Settings::setDefaults()
 	mBoolMap["AutoscrollMenuEntries"] = true;
 	mBoolMap["CenterMenus"] = false;
 	mBoolMap["AutoMenuWidth"] = false;
+
+	mStringMap["suspend.device.mode"] = "LIGHT";
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

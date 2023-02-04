@@ -365,6 +365,11 @@ void loadOtherSettings()
 				SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 			}
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
+			{
+				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
+			}
+
 		});
 		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }

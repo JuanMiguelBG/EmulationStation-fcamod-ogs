@@ -72,26 +72,8 @@ void GuiAutoSuspendOptions::initializeMenu()
 					|| (auto_suspend_time_value != auto_suspend_time_new_value) || (auto_suspend_time_timeout_value != auto_suspend_time_timeout_new_value)
 					|| (auto_suspend_battery_value != auto_suspend_battery_new_value) || (auto_suspend_battery_level_value != auto_suspend_battery_level_new_value))
 			{
-				manageSuspendScreenSaver(window, auto_suspend_time_new_value || auto_suspend_battery_new_value);
 				ApiSystem::getInstance()->setDeviceAutoSuspendValues( stay_awake_charging_new_value, auto_suspend_time_new_value, auto_suspend_time_timeout_new_value, auto_suspend_battery_new_value, auto_suspend_battery_level_new_value);
 			}
 		});
 
-}
-
-void GuiAutoSuspendOptions::manageSuspendScreenSaver(Window *window, bool auto_suspend_enabled)
-{
-	if (auto_suspend_enabled && Settings::getInstance()->getString("ScreenSaverBehavior") == "suspend")
-	{
-		char strbuf[128];
-		snprintf(strbuf, 128, _("THE '%s' SCREENSAVER WAS DISABLED. THE SCREENSAVER BEHAVIOR WAS SETTLED TO 'NONE'.").c_str(), Utils::String::toUpper(_("suspend")).c_str());
-
-		window->pushGui(new GuiMsgBox(window,
-			strbuf,
-			_("OK"), []
-				{
-					Settings::getInstance()->setString("ScreenSaverBehavior", "none");
-					PowerSaver::updateTimeouts();
-				}));
-	}
 }

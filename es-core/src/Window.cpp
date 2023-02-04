@@ -188,35 +188,32 @@ void Window::input(InputConfig* config, Input input)
 {
 	if (mScreenSaver && mScreenSaver->isEnabled())
 	{
-		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-		if (screensaver_behavior != "suspend")
+		if (mScreenSaver->isScreenSaverActive())
 		{
-			if (mScreenSaver->isScreenSaverActive())
+			std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
+			if (((screensaver_behavior == "slideshow") || (screensaver_behavior == "random video")) && Settings::getInstance()->getBool("ScreenSaverControls"))
 			{
-				if (((screensaver_behavior == "slideshow") || (screensaver_behavior == "random video")) && Settings::getInstance()->getBool("ScreenSaverControls"))
+				if((mScreenSaver->getCurrentGame() != NULL) && (config->isMappedLike("right", input) || config->isMappedTo("start", input) || config->isMappedTo("select", input)))
 				{
-					if((mScreenSaver->getCurrentGame() != NULL) && (config->isMappedLike("right", input) || config->isMappedTo("start", input) || config->isMappedTo("select", input)))
+					if(config->isMappedLike("right", input) || config->isMappedTo("select", input))
 					{
-						if(config->isMappedLike("right", input) || config->isMappedTo("select", input))
-						{
-							if (input.value != 0) // handle screensaver control
-								mScreenSaver->nextVideo();
+						if (input.value != 0) // handle screensaver control
+							mScreenSaver->nextVideo();
 
-							return;
-						}
-						else if(config->isMappedTo("start", input) && input.value != 0)
-						{
-							// launch game!
-							cancelScreenSaver();
-							mScreenSaver->launchGame();
-							// to force handling the wake up process
-							mSleeping = true;
-						}
+						return;
+					}
+					else if(config->isMappedTo("start", input) && input.value != 0)
+					{
+						// launch game!
+						cancelScreenSaver();
+						mScreenSaver->launchGame();
+						// to force handling the wake up process
+						mSleeping = true;
 					}
 				}
-				else if ( ((screensaver_behavior == "black") || (screensaver_behavior == "dim")) && (config->isMappedTo("select", input) && input.value == 0))
-					return;
 			}
+			else if ( ((screensaver_behavior == "black") || (screensaver_behavior == "dim")) && (config->isMappedTo("select", input) && input.value == 0))
+				return;
 		}
 	}
 
@@ -691,8 +688,7 @@ void Window::startScreenSaver()
 
 bool Window::cancelScreenSaver()
 {
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if ((screensaver_behavior == "suspend") || !isScreenSaverEnabled())
+	if (!isScreenSaverEnabled())
 		return false;
 
 	if (mScreenSaver && mRenderScreenSaver)

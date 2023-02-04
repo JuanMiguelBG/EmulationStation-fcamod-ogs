@@ -3429,6 +3429,10 @@ msgid "ENGLISH"
 msgstr "INGLÉS"
 
 #:
+msgid "ITALIAN"
+msgstr "ITALIANO"
+
+#:
 msgid "ADD STAR"
 msgstr "+1 ESTRELLA"
 
