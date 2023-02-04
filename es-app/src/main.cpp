@@ -335,30 +335,43 @@ bool parseArgs(int argc, char* argv[])
 
 void loadOtherSettings()
 {
+	LOG(LogDebug) << "MAIN::loadOtherSettings() - Enter function";
 	Utils::Async::run( [] (void)
 		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 			{
 				SystemConf::getInstance()->set("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
-				bool wifi_enabled = ApiSystem::getInstance()->isWifiEnabled();
-				if (wifi_enabled)
-				{
-					SystemConf::getInstance()->setBool("wifi.enabled", wifi_enabled);
-//					std::string ssid = ApiSystem::getInstance()->getWifiSsid();
-//					if (SystemConf::getInstance()->setBool("wifi.ssid") != ssid)
-//						SystemConf::getInstance()->setBool("wifi.ssid", ssid);
-				}
-			}
+				SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
+				SystemConf::getInstance()->set("system.hostname", ApiSystem::getInstance()->getHostname());
 
-			bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
-			SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
-			if (btEnabled)
+				std::string ssid = ApiSystem::getInstance()->getWifiSsid();
+				if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
+					SystemConf::getInstance()->set("wifi.ssid", ssid);
+
+				if (!SystemConf::getInstance()->get("wifi.ssid").empty())
+					SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(ssid));
+
+				SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
+				SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
+			}
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
 			{
-				std::string btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
+				bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
+				SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
+				std::string btAudioDevice = "";
+				if (btEnabled)
+					btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
+
 				SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 			}
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
+			{
+				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
+			}
+
 		});
+		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
 
 bool verifyHomeFolderExists()

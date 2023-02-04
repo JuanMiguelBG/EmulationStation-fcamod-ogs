@@ -247,6 +247,8 @@ struct SoftwareInformation
 		version = "N/A";
 		so_base = "N/A";
 		vlinux = "N/A";
+		es_version = "";
+		es_built = "";
 	}
 
 	std::string hostname;
@@ -254,6 +256,8 @@ struct SoftwareInformation
 	std::string version;
 	std::string so_base;
 	std::string vlinux;
+	std::string es_version;
+	std::string es_built;
 };
 
 std::string queryHostname();

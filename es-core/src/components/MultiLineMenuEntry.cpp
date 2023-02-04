@@ -15,11 +15,19 @@ MultiLineMenuEntry::MultiLineMenuEntry(Window* window, const std::string& text, 
 	auto theme = ThemeData::getMenuTheme();
 
 	mText = std::make_shared<TextComponent>(mWindow, text.c_str(), theme->Text.font, theme->Text.color);
+	mText->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+
 	mText->setVerticalAlignment(ALIGN_TOP);
 
 	mSubstring = std::make_shared<TextComponent>(mWindow, substring.c_str(), theme->TextSmall.font, theme->Text.color);		
 	mSubstring->setVerticalAlignment(ALIGN_TOP);
 	mSubstring->setOpacity(192);
+
+	if (Settings::getInstance()->getBool("AutoscrollMenuEntries"))
+	{
+		mText->setAutoScroll(true);
+		mSubstring->setAutoScroll(true);
+	}
 
 	setEntry(mText, Vector2i(0, 0), true, true);
 	setEntry(mSubstring, Vector2i(0, 1), false, true);

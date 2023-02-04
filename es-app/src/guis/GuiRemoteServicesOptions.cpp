@@ -24,17 +24,17 @@ void GuiRemoteServicesOptions::configRemoteService(Window* window, RemoteService
 		{
 			service.isActive = isActive;
 			service.isStartOnBoot = isStartOnBoot;
-			Settings::getInstance()->setBool("wait.process.loading", true);
 			char title[64];
 			snprintf(title, 64, _("CONFIGURING THE '%s' SERVICE...").c_str(), service.name.c_str());
 			window->pushGui(new GuiLoading<bool>(window, title,
-				[service]
+				[this, service]
 				{
+					setWaitingLoad(true);
 					return ApiSystem::getInstance()->configRemoteService(service);
 				},
-				[window, service](bool success)
+				[this, window, service](bool success)
 				{
-					Settings::getInstance()->setBool("wait.process.loading", false);
+					setWaitingLoad(false);
 					char msg[64];
 					if (success)
 					{

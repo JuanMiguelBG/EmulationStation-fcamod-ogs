@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 do_help() {
-	echo "$0 usage : active_optimize_system [true/false]" >&2
-	exit 1
+   echo "$0 usage : active_optimize_system [true/false]" >&2
+   exit 1
 }
 
 #****************** rsyslog *************************
@@ -10,22 +10,22 @@ do_help() {
 rsyslogConfigFile="/etc/rsyslog.d/50-default.conf"
 
 rsyslog_config () {
-	local valPresent=`cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler"`
-	if [ -z "$valPresent" ]; then
-		sudo chmod 644 "$rsyslogConfigFile"
-		sudo sed -i -e '4 i\if $msg contains "rtl8723b_c2h_packet_handler" then { stop }\nif $msg contains "_btmpoper_cmd: C2H status" then { stop }\nif $msg contains "IsBtDisabled" then { stop }\nif $msg contains "rtl8723b_fill_default_txdesc" then { stop }\n' -e "s/#\?\*\.\*;auth,authpriv\.none/\*\.\*;auth\.none,authpriv\.none,kern\.none/g" -e "s/#\?mail\.\*/#mail\.\*/g" -e "s/#\?mail.err/#mail.err/g" "$rsyslogConfigFile" > /dev/null
+   local valPresent=`cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler"`
+   if [ -z "$valPresent" ]; then
+      sudo chmod 644 "$rsyslogConfigFile"
+      sudo sed -i -e '4 i\if $msg contains "rtl8723b_c2h_packet_handler" then { stop }\nif $msg contains "_btmpoper_cmd: C2H status" then { stop }\nif $msg contains "IsBtDisabled" then { stop }\nif $msg contains "rtl8723b_fill_default_txdesc" then { stop }\n' -e "s/#\?\*\.\*;auth,authpriv\.none/\*\.\*;auth\.none,authpriv\.none,kern\.none/g" -e "s/#\?mail\.\*/#mail\.\*/g" -e "s/#\?mail.err/#mail.err/g" "$rsyslogConfigFile" > /dev/null
 
-		sudo systemctl restart rsyslog.service
-	fi
+      sudo systemctl restart rsyslog.service
+   fi
 }
 
 rsyslog_restore() {
-	local valPresent=`cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler"`
-	if [ ! -z "$valPresent" ]; then
-		sudo chmod 644 "$rsyslogConfigFile"
-		sudo sed -i -e 4,8d -e "s/#\?\*\.\*;auth\.none,authpriv\.none,kern\.none/\*\.\*;auth,authpriv\.none/g" "$rsyslogConfigFile" > /dev/null
-		sudo systemctl restart rsyslog.service
-	fi
+   local valPresent=`cat "$rsyslogConfigFile" | grep -iw "rtl8723b_c2h_packet_handler"`
+   if [ ! -z "$valPresent" ]; then
+      sudo chmod 644 "$rsyslogConfigFile"
+      sudo sed -i -e 4,8d -e "s/#\?\*\.\*;auth\.none,authpriv\.none,kern\.none/\*\.\*;auth,authpriv\.none/g" "$rsyslogConfigFile" > /dev/null
+      sudo systemctl restart rsyslog.service
+   fi
 }
 
 
@@ -33,17 +33,17 @@ rsyslog_restore() {
 sysctlConfigFile="/etc/sysctl.conf"
 
 sysctl_config () {
-	sudo chmod 644 "$sysctlConfigFile"
-	sudo sed -i "s/#\?#kernel\.printk = 3 4 1 3/kernel\.printk = 3 3 1 3/g" "$sysctlConfigFile" > /dev/null
-	sudo sysctl --system
-	#sudo sysctl -p "$sysctlConfigFile" > /dev/null
+   sudo chmod 644 "$sysctlConfigFile"
+   sudo sed -i "s/#\?#kernel\.printk = 3 4 1 3/kernel\.printk = 3 3 1 3/g" "$sysctlConfigFile" > /dev/null
+   sudo sysctl --system
+   #sudo sysctl -p "$sysctlConfigFile" > /dev/null
 }
 
 sysctl_restore() {
-	sudo chmod 644 "$sysctlConfigFile"
-	sudo sed -i "s/#\?kernel\.printk = 3 3 1 3/#kernel\.printk = 3 4 1 3/g" "$sysctlConfigFile" > /dev/null
-	sudo sysctl --system
-	#sudo sysctl -p "$sysctlConfigFile" > /dev/null
+   sudo chmod 644 "$sysctlConfigFile"
+   sudo sed -i "s/#\?kernel\.printk = 3 3 1 3/#kernel\.printk = 3 4 1 3/g" "$sysctlConfigFile" > /dev/null
+   sudo sysctl --system
+   #sudo sysctl -p "$sysctlConfigFile" > /dev/null
 }
 
 
@@ -51,35 +51,35 @@ sysctl_restore() {
 #journaldConfigFile="/etc/systemd/journald.conf"
 
 journald_config () {
-#	local valPresent=`cat "$journaldConfigFile" | grep -iw "Compress=no"`
-#	if [ -z "$valPresent" ]; then
-#		sudo chmod 644 "$journaldConfigFile"
-#		sudo sed -i -e '17 i\Compress=no' -e '19 i\SplitMode=none' -e '23 i\SystemMaxUse=10M' -e '27 i\RuntimeMaxUse=2M' -e '29 i\RuntimeMaxFileSize=128K' -e '32 i\MaxFileSec=2day' -e '38 i\MaxLevelStore=warning' -e '39 i\MaxLevelSyslog=warning' -e '40 i\MaxLevelKMsg=warning' -e '41 i\MaxLevelConsole=warning' -e '43 i\ReadKMsg=no' "$journaldConfigFile" > /dev/null
-#		sudo systemctl restart systemd-journald
-#	fi
+#   local valPresent=`cat "$journaldConfigFile" | grep -iw "Compress=no"`
+#   if [ -z "$valPresent" ]; then
+#      sudo chmod 644 "$journaldConfigFile"
+#      sudo sed -i -e '17 i\Compress=no' -e '19 i\SplitMode=none' -e '23 i\SystemMaxUse=10M' -e '27 i\RuntimeMaxUse=2M' -e '29 i\RuntimeMaxFileSize=128K' -e '32 i\MaxFileSec=2day' -e '38 i\MaxLevelStore=warning' -e '39 i\MaxLevelSyslog=warning' -e '40 i\MaxLevelKMsg=warning' -e '41 i\MaxLevelConsole=warning' -e '43 i\ReadKMsg=no' "$journaldConfigFile" > /dev/null
+#      sudo systemctl restart systemd-journald
+#   fi
 
-	sudo systemctl stop systemd-journald.service --quiet
-	sudo systemctl stop systemd-journal-flush.service --quiet
+   sudo systemctl stop systemd-journald.service --quiet
+   sudo systemctl stop systemd-journal-flush.service --quiet
 
-	sudo systemctl mask systemd-journald.service --quiet
-	sudo systemctl mask systemd-journal-flush.service --quiet
-	sudo systemctl daemon-reload --quiet &
+   sudo systemctl mask systemd-journald.service --quiet
+   sudo systemctl mask systemd-journal-flush.service --quiet
+   sudo systemctl daemon-reload --quiet &
 }
 
 journald_restore () {
-#	local valPresent=`cat "$journaldConfigFile" | grep -iw "Compress=no"`
-#	if [ ! -z "$valPresent" ]; then
-#		sudo chmod 644 "$journaldConfigFile"
-#		sudo sed -i -e '53d;50d;48d;46d;44d;37d;33d;30d;25d;20d;17d' "$journaldConfigFile" > /dev/null
-#		sudo systemctl restart systemd-journald
-#	fi
+#   local valPresent=`cat "$journaldConfigFile" | grep -iw "Compress=no"`
+#   if [ ! -z "$valPresent" ]; then
+#      sudo chmod 644 "$journaldConfigFile"
+#      sudo sed -i -e '53d;50d;48d;46d;44d;37d;33d;30d;25d;20d;17d' "$journaldConfigFile" > /dev/null
+#      sudo systemctl restart systemd-journald
+#   fi
 
-	sudo systemctl unmask systemd-journald.service --quiet
-	sudo systemctl unmask systemd-journal-flush.service --quiet
+   sudo systemctl unmask systemd-journald.service --quiet
+   sudo systemctl unmask systemd-journal-flush.service --quiet
 
-	sudo systemctl start systemd-journald.service --quiet
-	sudo systemctl start systemd-journal-flush.service --quiet
-	sudo systemctl daemon-reload --quiet &
+   sudo systemctl start systemd-journald.service --quiet
+   sudo systemctl start systemd-journal-flush.service --quiet
+   sudo systemctl daemon-reload --quiet &
 }
 
 
@@ -89,33 +89,33 @@ logrotateRsyslogConfigFile="/etc/logrotate.d/rsyslog"
 log_path="/var/log"
 
 logrotate_config () {
-	sudo chmod 644 "$logrotateConfigFile"
-	sudo chmod 755 "$log_path"
-	sudo sed -i -e "s/#\?weekly/daily/g" -e "s/#\?#dateext/dateext/g" "$logrotateConfigFile" > /dev/null
-	sudo logrotate -v -f "$logrotateConfigFile"
+   sudo chmod 644 "$logrotateConfigFile"
+   sudo chmod 755 "$log_path"
+   sudo sed -i -e "s/#\?weekly/daily/g" -e "s/#\?#dateext/dateext/g" "$logrotateConfigFile" > /dev/null
+   sudo logrotate -v -f "$logrotateConfigFile"
 
-	local valPresent=`cat "$logrotateRsyslogConfigFile" | grep -iw "compress"`
-	if [ ! -z "$valPresent" ]; then
-		sudo chmod 644 "$logrotateRsyslogConfigFile"
-		sudo sed -i -e "s/#\?rotate 7/rotate 4/g" -e "s/#\?weekly/daily/g" -e '7,8d;31,32d' "$logrotateRsyslogConfigFile" > /dev/null
-		sudo logrotate -v -f "$logrotateRsyslogConfigFile" > /dev/null
-	fi
+   local valPresent=`cat "$logrotateRsyslogConfigFile" | grep -iw "compress"`
+   if [ ! -z "$valPresent" ]; then
+      sudo chmod 644 "$logrotateRsyslogConfigFile"
+      sudo sed -i -e "s/#\?rotate 7/rotate 4/g" -e "s/#\?weekly/daily/g" -e '7,8d;31,32d' "$logrotateRsyslogConfigFile" > /dev/null
+      sudo logrotate -v -f "$logrotateRsyslogConfigFile" > /dev/null
+   fi
 }
 
 logrotate_restore () {
-	sudo chmod 644 "$logrotateConfigFile"
-	sudo chmod 755 "$log_path"
-	sudo sed -i -e "s/#\?daily/weekly/g" -e "s/#\?dateext/#dateext/g" "$logrotateConfigFile" > /dev/null
-	sudo logrotate -v -f "$logrotateConfigFile"
+   sudo chmod 644 "$logrotateConfigFile"
+   sudo chmod 755 "$log_path"
+   sudo sed -i -e "s/#\?daily/weekly/g" -e "s/#\?dateext/#dateext/g" "$logrotateConfigFile" > /dev/null
+   sudo logrotate -v -f "$logrotateConfigFile"
 
-	local valPresent=`cat "$logrotateRsyslogConfigFile" | grep -iw "compress"`
-	if [ -z "$valPresent" ]; then
-		sudo chmod 644 "$logrotateRsyslogConfigFile"
-		sudo sed -i -e '3d;26d' "$logrotateRsyslogConfigFile" > /dev/null
-		sudo sed -i -e '3 i\	rotate 7' -e '6 i\	delaycompress' -e '6 i\	compress' -e '25 i\	weekly' -e '27 i\	compress' -e '27 i\	delaycompress' "$logrotateRsyslogConfigFile" > /dev/null
-		sudo chmod 644 "$logrotateRsyslogConfigFile"
-		sudo logrotate -v -f "$logrotateRsyslogConfigFile" > /dev/null
-	fi
+   local valPresent=`cat "$logrotateRsyslogConfigFile" | grep -iw "compress"`
+   if [ -z "$valPresent" ]; then
+      sudo chmod 644 "$logrotateRsyslogConfigFile"
+      sudo sed -i -e '3d;26d' "$logrotateRsyslogConfigFile" > /dev/null
+      sudo sed -i -e '3 i\   rotate 7' -e '6 i\   delaycompress' -e '6 i\   compress' -e '25 i\   weekly' -e '27 i\   compress' -e '27 i\   delaycompress' "$logrotateRsyslogConfigFile" > /dev/null
+      sudo chmod 644 "$logrotateRsyslogConfigFile"
+      sudo logrotate -v -f "$logrotateRsyslogConfigFile" > /dev/null
+   fi
 }
 
 
@@ -123,19 +123,19 @@ logrotate_restore () {
 fstabConfigFile="/etc/fstab"
 
 fstab_config () {
-	local valPresent=`cat "$fstabConfigFile" | grep -iw "nodiratime"`
-	if [ -z "$valPresent" ]; then
-		sudo chmod 644 "$fstabConfigFile"
-		sudo sed -i -e "s/#\?noatime /nodiratime,noatime /g" "$fstabConfigFile" -e "s/#\?defaults /defaults,noatime,nodiratime /g" > /dev/null
-	fi
+   local valPresent=`cat "$fstabConfigFile" | grep -iw "nodiratime"`
+   if [ -z "$valPresent" ]; then
+      sudo chmod 644 "$fstabConfigFile"
+      sudo sed -i -e "s/#\?noatime /nodiratime,noatime /g" "$fstabConfigFile" -e "s/#\?defaults /defaults,noatime,nodiratime /g" > /dev/null
+   fi
 }
 
 fstab_restore () {
-	local valPresent=`cat "$fstabConfigFile" | grep -iw "nodiratime"`
-	if [ ! -z "$valPresent" ]; then
-		sudo chmod 644 "$fstabConfigFile"
-		sudo sed -i -e "s/#\?nodiratime,noatime /noatime /g" -e "s/#\?defaults,noatime,nodiratime /defaults /g" "$fstabConfigFile" > /dev/null
-	fi
+   local valPresent=`cat "$fstabConfigFile" | grep -iw "nodiratime"`
+   if [ ! -z "$valPresent" ]; then
+      sudo chmod 644 "$fstabConfigFile"
+      sudo sed -i -e "s/#\?nodiratime,noatime /noatime /g" -e "s/#\?defaults,noatime,nodiratime /defaults /g" "$fstabConfigFile" > /dev/null
+   fi
 }
 
 
@@ -143,65 +143,109 @@ fstab_restore () {
 bootConfigFile="/boot/extlinux/extlinux.conf"
 
 boot_config () {
-	local valPresent=`cat "$bootConfigFile" | grep -iw "elevator=noop"`
-	if [ -z "$valPresent" ]; then
-		sudo sed -i -e "s/#\?consoleblank=0/consoleblank=0 elevator=noop/g" "$bootConfigFile" > /dev/null
-	fi
+   local valPresent=`cat "$bootConfigFile" | grep -iw "elevator=noop"`
+   if [ -z "$valPresent" ]; then
+      sudo sed -i -e "s/#\?consoleblank=0/consoleblank=0 elevator=noop/g" "$bootConfigFile" > /dev/null
+   fi
 }
 
 boot_restore () {
-	local valPresent=`cat "$bootConfigFile" | grep -iw "elevator=noop"`
-	if [ ! -z "$valPresent" ]; then
-		sudo sed -i -e "s/#\?[ ]\+elevator=noop//g" "$bootConfigFile" > /dev/null
-	fi
+   local valPresent=`cat "$bootConfigFile" | grep -iw "elevator=noop"`
+   if [ ! -z "$valPresent" ]; then
+      sudo sed -i -e "s/#\?[ ]\+elevator=noop//g" "$bootConfigFile" > /dev/null
+   fi
 }
 
 
 #************* remove log / journals *************
 remove_log () {
-	sudo rm -f "$log_path"/*.log*
-	sudo rm -f "$log_path"/dmesg*
-	sudo rm -f "$log_path"/syslog*
-	sudo rm -f "$log_path"/lastlog*
-	sudo rm -f "$log_path"/btmp*
-	sudo rm -f "$log_path"/wtmp*
+   sudo rm -f "$log_path"/*.log*
+   sudo rm -f "$log_path"/dmesg*
+   sudo rm -f "$log_path"/syslog*
+   sudo rm -f "$log_path"/lastlog*
+   sudo rm -f "$log_path"/btmp*
+   sudo rm -f "$log_path"/wtmp*
 }
 
 remove_journal () {
-	#sudo systemctl stop systemd-journald
-	sudo rm -f "$PWD/*@*.journal"
-	#sudo systemctl start systemd-journald
+   #sudo systemctl stop systemd-journald
+   sudo rm -f "$PWD/*@*.journal"
+   #sudo systemctl start systemd-journald
 }
 
 #******************* global funtions ********************
 
 optimize_system () {
-	rsyslog_config
-	sysctl_config
-	journald_config
-	logrotate_config
-	fstab_config
-	boot_config
-	inactive_es_scripts_log_feature
+   rsyslog_config
+   sysctl_config
+   journald_config
+   logrotate_config
+   fstab_config
+   boot_config
+   inactive_es_scripts_log_feature
 }
 
 normal_system () {
-	rsyslog_restore
-	sysctl_restore
-	journald_restore
-	logrotate_restore
-	fstab_restore
-	boot_restore
+   rsyslog_restore
+   sysctl_restore
+   journald_restore
+   logrotate_restore
+   fstab_restore
+   boot_restore
 }
 
 do_active_optimize_system() {
-	local pvalue="$1"
+   local pvalue="$1"
 
-	if [ "$pvalue" = "true" ]; then
-		optimize_system
-	else
-		normal_system
-	fi
+   if [ "$pvalue" = "true" ]; then
+      optimize_system
+   else
+      normal_system
+   fi
+}
+
+set_sleep_mode()
+{
+   local sleep_mode=$1
+   #print_log $LOG_FILE "INFO" "set_sleep_mode() - Setting sleep mode: '$sleep_mode'"
+
+   if [ ! -z "$sleep_mode" ]; then
+      local sleep_config_file="/etc/systemd/sleep.conf"
+      if [ $sleep_mode = "DISABLED" ]; then
+         #print_log $LOG_FILE "INFO" "set_sleep_mode() - Disabling sleep/suspend mode, masking services..."
+         sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target --quiet &
+      else
+         #print_log $LOG_FILE "INFO" "set_sleep_mode() - Enabling sleep/suspend mode, unmasking services..."
+         sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target --quiet &
+         if [ $sleep_mode = "DEEP" ]; then
+            sudo sed -i "/SuspendState\=/c\SuspendState\=mem" /etc/systemd/sleep.conf
+         else # LIGHT
+            sudo sed -i "/SuspendState\=/c\SuspendState\=freeze" /etc/systemd/sleep.conf
+         fi
+      fi
+      sudo systemctl daemon-reload --quiet &
+   fi
+}
+
+get_sleep_mode()
+{
+   if [ "$(sudo systemctl status suspend.target | grep -c masked)" -gt "0" ]; then
+      echo "DISABLED"
+   else
+      local sleep_mode=`cat /etc/systemd/sleep.conf | grep SuspendState | tr "=" "\n" | tail -n1`
+      #print_log $LOG_FILE "INFO" "get_sleep_mode() - Sleep mode: '$sleep_mode'"
+      if [ $sleep_mode = "mem" ]; then
+         echo "DEEP"
+      else
+         echo "LIGHT"
+      fi
+   fi
+}
+
+get_sleep_modes()
+{
+   #print_log $LOG_FILE "INFO" "get_sleep_modes() - Sleep modes: {DISABLED, LIGHT, DEEP}"
+   echo -e "DISABLED\nLIGHT\nDEEP"
 }
 
 # ******************************************************************************************
@@ -223,10 +267,10 @@ fi
 
 exit_execution()
 {
-    local return=$1
-    local param1=$2
-    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1', exit code: '$return' #####"
-    exit $return
+   local return=$1
+   local param1=$2
+   #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1', exit code: '$return' #####"
+   exit $return
 }
 
 ACTION=$1
@@ -235,16 +279,25 @@ shift
 #print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1' #####"
 
 case "${ACTION}" in
-    "active_optimize_system")
-        do_active_optimize_system "$1"
-        remove_log
-        remove_journal
-    ;;
-    *)
-        do_help
-        >&2 echo "error: invalid command ${ACTION}"
-        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
-        exit 1
+   "active_optimize_system")
+      do_active_optimize_system "$1"
+      remove_log
+      remove_journal
+   ;;
+   "set_sleep_mode")
+      set_sleep_mode "$1" || exit_execution 1 "$1"
+   ;;
+   "get_sleep_mode")
+      get_sleep_mode
+   ;;
+   "get_sleep_modes")
+      get_sleep_modes
+   ;;
+   *)
+      do_help
+      >&2 echo "error: invalid command ${ACTION}"
+      #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+      exit 1
 esac
 
 exit_execution 0 "$1"

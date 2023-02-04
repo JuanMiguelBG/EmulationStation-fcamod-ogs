@@ -44,7 +44,8 @@ static std::map<std::string, std::string> defaults =
 	{ "bluetooth.enabled", "0" },
 	{ "bluetooth.audio.connected", "0" },
 	{ "bluetooth.audio.device", "" },
-	{ "bluetooth.audio.device.autoconnect", "0" }
+	{ "bluetooth.audio.device.autoconnect", "0" },
+	{ "suspend.device.mode", "LIGHT" }
 };
 
 std::string systemConfFile = "~/.emulationstation.conf";

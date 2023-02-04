@@ -70,6 +70,9 @@ public:
 	void setTitle(const std::string title) { mMenu.setTitle(title); }
 	void setSubTitle(const std::string text) { mMenu.setSubTitle(text); }
 
+	bool isWaitingLoad() { return mWaitingLoad; };
+	void setWaitingLoad(bool waitingLoad) { mWaitingLoad = waitingLoad; };
+
 protected:
 	MenuComponent mMenu;
 
@@ -83,6 +86,8 @@ private:
 
 	std::string mCloseButton;
 	std::function<void()> mCloseButtonFunc;
+
+	bool		  mWaitingLoad;
 };
 
 #endif // ES_APP_GUIS_GUI_SETTINGS_H

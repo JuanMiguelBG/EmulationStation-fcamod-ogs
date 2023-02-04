@@ -703,6 +703,12 @@ void GuiSystemInformation::openSoftware()
 	// kernel
 	s->addWithLabel(_("KERNEL"), std::make_shared<TextComponent>(window, si.vlinux, font, color));
 
+	// ES version
+	s->addWithLabel(_("EMULATIONSTATION"), std::make_shared<TextComponent>(window, si.es_version, font, color));
+
+	// ES built
+	s->addWithLabel(_("BUILT"), std::make_shared<TextComponent>(window, si.es_built, font, color));
+
 	window->pushGui(s);
 }
 

@@ -81,7 +81,7 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 		mGrid.setEntry(mImage, Vector2i(0, 0), false, false);
 	}
 
-	mMsg = std::make_shared<TextComponent>(mWindow, text, ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color, mImage == nullptr || Renderer::isSmallScreen() ? ALIGN_CENTER : ALIGN_LEFT); // CENTER
+	mMsg = std::make_shared<TextComponent>(mWindow, text, theme->Text.font, theme->Text.color, mImage == nullptr || Renderer::isSmallScreen() ? ALIGN_CENTER : ALIGN_LEFT); // CENTER
 	mMsg->setPadding(Vector4f(Renderer::getScreenWidth()*0.015f, 0, Renderer::getScreenWidth()*0.015f, 0));
 
 	mGrid.setEntry(mMsg, Vector2i(mImage == nullptr ? 0 : 1, 0), false, false, Vector2i(mImage == nullptr ? 2 : 1, 1));
@@ -114,7 +114,7 @@ GuiMsgBox::GuiMsgBox(Window* window, const std::string& text,
 	}
 
 	// put the buttons into a ComponentGrid
-	mButtonGrid = makeButtonGrid(mWindow, mButtons);
+	mButtonGrid = makeButtonGrid(mWindow, mButtons, false);
 	mGrid.setEntry(mButtonGrid, Vector2i(0, 1), true, false, Vector2i(2, 1), GridFlags::BORDER_TOP);
 
 	// decide final width

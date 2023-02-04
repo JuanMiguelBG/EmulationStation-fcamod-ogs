@@ -11,7 +11,7 @@
 #include "ContentInstaller.h"
 
 GuiThemeInstall::GuiThemeInstall(Window* window)
-	: GuiComponent(window), mMenu(window, _("SELECT THEME TO INSTALL").c_str())
+	: GuiComponent(window), mMenu(window, _("SELECT THEME TO INSTALL").c_str(), true)
 {
 	auto theme = ThemeData::getMenuTheme();
 

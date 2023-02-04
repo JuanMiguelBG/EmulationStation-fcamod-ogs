@@ -12,31 +12,30 @@
 #include "components/SwitchComponent.h"
 
 
-GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) : GuiComponent(window), mMenu(window, title)
+GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) : GuiComponent(window), mMenu(window, title, true)
 {
 	addChild(&mMenu);
 
+	mWaitingLoad = false;
 	mCloseButton = "start";
 	mMenu.addButton(_("BACK"), _("BACK"), [this] { close(); });
 
 	setSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
 
+	float x_end = (mSize.x() - mMenu.getSize().x()) / 2,
+		  y_end = Renderer::isSmallScreen() ? 0.f : Renderer::getScreenHeight() * 0.15f;
+
 	if (animate)
 	{
-		if (Renderer::isSmallScreen())
-			animateTo((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
-		else
-			animateTo(
-				Vector2f((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.5),
-				Vector2f((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f));
+		float x_start = (Renderer::getScreenWidth() - mMenu.getSize().x()) / 2,
+			  y_start = Renderer::getScreenHeight() * 0.5f;
+		
+		x_end = Renderer::isSmallScreen() ? 0.f : (Renderer::getScreenWidth() - mMenu.getSize().x()) / 2;
+
+		animateTo(Vector2f(x_start, y_start), Vector2f(x_end, y_end));
 	}
 	else
-	{
-		if (Renderer::isSmallScreen())
-			mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
-		else
-			mMenu.setPosition((mSize.x() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
-	}
+		mMenu.setPosition(x_end, y_end);
 }
 
 GuiSettings::GuiSettings(Window* window, const std::string title, bool animate, const std::string closeButton, const std::function<void()>& closeButtonFunc) : 
@@ -84,14 +83,14 @@ bool GuiSettings::input(InputConfig* config, Input input)
 	{
 		if (config->isMappedTo(BUTTON_BACK, input))
 		{
-			if (!Settings::getInstance()->getBool("wait.process.loading"))
+			if (!mWaitingLoad)
 				close();
 
 			return true;
 		}
 		else if (config->isMappedTo(mCloseButton, input))
 		{
-			if (!Settings::getInstance()->getBool("wait.process.loading"))
+			if (!mWaitingLoad)
 			{
 				if (mCloseButtonFunc != nullptr)
 						mCloseButtonFunc();
@@ -139,6 +138,7 @@ void GuiSettings::addSubMenu(const std::string& label, const std::function<void(
 		return;
 
 	auto entryMenu = std::make_shared<TextComponent>(mWindow, label, theme->Text.font, theme->Text.color);
+	entryMenu->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	row.addElement(entryMenu, true);
 	row.addElement(makeArrow(mWindow), false);
 	mMenu.addRow(row);

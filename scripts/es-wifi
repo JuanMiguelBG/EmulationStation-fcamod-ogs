@@ -389,7 +389,7 @@ get_network_exist_flag()
 is_wifi_power_safe_enabled() {
     #print_log $LOG_FILE "INFO" "Executing 'is_wifi_power_safe_enabled()'"
 
-    status=`sudo iw dev wlan0 get power_save | awk '{print $3}'`
+    local status=`sudo iw dev wlan0 get power_save | awk '{print $3}'`
     if [ "$status" == "on" ]; then
       # enabled
       #print_log $LOG_FILE "INFO" "is_wifi_power_safe_enabled() - NetworkManager Wifi Power Safe is enabled"

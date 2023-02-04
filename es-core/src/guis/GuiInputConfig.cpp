@@ -19,35 +19,35 @@ struct InputConfigStructure
 static const int inputCount = 25;
 static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 {
-	{ "Up",               false, "D-PAD UP",           ":/help/dpad_up.svg" },
-	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down.svg" },
-	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left.svg" },
-	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right.svg" },
-	{ "Start",            true,  "START",              ":/help/button_start.svg" },
-	{ "Select",           true,  "SELECT",             ":/help/button_select.svg" },
+	{ "Up",               false, "D-PAD UP",           ":/help/dpad_up_gt.svg" },
+	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down_gt.svg" },
+	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left_gt.svg" },
+	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right_gt.svg" },
+	{ "Start",            true,  "START",              ":/help/button_start_gt.svg" },
+	{ "Select",           true,  "SELECT",             ":/help/button_select_gt.svg" },
 
-	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east.svg" },
-	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south.svg" },
-	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north.svg" },
-	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west.svg" },
+	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east_gt.svg" },
+	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south_gt.svg" },
+	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north_gt.svg" },
+	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west_gt.svg" },
 
-	{ "L1",               true,  "L1 / Page Up",       ":/help/button_l.svg" },
-	{ "R1",               true,  "R1 / Page Down",     ":/help/button_r.svg" },
-	{ "L2",               true,  "L2",                 ":/help/button_lt.svg" },
-	{ "R2",               true,  "R2",                 ":/help/button_rt.svg" },
-	{ "L3",               true,  "L3",                 ":/help/analog_thumb.svg" },
-	{ "R3",               true,  "R3",                 ":/help/analog_thumb.svg" },
+	{ "LeftShoulder",     true,  "L1 / Page Up",       ":/help/button_l_gt.svg" },
+	{ "RightShoulder",    true,  "R1 / Page Down",     ":/help/button_r_gt.svg" },
+	{ "LeftTrigger",      true,  "L2",                 ":/help/button_lt_gt.svg" },
+	{ "RightTrigger",     true,  "R2",                 ":/help/button_rt_gt.svg" },
+	{ "LeftThumb",        true,  "L3",                 ":/help/analog_thumb_gt.svg" },
+	{ "RightThumb",       true,  "R3",                 ":/help/analog_thumb_gt.svg" },
 
-	{ "LeftAnalogUp",     true,  "LEFT ANALOG UP",     ":/help/analog_up.svg" },
-	{ "LeftAnalogDown",   true,  "LEFT ANALOG DOWN",   ":/help/analog_down.svg" },
-	{ "LeftAnalogLeft",   true,  "LEFT ANALOG LEFT",   ":/help/analog_left.svg" },
-	{ "LeftAnalogRight",  true,  "LEFT ANALOG RIGHT",  ":/help/analog_right.svg" },
+	{ "LeftAnalogUp",     true,  "LEFT ANALOG UP",     ":/help/analog_up_gt.svg" },
+	{ "LeftAnalogDown",   true,  "LEFT ANALOG DOWN",   ":/help/analog_down_gt.svg" },
+	{ "LeftAnalogLeft",   true,  "LEFT ANALOG LEFT",   ":/help/analog_left_gt.svg" },
+	{ "LeftAnalogRight",  true,  "LEFT ANALOG RIGHT",  ":/help/analog_right_gt.svg" },
 
-	{ "RightAnalogUp",    true,  "RIGHT ANALOG UP",    ":/help/analog_up.svg" },
-	{ "RightAnalogDown",  true,  "RIGHT ANALOG DOWN",  ":/help/analog_down.svg" },
-	{ "RightAnalogLeft",  true,  "RIGHT ANALOG LEFT",  ":/help/analog_left.svg" },
-	{ "RightAnalogRight", true,  "RIGHT ANALOG RIGHT", ":/help/analog_right.svg" },
-	{ "hotkeyEnable",     true,  "HOTKEY",             ":/help/button_hotkey.svg" }
+	{ "RightAnalogUp",    true,  "RIGHT ANALOG UP",    ":/help/analog_up_gt.svg" },
+	{ "RightAnalogDown",  true,  "RIGHT ANALOG DOWN",  ":/help/analog_down_gt.svg" },
+	{ "RightAnalogLeft",  true,  "RIGHT ANALOG LEFT",  ":/help/analog_left_gt.svg" },
+	{ "RightAnalogRight", true,  "RIGHT ANALOG RIGHT", ":/help/analog_right_gt.svg" },
+	{ "hotkeyEnable",     true,  "HOTKEY",             ":/help/button_hotkey_gt_gt.svg" }
 };
 
 //MasterVolUp and MasterVolDown are also hooked up, but do not appear on this screen.
@@ -207,29 +207,43 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		Input input;
 		if (!mTargetConfig->getInputByName("hotkeyEnable", &input)) {
 			mWindow->pushGui(new GuiMsgBox(mWindow,
-				_("YOU DIDN'T CHOOSE A HOTKEY ENABLE BUTTON. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON DEFAULT ? PLEASE ANSWER YES TO USE SELECT OR NO TO NOT SET A HOTKEY ENABLE BUTTON."),
-				_("YES"), [this, okFunction] {
+				_("NO HOTKEY BUTTON HAS BEEN ASSIGNED. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON AS YOUR HOTKEY?"), 
+				_("SET SELECT AS HOTKEY"), [this, okFunction] {
 					Input input;
 					mTargetConfig->getInputByName("Select", &input);
 					mTargetConfig->mapInput("HotKeyEnable", input);
 					okFunction();
 					},
-				_("NO"), [this, okFunction] {
+				_("DO NOT ASSIGN HOTKEY"), [this, okFunction] {
 					// for a disabled hotkey enable button, set to a key with id 0,
 					// so the input configuration script can be backwards compatible.
 					mTargetConfig->mapInput("HotKeyEnable", Input(DEVICE_KEYBOARD, TYPE_KEY, 0, 1, true));
 					okFunction();
 				}
 			));
-		} else {
-			okFunction();
 		}
+		else
+			okFunction();
+
 	}));
 	mButtonGrid = makeButtonGrid(mWindow, buttons);
 	mGrid.setEntry(mButtonGrid, Vector2i(0, 6), true, false);
 
-	setSize(Renderer::getScreenWidth() * 0.6f, Renderer::getScreenHeight() * 0.75f);
-	setPosition((Renderer::getScreenWidth() - mSize.x()) / 2, (Renderer::getScreenHeight() - mSize.y()) / 2);
+
+	float width = Renderer::getScreenWidth(),
+		  height = Renderer::getScreenHeight(),
+		  x = 0.f,
+		  y = 0.f;
+	if (!Renderer::isSmallScreen())
+	{
+		width = width * 0.6f;
+		height = height * 0.75f;
+		x = (Renderer::getScreenWidth() - mSize.x()) / 2;
+		y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+	}
+
+	setSize(width, height);
+	setPosition(x, y);
 }
 
 void GuiInputConfig::onSizeChanged()
