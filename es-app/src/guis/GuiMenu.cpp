@@ -52,7 +52,7 @@
 #include "guis/GuiLoading.h"
 
 
-GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), true), mVersion(window)
+GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
 {
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
 	{

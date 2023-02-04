@@ -368,7 +368,7 @@ std::vector<HelpPrompt> MenuComponent::getHelpPrompts()
 
 float getHelpComponentHeight(Window* window, bool addHelpComponnetHeight)
 {
-	return addHelpComponnetHeight ? window->getHelpComponentHeight() : 0.f;
+	return window && addHelpComponnetHeight ? window->getHelpComponentHeight() : 0.f;
 }
 
 std::shared_ptr<ComponentGrid> makeMultiDimButtonGrid(Window* window, const std::vector< std::vector< std::shared_ptr<ButtonComponent> > >& buttons, float outerWidth)
@@ -426,7 +426,7 @@ std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector<
 	float helpComponentHeight = getHelpComponentHeight(window, addHelpComponentHeight);
 	LOG(LogDebug) << "MenuComponent::makeButtonGrid() - help component height: " << std::to_string(helpComponentHeight) << ", addHelpComponentHeight: " << Utils::String::boolToString(addHelpComponentHeight);
 	Log::flush();
-	buttonGrid->setSize(buttonGridWidth, buttons.at(0)->getSize().y() + BUTTON_GRID_VERT_PADDING + (helpComponentHeight > 0 ? helpComponentHeight : 2));
+	buttonGrid->setSize(buttonGridWidth, buttons.at(0)->getSize().y() + BUTTON_GRID_VERT_PADDING + (helpComponentHeight > 0.f ? helpComponentHeight : 2));
 	// spacer row to deal with dropshadow to make buttons look centered
 	buttonGrid->setRowHeightPerc(1, helpComponentHeight > 0.f ? 0.4f : (2 / buttonGrid->getSize().y()) );
 
