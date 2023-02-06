@@ -38,8 +38,8 @@ private:
 	void openSoundSettings();
 	void openUISettings();
 	void openSystemInformation();
-	void openMenusSettings();
-	void openQuitSettings();
+	void openMenusSettings(GuiSettings *parentGui);
+	void openQuitSettings(GuiSettings *parentGui);
 	void openAutoSuspendSettings();
 	void openSystemHotkeyEventsSettings();
 	void openRetroAchievementsSettings();
