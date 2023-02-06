@@ -206,7 +206,8 @@ void GuiMenu::openDisplaySettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -547,7 +548,8 @@ void GuiMenu::openSoundSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -1194,7 +1196,8 @@ void GuiMenu::openUISettings()
 
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 
@@ -1680,7 +1683,8 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -1853,7 +1857,8 @@ void GuiMenu::openBluetoothSettings()
 
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 
@@ -1974,7 +1979,10 @@ void GuiMenu::openUpdateSettings()
 	s->onFinalize([s, pthis]
 	{
 		if (s->getVariable("closeGuiMenu"))
-			delete pthis;
+		{
+			if (pthis)
+				delete pthis;
+		}
 	});
 
 	window->pushGui(s);
@@ -2403,7 +2411,8 @@ void GuiMenu::openAdvancedSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -2423,7 +2432,8 @@ void GuiMenu::openQuitSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -2459,7 +2469,8 @@ void GuiMenu::openMenusSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			auto main_menu = new GuiMenu(window, false);
 			window->pushGui(main_menu);
 			main_menu->openUISettings();
@@ -2862,7 +2873,9 @@ bool GuiMenu::input(InputConfig* config, Input input)
 
 	if ((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("start", input)) && input.value != 0)
 	{
-		delete this;
+		auto pthis = this;
+		if (pthis)
+			delete pthis;
 		return true;
 	}
 

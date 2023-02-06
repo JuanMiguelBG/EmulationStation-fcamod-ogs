@@ -53,18 +53,18 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 	if (ViewController::get()->getState().viewing == ViewController::GAME_LIST)
 		currentSystem = ViewController::get()->getState().getSystem()->getName();
 
-	//add systems (all with a platformid specified selected)
+	//add systems (all visible systems with a platformid specified selected)
 	mSystems = std::make_shared< OptionListComponent<SystemData*> >(mWindow, _("SCRAPE THESE SYSTEMS"), true);
-	for(auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
+	for(auto system : SystemData::sSystemVector)
 	{
-		if ((*it)->isGroupSystem())
+		if (system->isGroupSystem() || !system->isVisible())
 			continue;
 
-		if (!(*it)->hasPlatformId(PlatformIds::PLATFORM_IGNORE))
-			mSystems->add((*it)->getFullName(), *it,
+		if (!system->hasPlatformId(PlatformIds::PLATFORM_IGNORE))
+			mSystems->add(system->getFullName(), system,
 				currentSystem.empty() ?
-				!(*it)->getPlatformIds().empty() :
-				(*it)->getName() == currentSystem && !(*it)->getPlatformIds().empty());
+				!system->getPlatformIds().empty() :
+				system->getName() == currentSystem && !system->getPlatformIds().empty());
 	}
 	mMenu.addWithLabel(_("SYSTEMS"), mSystems);
 

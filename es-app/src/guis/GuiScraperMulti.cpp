@@ -99,9 +99,15 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 
 GuiScraperMulti::~GuiScraperMulti()
 {
-	// view type probably changed (basic -> detailed)
-	for(auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
-		ViewController::get()->reloadGameListView(*it, false);
+	if (mTotalSuccessful > 0)
+	{
+		// view type probably changed (basic -> detailed)
+		for (auto system : SystemData::sSystemVector)
+		{
+			if (system->isVisible())
+				ViewController::get()->reloadGameListView(system, false);
+		}
+	}
 }
 
 void GuiScraperMulti::onSizeChanged()
@@ -117,7 +123,7 @@ void GuiScraperMulti::onSizeChanged()
 
 void GuiScraperMulti::doNextSearch()
 {
-	if(mSearchQueue.empty())
+	if (mSearchQueue.empty())
 	{
 		finish();
 		return;
@@ -149,6 +155,7 @@ void GuiScraperMulti::acceptResult(const ScraperSearchResult& result)
 	mSearchQueue.pop();
 	mCurrentGame++;
 	mTotalSuccessful++;
+
 	doNextSearch();
 }
 
@@ -163,16 +170,18 @@ void GuiScraperMulti::skip()
 void GuiScraperMulti::finish()
 {
 	std::stringstream ss;
-	if(mTotalSuccessful == 0)
+	if (mTotalSuccessful == 0)
 	{
 		ss << _("NO GAMES WERE SCRAPED") << ".";
-	}else{
-		
+	}
+	else
+	{
 		char csstrbuf[64];
 		snprintf(csstrbuf, 64, EsLocale::nGetText("%i GAME SUCCESSFULLY SCRAPED!", "%i GAMES SUCCESSFULLY SCRAPED!", mTotalSuccessful).c_str(), mTotalSuccessful);
 		ss << csstrbuf;
 
-		if(mTotalSkipped > 0) {
+		if (mTotalSkipped > 0)
+		{
 			char skrbuf[64];
 			snprintf(skrbuf, 64, EsLocale::nGetText("%i GAME SKIPPED.", "%i GAMES SKIPPED.", mTotalSuccessful).c_str(), mTotalSuccessful);
 			ss << "\n" << skrbuf;
