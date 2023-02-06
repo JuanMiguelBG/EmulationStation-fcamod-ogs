@@ -206,7 +206,8 @@ void GuiMenu::openDisplaySettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -222,6 +223,7 @@ void GuiMenu::openDisplayAutoDimSettings()
 
 void GuiMenu::openControllersSettings()
 {
+	auto pthis = this;
 	Window *window = mWindow;
 
 	GuiSettings* s = new GuiSettings(window, _("CONTROLLERS SETTINGS"));
@@ -260,6 +262,15 @@ void GuiMenu::openControllersSettings()
 		});
 
 	s->addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); } );
+
+	s->onFinalize([s, pthis, window]
+	{
+		if (s->getVariable("reloadAll"))
+		{
+			ViewController::get()->reloadAll(window);
+			window->endRenderLoadingScreen();
+		}
+	});
 
 	window->pushGui(s);
 }
@@ -547,7 +558,8 @@ void GuiMenu::openSoundSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -1058,7 +1070,7 @@ void GuiMenu::openUISettings()
 	});
 
 	// menus configurations
-	s->addEntry(_("MENUS SETTINGS"), true, [this] { openMenusSettings(); });
+	s->addEntry(_("MENUS SETTINGS"), true, [this, s] { openMenusSettings(s); });
 
 	// Hide system view
 	auto hideSystemView = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("HideSystemView"));
@@ -1194,7 +1206,8 @@ void GuiMenu::openUISettings()
 
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 
@@ -1680,7 +1693,8 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -1853,7 +1867,8 @@ void GuiMenu::openBluetoothSettings()
 
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 
@@ -1974,7 +1989,10 @@ void GuiMenu::openUpdateSettings()
 	s->onFinalize([s, pthis]
 	{
 		if (s->getVariable("closeGuiMenu"))
-			delete pthis;
+		{
+			if (pthis)
+				delete pthis;
+		}
 	});
 
 	window->pushGui(s);
@@ -2339,7 +2357,7 @@ void GuiMenu::openAdvancedSettings()
 
 	s->addGroup(_("OTHERS"));
 
-	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this] { openQuitSettings(); });
+	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this, s] { openQuitSettings(s); });
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::AUTO_SUSPEND))
 		s->addEntry(_("DEVICE AUTO SUSPEND SETTINGS"), true, [this] { openAutoSuspendSettings(); });
@@ -2403,7 +2421,8 @@ void GuiMenu::openAdvancedSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -2412,19 +2431,25 @@ void GuiMenu::openAdvancedSettings()
 
 }
 
-void GuiMenu::openQuitSettings()
+void GuiMenu::openQuitSettings(GuiSettings *parentGui)
 {
 	Window* window = mWindow;
 	auto pthis = this;
 
 	auto s = new GuiQuitOptions(window);
 
-	s->onFinalize([s, pthis, window]
+	s->onFinalize([s, parentGui, pthis, window]
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
-			window->pushGui(new GuiMenu(window, false));
+			if (parentGui)
+				delete parentGui;
+			if (pthis)
+				delete pthis;
+			
+			auto main_menu = new GuiMenu(window, false);
+			window->pushGui(main_menu);
+			main_menu->openAdvancedSettings();
 		}
 	});
 
@@ -2449,17 +2474,21 @@ void GuiMenu::openRetroAchievementsSettings()
 	window->pushGui(new GuiRetroachievementsOptions(window));
 }
 
-void GuiMenu::openMenusSettings()
+void GuiMenu::openMenusSettings(GuiSettings *parentGui)
 {
 	Window* window = mWindow;
 	auto pthis = this;
 	auto s = new GuiMenusOptions(mWindow);
 
-	s->onFinalize([s, pthis, window]
+	s->onFinalize([s, parentGui, pthis, window]
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (parentGui)
+				delete parentGui;
+			if (pthis)
+				delete pthis;
+			
 			auto main_menu = new GuiMenu(window, false);
 			window->pushGui(main_menu);
 			main_menu->openUISettings();
@@ -2830,8 +2859,8 @@ void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<voi
 			// icon
 			auto icon = std::make_shared<ImageComponent>(window);
 			icon->setImage(iconPath);
-			icon->setColorShift(theme->Text.color);
-			icon->setResize(0, theme->Text.font->getLetterHeight() * 1.25f);
+			icon->setColorShift(color);
+			icon->setResize(0, font->getLetterHeight() * 1.25f);
 			row.addElement(icon, false);
 
 			// spacer between icon and text
@@ -2862,7 +2891,9 @@ bool GuiMenu::input(InputConfig* config, Input input)
 
 	if ((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("start", input)) && input.value != 0)
 	{
-		delete this;
+		auto pthis = this;
+		if (pthis)
+			delete pthis;
 		return true;
 	}
 

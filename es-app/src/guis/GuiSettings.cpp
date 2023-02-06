@@ -55,7 +55,7 @@ void GuiSettings::close()
 	save();
 
 	if (mOnFinalizeFunc != nullptr)
-			mOnFinalizeFunc();
+		mOnFinalizeFunc();
 
 	if (mCloseButtonFunc != nullptr)
 		mCloseButtonFunc();
@@ -71,8 +71,8 @@ void GuiSettings::save()
 	if (!mSaveFuncs.size())
 		return;
 
-	for (auto it = mSaveFuncs.cbegin(); it != mSaveFuncs.cend(); it++)
-		(*it)();
+	for (auto saveFunction : mSaveFuncs)
+		saveFunction();
 
 	Settings::getInstance()->saveFile();
 }
@@ -93,7 +93,7 @@ bool GuiSettings::input(InputConfig* config, Input input)
 			if (!mWaitingLoad)
 			{
 				if (mCloseButtonFunc != nullptr)
-						mCloseButtonFunc();
+					mCloseButtonFunc();
 
 				// close everything
 				Window* window = mWindow;
@@ -161,6 +161,7 @@ void GuiSettings::addInputTextRow(std::string title, const char *settingsID, boo
 	ComponentListRow row;
 
 	auto lbl = std::make_shared<TextComponent>(window, title, font, color);
+	lbl->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	if (EsLocale::isRTL())
 		lbl->setHorizontalAlignment(Alignment::ALIGN_RIGHT);
 
@@ -169,6 +170,7 @@ void GuiSettings::addInputTextRow(std::string title, const char *settingsID, boo
 	std::string value = storeInSettings ? Settings::getInstance()->getString(settingsID) : SystemConf::getInstance()->get(settingsID);
 
 	std::shared_ptr<TextComponent> ed = std::make_shared<TextComponent>(window, ((password && value != "") ? "*********" : value), font, color, ALIGN_RIGHT);
+	ed->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	if (EsLocale::isRTL())
 		ed->setHorizontalAlignment(Alignment::ALIGN_LEFT);
 
