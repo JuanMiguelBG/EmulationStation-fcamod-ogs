@@ -44,7 +44,7 @@ void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 		hasDevices = true;
 		for (auto btDevice : btDevices)
 		{
-			std::string device_name(btDevice.name);
+			std::string device_name(getDeviceName(btDevice));
 			if (btDevice.connected)
 				device_name.append(SystemConf::getInstance()->get("already.connection.exist.flag"));
 
@@ -116,7 +116,7 @@ bool GuiBluetoothPaired::onConnectDevice(const BluetoothDevice& btDevice)
 	if (mWaitingLoad || !hasDevices)
 		return false;
 
-	std::string msg = _("CONNECTING BLUETOOTH DEVICE") + " '" + btDevice.name + "'...";
+	std::string msg = _("CONNECTING BLUETOOTH DEVICE") + " '" + getDeviceName(btDevice) + "'...";
 
 	Window* window = mWindow;
 
@@ -135,7 +135,7 @@ bool GuiBluetoothPaired::onConnectDevice(const BluetoothDevice& btDevice)
 			//Log::flush();
 			result = ApiSystem::getInstance()->connectBluetoothDevice(btDevice.id);
 			
-			//LOG(LogDebug) << "GuiBluetoothPaired::onConnectDevice() - tried to connect to '" << btDevice.name << "' device, result: " << Utils::String::boolToString(result);
+			//LOG(LogDebug) << "GuiBluetoothPaired::onConnectDevice() - tried to connect to '" << getDeviceName(btDevice) << "' device, result: " << Utils::String::boolToString(result);
 			//Log::flush();
 
 			// successfully connected
@@ -160,13 +160,13 @@ bool GuiBluetoothPaired::onConnectDevice(const BluetoothDevice& btDevice)
 
 			if (result)
  			{
-				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE SUCCESSFULLY CONNECTED"));
+				msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE SUCCESSFULLY CONNECTED"));
 
 				// audio bluetooth connecting changes
 				restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
 			}
 			else
-				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE FAILED TO CONNECT"));
+				msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE FAILED TO CONNECT"));
 
 			//LOG(LogDebug) << "GuiBluetoothPaired::onConnectDevice() - message: " << msg;
 			//Log::flush();
@@ -188,7 +188,7 @@ bool GuiBluetoothPaired::onDisconnectDevice(const BluetoothDevice& btDevice)
 	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO DISCONNECT THE DEVICE?"),
 		_("YES"), [this, window, btDevice]
 		{
-			std::string msg = _("DISCONNECTING BLUETOOTH DEVICE") + " '" + btDevice.name + "'...";
+			std::string msg = _("DISCONNECTING BLUETOOTH DEVICE") + " '" + getDeviceName(btDevice) + "'...";
 			std::string audio_device = SystemConf::getInstance()->get("bluetooth.audio.device");
 			//LOG(LogDebug) << "GuiBluetoothPaired::onDisconnectDevice() - actual BT audio device: '" << audio_device << "'";
 			//Log::flush();
@@ -204,7 +204,7 @@ bool GuiBluetoothPaired::onDisconnectDevice(const BluetoothDevice& btDevice)
 					//Log::flush();
 					result = ApiSystem::getInstance()->disconnectBluetoothDevice(btDevice.id);
 					
-					//LOG(LogDebug) << "GuiBluetoothPaired::onDisconnectDevice() - tried to disconnect from '" << btDevice.name << "' device, result: " << Utils::String::boolToString(result);
+					//LOG(LogDebug) << "GuiBluetoothPaired::onDisconnectDevice() - tried to disconnect from '" << getDeviceName(btDevice) << "' device, result: " << Utils::String::boolToString(result);
 					//Log::flush();
 
 					// successfully connected
@@ -229,13 +229,13 @@ bool GuiBluetoothPaired::onDisconnectDevice(const BluetoothDevice& btDevice)
 
 					if (result)
 					{
-						msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE SUCCESSFULLY DISCONNECTED"));
+						msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE SUCCESSFULLY DISCONNECTED"));
 
 						// audio bluetooth connecting changes
 						restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
 					}
 					else
-						msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE FAILED TO DISCONNECT"));
+						msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE FAILED TO DISCONNECT"));
 
 					//LOG(LogDebug) << "GuiBluetoothPaired::onDisconnectDevice() - message: '" << msg << "'";
 					//Log::flush();
@@ -283,7 +283,8 @@ std::vector<HelpPrompt> GuiBluetoothPaired::getHelpPrompts()
 	prompts.push_back(HelpPrompt("x", _("REFRESH")));
 	if (hasDevices)
 	{
-		//LOG(LogDebug) << "GuiBluetoothPaired::getHelpPrompts() - selected: " << mMenu.getList()->getSelectedName();
+		LOG(LogDebug) << "GuiBluetoothPaired::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getList()->getCursorId()) << ", selected: " << mMenu.getList()->getSelectedName();
+		Log::flush();
 
 		prompts.push_back(HelpPrompt("y", _("UNPAIR ALL")));
 		prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT/DISCONNECT")));
@@ -364,4 +365,13 @@ void GuiBluetoothPaired::onDeleteAll()
 				}));
 		},
 		_("NO"), nullptr));
+}
+
+std::string GuiBluetoothPaired::getDeviceName(const BluetoothDevice& btDevice) const
+{
+	std::string name = btDevice.name;
+	if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty())
+		name = btDevice.alias;
+
+	return name;
 }

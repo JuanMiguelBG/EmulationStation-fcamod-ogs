@@ -42,7 +42,7 @@ void GuiBluetoothScan::load(std::vector<BluetoothDevice> btDevices)
 	{
 		hasDevices = true;
 		for (auto btDevice : btDevices)
-			mMenu.addWithDescription(btDevice.name, btDevice.id, nullptr, [this, btDevice]() { GuiBluetoothScan::onConnectDevice(btDevice); }, btDevice.type);
+			mMenu.addWithDescription(getDeviceName(btDevice), btDevice.id, nullptr, [this, btDevice]() { GuiBluetoothScan::onConnectDevice(btDevice); }, btDevice.type);
 	}
 
 	mMenu.updateSize();
@@ -98,7 +98,7 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 	//Log::flush();
 
 	std:: string msg(_("CONNECTING BLUETOOTH DEVICE"));
-	window->pushGui(new GuiLoading<bool>(window, msg.append(" '").append(btDevice.name).append("'..."), 
+	window->pushGui(new GuiLoading<bool>(window, msg.append(" '").append(getDeviceName(btDevice)).append("'..."), 
 		[this, btDevice, audio_device]
 		{
 			mWaitingLoad = true;
@@ -122,7 +122,7 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 			//Log::flush();
 			result = ApiSystem::getInstance()->connectBluetoothDevice(btDevice.id);
 			
-			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - tried to connect to '" << btDevice.name << "' device, result: " << Utils::String::boolToString(result);
+			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - tried to connect to '" << getDeviceName(btDevice) << "' device, result: " << Utils::String::boolToString(result);
 			//Log::flush();
 
 			// successfully connected
@@ -147,13 +147,13 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 
 			if (result)
  			{
-				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE SUCCESSFULLY PAIRED AND CONNECTED"));
+				msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE SUCCESSFULLY PAIRED AND CONNECTED"));
 
 				// audio bluetooth connecting changes
 				restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
 			}
 			else
-				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE FAILED TO PAIR AND CONNECT"));
+				msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE FAILED TO PAIR AND CONNECT"));
 
 			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - message: " << msg;
 			//Log::flush();
@@ -214,4 +214,13 @@ void GuiBluetoothScan::onScan()
 			mWaitingLoad = false;
 			load(btDevices);
 		}));
+}
+
+std::string GuiBluetoothScan::getDeviceName(const BluetoothDevice& btDevice) const
+{
+	std::string name = btDevice.name;
+	if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty())
+		name = btDevice.alias;
+
+	return name;
 }

@@ -1645,6 +1645,7 @@ std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std
 		{
 			bt_device.id = Utils::String::extractString(btDevice, "id=\"", "\"", false);
 			bt_device.name = Utils::String::extractString(btDevice, "name=\"", "\"", false);
+			bt_device.alias = Utils::String::extractString(btDevice, "alias=\"", "\"", false);
 			bt_device.type = Utils::String::extractString(btDevice, "type=\"", "\"", false);
 			bt_device.connected = Utils::String::toBool( Utils::String::extractString(btDevice, "connected=\"", "\"", false) );
 			bt_device.paired = Utils::String::toBool( Utils::String::extractString(btDevice, "paired=\"", "\"", false) );

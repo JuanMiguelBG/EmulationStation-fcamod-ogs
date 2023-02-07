@@ -539,7 +539,10 @@ get_info_device()
       CONNECTED="false"
     fi
 
-    result="<device id=\"$DEVICE\" name=\"$NAME\" type=\"$ICON\" paired=\"$PAIRED\" connected=\"$CONNECTED\" />"
+    local DEV_ALIAS=`echo "$device_data" | grep "Alias:" | cut -d\  -f2- | awk 1 ORS=' '`
+    DEV_ALIAS=$(trim "$DEV_ALIAS")
+
+    result="<device id=\"$DEVICE\" name=\"$NAME\" alias=\"$DEV_ALIAS\" type=\"$ICON\" paired=\"$PAIRED\" connected=\"$CONNECTED\" />"
     echo "$result"
     #print_log $LOG_FILE "DEBUG" "Executing 'get_info_device()' - result: '$result'"
 }

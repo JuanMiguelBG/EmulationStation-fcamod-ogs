@@ -332,6 +332,7 @@ struct BluetoothDevice
 	BluetoothDevice()
 	{
 		name = "N/A";
+		alias = "N/A";
 		id = "N/A";
 		type = "N/A";
 		connected = false;
@@ -340,6 +341,7 @@ struct BluetoothDevice
 	}
 
 	std::string name;
+	std::string alias;
 	std::string id;
 	std::string type;
 	bool connected;

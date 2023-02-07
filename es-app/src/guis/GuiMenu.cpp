@@ -1828,24 +1828,32 @@ void GuiMenu::openBluetoothSettings()
 
 			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color));
 		}
+	}
 
-		// autoconnect audio device on boot
-		auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
-		s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
-		auto_connect->setOnChangedCallback([this, s, auto_connect]
+	// use alias as device name
+	auto alias_as_name = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.use.alias"));
+	s->addWithLabel(_("USE ALIAS AS DEVICE NAME"), alias_as_name);
+	s->addSaveFunc([alias_as_name]
+		{
+			SystemConf::getInstance()->setBool("bluetooth.use.alias", alias_as_name->getState());
+		});	
+
+	// autoconnect audio device on boot
+	auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
+	s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
+	s->addSaveFunc([auto_connect]
 		{
 			SystemConf::getInstance()->setBool("bluetooth.audio.device.autoconnect", auto_connect->getState());
 		});
 
-		auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
-		auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
-		s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
-		auto_connect_timeout->setOnValueChanged([window, s](const float &newVal)
-			{
-				int timeout = (int)Math::round(newVal);
-				Settings::getInstance()->setInt("bluetooth.boot.game.timeout", timeout);
-			});
-	}
+	auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
+	auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
+	s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
+	s->addSaveFunc([auto_connect_timeout]
+		{
+			Settings::getInstance()->setInt("bluetooth.boot.game.timeout", (int)Math::round(auto_connect_timeout->getValue()));
+		});
+
 
 	auto pthis = this;
 
