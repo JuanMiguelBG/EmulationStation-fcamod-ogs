@@ -1647,8 +1647,8 @@ std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std
 			bt_device.name = Utils::String::extractString(btDevice, "name=\"", "\"", false);
 			bt_device.alias = Utils::String::extractString(btDevice, "alias=\"", "\"", false);
 			bt_device.type = Utils::String::extractString(btDevice, "type=\"", "\"", false);
-			bt_device.connected = Utils::String::toBool( Utils::String::extractString(btDevice, "connected=\"", "\"", false) );
 			bt_device.paired = Utils::String::toBool( Utils::String::extractString(btDevice, "paired=\"", "\"", false) );
+			bt_device.connected = Utils::String::toBool( Utils::String::extractString(btDevice, "connected=\"", "\"", false) );
 
 			if (Utils::String::startsWith(bt_device.type, "audio-"))
 				bt_device.isAudioDevice = true;
@@ -1703,8 +1703,8 @@ BluetoothDevice ApiSystem::getBluetoothDeviceInfo(const std::string id)
 		bt_device.name = Utils::String::extractString(device_info, "name=\"", "\"", false);
 		bt_device.alias = Utils::String::extractString(device_info, "alias=\"", "\"", false);
 		bt_device.type = Utils::String::extractString(device_info, "type=\"", "\"", false);
-		bt_device.connected = Utils::String::toBool( Utils::String::extractString(device_info, "connected=\"", "\"", false) );
 		bt_device.paired = Utils::String::toBool( Utils::String::extractString(device_info, "paired=\"", "\"", false) );
+		bt_device.connected = Utils::String::toBool( Utils::String::extractString(device_info, "connected=\"", "\"", false) );
 
 		if (Utils::String::startsWith(bt_device.type, "audio-"))
 			bt_device.isAudioDevice = true;
