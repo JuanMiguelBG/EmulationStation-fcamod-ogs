@@ -78,7 +78,11 @@ bool GuiBluetoothAlias::onManageDeviceAlias(const BluetoothDevice& btDevice)
 		LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - updateVal() - newVal: " << newVal;
 		Log::flush();
 		
-		return ApiSystem::getInstance()->setBluetoothDeviceAlias(device_id, newVal);
+		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(device_id, newVal))
+		{
+			return true;
+		}
+		return false;
 	}; // ok callback (apply new value to ed)
 
 	std::function<void(const std::string /*&newVal*/)> cancelVal = [this, window, device_id, device_alias](const std::string &newVal)
@@ -129,10 +133,11 @@ std::vector<HelpPrompt> GuiBluetoothAlias::getHelpPrompts()
 
 	if (hasDevices)
 	{
-		LOG(LogDebug) << "GuiBluetoothAlias::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getCursor()) << ", selected: " << mMenu.getSelected();
+		std::string selected = mMenu.getSelected();
+
+		LOG(LogDebug) << "GuiBluetoothAlias::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getCursor()) << ", selected: " << selected;
 		Log::flush();
 
-		std::string selected = mMenu.getSelected();
 		if (!selected.empty())
 			prompts.push_back(HelpPrompt(BUTTON_OK, _("EDIT ALIAS")));
 		else

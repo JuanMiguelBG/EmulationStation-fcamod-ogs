@@ -293,10 +293,11 @@ std::vector<HelpPrompt> GuiBluetoothPaired::getHelpPrompts()
 	{
 		prompts.push_back(HelpPrompt("y", _("UNPAIR ALL")));
 
-		LOG(LogDebug) << "GuiBluetoothPaired::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getCursor()) << ", selected: " << mMenu.getSelected();
+		std::string selected = mMenu.getSelected();
+
+		LOG(LogDebug) << "GuiBluetoothPaired::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getCursor()) << ", selected: " << selected;
 		Log::flush();
 
-		std::string selected = mMenu.getSelected();
 		if (!selected.empty())
 		{  // BT device
 			if (Utils::String::endsWith(selected, SystemConf::getInstance()->get("already.connection.exist.flag")))
