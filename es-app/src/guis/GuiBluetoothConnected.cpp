@@ -31,8 +31,8 @@ void GuiBluetoothConnected::load(std::vector<BluetoothDevice> btDevices)
 {
 	mMenu.clear();
 	mMenu.clearButtons();
-
 	hasDevices = false;
+
 	if (btDevices.size() == 0)
 		mMenu.addEntry(_("NO BLUETOOTH DEVICES FOUND"), false, std::bind(&GuiBluetoothConnected::onRefresh, this));
 	else

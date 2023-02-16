@@ -1634,7 +1634,7 @@ bool ApiSystem::isBluetoothAudioDeviceConnected()
 
 std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std::string> btDevices)
 {
-	LOG(LogInfo) << "ApiSystem::getBluetoothDevices()";
+	LOG(LogInfo) << "ApiSystem::toBluetoothDevicesVector()";
 
 	std::vector<BluetoothDevice> result;
 	for (auto btDevice : btDevices)
@@ -1701,6 +1701,7 @@ BluetoothDevice ApiSystem::getBluetoothDeviceInfo(const std::string id)
 	{
 		bt_device.id = Utils::String::extractString(device_info, "id=\"", "\"", false);
 		bt_device.name = Utils::String::extractString(device_info, "name=\"", "\"", false);
+		bt_device.alias = Utils::String::extractString(device_info, "alias=\"", "\"", false);
 		bt_device.type = Utils::String::extractString(device_info, "type=\"", "\"", false);
 		bt_device.connected = Utils::String::toBool( Utils::String::extractString(device_info, "connected=\"", "\"", false) );
 		bt_device.paired = Utils::String::toBool( Utils::String::extractString(device_info, "paired=\"", "\"", false) );
@@ -1786,7 +1787,7 @@ bool ApiSystem::stopAutoConnectBluetoothAudioDevice()
 
 bool ApiSystem::setBluetoothDeviceAlias(const std::string id, const std::string alias)
 {
-	LOG(LogInfo) << "ApiSystem::stopAutoConnectBluetoothAudioDevice() - id: " << id << ", alias: " << alias;
+	LOG(LogInfo) << "ApiSystem::setBluetoothDeviceAlias() - id: " << id << ", alias: " << alias;
 
 	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + "\"" );
 }

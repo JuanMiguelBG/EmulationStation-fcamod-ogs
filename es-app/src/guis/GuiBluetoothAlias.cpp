@@ -33,6 +33,7 @@ GuiBluetoothAlias::GuiBluetoothAlias(Window* window, const std::string title, co
 void GuiBluetoothAlias::load(std::vector<BluetoothDevice> btDevices)
 {
 	mMenu.clear();
+	hasDevices = false;
 
 	if (btDevices.size() == 0)
 		mMenu.addEntry(_("NO BLUETOOTH DEVICES FOUND"), false, std::bind(&GuiBluetoothAlias::onScan, this));
