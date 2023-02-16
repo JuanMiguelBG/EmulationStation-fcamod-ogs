@@ -32,8 +32,8 @@ GuiBluetoothScan::GuiBluetoothScan(Window* window, const std::string title, cons
 
 void GuiBluetoothScan::load(std::vector<BluetoothDevice> btDevices)
 {
-	mMenu.clear();
 	hasDevices = false;
+	mMenu.clear();
 
 	if (btDevices.size() == 0)
 		mMenu.addEntry(_("NO BLUETOOTH DEVICES FOUND"), false, std::bind(&GuiBluetoothScan::onScan, this));
