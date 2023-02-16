@@ -1,7 +1,6 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "components/MenuComponent.h"
 #include "utils/StringUtil.h"
-#include "Log.h"
 #include "EsLocale.h"
 #include "SystemConf.h"
 #include "Settings.h"
@@ -331,8 +330,6 @@ void GuiTextEditPopupKeyboard::onSizeChanged()
 
 bool GuiTextEditPopupKeyboard::input(InputConfig* config, Input input)
 {
-	LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - enter function";
-	Log::flush();
 	if (GuiComponent::input(config, input))
 		return true;
 
@@ -344,38 +341,20 @@ bool GuiTextEditPopupKeyboard::input(InputConfig* config, Input input)
 
 	if (input.value)
 	{
-		LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (input.value)";
-		Log::flush();
-
 		// pressing start
 		if (config->isMappedTo("start", input))
 		{
-			LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (config->isMappedTo(\"start\", input))";
-			Log::flush();
-
 			if ((mOkCallback != nullptr) && mOkCallback(mText->getValue()))
-			{
-				LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if ((mOkCallback != nullptr) && mOkCallback(mText->getValue()))";
-				Log::flush();
 				delete this;
-			}
-			LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - exit --> if (config->isMappedTo(\"start\", input))";
-			Log::flush();
+
 			return true;
 		}
 
 		// pressing back when not text editing closes us
 		if (config->isMappedTo(BUTTON_BACK, input))
 		{
-			LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (config->isMappedTo(BUTTON_BACK, input))";
-			Log::flush();
-
 			if (mBackCallback != nullptr)
-			{
-				LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (mBackCallback != nullptr)";
-				Log::flush();
 				mBackCallback(mText->getValue());
-			}
 
 			delete this;
 			return true;

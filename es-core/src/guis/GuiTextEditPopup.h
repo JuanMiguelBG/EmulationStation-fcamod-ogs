@@ -14,7 +14,7 @@ class GuiTextEditPopup : public GuiComponent
 public:
 	GuiTextEditPopup(Window* window, const std::string& title, const std::string& initValue,
 		const std::function<bool(const std::string&)>& okCallback, bool multiLine,
-		const std::function<void(const std::string&)>& cancelCallback = nullptr);
+		const std::function<void(const std::string&)>& cancelCallback);
 
 	GuiTextEditPopup(Window* window, const std::string& title, const std::string& initValue,
 		const std::function<bool(const std::string&)>& okCallback, bool multiLine,

@@ -74,28 +74,13 @@ void GuiBluetoothScan::handleAlias(Window *window, bool deleteWindow, bool resta
 				initial_data,
 				device_id;
 	
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - deviceData: " << deviceData;
-
 	std::vector<std::string> data = Utils::String::split(deviceData, " - ", true);
 	initial_data = data[0];
 	device_id = data[1];
-
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - data.size(): " << std::to_string(data.size());
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - initial_data: " << initial_data;
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - device_id: " << device_id;
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - flag: '" << SystemConf::getInstance()->get("already.connection.exist.flag") << "'";
-	Log::flush();
-
 	device_id = Utils::String::replace(device_id, SystemConf::getInstance()->get("already.connection.exist.flag"), "");
 
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - after replace device_id: " << device_id;
-	Log::flush();
 	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, deleteWindow, restarES, device_id](const std::string &newVal)
 	{	
-		LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - updateVal() -  device_id: " << device_id;
-		LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - updateVal() -  newVal: " << newVal;
-		Log::flush();
-		
 		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(device_id, newVal))
 		{
 			displayRestartDialog(window, deleteWindow, restarES);
@@ -107,22 +92,13 @@ void GuiBluetoothScan::handleAlias(Window *window, bool deleteWindow, bool resta
 
 	std::function<void(const std::string /*&newVal*/)> cancelVal = [this, window, deleteWindow, restarES, device_id](const std::string &newVal)
 	{	
-		LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - cancelVal() -  device_id: " << device_id;
-		LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - cancelVal() -  newVal: " << newVal;
-		Log::flush();
-		
 		displayRestartDialog(window, deleteWindow, restarES);
 	}; // cancel callback (apply new value to ed)
 
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - open keyborad";
-	Log::flush();
 	if (Settings::getInstance()->getBool("UseOSK"))
 		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, initial_data, updateVal, false, cancelVal));
 	else
 		mWindow->pushGui(new GuiTextEditPopup(mWindow, title, initial_data, updateVal, false, cancelVal));
-
-	LOG(LogDebug) << "GuiBluetoothScan::handleAlias() - exit keyborad";
-	Log::flush();
 }
 
 void GuiBluetoothScan::displayRestartDialog(Window *window, bool deleteWindow, bool restarES)
@@ -130,8 +106,6 @@ void GuiBluetoothScan::displayRestartDialog(Window *window, bool deleteWindow, b
 	// checking if a reset audio configuration is needed
 	if (restarES)
 	{
-		//LOG(LogDebug) << "GuiBluetoothScan::displayRestartDialog() - Audio BT device changed, restarting ES.";
-		//Log::flush();
 		ApiSystem::getInstance()->stopBluetoothLiveScan();
 
 		std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
@@ -161,20 +135,13 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 	Window* window = mWindow;
 
 	std::string audio_device = SystemConf::getInstance()->get("bluetooth.audio.device");
-	//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - actual BT audio device: '" << audio_device << "'";
-	//Log::flush();
-
 	std:: string msg(_("CONNECTING BLUETOOTH DEVICE"));
 	window->pushGui(new GuiLoading<bool>(window, msg.append(" '").append(getDeviceName(btDevice)).append("'..."), 
 		[this, btDevice, audio_device]
 		{
 			mWaitingLoad = true;
 
-			bool result = false;
-
-			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - calling --> ApiSystem::getInstance()->pairBluetoothDevice(" << btDevice.id << ')';
-			//Log::flush();
-			result = ApiSystem::getInstance()->pairBluetoothDevice(btDevice.id);
+			bool result = ApiSystem::getInstance()->pairBluetoothDevice(btDevice.id);
 
 			// fail paired
 			if (!result)
@@ -184,23 +151,13 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 			if (!isAudioDevice && (btDevice.type == "unknown"))
 				isAudioDevice = ApiSystem::getInstance()->isBluetoothAudioDevice(btDevice.id);
 
-			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - successfully paired device ID: '" << btDevice.id << "', type: '" << btDevice.type << "', isAudioDevice: '" << Utils::String::boolToString(isAudioDevice) << "'";
-			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - calling --> ApiSystem::getInstance()->connectBluetoothDevice(" << btDevice.id << ')';
-			//Log::flush();
 			result = ApiSystem::getInstance()->connectBluetoothDevice(btDevice.id);
-			
-			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - tried to connect to '" << getDeviceName(btDevice) << "' device, result: " << Utils::String::boolToString(result);
-			//Log::flush();
-
 			// successfully connected
 			if (result)
 			{
 				// BT 4.2, only one audio device
 				// reload BT audio device info
 				std::string new_audio_device = ApiSystem::getInstance()->getBluetoothAudioDevice();
-				//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - new BT audio device: '" << new_audio_device << "'";
-				//Log::flush();
-
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !new_audio_device.empty());
 				SystemConf::getInstance()->set("bluetooth.audio.device", new_audio_device);
 			}
@@ -245,8 +202,6 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 						})
 				);
 			}
-			//LOG(LogDebug) << "GuiBluetoothScan::onConnectDevice() - message: " << msg;
-			//Log::flush();
 		}));
 
 	return true;

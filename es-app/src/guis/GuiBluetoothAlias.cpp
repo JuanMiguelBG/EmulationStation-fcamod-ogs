@@ -9,7 +9,6 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiLoading.h"
 #include "SystemConf.h"
-#include "Log.h"
 
 
 GuiBluetoothAlias::GuiBluetoothAlias(Window* window, const std::string title, const std::string subtitle)
@@ -70,37 +69,20 @@ bool GuiBluetoothAlias::onManageDeviceAlias(const BluetoothDevice& btDevice)
 				device_id = btDevice.id,
 				device_alias = btDevice.alias;
 	
-	LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - device id: " << device_id << ", name: " << btDevice.name << ", alias: " << device_alias;
-	Log::flush();
-	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, device_id, device_alias](const std::string &newVal)
+	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, device_id](const std::string &newVal)
 	{	
-		LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - updateVal() - device id: " << device_id << ", alias: " << device_alias;
-		LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - updateVal() - newVal: " << newVal;
-		Log::flush();
-		
 		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(device_id, newVal))
 		{
+			onScan();
 			return true;
 		}
 		return false;
 	}; // ok callback (apply new value to ed)
 
-	std::function<void(const std::string /*&newVal*/)> cancelVal = [this, window, device_id, device_alias](const std::string &newVal)
-	{	
-		LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - cancelVal() - device id: " << device_id << ", alias: " << device_alias;
-		LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - cancelVal() - newVal: " << newVal;
-		Log::flush();
-	}; // cancel callback (apply new value to ed)
-
-	LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - open keyborad";
-	Log::flush();
 	if (Settings::getInstance()->getBool("UseOSK"))
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, device_alias, updateVal, false, cancelVal));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, device_alias, updateVal, false));
 	else
-		mWindow->pushGui(new GuiTextEditPopup(mWindow, title, device_alias, updateVal, false, cancelVal));
-
-	LOG(LogDebug) << "GuiBluetoothAlias::onManageDeviceAlias() - exit keyborad";
-	Log::flush();
+		mWindow->pushGui(new GuiTextEditPopup(mWindow, title, device_alias, updateVal, false));
 
 	return true;
 }
@@ -133,12 +115,7 @@ std::vector<HelpPrompt> GuiBluetoothAlias::getHelpPrompts()
 
 	if (hasDevices)
 	{
-		std::string selected = mMenu.getSelected();
-
-		LOG(LogDebug) << "GuiBluetoothAlias::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getCursor()) << ", selected: " << selected;
-		Log::flush();
-
-		if (!selected.empty())
+		if (!mMenu.getSelected().empty())
 			prompts.push_back(HelpPrompt(BUTTON_OK, _("EDIT ALIAS")));
 		else
 			prompts.push_back(HelpPrompt(BUTTON_OK, _("ADD ALIAS")));
