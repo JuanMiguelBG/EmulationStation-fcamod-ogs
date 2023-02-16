@@ -9,8 +9,6 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiLoading.h"
 #include "SystemConf.h"
-#include "AudioManager.h"
-#include "VolumeControl.h"
 #include "Log.h"
 
 
@@ -41,7 +39,24 @@ void GuiBluetoothConnected::load(std::vector<BluetoothDevice> btDevices)
 	{
 		hasDevices = true;
 		for (auto btDevice : btDevices)
-			mMenu.addWithDescription(getDeviceName(btDevice), btDevice.id, nullptr, [this, btDevice]() { GuiBluetoothConnected::onDisconnectDevice(btDevice); }, btDevice.type);
+		{
+			std::string device_name = btDevice.name,
+						device_value = btDevice.name,
+						device_id;
+			device_value.append(" - ").append(btDevice.id);
+
+			if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty())
+			{
+				device_name = btDevice.alias;
+				device_value = btDevice.alias;
+				device_value.append(" - ").append(btDevice.id).append(SystemConf::getInstance()->get("already.connection.exist.flag"));
+				device_id.append(btDevice.name).append(" - ");
+			}
+			device_id.append(btDevice.id);
+
+			mMenu.addWithDescription(btDevice.name, device_id, [this, btDevice]() { GuiBluetoothConnected::onDisconnectDevice(btDevice); },
+									 btDevice.type, device_value);
+		}
 	}
 
 	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onRefresh(); });
@@ -199,7 +214,10 @@ std::vector<HelpPrompt> GuiBluetoothConnected::getHelpPrompts()
 	if (hasDevices)
 	{
 		prompts.push_back(HelpPrompt("y", _("DISCONNECT ALL")));
-		prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
+
+		std::string selected = mMenu.getSelected();
+		if (!selected.empty())
+			prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
 	}
 	else
 		prompts.push_back(HelpPrompt(BUTTON_OK, _("REFRESH")));

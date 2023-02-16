@@ -18,6 +18,7 @@
 #include "guis/GuiQuitOptions.h"
 #include "guis/GuiSystemHotkeyEventsOptions.h"
 #include "guis/GuiWifi.h"
+#include "guis/GuiBluetoothAlias.h"
 #include "guis/GuiBluetoothScan.h"
 #include "guis/GuiBluetoothPaired.h"
 #include "guis/GuiBluetoothConnected.h"
@@ -1829,11 +1830,16 @@ void GuiMenu::openBluetoothSettings()
 			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color));
 		}
 	}
+	else
+	{
+		std::string bt_title = _("MANAGE BLUETOOTH DEVICES ALIAS");
+		s->addEntry(bt_title, true, [this, window, bt_title] { openBluetoothDevicesAlias(window, bt_title); });
+	}
 
 	// use alias as device name
 	auto alias_as_name = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.use.alias"));
 	s->addWithLabel(_("USE ALIAS AS DEVICE NAME"), alias_as_name);
-	s->addSaveFunc([alias_as_name]
+	alias_as_name->setOnChangedCallback([alias_as_name]
 		{
 			SystemConf::getInstance()->setBool("bluetooth.use.alias", alias_as_name->getState());
 		});	
@@ -1896,6 +1902,11 @@ void GuiMenu::reinitSoundComponentsAndMusic()
 		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
 	else
 		AudioManager::getInstance()->playRandomMusic();
+}
+
+void GuiMenu::openBluetoothDevicesAlias(Window* window, std::string title)
+{
+	window->pushGui(new GuiBluetoothAlias(window, title));
 }
 
 void GuiMenu::openBluetoothScanDevices(Window* window, std::string title)

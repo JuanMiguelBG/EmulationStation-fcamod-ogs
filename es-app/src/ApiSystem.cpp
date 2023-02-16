@@ -1784,6 +1784,13 @@ bool ApiSystem::stopAutoConnectBluetoothAudioDevice()
 	return executeSystemScript("es-bluetooth auto_connect_audio_device_off &");
 }
 
+bool ApiSystem::setBluetoothDeviceAlias(const std::string id, const std::string alias)
+{
+	LOG(LogInfo) << "ApiSystem::stopAutoConnectBluetoothAudioDevice() - id: " << id << ", alias: " << alias;
+
+	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + "\"" );
+}
+
 void ApiSystem::backupAfterGameValues()
 {
 	LOG(LogInfo) << "ApiSystem::backupAfterGameValues()";

@@ -11,7 +11,12 @@ class GuiTextEditPopupKeyboard : public GuiComponent
 {
 public:
 	GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
-		const std::function<bool(const std::string&)>& okCallback, bool multiLine, const std::string acceptBtnText = "OK");
+		const std::function<bool(const std::string&)>& okCallback, bool multiLine,
+		const std::function<void(const std::string&)>& backCallback = nullptr);
+
+	GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
+		const std::function<bool(const std::string&)>& okCallback, bool multiLine, const char* acceptPromptText = "OK",
+		const std::function<void(const std::string&)>& backCallback = nullptr);
 
 	bool input(InputConfig* config, Input input);
 	//void update(int deltatime) override;
@@ -48,8 +53,11 @@ private:
 	std::shared_ptr<ComponentGrid> mKeyboardGrid;
 
 	std::function<bool(const std::string&)> mOkCallback;
+	std::function<void(const std::string&)> mBackCallback;
 
 	bool mMultiLine;
 	bool mShift = false;
 	bool mAlt = false;
+
+	std::string mAcceptPromptText;
 };

@@ -10,8 +10,6 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiLoading.h"
 #include "SystemConf.h"
-#include "AudioManager.h"
-#include "VolumeControl.h"
 #include "Log.h"
 #include "utils/FileSystemUtil.h"
 
@@ -44,11 +42,21 @@ void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 		hasDevices = true;
 		for (auto btDevice : btDevices)
 		{
-			std::string device_name(getDeviceName(btDevice));
+			std::string device_name = btDevice.name,
+						device_id;
+
+			if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty() && (btDevice.name != btDevice.alias))
+			{
+				device_name = btDevice.alias;
+				device_id.append(btDevice.name).append(" - ");
+			}
 			if (btDevice.connected)
 				device_name.append(SystemConf::getInstance()->get("already.connection.exist.flag"));
 
-			mMenu.addWithDescription(device_name, btDevice.id, nullptr, [this, btDevice]() { GuiBluetoothPaired::onAction(btDevice); }, btDevice.type);
+			device_id.append(btDevice.id);
+
+			mMenu.addWithDescription(device_name, device_id, [this, btDevice]() { GuiBluetoothPaired::onAction(btDevice); },
+									 btDevice.type, device_name);
 		}
 	}
 
@@ -283,11 +291,19 @@ std::vector<HelpPrompt> GuiBluetoothPaired::getHelpPrompts()
 	prompts.push_back(HelpPrompt("x", _("REFRESH")));
 	if (hasDevices)
 	{
-		LOG(LogDebug) << "GuiBluetoothPaired::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getList()->getCursorId()) << ", selected: " << mMenu.getList()->getSelectedName();
+		prompts.push_back(HelpPrompt("y", _("UNPAIR ALL")));
+
+		LOG(LogDebug) << "GuiBluetoothPaired::getHelpPrompts() - cursor position: " << std::to_string(mMenu.getCursor()) << ", selected: " << mMenu.getSelected();
 		Log::flush();
 
-		prompts.push_back(HelpPrompt("y", _("UNPAIR ALL")));
-		prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT/DISCONNECT")));
+		std::string selected = mMenu.getSelected();
+		if (!selected.empty())
+		{  // BT device
+			if (Utils::String::endsWith(selected, SystemConf::getInstance()->get("already.connection.exist.flag")))
+				prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
+			else
+				prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT")));
+		}
 	}
 	else
 		prompts.push_back(HelpPrompt(BUTTON_OK, _("REFRESH")));

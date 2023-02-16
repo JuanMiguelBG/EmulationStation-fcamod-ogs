@@ -82,14 +82,20 @@ std::vector<std::vector<const char*>> kbEs {
 	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" }
 };
 
+GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
+		const std::function<bool(const std::string&)>& okCallback, bool multiLine,
+		const std::function<void(const std::string&)>& backCallback) :
+	GuiTextEditPopupKeyboard(window, title, initValue, okCallback, multiLine, "OK", backCallback) {}
 
 GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
-	const std::function<bool(const std::string&)>& okCallback, bool multiLine, const std::string acceptBtnText)
-	: GuiComponent(window), mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)), mMultiLine(multiLine)
+	const std::function<bool(const std::string&)>& okCallback, bool multiLine, const char* acceptPromptText,
+	const std::function<void(const std::string&)>& backCallback)
+	: GuiComponent(window), mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)), mMultiLine(multiLine), mAcceptPromptText(acceptPromptText)
 {
 	setTag("popup");
 
 	mOkCallback = okCallback;
+	mBackCallback = backCallback;
 
 	auto theme = ThemeData::getMenuTheme();
 	mBackground.setImagePath(theme->Background.path);
@@ -325,6 +331,8 @@ void GuiTextEditPopupKeyboard::onSizeChanged()
 
 bool GuiTextEditPopupKeyboard::input(InputConfig* config, Input input)
 {
+	LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - enter function";
+	Log::flush();
 	if (GuiComponent::input(config, input))
 		return true;
 
@@ -336,18 +344,39 @@ bool GuiTextEditPopupKeyboard::input(InputConfig* config, Input input)
 
 	if (input.value)
 	{
+		LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (input.value)";
+		Log::flush();
+
 		// pressing start
 		if (config->isMappedTo("start", input))
 		{
-			if ((mOkCallback != nullptr) && mOkCallback(mText->getValue()))
-				delete this;
+			LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (config->isMappedTo(\"start\", input))";
+			Log::flush();
 
+			if ((mOkCallback != nullptr) && mOkCallback(mText->getValue()))
+			{
+				LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if ((mOkCallback != nullptr) && mOkCallback(mText->getValue()))";
+				Log::flush();
+				delete this;
+			}
+			LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - exit --> if (config->isMappedTo(\"start\", input))";
+			Log::flush();
 			return true;
 		}
 
 		// pressing back when not text editing closes us
 		if (config->isMappedTo(BUTTON_BACK, input))
 		{
+			LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (config->isMappedTo(BUTTON_BACK, input))";
+			Log::flush();
+
+			if (mBackCallback != nullptr)
+			{
+				LOG(LogDebug) << "GuiTextEditPopupKeyboard::input() - inside --> if (mBackCallback != nullptr)";
+				Log::flush();
+				mBackCallback(mText->getValue());
+			}
+
 			delete this;
 			return true;
 		}
@@ -467,8 +496,8 @@ std::vector<HelpPrompt> GuiTextEditPopupKeyboard::getHelpPrompts()
 		prompts.push_back(HelpPrompt("x", _("RESET")));
 
 	prompts.push_back(HelpPrompt("y", _("SHIFT")));
-	prompts.push_back(HelpPrompt("start", _("OK")));
-	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
+	prompts.push_back(HelpPrompt("start", _(mAcceptPromptText)));
+	prompts.push_back(HelpPrompt(BUTTON_BACK, _("DISCARD CHANGES")));
 	prompts.push_back(HelpPrompt(BUTTON_R2, _("SPACE")));
 	prompts.push_back(HelpPrompt(BUTTON_L2, _("DELETE")));
 	return prompts;

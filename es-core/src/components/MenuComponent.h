@@ -36,7 +36,8 @@ public:
 	inline void clear() { mList->clear(); }
 
 	void addWithLabel(const std::string& label, const std::shared_ptr<GuiComponent>& comp, const std::string iconName = "", bool setCursorHere = false, bool invert_when_selected = true);
-	void addWithDescription(const std::string& label, const std::string& description, const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func = nullptr, const std::string iconName = "", bool setCursorHere = false, bool invert_when_selected = true, bool multiLine = false);
+	void addWithDescription(const std::string& label, const std::string& description, const std::function<void()>& func = nullptr, const std::string iconName = "", const std::string userData = "") { addWithDescription(label, description, nullptr, func, iconName, false, true, false, userData); };
+	void addWithDescription(const std::string& label, const std::string& description, const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func = nullptr, const std::string iconName = "", bool setCursorHere = false, bool invert_when_selected = true, bool multiLine = false, const std::string userData = "");
 	void addEntry(const std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName="", bool setCursorHere = false, bool invert_when_selected = true, bool onButtonRelease = false, const std::string userData = "", bool doUpdateSize = true);
 
 	void addGroup(const std::string& label) { mList->addGroup(label); updateSize(); }
@@ -50,7 +51,8 @@ public:
 	inline void setCursorToButtons() { assert(mButtonGrid); mGrid.setCursorTo(mButtonGrid); }
 
 	inline int size() const { return mList->size(); }
-	std::string getSelected() { return mList->getSelected(); }
+	inline int getCursor() const { return mList->getCursorId(); }
+	inline std::string getSelected() { return mList->getSelected(); }
 
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 

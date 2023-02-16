@@ -27,9 +27,10 @@ private:
 	bool	onConnectDevice(const BluetoothDevice& btDeviced);
 	void	onScan();
 
-	void	displayRestartDialog(Window *window, const std::string message, bool deleteWindow, bool restarES);
+	void	displayRestartDialog(Window *window, bool deleteWindow, bool restarES);
 
 	std::string getDeviceName(const BluetoothDevice& btDevice) const;
+	void handleAlias(Window *window, bool deleteWindow, bool restarES, const std::string deviceData);
 
 	MenuComponent mMenu;
 

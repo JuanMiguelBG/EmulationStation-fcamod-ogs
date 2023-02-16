@@ -399,7 +399,7 @@ void GuiGamelistOptions::addCustomCollectionLongName(const std::string& collecti
 
 	row.makeAcceptInputHandler([this, title, fullName, updateVal]
 	{
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, fullName->getValue(), updateVal, false));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, fullName->getValue(), updateVal, false, nullptr));
 	});
 
 	mMenu.addRow(row);
@@ -457,7 +457,7 @@ void GuiGamelistOptions::addTextFilterToMenu()
 
 	row.makeAcceptInputHandler([this, updateVal]
 	{
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("FILTER GAMES BY TEXT"), mTextFilter->getValue(), updateVal, false));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("FILTER GAMES BY TEXT"), mTextFilter->getValue(), updateVal, false, nullptr));
 	});
 
 	mMenu.addRow(row);

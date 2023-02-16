@@ -279,7 +279,7 @@ setScummvmLanguageValue ()
 	valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
-		sudo sed -i "/\[scummvm\]/ a gui_language=$value" "$scummvmConfigFile"
+		sudo sed -i "/\[scummvm\]/a gui_language=$value" "$scummvmConfigFile"
 	else
 		sudo sed -i "s/#\?gui_language=.*/gui_language=$value/g" "$scummvmConfigFile" > /dev/null
 	fi
@@ -350,7 +350,7 @@ setLzdoomLanguageValue ()
 	valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
-		sudo sed -i "/\[GlobalSettings\]/ a language=$value" "$lzdoomConfigFile"
+		sudo sed -i "/\[GlobalSettings\]/a language=$value" "$lzdoomConfigFile"
 	else
 		sudo sed -i "s/#\?language=.*/language=$value/g" "$lzdoomConfigFile" > /dev/null
 	fi
@@ -422,7 +422,7 @@ setGzdoomLanguageValue ()
 	valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
-		sudo sed -i "/\[GlobalSettings\]/ a language=$value" "$gzdoomConfigFile"
+		sudo sed -i "/\[GlobalSettings\]/a language=$value" "$gzdoomConfigFile"
 	else
 		sudo sed -i "s/#\?language=.*/language=$value/g" "$gzdoomConfigFile" > /dev/null
 	fi

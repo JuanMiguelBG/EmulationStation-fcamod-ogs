@@ -366,10 +366,7 @@ void loadOtherSettings()
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 			}
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
-			{
 				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
-			}
-
 		});
 		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
@@ -686,13 +683,14 @@ int main(int argc, char* argv[])
 			SystemConf::getInstance()->set("global.bootgame.path", "");
 			SystemConf::getInstance()->set("global.bootgame.cmd", "");
 			SystemConf::getInstance()->set("global.bootgame.info", "");
-			return;
 		}
-
-		// wait for BT devices
-		waitForBluetoothDevices();
-		// Run boot game, before Window Create for linux
-		launchStartupGame(gamePath);
+		else
+		{
+			// wait for BT devices
+			waitForBluetoothDevices();
+			// Run boot game, before Window Create for linux
+			launchStartupGame(gamePath);
+		}
 	}
 
 	// metadata init

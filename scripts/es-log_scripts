@@ -85,7 +85,7 @@ get_compatible_es_log_level()
 active_es_scripts_log_feature()
 {
   local log_level=$1
-	local log_with_nano=$2
+  local log_with_nano=$2
 
   log_level="$(get_compatible_es_log_level $log_level)"
 
@@ -105,9 +105,9 @@ remove_es_scripts_log()
 }
 
 do_active_es_scripts_log() {
-	local log_status=$1
-	local log_level=$2
-	local log_with_nano=$3
+  local log_status=$1
+  local log_level=$2
+  local log_with_nano=$3
 
   if [ "$log_with_nano" = "true" ]; then
     log_with_nano=1
@@ -115,11 +115,11 @@ do_active_es_scripts_log() {
     log_with_nano=0
   fi
 
-	if [ "$log_status" = "true" ]; then
-		active_es_scripts_log_feature "$log_level" "$log_with_nano"
-	else
-		inactive_es_scripts_log_feature
-	fi
+  if [ "$log_status" = "true" ]; then
+    active_es_scripts_log_feature "$log_level" "$log_with_nano"
+  else
+    inactive_es_scripts_log_feature
+  fi
 }
 
 set_es_scripts_log_level()

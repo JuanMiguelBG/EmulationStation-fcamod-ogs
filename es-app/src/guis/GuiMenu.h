@@ -49,6 +49,7 @@ private:
 	static void openWifiSettings(Window* win, std::string title, std::string data, const std::function<bool(std::string)>& onsave);
 
 	void openBluetoothSettings();
+	void openBluetoothDevicesAlias(Window* window, std::string title);
 	void openBluetoothScanDevices(Window* win, std::string title);
 	void openBluetoothPairedDevices(Window* win, std::string title);
 	void openBluetoothConnectedDevices(Window* win, std::string title);
