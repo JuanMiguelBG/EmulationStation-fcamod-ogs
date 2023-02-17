@@ -4,35 +4,26 @@ do_help() {
     echo "$0 <DEVICE_ID> <DEVICE_NAME> <DEVICE_GUID>" >&2
 }
 
-update_controller_mapping()
+update_device_name_mapping()
 {
     local device_id=$1
     local device_name=$2
     local device_guid=$3
-    #print_log $LOG_FILE "INFO" "Executing 'update_controller_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
-
-retunr 0
-
+    print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
 
     local es_input_file_location="/etc/emulationstation/es_input.cfg"
     local ra_config_paths=( "/home/ark/.config/retroarch" "/home/ark/.config/retroarch32" )
 
-    local last_controller_config="$(cat ${es_input_file_location} | grep '<inputConfig type="joystick"' | tail -1 | grep -o -P -w 'deviceName="\K[^"]+')"
-    local controller=""
+    print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - Adding retroarch device_name configuration for '$device_name'"
 
-    if test -z "${1}"; then
-      controller="${last_controller_config}"
-    else
-      controller="${1}"
-    fi
-
-    if [[ -f "${ra_config_paths[0]}/autoconfig/udev/${controller}.cfg" ]]; then
-      if test ! -z "$(cat "${ra_config_paths[0]}/autoconfig/udev/${controller}.cfg" | grep "# ArkOS" | tr -d '\0')"; then
-        exit 0
+    # remove previous mapping
+    print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - Removing previous mapping"
+    for raconfigcreate in "${ra_config_paths[@]}"
+    do
+      if [[ -f "${raconfigcreate}/autoconfig/udev/${device_name}.cfg" ]]; then
+        sudo rm -f "${raconfigcreate}/autoconfig/udev/${device_name}.cfg"
       fi
-    fi
-
-    #print_log $LOG_FILE "INFO" "Adding retroarch controller configuration for '$controller'"
+    done
 
     button_list=( left \
                   right \
@@ -72,7 +63,7 @@ retunr 0
 
     for button in "${button_list[@]}"
     do
-        isitahatoranalog="$(tac ${es_input_file_location} | grep "${controller}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w "type=.{0,6}" | cut -c5- | cut -d '"' -f2)"
+        isitahatoranalog="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w "type=.{0,6}" | cut -c5- | cut -d '"' -f2)"
 
         unset value
         unset axis
@@ -81,7 +72,7 @@ retunr 0
         if [[ "$isitahatoranalog" == "hat" ]]; then
           value="hat found"
         elif [[ "$isitahatoranalog" == "axis" ]]; then
-          axis="$(tac ${es_input_file_location} | grep "${controller}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w "value=.{0,5}" | cut -c5- | cut -d '"' -f2)"
+          axis="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w "value=.{0,5}" | cut -c5- | cut -d '"' -f2)"
           if [[ "${axis}" == *"-"* ]]; then
             axis="-"
             reverse_axis="+"
@@ -91,10 +82,10 @@ retunr 0
           fi
         fi
 
-        get_button="$(tac ${es_input_file_location} | grep "${controller}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w 'id="\K[^"]+')"
+        get_button="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w 'id="\K[^"]+')"
 
         if test -z "$get_button"; then
-          echo "skip ${button}, empty value"
+          print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - Skip '${button}', empty value"
           continue;
         fi
 
@@ -104,47 +95,47 @@ retunr 0
 
         if test -z "$axis"; then
           if test ! -z "$value"; then
-            echo "$button = h${get_button}${button}"
+            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = h${get_button}${button}"
             retropad+=("h${get_button}${button}")
           else
-            echo "$button = $get_button"
+            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = $get_button"
             retropad+=("${get_button}")
           fi
         else
           if [[ "$button" == "joystick1up" ]]; then
-            echo "joystick1down = $reverse_axis$get_button"
+            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick1down = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           elif [[ "$button" == "joystick2up" ]]; then
-            echo "joystick2down = $reverse_axis$get_button"
+            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick2down = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           fi
 
-          echo "$button = $axis$get_button"
+          print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = $axis$get_button"
           retropad+=("${axis}${get_button}")
 
           if [[ "$button" == "joystick1left" ]]; then
-            echo "joystick1right = $reverse_axis$get_button"
+            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick1right = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           elif [[ "$button" == "joystick2left" ]]; then
-            echo "joystick2right = $reverse_axis$get_button"
+            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick2right = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           fi
         fi
     done
 
-    local vendor="$(cat /proc/bus/input/devices | grep -B1 -m 1 "${controller}" | grep -o -P -w 'Vendor=\K[^ ]+')"
+    local vendor="$(cat /proc/bus/input/devices | grep -B1 -m 1 "${device_name}" | grep -o -P -w 'Vendor=\K[^ ]+')"
     vendor="$((0x${vendor}))"
-    local product="$(cat /proc/bus/input/devices | grep -B1 -m 1 "${controller}" | grep -o -P -w 'Product=\K[^ ]+')"
+    local product="$(cat /proc/bus/input/devices | grep -B1 -m 1 "${device_name}" | grep -o -P -w 'Product=\K[^ ]+')"
     product="$((0x${product}))"
 
     let i=0
     for raconfigcreate in "${ra_config_paths[@]}"
     do
-        echo "# ArkOS" > "${raconfigcreate}/autoconfig/udev/${controller}".cfg
-        echo "input_driver = \"udev\"" >> "${raconfigcreate}/autoconfig/udev/${controller}".cfg
-        echo "input_device = \"${controller}\"" >> "${raconfigcreate}/autoconfig/udev/${controller}".cfg
-        echo "input_vendor_id = \"${vendor}\"" >> "${raconfigcreate}/autoconfig/udev/${controller}".cfg
-        echo "input_product_id = \"${product}\"" >> "${raconfigcreate}/autoconfig/udev/${controller}".cfg
+        echo "# ArkOS" > "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
+        echo "input_driver = \"udev\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
+        echo "input_device = \"${device_name}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
+        echo "input_vendor_id = \"${vendor}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
+        echo "input_product_id = \"${product}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
     done
 
     for retroA in "${retropad[@]}"
@@ -176,13 +167,13 @@ retunr 0
 
         for raconfig in "${ra_config_paths[@]}"
         do
-            [ ! -z "${retroA}" ] && echo "${retropad_list[$i]} = \"${retroA}\"" >> "${raconfig}/autoconfig/udev/${controller}.cfg"
+            [ ! -z "${retroA}" ] && echo "${retropad_list[$i]} = \"${retroA}\"" >> "${raconfig}/autoconfig/udev/${device_name}.cfg"
         done
         let i++
     done
 
 
-    #print_log $LOG_FILE "INFO" "Exit 'update_controller_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
+    print_log $LOG_FILE "INFO" "Exit 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
 }
 
 
@@ -203,7 +194,7 @@ exit_execution()
     local param1=$2
     local param2=$3
     local param3=$4
-    #print_log $LOG_FILE "INFO" "##### Exit executing control-mapped: '$1 $2 $3', exit code: '$return' #####"
+    print_log $LOG_FILE "INFO" "##### Exit executing control-mapped: '$param1' '$param2' '$param3', exit code: '$return' #####"
     exit $return
 }
 
@@ -212,8 +203,8 @@ if [ $# -lt 3 ]; then
   exit 1
 fi
 
-#print_log $LOG_FILE "INFO" "##### Executing control-mapped: '$1 $2 $3' #####"
+print_log $LOG_FILE "INFO" "##### Executing control-mapped: '$1 $2 $3' #####"
 
-update_controller_mapping "$1" "$2" "$3" &
+update_device_name_mapping "$1" "$2" "$3" &
 
 exit_execution 0 "$1" "$2" "$3"
