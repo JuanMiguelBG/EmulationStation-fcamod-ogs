@@ -318,10 +318,6 @@ std::string getRemoteServicePlatformName(RemoteServicesId id = RemoteServicesId:
 RemoteServiceInformation queryRemoteServiceStatus(RemoteServicesId id = RemoteServicesId::UNKNOWN);
 bool setRemoteServiceStatus(RemoteServiceInformation service);
 
-#ifdef _DEBUG
-uint32_t getVolume();
-#endif
-
 std::string getShOutput(const std::string& mStr);
 
 std::string stateToString(bool state, const std::string &active_value = "enabled", const std::string &not_active_value = "disabled");

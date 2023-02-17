@@ -7,6 +7,7 @@
 #include "Log.h"
 #include "Window.h"
 #include "EsLocale.h"
+#include "Scripting.h"
 
 struct InputConfigStructure
 {
@@ -200,6 +201,8 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		InputManager::getInstance()->writeDeviceConfig(mTargetConfig); // save
 		if(okCallback)
 			okCallback();
+
+		Scripting::fireEvent("control-mapped", std::to_string(mTargetConfig->getDeviceId()), mTargetConfig->getDeviceName(), mTargetConfig->getDeviceGUIDString());
 		delete this;
 	};
 	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("OK"), _("OK"), [this, okFunction] {
@@ -333,7 +336,7 @@ void GuiInputConfig::setAssignedTo(const std::shared_ptr<TextComponent>& text, I
 	text->setColor(ThemeData::getMenuTheme()->Text.color);
 }
 
-void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text, const std::string& /*msg*/)
+void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("ALREADY TAKEN"));
 	text->setColor(0x656565FF);
@@ -347,7 +350,7 @@ bool GuiInputConfig::assign(Input input, int inputId)
 	// (if it's the same as what it was before, allow it)
 	if(mTargetConfig->getMappedTo(input).size() > 0 && !mTargetConfig->isMappedTo(GUI_INPUT_CONFIG_LIST[inputId].name, input) && strcmp(GUI_INPUT_CONFIG_LIST[inputId].name, "HotKeyEnable") != 0)
 	{
-		error(mMappings.at(inputId), _("Already mapped!"));
+		error(mMappings.at(inputId));
 		return false;
 	}
 
