@@ -41,22 +41,7 @@ void GuiBluetoothScan::load(std::vector<BluetoothDevice> btDevices)
 	{
 		hasDevices = true;
 		for (auto btDevice : btDevices)
-		{
-			std::string device_name = btDevice.name,
-						device_value = btDevice.name,
-						device_id;
-			device_value.append(" - ").append(btDevice.id);
-
-			if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty() && (btDevice.name != btDevice.alias))
-			{
-				device_name = btDevice.alias;
-				device_value = btDevice.alias;
-				device_value.append(" - ").append(btDevice.id).append(SystemConf::getInstance()->get("already.connection.exist.flag"));
-				device_id.append(btDevice.name).append(" - ");
-			}
-			device_id.append(btDevice.id);
-			mMenu.addWithDescription(device_name, device_id, [this, btDevice]() { GuiBluetoothScan::onConnectDevice(btDevice); }, btDevice.type, device_value);
-		}
+			mMenu.addWithDescription(btDevice.name, btDevice.id, [this, btDevice]() { GuiBluetoothScan::onConnectDevice(btDevice); }, btDevice.type);
 	}
 
 	mMenu.updateSize();
@@ -68,21 +53,20 @@ void GuiBluetoothScan::load(std::vector<BluetoothDevice> btDevices)
 	mWaitingLoad = false;
 }
 
-void GuiBluetoothScan::handleAlias(Window *window, bool deleteWindow, bool restarES, const std::string deviceData)
+void GuiBluetoothScan::handleAlias(Window *window, bool deleteWindow, bool restarES, const BluetoothDevice& btDevice)
 {
-	std::string title = _("ADD ALIAS"),
-				initial_data,
-				device_id;
+	std::string title = _("ADD ALIAS");
 	
-	std::vector<std::string> data = Utils::String::split(deviceData, " - ", true);
-	initial_data = data[0];
-	device_id = data[1];
-	device_id = Utils::String::replace(device_id, SystemConf::getInstance()->get("already.connection.exist.flag"), "");
-
-	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, deleteWindow, restarES, device_id](const std::string &newVal)
+	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, deleteWindow, restarES, btDevice](const std::string &newVal)
 	{	
-		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(device_id, newVal))
+		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(btDevice.id, newVal))
 		{
+			if (Utils::String::startsWith(btDevice.type, "input-"))
+			{
+				Settings::getInstance()->setString(btDevice.name + ".bluetooth.input_gaming.alias", newVal);
+				Settings::getInstance()->saveFile();
+			}
+
 			displayRestartDialog(window, deleteWindow, restarES);
 			return true;
 		}
@@ -90,15 +74,15 @@ void GuiBluetoothScan::handleAlias(Window *window, bool deleteWindow, bool resta
 		return false;
 	}; // ok callback (apply new value to ed)
 
-	std::function<void(const std::string /*&newVal*/)> cancelVal = [this, window, deleteWindow, restarES, device_id](const std::string &newVal)
+	std::function<void(const std::string /*&newVal*/)> cancelVal = [this, window, deleteWindow, restarES](const std::string &newVal)
 	{	
 		displayRestartDialog(window, deleteWindow, restarES);
 	}; // cancel callback (apply new value to ed)
 
 	if (Settings::getInstance()->getBool("UseOSK"))
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, initial_data, updateVal, false, cancelVal));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, btDevice.alias, updateVal, false, cancelVal));
 	else
-		mWindow->pushGui(new GuiTextEditPopup(mWindow, title, initial_data, updateVal, false, cancelVal));
+		mWindow->pushGui(new GuiTextEditPopup(mWindow, title, btDevice.alias, updateVal, false, cancelVal));
 }
 
 void GuiBluetoothScan::displayRestartDialog(Window *window, bool deleteWindow, bool restarES)
@@ -136,7 +120,7 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 
 	std::string audio_device = SystemConf::getInstance()->get("bluetooth.audio.device");
 	std:: string msg(_("CONNECTING BLUETOOTH DEVICE"));
-	window->pushGui(new GuiLoading<bool>(window, msg.append(" '").append(getDeviceName(btDevice)).append("'..."), 
+	window->pushGui(new GuiLoading<bool>(window, msg.append(" '").append(btDevice.name).append("'..."), 
 		[this, btDevice, audio_device]
 		{
 			mWaitingLoad = true;
@@ -172,7 +156,7 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 			mWaitingLoad = false;
 			if (result)
  			{
-				msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE SUCCESSFULLY PAIRED AND CONNECTED"));
+				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE SUCCESSFULLY PAIRED AND CONNECTED"));
 
 				// audio bluetooth connecting changes
 				restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
@@ -184,15 +168,15 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 							displayRestartDialog(window, result, restar_ES);
 						},
 					_("ADD ALIAS"),
-						[this, window, result, restar_ES]
+						[this, window, result, restar_ES, btDevice]
 						{
-							handleAlias(window, result, restar_ES, getMenu()->getSelected());
+							handleAlias(window, result, restar_ES, btDevice);
 						})
 				);
 			}
 			else
 			{
-				msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE FAILED TO PAIR AND CONNECT"));
+				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE FAILED TO PAIR AND CONNECT"));
 
 				window->pushGui(new GuiMsgBox(window, msg,
 					_("OK"),
@@ -256,13 +240,4 @@ void GuiBluetoothScan::onScan()
 			mWaitingLoad = false;
 			load(btDevices);
 		}));
-}
-
-std::string GuiBluetoothScan::getDeviceName(const BluetoothDevice& btDevice) const
-{
-	std::string name = btDevice.name;
-	if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty())
-		name = btDevice.alias;
-
-	return name;
 }

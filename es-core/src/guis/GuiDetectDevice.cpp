@@ -82,7 +82,7 @@ bool GuiDetectDevice::input(InputConfig* config, Input input)
 {
 	PowerSaver::pause();
 
-	if(!mFirstRun && input.device == DEVICE_KEYBOARD && input.type == TYPE_KEY && input.value && input.id == SDLK_ESCAPE)
+	if (!mFirstRun && input.device == DEVICE_KEYBOARD && input.type == TYPE_KEY && input.value && input.id == SDLK_ESCAPE)
 	{
 		// cancel configuring
 		PowerSaver::resume();
@@ -90,15 +90,25 @@ bool GuiDetectDevice::input(InputConfig* config, Input input)
 		return true;
 	}
 
-	if(input.type == TYPE_BUTTON || input.type == TYPE_KEY ||input.type == TYPE_CEC_BUTTON)
+	if (input.type == TYPE_BUTTON || input.type == TYPE_KEY || input.type == TYPE_CEC_BUTTON)
 	{
-		if(input.value && mHoldingConfig == NULL)
+		if (input.value && mHoldingConfig == NULL)
 		{
 			// started holding
 			mHoldingConfig = config;
 			mHoldTime = HOLD_TIME;
-			mDeviceHeld->setText(Utils::String::toUpper(config->getDeviceName()));
-		}else if(!input.value && mHoldingConfig == config)
+
+			// get device name
+			std::string name = config->getDeviceName();
+			if (Settings::getInstance()->getBool("bluetooth.use.alias"))
+			{
+				std::string alias = Settings::getInstance()->getString(name + ".bluetooth.input_gaming.alias");
+				if (!alias.empty())
+					name = alias;
+			}
+			mDeviceHeld->setText(Utils::String::toUpper(name));
+		}
+		else if (!input.value && mHoldingConfig == config)
 		{
 			// cancel
 			mHoldingConfig = NULL;
@@ -111,13 +121,14 @@ bool GuiDetectDevice::input(InputConfig* config, Input input)
 
 void GuiDetectDevice::update(int deltaTime)
 {
-	if(mHoldingConfig)
+	if (mHoldingConfig)
 	{
 		// If ES starts and if a known device is connected after startup skip controller configuration
-		if(mFirstRun && Utils::FileSystem::exists(InputManager::getConfigPath()) && InputManager::getInstance()->getNumConfiguredDevices() > 0)
+		if (mFirstRun && Utils::FileSystem::exists(InputManager::getConfigPath()) && InputManager::getInstance()->getNumConfiguredDevices() > 0)
 		{
-			if(mDoneCallback)
+			if (mDoneCallback)
 				mDoneCallback();
+
 			PowerSaver::resume();
 			delete this; // delete GUI element
 		}
@@ -127,7 +138,7 @@ void GuiDetectDevice::update(int deltaTime)
 			const float t = (float)mHoldTime / HOLD_TIME;
 			unsigned int c = (unsigned char)(t * 255);
 			mDeviceHeld->setColor((c << 24) | (c << 16) | (c << 8) | 0xFF);
-			if(mHoldTime <= 0)
+			if (mHoldTime <= 0)
 			{
 				// picked one!
 				mWindow->pushGui(new GuiInputConfig(mWindow, mHoldingConfig, true, mDoneCallback));

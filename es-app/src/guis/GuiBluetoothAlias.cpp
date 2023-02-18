@@ -65,14 +65,17 @@ bool GuiBluetoothAlias::onManageDeviceAlias(const BluetoothDevice& btDevice)
 
 	Window* window = mWindow;
 	
-	std::string title = btDevice.alias.empty() ? _("ADD ALIAS") : _("EDIT ALIAS"),
-				device_id = btDevice.id,
-				device_alias = btDevice.alias;
+	std::string title = btDevice.alias.empty() ? _("ADD ALIAS") : _("EDIT ALIAS");
 	
-	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, device_id](const std::string &newVal)
+	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, btDevice](const std::string &newVal)
 	{	
-		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(device_id, newVal))
+		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(btDevice.id, newVal))
 		{
+			if (Utils::String::startsWith(btDevice.type, "input-"))
+			{
+				Settings::getInstance()->setString(btDevice.name + ".bluetooth.input_gaming.alias", newVal);
+				Settings::getInstance()->saveFile();
+			}
 			onScan();
 			return true;
 		}
@@ -80,9 +83,9 @@ bool GuiBluetoothAlias::onManageDeviceAlias(const BluetoothDevice& btDevice)
 	}; // ok callback (apply new value to ed)
 
 	if (Settings::getInstance()->getBool("UseOSK"))
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, device_alias, updateVal, false));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, btDevice.alias, updateVal, false));
 	else
-		mWindow->pushGui(new GuiTextEditPopup(mWindow, title, device_alias, updateVal, false));
+		mWindow->pushGui(new GuiTextEditPopup(mWindow, title, btDevice.alias, updateVal, false));
 
 	return true;
 }

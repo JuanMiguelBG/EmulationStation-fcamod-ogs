@@ -24,13 +24,13 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down_gt.svg" },
 	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left_gt.svg" },
 	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right_gt.svg" },
-	{ "Start",            true,  "START",              ":/help/button_start_gt.svg" },
 	{ "Select",           true,  "SELECT",             ":/help/button_select_gt.svg" },
+	{ "Start",            true,  "START",              ":/help/button_start_gt.svg" },
 
-	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east_gt.svg" },
-	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south_gt.svg" },
 	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north_gt.svg" },
+	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south_gt.svg" },
 	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west_gt.svg" },
+	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east_gt.svg" },
 
 	{ "LeftShoulder",     true,  "L1 / Page Up",       ":/help/button_l_gt.svg" },
 	{ "RightShoulder",    true,  "R1 / Page Down",     ":/help/button_r_gt.svg" },
