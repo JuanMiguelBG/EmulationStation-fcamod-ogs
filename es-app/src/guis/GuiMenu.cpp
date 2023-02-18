@@ -1453,7 +1453,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				if (manualDns)
 				{
 					std::string dnsOne = SystemConf::getInstance()->get("wifi.dns1"),
-											dnsTwo = SystemConf::getInstance()->get("wifi.dns2");
+								dnsTwo = SystemConf::getInstance()->get("wifi.dns2");
 					if (baseDnsOne != dnsOne || baseDnsTwo != dnsTwo || !baseManualDns)
 					{
 						window->pushGui(new GuiLoading<bool>(window, _("CONFIGURING MANUAL DNS"),
@@ -1502,7 +1502,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			if (wifienabled)
 			{
 				std::string newSSID = SystemConf::getInstance()->get("wifi.ssid"),
-										newKey = SystemConf::getInstance()->get("wifi.key");
+							newKey = SystemConf::getInstance()->get("wifi.key");
 
 				if (newSSID.empty())
 				{

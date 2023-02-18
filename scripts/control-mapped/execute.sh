@@ -9,15 +9,15 @@ update_device_name_mapping()
     local device_id=$1
     local device_name=$2
     local device_guid=$3
-    print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
+    #print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
 
     local es_input_file_location="/etc/emulationstation/es_input.cfg"
     local ra_config_paths=( "/home/ark/.config/retroarch" "/home/ark/.config/retroarch32" )
 
-    print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - Adding retroarch device_name configuration for '$device_name'"
+    #print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - Adding retroarch device_name configuration for '$device_name'"
 
     # remove previous mapping
-    print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - Removing previous mapping"
+    #print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - Removing previous mapping"
     for raconfigcreate in "${ra_config_paths[@]}"
     do
       if [[ -f "${raconfigcreate}/autoconfig/udev/${device_name}.cfg" ]]; then
@@ -85,7 +85,7 @@ update_device_name_mapping()
         get_button="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w 'id="\K[^"]+')"
 
         if test -z "$get_button"; then
-          print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - Skip '${button}', empty value"
+          #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - Skip '${button}', empty value"
           continue;
         fi
 
@@ -95,29 +95,29 @@ update_device_name_mapping()
 
         if test -z "$axis"; then
           if test ! -z "$value"; then
-            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = h${get_button}${button}"
+            #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = h${get_button}${button}"
             retropad+=("h${get_button}${button}")
           else
-            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = $get_button"
+            #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = $get_button"
             retropad+=("${get_button}")
           fi
         else
           if [[ "$button" == "joystick1up" ]]; then
-            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick1down = $reverse_axis$get_button"
+            #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick1down = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           elif [[ "$button" == "joystick2up" ]]; then
-            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick2down = $reverse_axis$get_button"
+            #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick2down = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           fi
 
-          print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = $axis$get_button"
+          #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - $button = $axis$get_button"
           retropad+=("${axis}${get_button}")
 
           if [[ "$button" == "joystick1left" ]]; then
-            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick1right = $reverse_axis$get_button"
+            #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick1right = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           elif [[ "$button" == "joystick2left" ]]; then
-            print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick2right = $reverse_axis$get_button"
+            #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - joystick2right = $reverse_axis$get_button"
             retropad+=("${reverse_axis}${get_button}")
           fi
         fi
@@ -173,7 +173,7 @@ update_device_name_mapping()
     done
 
 
-    print_log $LOG_FILE "INFO" "Exit 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
+    #print_log $LOG_FILE "INFO" "Exit 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
 }
 
 
@@ -194,7 +194,7 @@ exit_execution()
     local param1=$2
     local param2=$3
     local param3=$4
-    print_log $LOG_FILE "INFO" "##### Exit executing control-mapped: '$param1' '$param2' '$param3', exit code: '$return' #####"
+    #print_log $LOG_FILE "INFO" "##### Exit executing control-mapped: '$param1' '$param2' '$param3', exit code: '$return' #####"
     exit $return
 }
 
@@ -203,7 +203,7 @@ if [ $# -lt 3 ]; then
   exit 1
 fi
 
-print_log $LOG_FILE "INFO" "##### Executing control-mapped: '$1 $2 $3' #####"
+#print_log $LOG_FILE "INFO" "##### Executing control-mapped: '$1 $2 $3' #####"
 
 update_device_name_mapping "$1" "$2" "$3" &
 
