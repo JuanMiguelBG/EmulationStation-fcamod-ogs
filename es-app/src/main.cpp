@@ -366,10 +366,7 @@ void loadOtherSettings()
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 			}
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
-			{
 				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
-			}
-
 		});
 		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
@@ -412,7 +409,7 @@ bool loadSystemConfigFile(Window* window, const char** errorString)
 		return false;
 	}
 
-	if (SystemData::sSystemVector.size() == 0)
+	if(SystemData::sSystemVector.size() == 0)
 	{
 		LOG(LogError) << "MAIN::loadSystemConfigFile() - No systems found! Does at least one system have a game present? (check that extensions match!)\n(Also, make sure you've updated your es_systems.cfg for XML!)";
 
@@ -567,12 +564,8 @@ void signalHandler(int signum)
 	exit(signum);
 }
 
-void launchStartupGame()
+void launchStartupGame(const std::string gamePath)
 {
-	auto gamePath = SystemConf::getInstance()->get("global.bootgame.path");
-	if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
-		return;
-
 	auto command = SystemConf::getInstance()->get("global.bootgame.cmd");
 	if (command.empty())
 		return;
@@ -682,10 +675,22 @@ int main(int argc, char* argv[])
 	//always close the log on exit
 	atexit(&onExit);
 
-	if (bootGame.enable_startup_game) {
-		waitForBluetoothDevices();
-		// Run boot game, before Window Create for linux
-		launchStartupGame();
+	if (bootGame.enable_startup_game)
+	{
+		std::string gamePath = SystemConf::getInstance()->get("global.bootgame.path");
+		if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
+		{ // clean bootgame settings
+			SystemConf::getInstance()->set("global.bootgame.path", "");
+			SystemConf::getInstance()->set("global.bootgame.cmd", "");
+			SystemConf::getInstance()->set("global.bootgame.info", "");
+		}
+		else
+		{
+			// wait for BT devices
+			waitForBluetoothDevices();
+			// Run boot game, before Window Create for linux
+			launchStartupGame(gamePath);
+		}
 	}
 
 	// metadata init

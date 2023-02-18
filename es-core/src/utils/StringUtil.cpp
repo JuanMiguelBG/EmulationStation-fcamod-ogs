@@ -592,6 +592,33 @@ namespace Utils
 			return output;
 		}
 
+		std::vector<std::string> split  (const std::string& s, const std::string& separator, bool removeEmptyEntries)
+		{
+			std::vector<std::string> output;
+
+			unsigned prev_pos = 0;
+			auto pos = s.find(separator);
+			while (pos != std::string::npos)
+			{
+				std::string token = s.substr(prev_pos, pos - prev_pos);
+				if (!removeEmptyEntries || !token.empty())
+					output.push_back(token);
+
+				pos++;
+				prev_pos = pos;
+				pos = s.find(separator, pos);
+			}
+
+			if (prev_pos < s.length())
+			{
+				std::string token = s.substr(prev_pos);
+				if (!removeEmptyEntries || !token.empty())
+					output.push_back(token); // Last word
+			}
+
+			return output;
+		}
+
 		std::vector<std::string> splitAny(const std::string& s, const std::string& separator, bool removeEmptyEntries)
 		{
 			std::vector<std::string> output;

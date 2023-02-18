@@ -18,6 +18,7 @@
 #include "guis/GuiQuitOptions.h"
 #include "guis/GuiSystemHotkeyEventsOptions.h"
 #include "guis/GuiWifi.h"
+#include "guis/GuiBluetoothAlias.h"
 #include "guis/GuiBluetoothScan.h"
 #include "guis/GuiBluetoothPaired.h"
 #include "guis/GuiBluetoothConnected.h"
@@ -1452,7 +1453,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				if (manualDns)
 				{
 					std::string dnsOne = SystemConf::getInstance()->get("wifi.dns1"),
-											dnsTwo = SystemConf::getInstance()->get("wifi.dns2");
+								dnsTwo = SystemConf::getInstance()->get("wifi.dns2");
 					if (baseDnsOne != dnsOne || baseDnsTwo != dnsTwo || !baseManualDns)
 					{
 						window->pushGui(new GuiLoading<bool>(window, _("CONFIGURING MANUAL DNS"),
@@ -1501,7 +1502,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			if (wifienabled)
 			{
 				std::string newSSID = SystemConf::getInstance()->get("wifi.ssid"),
-										newKey = SystemConf::getInstance()->get("wifi.key");
+							newKey = SystemConf::getInstance()->get("wifi.key");
 
 				if (newSSID.empty())
 				{
@@ -1828,24 +1829,37 @@ void GuiMenu::openBluetoothSettings()
 
 			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color));
 		}
+	}
+	else
+	{
+		std::string bt_title = _("MANAGE BLUETOOTH DEVICES ALIAS");
+		s->addEntry(bt_title, true, [this, window, bt_title] { openBluetoothDevicesAlias(window, bt_title); });
+	}
 
-		// autoconnect audio device on boot
-		auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
-		s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
-		auto_connect->setOnChangedCallback([this, s, auto_connect]
+	// use alias as device name
+	auto alias_as_name = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.use.alias"));
+	s->addWithLabel(_("USE ALIAS AS DEVICE NAME"), alias_as_name);
+	alias_as_name->setOnChangedCallback([alias_as_name]
+		{
+			SystemConf::getInstance()->setBool("bluetooth.use.alias", alias_as_name->getState());
+		});	
+
+	// autoconnect audio device on boot
+	auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
+	s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
+	s->addSaveFunc([auto_connect]
 		{
 			SystemConf::getInstance()->setBool("bluetooth.audio.device.autoconnect", auto_connect->getState());
 		});
 
-		auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
-		auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
-		s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
-		auto_connect_timeout->setOnValueChanged([window, s](const float &newVal)
-			{
-				int timeout = (int)Math::round(newVal);
-				Settings::getInstance()->setInt("bluetooth.boot.game.timeout", timeout);
-			});
-	}
+	auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
+	auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
+	s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
+	s->addSaveFunc([auto_connect_timeout]
+		{
+			Settings::getInstance()->setInt("bluetooth.boot.game.timeout", (int)Math::round(auto_connect_timeout->getValue()));
+		});
+
 
 	auto pthis = this;
 
@@ -1888,6 +1902,11 @@ void GuiMenu::reinitSoundComponentsAndMusic()
 		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
 	else
 		AudioManager::getInstance()->playRandomMusic();
+}
+
+void GuiMenu::openBluetoothDevicesAlias(Window* window, std::string title)
+{
+	window->pushGui(new GuiBluetoothAlias(window, title));
 }
 
 void GuiMenu::openBluetoothScanDevices(Window* window, std::string title)

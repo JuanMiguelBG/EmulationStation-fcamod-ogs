@@ -281,6 +281,7 @@ public:
 	bool stopBluetoothLiveScan();
 	bool startAutoConnectBluetoothAudioDevice();
 	bool stopAutoConnectBluetoothAudioDevice();
+	bool setBluetoothDeviceAlias(const std::string id, const std::string alias);
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();

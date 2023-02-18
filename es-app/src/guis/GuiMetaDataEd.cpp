@@ -239,7 +239,7 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 					if (Settings::getInstance()->getBool("ShowFileBrowser"))
 						mWindow->pushGui(new GuiFileBrowser(mWindow, dir, filePath, type, updateVal, title));
 					else
-						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, filePath, updateVal, false));
+						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, filePath, updateVal, false, nullptr));
 				});
 
 				break;
@@ -277,9 +277,9 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 				row.makeAcceptInputHandler([this, title, ed, updateVal, multiLine] 
 				{
 					if (!multiLine && Settings::getInstance()->getBool("UseOSK"))
-						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, ed->getValue(), updateVal, multiLine));
+						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, ed->getValue(), updateVal, multiLine, nullptr));
 					else
-						mWindow->pushGui(new GuiTextEditPopup(mWindow, title, ed->getValue(), updateVal, multiLine));
+						mWindow->pushGui(new GuiTextEditPopup(mWindow, title, ed->getValue(), updateVal, multiLine, nullptr));
 				});
 				break;
 			}

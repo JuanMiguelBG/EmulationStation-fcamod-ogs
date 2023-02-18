@@ -31,6 +31,8 @@ private:
 
 	void	displayRestartDialog(Window *window, const std::string message, bool deleteWindow, bool restarES);
 
+	std::string getDeviceName(const BluetoothDevice& btDevice) const;
+
 	MenuComponent mMenu;
 
 	std::string mTitle;

@@ -1,7 +1,6 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "components/MenuComponent.h"
 #include "utils/StringUtil.h"
-#include "Log.h"
 #include "EsLocale.h"
 #include "SystemConf.h"
 #include "Settings.h"
@@ -87,14 +86,20 @@ std::vector<std::vector<const char*>> kbEs {
 	keyb_last_line
 };
 
+GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
+		const std::function<bool(const std::string&)>& okCallback, bool multiLine,
+		const std::function<void(const std::string&)>& backCallback) :
+	GuiTextEditPopupKeyboard(window, title, initValue, okCallback, multiLine, "OK", backCallback) {}
 
 GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
-	const std::function<bool(const std::string&)>& okCallback, bool multiLine, const std::string acceptBtnText)
-	: GuiComponent(window), mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)), mMultiLine(multiLine)
+	const std::function<bool(const std::string&)>& okCallback, bool multiLine, const char* acceptPromptText,
+	const std::function<void(const std::string&)>& backCallback)
+	: GuiComponent(window), mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)), mMultiLine(multiLine), mAcceptPromptText(acceptPromptText)
 {
 	setTag("popup");
 
 	mOkCallback = okCallback;
+	mBackCallback = backCallback;
 
 	auto theme = ThemeData::getMenuTheme();
 	mBackground.setImagePath(theme->Background.path);
@@ -353,6 +358,9 @@ bool GuiTextEditPopupKeyboard::input(InputConfig* config, Input input)
 		// pressing back when not text editing closes us
 		if (config->isMappedTo(BUTTON_BACK, input))
 		{
+			if (mBackCallback != nullptr)
+				mBackCallback(mText->getValue());
+
 			delete this;
 			return true;
 		}
@@ -472,8 +480,8 @@ std::vector<HelpPrompt> GuiTextEditPopupKeyboard::getHelpPrompts()
 		prompts.push_back(HelpPrompt("x", _("RESET")));
 
 	prompts.push_back(HelpPrompt("y", _("SHIFT")));
-	prompts.push_back(HelpPrompt("start", _("OK")));
-	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
+	prompts.push_back(HelpPrompt("start", _(mAcceptPromptText)));
+	prompts.push_back(HelpPrompt(BUTTON_BACK, _("DISCARD CHANGES")));
 	prompts.push_back(HelpPrompt(BUTTON_R2, _("SPACE")));
 	prompts.push_back(HelpPrompt(BUTTON_L2, _("DELETE")));
 	return prompts;

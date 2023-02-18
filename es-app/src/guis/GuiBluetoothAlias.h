@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ES_APP_GUIS_GUI_BLUETOOTH_SCAN_H
-#define ES_APP_GUIS_GUI_BLUETOOTH_SCAN_H
+#ifndef ES_APP_GUIS_GUI_BLUETOOTH_ALIAS_H
+#define ES_APP_GUIS_GUI_BLUETOOTH_ALIAS_H
 
 #include "GuiComponent.h"
 #include "components/MenuComponent.h"
@@ -9,10 +9,10 @@
 
 #include <thread>
 
-class GuiBluetoothScan : public GuiComponent
+class GuiBluetoothAlias : public GuiComponent
 {
 public:
-	GuiBluetoothScan(Window* window, const std::string title, const std::string subtitle = "");
+	GuiBluetoothAlias(Window* window, const std::string title, const std::string subtitle = "");
 
 	bool input(InputConfig* config, Input input) override;
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
@@ -24,12 +24,8 @@ protected:
 private:
 	void	load(std::vector<BluetoothDevice> bt_devices);
 
-	bool	onConnectDevice(const BluetoothDevice& btDeviced);
+	bool	onManageDeviceAlias(const BluetoothDevice& btDeviced);
 	void	onScan();
-
-	void	displayRestartDialog(Window *window, bool deleteWindow, bool restarES);
-
-	void handleAlias(Window *window, bool deleteWindow, bool restarES, const BluetoothDevice& btDevice);
 
 	MenuComponent mMenu;
 
@@ -39,4 +35,4 @@ private:
 	bool	hasDevices;
 };
 
-#endif // ES_APP_GUIS_GUI_BLUETOOTH_SCAN_H
+#endif // ES_APP_GUIS_GUI_BLUETOOTH_ALIAS_H

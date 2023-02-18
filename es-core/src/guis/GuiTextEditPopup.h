@@ -13,7 +13,15 @@ class GuiTextEditPopup : public GuiComponent
 {
 public:
 	GuiTextEditPopup(Window* window, const std::string& title, const std::string& initValue,
-		const std::function<bool(const std::string&)>& okCallback, bool multiLine, const char* acceptBtnText = "OK");
+		const std::function<bool(const std::string&)>& okCallback, bool multiLine,
+		const std::function<void(const std::string&)>& cancelCallback);
+
+	GuiTextEditPopup(Window* window, const std::string& title, const std::string& initValue,
+		const std::function<bool(const std::string&)>& okCallback, bool multiLine,
+		const char* acceptBtnText = "OK", const char* acceptPromptText = "OK",
+		const std::function<void(const std::string&)>& cancelCallback = nullptr,
+		const std::function<void(const std::string&)>& backCallback = nullptr,
+		const char* cancelBtnText = "CANCEL", const char* cancelPromptText = "DISCARD CHANGES");
 
 	bool input(InputConfig* config, Input input);
 	void onSizeChanged();
@@ -26,6 +34,8 @@ private:
 	std::shared_ptr<TextComponent> mTitle;
 	std::shared_ptr<TextEditComponent> mText;
 	std::shared_ptr<ComponentGrid> mButtonGrid;
+
+	std::function<void(const std::string&)> mBackCallback;
 
 	bool mMultiLine;
 };

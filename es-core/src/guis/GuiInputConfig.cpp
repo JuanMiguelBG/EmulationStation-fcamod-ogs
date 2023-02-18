@@ -7,6 +7,7 @@
 #include "Log.h"
 #include "Window.h"
 #include "EsLocale.h"
+#include "Scripting.h"
 
 struct InputConfigStructure
 {
@@ -23,13 +24,13 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down_gt.svg" },
 	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left_gt.svg" },
 	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right_gt.svg" },
-	{ "Start",            true,  "START",              ":/help/button_start_gt.svg" },
 	{ "Select",           true,  "SELECT",             ":/help/button_select_gt.svg" },
+	{ "Start",            true,  "START",              ":/help/button_start_gt.svg" },
 
-	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east_gt.svg" },
-	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south_gt.svg" },
 	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north_gt.svg" },
+	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south_gt.svg" },
 	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west_gt.svg" },
+	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east_gt.svg" },
 
 	{ "LeftShoulder",     true,  "L1 / Page Up",       ":/help/button_l_gt.svg" },
 	{ "RightShoulder",    true,  "R1 / Page Down",     ":/help/button_r_gt.svg" },
@@ -200,6 +201,8 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		InputManager::getInstance()->writeDeviceConfig(mTargetConfig); // save
 		if(okCallback)
 			okCallback();
+
+		Scripting::fireEvent("control-mapped", std::to_string(mTargetConfig->getDeviceId()), mTargetConfig->getDeviceName(), mTargetConfig->getDeviceGUIDString());
 		delete this;
 	};
 	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("OK"), _("OK"), [this, okFunction] {
@@ -333,7 +336,7 @@ void GuiInputConfig::setAssignedTo(const std::shared_ptr<TextComponent>& text, I
 	text->setColor(ThemeData::getMenuTheme()->Text.color);
 }
 
-void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text, const std::string& /*msg*/)
+void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("ALREADY TAKEN"));
 	text->setColor(0x656565FF);
@@ -347,7 +350,7 @@ bool GuiInputConfig::assign(Input input, int inputId)
 	// (if it's the same as what it was before, allow it)
 	if(mTargetConfig->getMappedTo(input).size() > 0 && !mTargetConfig->isMappedTo(GUI_INPUT_CONFIG_LIST[inputId].name, input) && strcmp(GUI_INPUT_CONFIG_LIST[inputId].name, "HotKeyEnable") != 0)
 	{
-		error(mMappings.at(inputId), _("Already mapped!"));
+		error(mMappings.at(inputId));
 		return false;
 	}
 
