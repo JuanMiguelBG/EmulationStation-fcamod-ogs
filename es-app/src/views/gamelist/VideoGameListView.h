@@ -42,31 +42,31 @@ private:
 	void initMDValues();
 
 	ImageComponent *mImage,
-									*mThumbnail,
-									mMarquee;
+				   *mThumbnail,
+				   *mMarquee;
 	VideoComponent *mVideo;
 
 	TextComponent mLblRating,
-								mLblReleaseDate,
-								mLblDeveloper,
-								mLblPublisher,
-								mLblGenre,
-								mLblPlayers,
-								mLblLastPlayed,
-								mLblPlayCount,
-								mLblGameTime,
+				  mLblReleaseDate,
+				  mLblDeveloper,
+				  mLblPublisher,
+				  mLblGenre,
+				  mLblPlayers,
+				  mLblLastPlayed,
+				  mLblPlayCount,
+				  mLblGameTime,
 
-								mDeveloper,
-								mPublisher,
-								mGenre,
-								mPlayers,
-								mPlayCount,
-								mGameTime,
-								mName;
+				  mDeveloper,
+				  mPublisher,
+				  mGenre,
+				  mPlayers,
+				  mPlayCount,
+				  mGameTime,
+				  mName;
 
 	RatingComponent mRating;
 	DateTimeComponent mReleaseDate,
-										mLastPlayed;
+					  mLastPlayed;
 
 	std::vector<TextComponent*> getMDLabels();
 	std::vector<GuiComponent*> getMDValues();

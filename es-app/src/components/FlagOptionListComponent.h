@@ -47,7 +47,7 @@ private:
 	public:
 		FlagOptionListPopup(Window* window, FlagOptionListComponent<T>* parent, const std::string& title,
 			const std::function<void(T& data, ComponentListRow& row)> callback = nullptr) : GuiComponent(window),
-			mMenu(window, title.c_str()), mParent(parent)
+			mMenu(window, title.c_str(), true), mParent(parent)
 		{
 			auto menuTheme = ThemeData::getMenuTheme();
 			auto font = menuTheme->Text.font;
@@ -75,7 +75,9 @@ private:
 				}
 				else
 				{
-					row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(it->name), font, color), true);
+					auto text_comp = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(it->name), font, color);
+					text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+					row.addElement(text_comp, true);
 
 					auto spacer = std::make_shared<GuiComponent>(mWindow);
 					spacer->setSize(Renderer::getScreenWidth() * 0.005f, 0);

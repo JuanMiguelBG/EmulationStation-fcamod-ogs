@@ -21,60 +21,17 @@
 
 std::vector<std::string> GuiGamelistOptions::gridSizes {
 	"automatic",
-	
 	"1x1",
-
-	"2x1",
-	"2x2",
-	"2x3",
-	"2x4",
-	"2x5",
-	"2x6",
-	"2x7",
-
-	"3x1",
-	"3x2",
-	"3x3",
-	"3x4",
-	"3x5",
-	"3x6",
-	"3x7",
-	
-	"4x1",
-	"4x2",
-	"4x3",
-	"4x4",
-	"4x5",
-	"4x6",
-	"4x7",
-
-	"5x1",
-	"5x2",
-	"5x3",
-	"5x4",
-	"5x5",
-	"5x6",
-	"5x7",
-
-	"6x1",
-	"6x2",
-	"6x3",
-	"6x4",
-	"6x5",
-	"6x6",
-	"6x7",
-
-	"7x1",
-	"7x2",
-	"7x3",
-	"7x4",
-	"7x5",
-	"7x6",
-	"7x7"
+	"2x1", "2x2", "2x3", "2x4", "2x5", "2x6", "2x7",
+	"3x1", "3x2", "3x3", "3x4", "3x5", "3x6", "3x7",
+	"4x1", "4x2", "4x3", "4x4", "4x5", "4x6", "4x7",
+	"5x1", "5x2", "5x3", "5x4", "5x5", "5x6", "5x7",
+	"6x1", "6x2", "6x3", "6x4", "6x5", "6x6", "6x7",
+	"7x1", "7x2", "7x3", "7x4", "7x5", "7x6", "7x7"
 };
 
 GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool showGridFeatures) : GuiComponent(window),
-	mSystem(system), mMenu(window, _("OPTIONS")), fromPlaceholder(false), mFiltersChanged(false), mReloadAll(false), mReloadSystems(false)
+	mSystem(system), mMenu(window, _("OPTIONS"), false), fromPlaceholder(false), mFiltersChanged(false), mReloadAll(false), mReloadSystems(false), mSelection(window)
 {	
 	auto theme = ThemeData::getMenuTheme();
 
@@ -314,9 +271,11 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 			});
 		}
 	}
+	
+	addSelectionInfo();
 
 	// center the menu
-	setSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());	
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());	
 	mMenu.animateTo(Vector2f((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2));
 }
 
@@ -440,7 +399,7 @@ void GuiGamelistOptions::addCustomCollectionLongName(const std::string& collecti
 
 	row.makeAcceptInputHandler([this, title, fullName, updateVal]
 	{
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, fullName->getValue(), updateVal, false));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, fullName->getValue(), updateVal, false, nullptr));
 	});
 
 	mMenu.addRow(row);
@@ -498,7 +457,7 @@ void GuiGamelistOptions::addTextFilterToMenu()
 
 	row.makeAcceptInputHandler([this, updateVal]
 	{
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("FILTER GAMES BY TEXT"), mTextFilter->getValue(), updateVal, false));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("FILTER GAMES BY TEXT"), mTextFilter->getValue(), updateVal, false, nullptr));
 	});
 
 	mMenu.addRow(row);
@@ -515,7 +474,7 @@ void GuiGamelistOptions::startEditMode()
 {
 	std::string editingSystem = mSystem->getName();
 	// need to check if we're editing the collections bundle, as we will want to edit the selected collection within
-	if(editingSystem == CollectionSystemManager::getInstance()->getCustomCollectionsBundle()->getName())
+	if (editingSystem == CollectionSystemManager::getInstance()->getCustomCollectionsBundle()->getName())
 	{
 		FileData* fileData = getGamelist()->getCursor();
 		// do we have the cursor on a specific collection?
@@ -664,4 +623,36 @@ void GuiGamelistOptions::deleteGame(FileData* fileData)
 void GuiGamelistOptions::close()
 {
 	delete this;
+}
+
+void GuiGamelistOptions::onSizeChanged()
+{
+	if (mWindow->getHelpComponentHeight() > 0)
+		return;
+
+	float h = mMenu.getButtonGridHeight();
+
+	mSelection.setSize(mSize.x(), h);
+	mSelection.setPosition(0, mSize.y() - h); //  mVersion.getSize().y()
+}
+
+void GuiGamelistOptions::addSelectionInfo()
+{
+	if (mWindow->getHelpComponentHeight() > 0)
+		return;
+
+	auto theme = ThemeData::getMenuTheme();
+
+	mSelection.setFont(theme->Footer.font);
+	mSelection.setColor(theme->Footer.color);
+
+	mSelection.setLineSpacing(0);
+
+	mSelection.setText(Utils::String::toUpper( _(mSystem->getFullName()) ) + " - " + Utils::String::toUpper(getGamelist()->getCursor()->getName()));
+
+	mSelection.setHorizontalAlignment(ALIGN_CENTER);	
+	mSelection.setVerticalAlignment(ALIGN_CENTER);
+	mSelection.setAutoScroll(true);
+
+	addChild(&mSelection);
 }

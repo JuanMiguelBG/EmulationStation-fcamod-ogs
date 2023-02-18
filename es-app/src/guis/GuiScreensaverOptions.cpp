@@ -7,29 +7,33 @@
 #include "SystemData.h"
 #include "Window.h"
 
-GuiScreensaverOptions::GuiScreensaverOptions(Window* window, std::string title) : GuiComponent(window), mMenu(window, title)
+GuiScreensaverOptions::GuiScreensaverOptions(Window* window, std::string title) : GuiComponent(window), mMenu(window, title, true)
 {
 	addChild(&mMenu);
 
 	mMenu.addButton(_("BACK"), _("BACK"), [this] { delete this; });
 
-	// resize
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height_ratio = 1.0f;
+	// resize & position
+	float width_ratio = 1.0f,
+		  height_ratio = 0.6f,
+		  width = Renderer::getScreenWidth(),
+		  height = Renderer::getScreenHeight(),
+		  new_x = 0.f,
+		  new_y = 0.f;
 
-	if ( change_height )
-		height_ratio = 0.95f;
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		width_ratio = 1.0f;
+		height_ratio = 1.0f;
+	}
+	setSize(width * width_ratio, height * height_ratio);
 
-	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
-
-	// center
-	float new_x = (mSize.x() - mMenu.getSize().x()) / 2,
-				new_y = (mSize.y() - mMenu.getSize().y()) / 2;
-
-	if ( change_height )
-		new_y = 0.f;
-
-	mMenu.setPosition(new_x, new_y);
+	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
+	{
+		new_x = (Renderer::getScreenWidth() - mMenu.getSize().x()) / 2; // center
+		new_y = (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2; // center
+	}
+	setPosition(new_x, new_y);
 }
 
 GuiScreensaverOptions::~GuiScreensaverOptions()
@@ -92,9 +96,11 @@ std::shared_ptr<TextComponent> GuiScreensaverOptions::addEditableTextComponent(c
 	ComponentListRow row;
 
 	auto lbl = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), theme->Text.font, theme->Text.color);
+	lbl->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	row.addElement(lbl, true); // label
 
 	std::shared_ptr<TextComponent> ed = std::make_shared<TextComponent>(mWindow, "", theme->TextSmall.font, theme->TextSmall.color);
+	ed->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	row.addElement(ed, true);
 
 	auto spacer = std::make_shared<GuiComponent>(mWindow);
@@ -108,7 +114,7 @@ std::shared_ptr<TextComponent> GuiScreensaverOptions::addEditableTextComponent(c
 
 	auto updateVal = [ed](const std::string& newVal) { ed->setValue(newVal); return true; }; // ok callback (apply new value to ed)
 	row.makeAcceptInputHandler([this, label, ed, updateVal] {
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, label, ed->getValue(), updateVal, false));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, label, ed->getValue(), updateVal, false, nullptr));
 	});
 
 	ed->setValue(value);

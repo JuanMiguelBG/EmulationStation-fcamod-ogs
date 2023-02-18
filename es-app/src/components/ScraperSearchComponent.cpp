@@ -494,10 +494,16 @@ void ScraperSearchComponent::openInputScreen(ScraperSearchParams& params)
 
 	stop();
 
-	mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("SEARCH FOR"),
-		// initial value is last search if there was one, otherwise the clean path name
-		params.nameOverride.empty() ? params.game->getCleanName() : params.nameOverride,
-		searchForFunc, false, _("SEARCH")));
+	if (Settings::getInstance()->getBool("UseOSK"))
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("SEARCH FOR"),
+			// initial value is last search if there was one, otherwise the clean path name
+			params.nameOverride.empty() ? params.game->getCleanName() : params.nameOverride,
+			searchForFunc, false, "SEARCH"));
+	else
+		mWindow->pushGui(new GuiTextEditPopup(mWindow, _("SEARCH FOR"),
+			// initial value is last search if there was one, otherwise the clean path name
+			params.nameOverride.empty() ? params.game->getCleanName() : params.nameOverride,
+			searchForFunc, false, "SEARCH", "SEARCH"));
 }
 
 std::vector<HelpPrompt> ScraperSearchComponent::getHelpPrompts()

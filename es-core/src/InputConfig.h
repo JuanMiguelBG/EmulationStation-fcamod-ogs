@@ -14,7 +14,7 @@ namespace pugi { class xml_node; }
 #define DEVICE_KEYBOARD -1
 #define DEVICE_CEC      -2
 // batocera
-#define MAX_PLAYERS 1
+#define MAX_PLAYERS 4
 
 extern char* BUTTON_OK;
 extern char* BUTTON_BACK;
@@ -118,7 +118,7 @@ public:
 	inline const std::string& getDeviceGUIDString() { return mDeviceGUID; }
 
 	//Returns true if Input is mapped to this name, false otherwise.
-	bool isMappedTo(const std::string& name, Input input);
+	bool isMappedTo(const std::string& name, Input input, bool reversedAxis = false);
 	bool isMappedLike(const std::string& name, Input input);
 
 	//Returns a list of names this input is mapped to.

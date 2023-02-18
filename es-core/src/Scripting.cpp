@@ -14,12 +14,12 @@ namespace Scripting
 
 		// check in exepath
 		test = Utils::FileSystem::getExePath() + "/scripts/" + eventName;
-		if(Utils::FileSystem::exists(test))
+		if (Utils::FileSystem::exists(test))
 			scriptDirList.push_back(test);
 
 		// check in ES config path
 		test = Utils::FileSystem::getEsConfigPath() + "/scripts/" + eventName;
-		if(Utils::FileSystem::exists(test))
+		if (Utils::FileSystem::exists(test))
 			scriptDirList.push_back(test);
 
 		int ret = 0;

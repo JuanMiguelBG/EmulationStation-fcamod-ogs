@@ -247,6 +247,8 @@ struct SoftwareInformation
 		version = "N/A";
 		so_base = "N/A";
 		vlinux = "N/A";
+		es_version = "";
+		es_built = "";
 	}
 
 	std::string hostname;
@@ -254,6 +256,8 @@ struct SoftwareInformation
 	std::string version;
 	std::string so_base;
 	std::string vlinux;
+	std::string es_version;
+	std::string es_built;
 };
 
 std::string queryHostname();
@@ -314,10 +318,6 @@ std::string getRemoteServicePlatformName(RemoteServicesId id = RemoteServicesId:
 RemoteServiceInformation queryRemoteServiceStatus(RemoteServicesId id = RemoteServicesId::UNKNOWN);
 bool setRemoteServiceStatus(RemoteServiceInformation service);
 
-#ifdef _DEBUG
-uint32_t getVolume();
-#endif
-
 std::string getShOutput(const std::string& mStr);
 
 std::string stateToString(bool state, const std::string &active_value = "enabled", const std::string &not_active_value = "disabled");
@@ -328,6 +328,7 @@ struct BluetoothDevice
 	BluetoothDevice()
 	{
 		name = "N/A";
+		alias = "N/A";
 		id = "N/A";
 		type = "N/A";
 		connected = false;
@@ -336,6 +337,7 @@ struct BluetoothDevice
 	}
 
 	std::string name;
+	std::string alias;
 	std::string id;
 	std::string type;
 	bool connected;

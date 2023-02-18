@@ -24,6 +24,8 @@ public:
 
 	std::shared_ptr<ComponentGrid> getGrid() { return mGrid; };
 
+	float getHeight();
+
 private:
 	std::shared_ptr<TextureResource> getIconTexture(const char* name);
 	std::map< std::string, std::shared_ptr<TextureResource> > mIconCache;

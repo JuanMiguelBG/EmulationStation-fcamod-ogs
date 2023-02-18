@@ -56,54 +56,59 @@ int run_scraper_cmdline()
 	std::vector<SystemData*> systems;
 
 	out << "You can scrape only specific platforms, or scrape all of them.\n";
-	out << "Would you like to scrape all platforms? (y/n)\n";
+	out << "Would you like to scrape all visible platforms? (y/n)\n";
 
 	std::string system_choice;
 	std::getline(std::cin, system_choice);
 
-	if(system_choice == "y" || system_choice == "Y")
+	if (system_choice == "y" || system_choice == "Y")
 	{
-		out << "Will scrape all platforms.\n";
-		for(auto i = SystemData::sSystemVector.cbegin(); i != SystemData::sSystemVector.cend(); i++)
+		out << "Will scrape all visible platforms.\n";
+		for (auto system : SystemData::sSystemVector)
 		{
-			out << "   " << (*i)->getName() << " (" << (*i)->getGameCount() << " games)\n";
-			systems.push_back(*i);
+			if (!system->isVisible())
+				continue;
+			
+			out << "   " << system->getName() << " (" << system->getGameCount() << " games)\n";
+			systems.push_back(system);
 		}
 
-	}else{
+	}
+	else
+	{
 		std::string sys_name;
 
 		out << "Enter the names of the platforms you would like to scrape, one at a time.\n";
 		out << "Type nothing and press enter when you are ready to continue.\n";
 
 		do {
-			for(auto i = SystemData::sSystemVector.cbegin(); i != SystemData::sSystemVector.cend(); i++)
+			for (auto system : SystemData::sSystemVector)
 			{
-				if(std::find(systems.cbegin(), systems.cend(), (*i)) != systems.cend())
+				if (std::find(systems.cbegin(), systems.cend(), system) != systems.cend())
 					out << " C ";
 				else
 					out << "   ";
 
-				out << "\"" << (*i)->getName() << "\" (" << (*i)->getGameCount() << " games)\n";
+				out << "\"" << system->getName() << "\" (" << system->getGameCount() << " games)\n";
 			}
 
 			std::getline(std::cin, sys_name);
 
-			if(sys_name.empty())
+			if (sys_name.empty())
 				break;
 
 			bool found = false;
-			for(auto i = SystemData::sSystemVector.cbegin(); i != SystemData::sSystemVector.cend(); i++)
+			for (auto system : SystemData::sSystemVector)
 			{
-				if((*i)->getName() == sys_name)
+				if (system->getName() == sys_name)
 				{
-					systems.push_back(*i);
+					systems.push_back(system);
 					found = true;
 					break;
 				}
 			}
 
-			if(!found)
+			if (!found)
 				out << "System not found.\n";
 
 		} while(true);

@@ -76,7 +76,6 @@ void SystemScreenSaver::startScreenSaver()
 
 	bool loadingNext = mLoadingNext;
 
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 	if (!isEnabled())
 	{
 		LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: running Screensaver not enabled";
@@ -84,6 +83,7 @@ void SystemScreenSaver::startScreenSaver()
 	}
 
 	// get the bightness level before call stopScreenSaver
+	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
 	if (screensaver_behavior == "black")
 	{
 		mCurrentBrightnessLevel = ApiSystem::getInstance()->getBrightnessLevel();
@@ -181,19 +181,6 @@ void SystemScreenSaver::startScreenSaver()
 			return;
 		}	
 	}
-	else if (screensaver_behavior == "suspend")
-	{
-		if (ApiSystem::getInstance()->isDeviceAutoSuspendStayAwakeCharging() && ApiSystem::getInstance()->isBatteryCharging())
-		{
-			LOG(LogInfo) << "SystemScreenSaver::startScreenSaver() - exit: screensaver_behavior 'suspend' and active 'AutoSuspendStayAwakeCharging' config";
-			return;
-		}
-
-		Scripting::fireEvent("quit", "suspend");
-		Scripting::fireEvent("suspend");
-		if (quitES(QuitMode::SUSPEND) != 0)
-			LOG(LogWarning) << "SystemScreenSaver::startScreenSaver() - Suspend terminated with non-zero result!";
-	}
 	else if (screensaver_behavior == "black")
 	{
 		mWindow->getBrightnessInfoComponent()->lock();
@@ -216,13 +203,12 @@ void SystemScreenSaver::stopScreenSaver()
 {
 	LOG(LogInfo) << "SystemScreenSaver::stopScreenSaver() - Enter";
 
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if (!isEnabled() || (screensaver_behavior == "suspend"))
+	if (!isEnabled())
 	{
-		LOG(LogInfo) << "SystemScreenSaver::stopScreenSaver() - exit: screensaver_behavior 'none' or 'suspend'";
+		LOG(LogInfo) << "SystemScreenSaver::stopScreenSaver() - exit: screensaver_behavior 'none'";
 		return;
 	}
-	else if (screensaver_behavior == "black")
+	else if (Settings::getInstance()->getString("ScreenSaverBehavior") == "black")
 	{
 		LOG(LogDebug) << "SystemScreenSaver::stopScreenSaver() - mCurrentBrightnessLevel: " << std::to_string(mCurrentBrightnessLevel);
 		if (mCurrentBrightnessLevel < 1)
@@ -268,8 +254,7 @@ void SystemScreenSaver::stopScreenSaver()
 
 void SystemScreenSaver::renderScreenSaver()
 {
-	std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-	if (!isEnabled() || (screensaver_behavior == "suspend"))
+	if (!isEnabled())
 		return;
 
 	Transform4x4f transform = Transform4x4f::Identity();
@@ -315,7 +300,6 @@ void SystemScreenSaver::renderScreenSaver()
 	else if (mState != STATE_INACTIVE)
 	{
 		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-
 		if ( (screensaver_behavior == "dim") && ApiSystem::getInstance()->isDisplayAutoDimStayAwakeCharging() && ApiSystem::getInstance()->isBatteryCharging() )
 			return;
 
@@ -491,9 +475,6 @@ std::string SystemScreenSaver::pickRandomCustomImage()
 
 void SystemScreenSaver::update(int deltaTime)
 {
-	if (Settings::getInstance()->getString("ScreenSaverBehavior") == "suspend")
-		return;
-
 	// Use this to update the fade value for the current fade stage
 	if (mState == STATE_FADE_OUT_WINDOW)
 	{

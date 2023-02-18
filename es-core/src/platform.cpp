@@ -1158,18 +1158,6 @@ bool stringToState(const std::string state, const std::string &active_value)
 	return ( Utils::String::replace(state, "\n", "") == active_value );
 }
 
-#ifdef _DEBUG
-uint32_t getVolume()
-{
-	uint32_t value = 0;
-	if (Utils::FileSystem::exists("/usr/local/bin/current_volume"))
-		value = std::atoi( getShOutput(R"(/usr/local/bin/current_volume)").c_str() );
-	else
-		value = std::atoi( getShOutput(R"(awk -F'[][]' '/Left:/ { print $2 }' <(amixer sget Master))").c_str() );
-	return value;
-}
-#endif
-
 std::string queryBluetoothEnabled()
 {
 	return getShOutput(R"(if [ -z $(pidof rtk_hciattach) ]; then echo "disabled"; else echo "enabled"; fi)");

@@ -239,7 +239,7 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 					if (Settings::getInstance()->getBool("ShowFileBrowser"))
 						mWindow->pushGui(new GuiFileBrowser(mWindow, dir, filePath, type, updateVal, title));
 					else
-						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, filePath, updateVal, false));
+						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, filePath, updateVal, false, nullptr));
 				});
 
 				break;
@@ -277,9 +277,9 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 				row.makeAcceptInputHandler([this, title, ed, updateVal, multiLine] 
 				{
 					if (!multiLine && Settings::getInstance()->getBool("UseOSK"))
-						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, ed->getValue(), updateVal, multiLine));
+						mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, ed->getValue(), updateVal, multiLine, nullptr));
 					else
-						mWindow->pushGui(new GuiTextEditPopup(mWindow, title, ed->getValue(), updateVal, multiLine));
+						mWindow->pushGui(new GuiTextEditPopup(mWindow, title, ed->getValue(), updateVal, multiLine, nullptr));
 				});
 				break;
 			}
@@ -332,20 +332,27 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 		return false;
 	});
 
-	// resize
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height_ratio = 1.0f;
-	if ( change_height )
-		height_ratio = 0.95f;
+	// resize & position
+	float width_ratio = 0.95f,
+		  height_ratio = 0.85f,
+		  width = Renderer::getScreenWidth(),
+		  height = Renderer::getScreenHeight(),
+		  new_x = 0.f,
+		  new_y = 0.f;
 
-	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		width_ratio = 1.0f;
+		height_ratio = 1.0f;
+	}
+	setSize(width * width_ratio, height * height_ratio);
 
-	// center
-	float new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-	if ( change_height )
-		new_y = 0.f;
-
-	setPosition(0.f, new_y);
+	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
+	{
+		new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,  // center
+		new_y = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
+	}
+	setPosition(new_x, new_y);
 }
 
 void GuiMetaDataEd::onSizeChanged()

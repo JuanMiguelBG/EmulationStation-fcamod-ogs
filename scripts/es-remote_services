@@ -159,7 +159,7 @@ do_systemd_inactive()
 
 do_filebrowser_active()
 {
-    sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
+    sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db -r &
 
     sleep 1
 
@@ -321,14 +321,14 @@ do_remote_services_active()
 {
     #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_active()'"
 
-    sudo systemctl start systemd-timesyncd.service --quiet
-    sudo systemctl start smbd.service --quiet
-    sudo systemctl start nmbd.service --quiet
-    sudo systemctl start ssh.service --quiet
-    sudo systemctl start NetworkManager-wait-online --quiet
+    sudo systemctl start systemd-timesyncd.service --quiet &
+    sudo systemctl start smbd.service --quiet &
+    sudo systemctl start nmbd.service --quiet &
+    sudo systemctl start ssh.service --quiet &
+    sudo systemctl start NetworkManager-wait-online --quiet &
 
     if [ -f "/usr/local/bin/filebrowser" ]; then
-      sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db &
+      sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db -r &
     fi
 
     return 0
@@ -338,14 +338,14 @@ do_remote_services_inactive()
 {
     #print_log $LOG_FILE "INFO" "Executing 'do_remote_services_inactive()'"
 
-    sudo systemctl stop systemd-timesyncd.service --quiet
-    sudo systemctl stop smbd.service --quiet
-    sudo systemctl stop nmbd.service --quiet
-    sudo systemctl stop ssh.service --quiet
-    sudo systemctl stop NetworkManager-wait-online --quiet
+    sudo systemctl stop systemd-timesyncd.service --quiet &
+    sudo systemctl stop smbd.service --quiet &
+    sudo systemctl stop nmbd.service --quiet &
+    sudo systemctl stop ssh.service --quiet &
+    sudo systemctl stop NetworkManager-wait-online --quiet &
 
     if [ -f "/usr/local/bin/filebrowser" ]; then
-      sudo pkill filebrowser
+      sudo pkill filebrowser &
     fi
 
     return 0

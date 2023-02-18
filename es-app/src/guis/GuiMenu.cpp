@@ -6,6 +6,7 @@
 #include "components/UpdatableTextComponent.h"
 #include "components/BrightnessInfoComponent.h"
 #include "components/VolumeInfoComponent.h"
+#include "components/HelpComponent.h"
 #include "guis/GuiCollectionSystemsOptions.h"
 #include "guis/GuiDetectDevice.h"
 #include "guis/GuiGeneralScreensaverOptions.h"
@@ -17,6 +18,7 @@
 #include "guis/GuiQuitOptions.h"
 #include "guis/GuiSystemHotkeyEventsOptions.h"
 #include "guis/GuiWifi.h"
+#include "guis/GuiBluetoothAlias.h"
 #include "guis/GuiBluetoothScan.h"
 #include "guis/GuiBluetoothPaired.h"
 #include "guis/GuiBluetoothConnected.h"
@@ -24,10 +26,10 @@
 #include "guis/GuiRetroachievementsOptions.h"
 #include "guis/GuiDisplayAutoDimOptions.h"
 #include "guis/GuiRemoteServicesOptions.h"
+#include "guis/GuiMenusOptions.h"
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
-#include "EmulationStation.h"
 #include "Scripting.h"
 #include "SystemData.h"
 #include "VolumeControl.h"
@@ -47,10 +49,11 @@
 #include "views/gamelist/IGameListView.h"
 #include "SystemConf.h"
 #include "utils/NetworkUtil.h"
+#include "utils/AsyncUtil.h"
 #include "guis/GuiLoading.h"
 
 
-GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU")), mVersion(window)
+GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
 {
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
 	{
@@ -94,40 +97,10 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		}
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-			addEntry(_("NETWORK SETTINGS").c_str(), true,
-				[this, window]
-				{
-					window->pushGui(new GuiLoading<bool>(window, _("PLEASE WAIT..."),
-						[this]
-						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
-							preloadNetworkSettings();
-							openNetworkSettings();
-							return true;
-						},
-						[](bool result)
-						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
-						}));
-				}, "iconNetwork");
+			addEntry(_("NETWORK SETTINGS").c_str(), true, [this]  { openNetworkSettings(); }, "iconNetwork");
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
-			addEntry(_("BLUETOOTH SETTINGS").c_str(), true,
-				[this, window]
-				{
-					window->pushGui(new GuiLoading<bool>(window, _("PLEASE WAIT..."),
-						[this]
-						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
-							preloadBluetoothSettings();
-							openBluetoothSettings();
-							return true;
-						},
-						[](bool result)
-						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
-						}));
-				}, "iconBluetooth");
+			addEntry(_("BLUETOOTH SETTINGS").c_str(), true, [this] { openBluetoothSettings(); }, "iconBluetooth");
 
 		addEntry(_("SCRAPER"), true, [this] { openScraperSettings(); }, "iconScraper");
 
@@ -148,46 +121,39 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 
 	addStatusBarInfo(window);
 
-	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
-	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
-
 	addChild(&mMenu);
 	addVersionInfo();
 
-	// resize
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height_ratio = 1.0f;
-	if ( change_height )
-		height_ratio = 0.95f;
+	// resize & position
+	float width = mSize.x(),
+		  height = mSize.y();
 
-	//setSize(mMenu.getSize());
-	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
+//	setSize(mMenu.getSize());
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		width = Renderer::getScreenWidth();
+		height = Renderer::getScreenHeight();
+	}
+	setSize(width, height);
+
+	float x_end = 0.f,
+		  y_end = 0.f;
+
+	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
+	{
+		x_end = (Renderer::getScreenWidth() - mSize.x()) / 2;  // center
+		y_end = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
+	}
 
 	if (animate)
 	{
-		float x_start = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					x_end = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					y_start = Renderer::getScreenHeight() * 0.95f,
-					y_end = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if ( change_height )
-			y_end = 0.f;
-
-		animateTo(
-			Vector2f(x_start, y_start),
-			Vector2f(x_end, y_end)
-		);
+		float x_start = x_end,
+			  y_start = Renderer::getScreenHeight() * 0.9f;
+		
+		animateTo(Vector2f(x_start, y_start), Vector2f(x_end, y_end));
 	}
 	else
-	{
-		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if ( change_height )
-			new_y = 0.f;
-
-		setPosition(new_x, new_y);
-	}
+		setPosition(x_end, y_end);
 }
 
 void GuiMenu::openDisplaySettings()
@@ -195,7 +161,7 @@ void GuiMenu::openDisplaySettings()
 	auto pthis = this;
 	Window* window = mWindow;
 
-	auto s = new GuiSettings(window, _("DISPLAY"));
+	auto s = new GuiSettings(window, _("DISPLAY SETTINGS"));
 
 	// Brightness
 	auto brightness = std::make_shared<SliderComponent>(window, 1.0f, 100.f, 1.0f, "%");
@@ -241,7 +207,8 @@ void GuiMenu::openDisplaySettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -257,6 +224,7 @@ void GuiMenu::openDisplayAutoDimSettings()
 
 void GuiMenu::openControllersSettings()
 {
+	auto pthis = this;
 	Window *window = mWindow;
 
 	GuiSettings* s = new GuiSettings(window, _("CONTROLLERS SETTINGS"));
@@ -295,6 +263,15 @@ void GuiMenu::openControllersSettings()
 		});
 
 	s->addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); } );
+
+	s->onFinalize([s, pthis, window]
+	{
+		if (s->getVariable("reloadAll"))
+		{
+			ViewController::get()->reloadAll(window);
+			window->endRenderLoadingScreen();
+		}
+	});
 
 	window->pushGui(s);
 }
@@ -582,7 +559,8 @@ void GuiMenu::openSoundSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -949,7 +927,7 @@ void GuiMenu::openUISettings()
 				s->setVariable("reloadAll", true);
 				s->setVariable("reloadGuiMenu", true);
 
-					// if theme is manual set, disable random theme selection
+				// if theme is manual set, disable random theme selection
 				if (Settings::getInstance()->getBool("ThemeRandom"))
 				{
 					Settings::getInstance()->setBool("ThemeRandom", Settings::getInstance()->getBool("ThemeRandom"));
@@ -1093,17 +1071,7 @@ void GuiMenu::openUISettings()
 	});
 
 	// menus configurations
-	// animated main menu
-	auto animated_main_menu = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("AnimatedMainMenu"));
-	s->addWithLabel(_("OPEN MAIN MENU WITH ANIMATION"), animated_main_menu);
-	s->addSaveFunc([animated_main_menu]
-		{
-			bool old_value = Settings::getInstance()->getBool("AnimatedMainMenu");
-			if (old_value != animated_main_menu->getState())
-			{
-				Settings::getInstance()->setBool("AnimatedMainMenu", animated_main_menu->getState());
-			}
-		});
+	s->addEntry(_("MENUS SETTINGS"), true, [this, s] { openMenusSettings(s); });
 
 	// Hide system view
 	auto hideSystemView = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("HideSystemView"));
@@ -1159,10 +1127,16 @@ void GuiMenu::openUISettings()
 	// show help
 	auto show_help = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("ShowHelpPrompts"));
 	s->addWithLabel(_("ON-SCREEN HELP"), show_help);
-	s->addSaveFunc([s, show_help]
+	s->addSaveFunc([window, s, show_help]
 	{
 		if (Settings::getInstance()->setBool("ShowHelpPrompts", show_help->getState()))
+		{
+			if (window->getHelpComponent())
+				window->getHelpComponent()->setVisible(show_help->getState());
+
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
+		}
 	});
 
 	// Battery indicator
@@ -1189,6 +1163,7 @@ void GuiMenu::openUISettings()
 			FileData::resetSettings();
 			s->setVariable("reloadCollections", true);
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
 		}
 	});
 
@@ -1198,7 +1173,10 @@ void GuiMenu::openUISettings()
 	s->addSaveFunc([enable_filter, s] { 
 		bool filter_is_enabled = !Settings::getInstance()->getBool("ForceDisableFilters");
 		if (Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState()))
+		{
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
+		}
 	});
 
 	// ignore articles when sorting
@@ -1209,6 +1187,7 @@ void GuiMenu::openUISettings()
 		if (Settings::getInstance()->setBool("IgnoreLeadingArticles", ignoreArticles->getState()))
 		{
 			s->setVariable("reloadAll", true);
+			s->setVariable("reloadGuiMenu", true);
 		}
 	});
 
@@ -1228,7 +1207,8 @@ void GuiMenu::openUISettings()
 
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 
@@ -1373,10 +1353,8 @@ void GuiMenu::updateGameLists(Window* window, bool confirm)
 		return;
 	}
 
-	window->pushGui(new GuiMsgBox(window, _("REALLY UPDATE GAMES LISTS ?"), _("YES"), [window]
-		{
-			ViewController::reloadAllGames(window, true);
-		},
+	window->pushGui(new GuiMsgBox(window, _("REALLY UPDATE GAMES LISTS ?"), _("YES"),
+		[window] { ViewController::reloadAllGames(window, true); },
 		_("NO"), nullptr));
 }
 
@@ -1389,22 +1367,6 @@ void GuiMenu::openRemoteServicesSettings()
 {
 	Window* window = mWindow;
 	window->pushGui(new GuiRemoteServicesOptions(window));
-}
-
-void GuiMenu::preloadNetworkSettings()
-{
-	SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
-	SystemConf::getInstance()->set("system.hostname", ApiSystem::getInstance()->getHostname());
-
-	std::string ssid = ApiSystem::getInstance()->getWifiSsid();
-	if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
-		SystemConf::getInstance()->set("wifi.ssid", ssid);
-
-	if (!SystemConf::getInstance()->get("wifi.ssid").empty())
-		SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(ssid));
-
-	SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
-	SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
 }
 
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)
@@ -1478,7 +1440,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		}
 	}
 
-	s->addSaveFunc([this, enable_wifi, manual_dns, baseManualDns, baseDnsOne, baseDnsTwo, window]
+	s->addSaveFunc([this, s, enable_wifi, manual_dns, baseManualDns, baseDnsOne, baseDnsTwo, window]
 		{
 			if (enable_wifi->getState())
 			{
@@ -1491,18 +1453,18 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				if (manualDns)
 				{
 					std::string dnsOne = SystemConf::getInstance()->get("wifi.dns1"),
-											dnsTwo = SystemConf::getInstance()->get("wifi.dns2");
+								dnsTwo = SystemConf::getInstance()->get("wifi.dns2");
 					if (baseDnsOne != dnsOne || baseDnsTwo != dnsTwo || !baseManualDns)
 					{
 						window->pushGui(new GuiLoading<bool>(window, _("CONFIGURING MANUAL DNS"),
-							[this, ssid, dnsOne, dnsTwo]
+							[this, s, ssid, dnsOne, dnsTwo]
 							{
-								Settings::getInstance()->setBool("wait.process.loading", true);
+								s->setWaitingLoad(true);
 								return ApiSystem::getInstance()->enableManualWifiDns(ssid, dnsOne, dnsTwo);
 							},
-							[this, window](bool success)
+							[this, window, s](bool success)
 							{
-								Settings::getInstance()->setBool("wait.process.loading", false);
+								s->setWaitingLoad(false);
 								if (success)
 									window->pushGui(new GuiMsgBox(window, _("MANUAL DNS ENABLED")));
 								else
@@ -1513,14 +1475,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				else if (baseManualDns)
 				{
 					window->pushGui(new GuiLoading<bool>(window, _("RESETING DNS CONFIGURATION"),
-						[this, window, ssid]
+						[this, window, s, ssid]
 						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
+							s->setWaitingLoad(true);
 							return ApiSystem::getInstance()->disableManualWifiDns(ssid);
 						},
-						[this, window](bool success)
+						[this, window, s](bool success)
 						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
+							s->setWaitingLoad(false);
 							if (!success)
 								window->pushGui(new GuiMsgBox(window, _("DNS CONFIGURATION ERROR"), GuiMsgBoxIcon::ICON_ERROR));
 						}));
@@ -1540,7 +1502,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			if (wifienabled)
 			{
 				std::string newSSID = SystemConf::getInstance()->get("wifi.ssid"),
-										newKey = SystemConf::getInstance()->get("wifi.key");
+							newKey = SystemConf::getInstance()->get("wifi.key");
 
 				if (newSSID.empty())
 				{
@@ -1551,14 +1513,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				if (baseSSID != newSSID || baseKEY != newKey || !baseWifiEnabled)
 				{
 					window->pushGui(new GuiLoading<bool>(window, _("CONNETING TO WIFI") + " '" + newSSID + "'",
-						[this, newSSID, newKey]
+						[this, s, newSSID, newKey]
 						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
+							s->setWaitingLoad(true);
 							return ApiSystem::getInstance()->connectWifi(newSSID, newKey);
 						},
-						[this, s, window, newSSID](bool success)
+						[this, window, s, newSSID](bool success)
 						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
+							s->setWaitingLoad(false);
 							if (success)
 							{
 								window->pushGui(new GuiMsgBox(window, "'" + newSSID + "' - " + _("WIFI ENABLED")));
@@ -1572,14 +1534,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 			else if (baseWifiEnabled)
 			{
 				window->pushGui(new GuiLoading<bool>(window, _("DISCONNETING TO WIFI") + " '" + baseSSID + "'",
-					[this]
+					[this, s]
 					{
-						Settings::getInstance()->setBool("wait.process.loading", true);
+						s->setWaitingLoad(true);
 						return ApiSystem::getInstance()->disableWifi(false);
 					},
-					[this, s, window, baseSSID](bool success)
+					[this, window, s, baseSSID](bool success)
 					{
-						Settings::getInstance()->setBool("wait.process.loading", false);
+						s->setWaitingLoad(false);
 						if (success)
 							s->setVariable("reloadGuiMenu", true);
 						else
@@ -1608,14 +1570,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 					}
 
 					window->pushGui(new GuiLoading<bool>(window, _("CONNETING TO WIFI") + " '" + ssid + "'",
-						[s, ssid]
+						[this, s, ssid]
 						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
+							s->setWaitingLoad(true);
 							return ApiSystem::getInstance()->connectWifi(ssid, SystemConf::getInstance()->get("wifi.key"));
 						},
-						[this, s, window, ssid](bool success)
+						[this, window, s, ssid](bool success)
 						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
+							s->setWaitingLoad(false);
 							if (success)
 							{
 								window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
@@ -1638,14 +1600,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						return;
 					}
 					window->pushGui(new GuiLoading<bool>(window, _("DISCONNETING TO WIFI") + " '" + ssid + "'",
-						[s, ssid]
+						[this, s, ssid]
 						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
+							s->setWaitingLoad(true);
 							return ApiSystem::getInstance()->disableWifi(false);
 						},
-						[this, s, window, ssid](bool success)
+						[this, window, s, ssid](bool success)
 						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
+							s->setWaitingLoad(false);
 							if (success)
 								s->setVariable("reloadGuiMenu", true);
 							else
@@ -1677,14 +1639,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				if (manualDns)
 				{
 					window->pushGui(new GuiLoading<bool>(window, _("CONFIGURING MANUAL DNS"),
-						[this, ssid]
+						[this, s, ssid]
 						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
+							s->setWaitingLoad(true);
 							return ApiSystem::getInstance()->enableManualWifiDns(ssid, SystemConf::getInstance()->get("wifi.dns1"), SystemConf::getInstance()->get("wifi.dns2"));
 						},
 						[this, window, s](bool success)
 						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
+							s->setWaitingLoad(false);
 							if (success)
 								window->displayNotificationMessage(_U("\uF25B  ") + _("DNS CONFIGURATION SUCCESFULLY"), 10000);
 							else
@@ -1697,14 +1659,14 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 				else
 				{
 					window->pushGui(new GuiLoading<bool>(window, _("RESETING DNS CONFIGURATION"),
-						[this, ssid]
+						[this, s, ssid]
 						{
-							Settings::getInstance()->setBool("wait.process.loading", true);
+							s->setWaitingLoad(true);
 							return ApiSystem::getInstance()->disableManualWifiDns(ssid);
 						},
-						[this, s, window](bool success)
+						[this, window, s](bool success)
 						{
-							Settings::getInstance()->setBool("wait.process.loading", false);
+							s->setWaitingLoad(false);
 							if (!success)
 								window->displayNotificationMessage(_U("\uF071  ") + _("DNS CONFIGURATION ERROR"), 10000);
 
@@ -1732,12 +1694,12 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
 
-	Settings::getInstance()->setBool("wait.process.loading", false);
 	window->pushGui(s);
 }
 
@@ -1756,18 +1718,6 @@ void GuiMenu::resetNetworkSettings(GuiSettings *gui)
 	window->removeGui(gui);
 	delete gui;
 	openNetworkSettings(true, false);
-}
-
-void GuiMenu::preloadBluetoothSettings()
-{
-	bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
-	SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
-	std::string btAudioDevice = "";
-	if (btEnabled)
-		btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
-
-	SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
-	SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 }
 
 void GuiMenu::openBluetoothSettings()
@@ -1798,9 +1748,9 @@ void GuiMenu::openBluetoothSettings()
 			if (bt_enabled)
 			{
 				window->pushGui(new GuiLoading<bool>(window, _("ENABLING BLUETOOTH ..."), 
-					[this, window]
+					[this, window, s]
 					{
-						Settings::getInstance()->setBool("wait.process.loading", true);
+						s->setWaitingLoad(true);
 						bool result = ApiSystem::getInstance()->enableBluetooth();
 						SystemConf::getInstance()->setBool("bluetooth.enabled", result);
 						if (result)
@@ -1812,8 +1762,7 @@ void GuiMenu::openBluetoothSettings()
 					},
 					[this, window, s](bool result)
 					{
-						Settings::getInstance()->setBool("wait.process.loading", false);
-
+						s->setWaitingLoad(false);
 						if (result)
 							s->setVariable("reloadGuiMenu", true);
 
@@ -1824,9 +1773,9 @@ void GuiMenu::openBluetoothSettings()
 			else
 			{
 				window->pushGui(new GuiLoading<bool>(window, _("DISABLING BLUETOOTH ..."), 
-					[this, window]
+					[this, window, s]
 					{
-						Settings::getInstance()->setBool("wait.process.loading", true);
+						s->setWaitingLoad(true);
 						ApiSystem::getInstance()->stopBluetoothLiveScan();
 						bool result = ApiSystem::getInstance()->disableBluetooth();
 						SystemConf::getInstance()->setBool("bluetooth.enabled", !result);
@@ -1837,7 +1786,7 @@ void GuiMenu::openBluetoothSettings()
 					},
 					[this, window, s, baseBtAudioConnected](bool result)
 					{
-						Settings::getInstance()->setBool("wait.process.loading", false);
+						s->setWaitingLoad(false);
 						if (result)
 						{ // successfully disabled
 							SystemConf::getInstance()->setBool("bluetooth.audio.connected", false);
@@ -1880,30 +1829,42 @@ void GuiMenu::openBluetoothSettings()
 
 			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color));
 		}
+	}
+	else
+	{
+		std::string bt_title = _("MANAGE BLUETOOTH DEVICES ALIAS");
+		s->addEntry(bt_title, true, [this, window, bt_title] { openBluetoothDevicesAlias(window, bt_title); });
+	}
 
-		// autoconnect audio device on boot
-		auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
-		s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
-		auto_connect->setOnChangedCallback([this, s, auto_connect]
+	// use alias as device name
+	auto alias_as_name = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.use.alias"));
+	s->addWithLabel(_("USE ALIAS AS DEVICE NAME"), alias_as_name);
+	alias_as_name->setOnChangedCallback([alias_as_name]
+		{
+			SystemConf::getInstance()->setBool("bluetooth.use.alias", alias_as_name->getState());
+		});	
+
+	// autoconnect audio device on boot
+	auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
+	s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
+	s->addSaveFunc([auto_connect]
 		{
 			SystemConf::getInstance()->setBool("bluetooth.audio.device.autoconnect", auto_connect->getState());
 		});
 
-		auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
-		auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
-		s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
-		auto_connect_timeout->setOnValueChanged([window, s](const float &newVal)
-			{
-				int timeout = (int)Math::round(newVal);
-				Settings::getInstance()->setInt("bluetooth.boot.game.timeout", timeout);
-			});
-	}
+	auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
+	auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
+	s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
+	s->addSaveFunc([auto_connect_timeout]
+		{
+			Settings::getInstance()->setInt("bluetooth.boot.game.timeout", (int)Math::round(auto_connect_timeout->getValue()));
+		});
+
 
 	auto pthis = this;
 
 	s->onClose([s, pthis, window]
 	{
-		Settings::getInstance()->setBool("wait.process.loading", false);
 		ApiSystem::getInstance()->stopBluetoothLiveScan();
 
 		bool es_abt = SystemConf::getInstance()->getBool("bluetooth.audio.connected"),
@@ -1920,13 +1881,13 @@ void GuiMenu::openBluetoothSettings()
 
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 
 	});
 
-	Settings::getInstance()->setBool("wait.process.loading", false);
 	window->pushGui(s);
 }
 
@@ -1941,6 +1902,11 @@ void GuiMenu::reinitSoundComponentsAndMusic()
 		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme(), true);
 	else
 		AudioManager::getInstance()->playRandomMusic();
+}
+
+void GuiMenu::openBluetoothDevicesAlias(Window* window, std::string title)
+{
+	window->pushGui(new GuiBluetoothAlias(window, title));
 }
 
 void GuiMenu::openBluetoothScanDevices(Window* window, std::string title)
@@ -2042,7 +2008,10 @@ void GuiMenu::openUpdateSettings()
 	s->onFinalize([s, pthis]
 	{
 		if (s->getVariable("closeGuiMenu"))
-			delete pthis;
+		{
+			if (pthis)
+				delete pthis;
+		}
 	});
 
 	window->pushGui(s);
@@ -2143,6 +2112,8 @@ void GuiMenu::openAdvancedSettings()
 					language_label = "PORTUGUESE PORTUGAL";
 				else if (*it == "zh-CN")
 					language_label = "SIMPLIFIED CHINESE";
+				else if (*it == "it")
+					language_label = "ITALIAN";
 				else
 					language_label = *it;
 
@@ -2166,12 +2137,12 @@ void GuiMenu::openAdvancedSettings()
 
 	// power saver
 	auto power_saver = std::make_shared< OptionListComponent<std::string> >(window, _("POWER SAVER MODES"), false);
-	std::vector<std::string> modes;
-	modes.push_back("disabled");
-	modes.push_back("default");
-	modes.push_back("enhanced");
-	modes.push_back("instant");
-	for (auto it = modes.cbegin(); it != modes.cend(); it++)
+	std::vector<std::string> ps_modes;
+	ps_modes.push_back("disabled");
+	ps_modes.push_back("default");
+	ps_modes.push_back("enhanced");
+	ps_modes.push_back("instant");
+	for (auto it = ps_modes.cbegin(); it != ps_modes.cend(); it++)
 		power_saver->add(_(it->c_str()), *it, Settings::getInstance()->getString("PowerSaverMode") == *it);
 
 	s->addWithLabel(_("POWER SAVER MODES"), power_saver);
@@ -2189,6 +2160,31 @@ void GuiMenu::openAdvancedSettings()
 		PowerSaver::init();
 	});
 
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
+	{
+		// sleep / suspend modes
+		auto suspend_mode = std::make_shared< OptionListComponent<std::string> >(window, _("SUSPEND MODES"), false);
+		std::vector<std::string> suspend_modes = ApiSystem::getInstance()->getSuspendModes();
+		std::string sm_value = ApiSystem::getInstance()->getSuspendMode();
+		for (auto it = suspend_modes.cbegin(); it != suspend_modes.cend(); it++)
+			suspend_mode->add(_(it->c_str()), *it, sm_value == *it);
+		
+		s->addWithLabel(_("SUSPEND MODES"), suspend_mode);
+		s->addSaveFunc([this, s, suspend_mode]
+			{
+				if (SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected()))
+				{
+					ApiSystem::getInstance()->setSuspendMode(suspend_mode->getSelected());
+					if (suspend_mode->getSelected() == "DISABLED")
+					{
+						if (Settings::getInstance()->setString("OnlyExitAction", "shutdown")
+							&& Settings::getInstance()->getBool("ShowOnlyExit"))
+							s->setVariable("reloadGuiMenu", true);
+					}
+				}
+			});
+
+	}
 
 	s->addGroup(_("GAME LIST"));
 
@@ -2297,7 +2293,7 @@ void GuiMenu::openAdvancedSettings()
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC))
 	{
-		// preloa VLC - workaround for the freeze of the first video play
+		// preload VLC - workaround for the freeze of the first video play
 		auto preloa_VLC = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("PreloadVLC"));
 		s->addWithLabel(_("PRELOAD VLC"), preloa_VLC);
 		s->addSaveFunc([preloa_VLC]
@@ -2370,7 +2366,7 @@ void GuiMenu::openAdvancedSettings()
 		//s->setVariable("reloadAll", true);
 	});
 
-	// Battery Indicator
+	// Close with select the game metadata edit gui
 	auto gui_metadata_select = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("GuiEditMetadataCloseAllWindows"));
 	s->addWithLabel(_("GAME METADATA EDIT - \"SELECT\" CLOSE MENU"), gui_metadata_select);
 	s->addSaveFunc([s, gui_metadata_select]
@@ -2378,10 +2374,9 @@ void GuiMenu::openAdvancedSettings()
 		Settings::getInstance()->setBool("GuiEditMetadataCloseAllWindows", gui_metadata_select->getState());
 	});
 
-
 	s->addGroup(_("OTHERS"));
 
-	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this] { openQuitSettings(); });
+	s->addEntry(_("\"QUIT\" SETTINGS"), true, [this, s] { openQuitSettings(s); });
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::AUTO_SUSPEND))
 		s->addEntry(_("DEVICE AUTO SUSPEND SETTINGS"), true, [this] { openAutoSuspendSettings(); });
@@ -2416,18 +2411,14 @@ void GuiMenu::openAdvancedSettings()
 		{
 			Log::setupReportingLevel();
 			Log::init();
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS) && ApiSystem::getInstance()->isEsScriptsLoggingActivated())
-				ApiSystem::getInstance()->setEsScriptsLoggingLevel(logLevel->getSelected());
 		}
 	});
 
 	auto logWithMilliseconds = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("LogWithMilliseconds"));
 	s->addWithLabel(_("LOG WITH MILLISECONDS"), logWithMilliseconds);
 	s->addSaveFunc([logWithMilliseconds] {
-		bool old_value = Settings::getInstance()->getBool("LogWithMilliseconds");
-		if (old_value != logWithMilliseconds->getState())
+		if (Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState()))
 		{
-			Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState());
 			Log::setupReportingLevel();
 			Log::init();
 		}
@@ -2435,12 +2426,11 @@ void GuiMenu::openAdvancedSettings()
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS))
 	{
-		bool scripts_log_activated_value = ApiSystem::getInstance()->isEsScriptsLoggingActivated();
-		auto scripts_log_activated = std::make_shared<SwitchComponent>(window, scripts_log_activated_value);
+		auto scripts_log_activated = std::make_shared<SwitchComponent>(window, ApiSystem::getInstance()->isEsScriptsLoggingActivated());
 		s->addWithLabel(_("ACTIVATE ES SCRIPTS LOGGING"), scripts_log_activated);
-		s->addSaveFunc([scripts_log_activated_value, scripts_log_activated] {
-			if (scripts_log_activated_value != scripts_log_activated->getState())
-				ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState(), Settings::getInstance()->getString("LogLevel"));
+		s->addSaveFunc([scripts_log_activated] {
+			ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState(), Settings::getInstance()->getString("LogLevel"),
+																   Settings::getInstance()->getBool("LogWithMilliseconds"));
 		});
 	}
 
@@ -2450,7 +2440,8 @@ void GuiMenu::openAdvancedSettings()
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
+			if (pthis)
+				delete pthis;
 			window->pushGui(new GuiMenu(window, false));
 		}
 	});
@@ -2459,19 +2450,25 @@ void GuiMenu::openAdvancedSettings()
 
 }
 
-void GuiMenu::openQuitSettings()
+void GuiMenu::openQuitSettings(GuiSettings *parentGui)
 {
 	Window* window = mWindow;
 	auto pthis = this;
 
 	auto s = new GuiQuitOptions(window);
 
-	s->onFinalize([s, pthis, window]
+	s->onFinalize([s, parentGui, pthis, window]
 	{
 		if (s->getVariable("reloadGuiMenu"))
 		{
-			delete pthis;
-			window->pushGui(new GuiMenu(window, false));
+			if (parentGui)
+				delete parentGui;
+			if (pthis)
+				delete pthis;
+			
+			auto main_menu = new GuiMenu(window, false);
+			window->pushGui(main_menu);
+			main_menu->openAdvancedSettings();
 		}
 	});
 
@@ -2496,6 +2493,31 @@ void GuiMenu::openRetroAchievementsSettings()
 	window->pushGui(new GuiRetroachievementsOptions(window));
 }
 
+void GuiMenu::openMenusSettings(GuiSettings *parentGui)
+{
+	Window* window = mWindow;
+	auto pthis = this;
+	auto s = new GuiMenusOptions(mWindow);
+
+	s->onFinalize([s, parentGui, pthis, window]
+	{
+		if (s->getVariable("reloadGuiMenu"))
+		{
+			if (parentGui)
+				delete parentGui;
+			if (pthis)
+				delete pthis;
+			
+			auto main_menu = new GuiMenu(window, false);
+			window->pushGui(main_menu);
+			main_menu->openUISettings();
+		}
+
+	});
+
+	mWindow->pushGui(s);
+}
+
 void GuiMenu::openSystemInformation()
 {
 	Window *window = mWindow;
@@ -2505,7 +2527,6 @@ void GuiMenu::openSystemInformation()
 void GuiMenu::openConfigInput()
 {
 	Window* window = mWindow;
-//	window->pushGui(new GuiDetectDevice(window, false, nullptr));
 		
 	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO CONFIGURE INPUT?"), _("YES"),
 		[window] {
@@ -2764,22 +2785,29 @@ std::string getBuildTime()
 
 void GuiMenu::addVersionInfo()
 {
-	std::string  buildDate = getBuildTime();
-	//	(Settings::getInstance()->getBool("Debug") ? std::string( "   (" + Utils::String::toUpper(PROGRAM_BUILT_STRING) + ")") : (""));
+	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
+	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 
+	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
+	{
+		mVersion.setVisible(false);
+		return;
+	}
+
+	std::string  buildDate = getBuildTime();
 	auto theme = ThemeData::getMenuTheme();
-//	mVersion.setFont(Font::get(FONT_SIZE_SMALL));
-//	mVersion.setColor(0x5E5E5EFF);
 
 	mVersion.setFont(theme->Footer.font);
 	mVersion.setColor(theme->Footer.color);
-
 	mVersion.setLineSpacing(0);
 	
-	mVersion.setText("EMULATIONSTATION V" + Utils::String::toUpper(PROGRAM_VERSION_STRING) + " BUILD " + buildDate);
+	mVersion.setText("EMULATIONSTATION V" + Utils::String::toUpper(software.es_version) + " BUILD " + buildDate);
 
 	mVersion.setHorizontalAlignment(ALIGN_CENTER);	
 	mVersion.setVerticalAlignment(ALIGN_CENTER);
+	mVersion.setAutoScroll(true);
+	mVersion.setVisible(true);
+
 	addChild(&mVersion);
 }
 
@@ -2819,10 +2847,17 @@ void GuiMenu::openCollectionSystemSettings(bool cursor)
 
 void GuiMenu::onSizeChanged()
 {
+	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
+	{
+		mVersion.setVisible(false);
+		return;
+	}
+
 	float h = mMenu.getButtonGridHeight();
 
 	mVersion.setSize(mSize.x(), h);
 	mVersion.setPosition(0, mSize.y() - h); //  mVersion.getSize().y()
+	mVersion.setVisible(true);
 }
 
 void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName)
@@ -2843,8 +2878,8 @@ void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<voi
 			// icon
 			auto icon = std::make_shared<ImageComponent>(window);
 			icon->setImage(iconPath);
-			icon->setColorShift(theme->Text.color);
-			icon->setResize(0, theme->Text.font->getLetterHeight() * 1.25f);
+			icon->setColorShift(color);
+			icon->setResize(0, font->getLetterHeight() * 1.25f);
 			row.addElement(icon, false);
 
 			// spacer between icon and text
@@ -2854,7 +2889,9 @@ void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<voi
 		}
 	}
 
-	row.addElement(std::make_shared<TextComponent>(window, name, font, color), true);
+	auto text_comp = std::make_shared<TextComponent>(window, name, font, color);
+	text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+	row.addElement(text_comp, true);
 
 	if (add_arrow)
 	{
@@ -2873,9 +2910,9 @@ bool GuiMenu::input(InputConfig* config, Input input)
 
 	if ((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("start", input)) && input.value != 0)
 	{
-		if (!Settings::getInstance()->getBool("wait.process.loading"))
-			delete this;
-
+		auto pthis = this;
+		if (pthis)
+			delete pthis;
 		return true;
 	}
 
@@ -3004,11 +3041,10 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
 		row.addElement(icon, false, false);
 		row.addElement(spacer, false);
-}
-	else
-	{
-		text.append("BAT: ");
 	}
+	else
+		text.append("BAT: ");
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Sound Information
@@ -3016,7 +3052,7 @@ void GuiMenu::addStatusBarInfo(Window* window)
 	iconPath = getIconSound(level);
 	text.clear();
 	if (!iconPath.empty())
-{
+	{
 		// icon
 		auto icon = std::make_shared<ImageComponent>(window);
 		icon->setImage(iconPath);
@@ -3026,9 +3062,8 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		text.append("SND: ");
-	}
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Brightness Information
@@ -3044,11 +3079,10 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
 		row.addElement(icon, false, false);
 		row.addElement(spacer, false);
-}
-	else
-	{
-		text.append("BRT: ");
 	}
+	else
+		text.append("BRT: ");
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
 	// Bluetooth Information
@@ -3066,9 +3100,8 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		text.append("BT: ").append(( status ? "ON" : "OFF" ));
-	}
+
 	row.addElement(std::make_shared<TextComponent>(window, text.append(" | "), font, color), false);
 
 	// Network Information
@@ -3085,9 +3118,8 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		row.addElement(std::make_shared<TextComponent>(window, text.append("NTW: "), font, color), false);
-	}
+
 	status = ApiSystem::getInstance()->isNetworkConnected();
 	iconPath = getIconNetwork(status);
 	text.clear();
@@ -3102,9 +3134,7 @@ void GuiMenu::addStatusBarInfo(Window* window)
 		row.addElement(spacer, false);
 	}
 	else
-	{
 		row.addElement(std::make_shared<TextComponent>(window, text.append(formatNetworkStatus(status)), font, color), false);
-	}
 
 	mMenu.addRow(row);
 }

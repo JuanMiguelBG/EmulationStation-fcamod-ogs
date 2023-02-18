@@ -10,9 +10,8 @@ do_help() {
 }
 
 is_enabled() {
-    output=$(nmcli radio wifi)
-
-    enabled=$(echo "$output" | grep enabled)
+    local output=$(nmcli radio wifi)
+    local enabled=$(echo "$output" | grep enabled)
 
     if [ -z "$enabled" ]; then
       # disaled
@@ -24,7 +23,7 @@ is_enabled() {
 }
 
 get_system_name() {
-  file=""
+  local file=""
 
   if [ -f "/usr/share/plymouth/themes/text.plymouth" ]; then
     file="/usr/share/plymouth/themes/text.plymouth"
@@ -37,7 +36,7 @@ get_system_name() {
 }
 
 get_system_version() {
-  version=""
+  local version=""
 
   if [ -f "/usr/share/plymouth/themes/text.plymouth" ]; then
     file="/usr/share/plymouth/themes/text.plymouth"
@@ -58,7 +57,7 @@ get_system_info() {
 }
 
 get_base_os_info() {
-  base_os=""
+  local base_os=""
 
   if [ -f "/usr/bin/hostnamectl" ]; then
     base_os=$(hostnamectl | grep -iw "system" | awk '{gsub(/=/," ")}; {for (i=3; i<NF; i++) printf $i " "; print $NF}')
@@ -71,7 +70,7 @@ get_base_os_info() {
 }
 
 get_kernel_info() {
-  kernel=""
+  local kernel=""
 
   if [ -f "/usr/bin/hostnamectl" ]; then
     kernel=$(hostnamectl | grep -iw "kernel" | awk '{gsub(/=/," ")}; {for (i=2; i<NF; i++) printf $i " "; print $NF}')
@@ -86,7 +85,7 @@ get_device_name() {
 }
 
 get_soc_name() {
-  soc=$(cat /proc/cpuinfo | grep -iw hardware | awk '{print $3 " " $4}')
+  local soc=$(cat /proc/cpuinfo | grep -iw hardware | awk '{print $3 " " $4}')
   if [ -z "$var" ]
   then
       soc="Rockchip RK3566"

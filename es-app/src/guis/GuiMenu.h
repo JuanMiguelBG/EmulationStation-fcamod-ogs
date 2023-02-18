@@ -38,18 +38,18 @@ private:
 	void openSoundSettings();
 	void openUISettings();
 	void openSystemInformation();
-	void openQuitSettings();
+	void openMenusSettings(GuiSettings *parentGui);
+	void openQuitSettings(GuiSettings *parentGui);
 	void openAutoSuspendSettings();
 	void openSystemHotkeyEventsSettings();
 	void openRetroAchievementsSettings();
-	void preloadNetworkSettings();
 	void openNetworkSettings(bool selectWifiEnable = false, bool selectManualWifiDnsEnable = false);
 	void resetNetworkSettings(GuiSettings *gui);
 
 	static void openWifiSettings(Window* win, std::string title, std::string data, const std::function<bool(std::string)>& onsave);
 
-	void preloadBluetoothSettings();
 	void openBluetoothSettings();
+	void openBluetoothDevicesAlias(Window* window, std::string title);
 	void openBluetoothScanDevices(Window* win, std::string title);
 	void openBluetoothPairedDevices(Window* win, std::string title);
 	void openBluetoothConnectedDevices(Window* win, std::string title);
