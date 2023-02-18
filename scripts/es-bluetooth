@@ -49,6 +49,7 @@ update_controller_id()
 
     if [ -z "$bt_controller_id" ]; then
       #print_log $LOG_FILE "ERROR" "Executing 'update_controller_id()' - bluetooth controller ID is empty, skipping"
+      return 1
     fi
 
     local cid_setted=`cat "$SYSTEM_VARIABLES_PATH" | grep "$bt_controller_id"`
