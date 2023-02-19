@@ -154,10 +154,10 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 	};
 	addEntry(_("CREATE NEW CUSTOM COLLECTION").c_str(), true, [this, window, createCustomCollection] {
 		if (Settings::getInstance()->getBool("UseOSK")) {
-			window->pushGui(new GuiTextEditPopupKeyboard(window, _("New Collection Name"), "", createCustomCollection, false, nullptr));
+			window->pushGui(new GuiTextEditPopupKeyboard(window, _("New Collection Name"), "", createCustomCollection, false));
 		}
 		else {
-			window->pushGui(new GuiTextEditPopup(window, _("New Collection Name"), "", createCustomCollection, false, nullptr));
+			window->pushGui(new GuiTextEditPopup(window, _("New Collection Name"), "", createCustomCollection, false));
 		}
 	});
 

@@ -6,8 +6,6 @@
 #include "SystemConf.h"
 #include "ApiSystem.h"
 #include "EsLocale.h"
-#include "guis/GuiTextEditPopup.h"
-#include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiLoading.h"
 #include "SystemConf.h"
 #include "Log.h"

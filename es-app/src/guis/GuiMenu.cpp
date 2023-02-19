@@ -42,8 +42,6 @@
 #include "GuiGamelistOptions.h" // grid sizes
 #include "platform.h"
 #include "renderers/Renderer.h" // setSwapInterval()
-#include "guis/GuiTextEditPopup.h"
-#include "guis/GuiTextEditPopupKeyboard.h"
 #include "scrapers/ThreadedScraper.h"
 #include "ApiSystem.h"
 #include "views/gamelist/IGameListView.h"
