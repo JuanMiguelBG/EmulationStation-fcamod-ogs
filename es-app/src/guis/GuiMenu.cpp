@@ -276,7 +276,6 @@ void GuiMenu::openControllersSettings()
 
 void GuiMenu::openScraperSettings()
 {
-	return;
 	Window *window = mWindow;
 
 	auto s = new GuiSettings(window, _("SCRAPER"));
