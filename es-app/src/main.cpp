@@ -557,6 +557,10 @@ void signalHandler(int signum)
 		LOG(LogError) << "Interrupt signal SIGFPE received.\n";
 	else if (signum == SIGFPE)
 		LOG(LogError) << "Interrupt signal SIGFPE received.\n";
+	else if (signum == SIGABRT)
+		LOG(LogError) << "Interrupt signal SIGABRT received.\n";
+	else if (signum == SIGTERM)
+		LOG(LogError) << "Interrupt signal SIGTERM received.\n";
 	else
 		LOG(LogError) << "Interrupt signal (" << signum << ") received.\n";
 
@@ -617,12 +621,12 @@ void updateMetadataStartupGame()
 
 int main(int argc, char* argv[])
 {
-	// signal(SIGABRT, signalHandler);
+	signal(SIGABRT, signalHandler);
 	signal(SIGFPE, signalHandler);
 	signal(SIGILL, signalHandler);
 	signal(SIGINT, signalHandler);
 	signal(SIGSEGV, signalHandler);
-	// signal(SIGTERM, signalHandler);
+	signal(SIGTERM, signalHandler);
 
 	srand((unsigned int)time(NULL));
 
