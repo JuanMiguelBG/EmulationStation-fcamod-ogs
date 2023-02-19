@@ -278,6 +278,7 @@ void GuiMenu::openControllersSettings()
 
 void GuiMenu::openScraperSettings()
 {
+	return;
 	Window *window = mWindow;
 
 	auto s = new GuiSettings(window, _("SCRAPER"));
@@ -2175,10 +2176,10 @@ void GuiMenu::openAdvancedSettings()
 				if (SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected()))
 				{
 					ApiSystem::getInstance()->setSuspendMode(suspend_mode->getSelected());
-					if (suspend_mode->getSelected() == "DISABLED")
+					if (Settings::getInstance()->getBool("ShowOnlyExit")
+						&& ((suspend_mode->getSelected() == "DISABLED") && (Settings::getInstance()->getString("OnlyExitAction") == "suspend")))
 					{
-						if (Settings::getInstance()->setString("OnlyExitAction", "shutdown")
-							&& Settings::getInstance()->getBool("ShowOnlyExit"))
+						if (Settings::getInstance()->setString("OnlyExitAction", "shutdown"))
 							s->setVariable("reloadGuiMenu", true);
 					}
 				}
@@ -2662,7 +2663,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 					restartEsFunction();
 			}, "iconRestartEmulationstaion");
 
-		if(Settings::getInstance()->getBool("ShowExit"))
+		if (!Settings::getInstance()->getBool("HideQuitEsOption"))
 		{
 			s->addEntry(_("QUIT EMULATIONSTATION"), false, [window]
 				{

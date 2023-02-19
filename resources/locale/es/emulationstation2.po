@@ -3190,6 +3190,10 @@ msgid "SHOW ACTION NAME AS MENU OPTION"
 msgstr "ACCIÓN COMO OPCIÓN DE MENÚ"
 
 #:
+msgid "HIDE \"QUIT EMULATIONSTATION\" OPTION"
+msgstr "OCULTAR \"SALIR DE EMULATIONSTATION\""
+
+#:
 msgid "The selected UI mode has nothing to show,\n returning to UI mode: FULL"
 msgstr "El modo seleccionado no muestra nada, \n volviendo al modo: COMPLETO"
 
