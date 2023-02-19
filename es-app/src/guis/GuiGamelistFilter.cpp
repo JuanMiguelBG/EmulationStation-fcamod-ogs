@@ -6,7 +6,7 @@
 #include "EsLocale.h"
 #include "utils/StringUtil.h"
 
-GuiGamelistFilter::GuiGamelistFilter(Window* window, SystemData* system) : GuiComponent(window), mMenu(window, _("FILTER GAMELIST BY"), true), mSystem(system)
+GuiGamelistFilter::GuiGamelistFilter(Window* window, SystemData* system) : GuiComponent(window), mMenu(window, _("FILTER GAMELIST BY")), mSystem(system)
 {
 	initializeMenu();
 }

@@ -22,7 +22,7 @@
 #define DOCUMENT_ICON		_U("\uF02D ")
 
 GuiFileBrowser::GuiFileBrowser(Window* window, const std::string startPath, const std::string selectedFile, FileTypes types, const std::function<void(const std::string&)>& okCallback, const std::string& title)
-	: GuiComponent(window), mMenu(window, title.empty() ? _("FILE BROWSER") : title, true)
+	: GuiComponent(window), mMenu(window, title.empty() ? _("FILE BROWSER") : title)
 {
 	setTag("popup");
 

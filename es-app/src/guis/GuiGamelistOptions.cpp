@@ -31,7 +31,7 @@ std::vector<std::string> GuiGamelistOptions::gridSizes {
 };
 
 GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool showGridFeatures) : GuiComponent(window),
-	mSystem(system), mMenu(window, _("OPTIONS"), false), fromPlaceholder(false), mFiltersChanged(false), mReloadAll(false), mReloadSystems(false), mSelection(window)
+	mSystem(system), mMenu(window, _("OPTIONS")), fromPlaceholder(false), mFiltersChanged(false), mReloadAll(false), mReloadSystems(false), mSelection(window)
 {	
 	auto theme = ThemeData::getMenuTheme();
 

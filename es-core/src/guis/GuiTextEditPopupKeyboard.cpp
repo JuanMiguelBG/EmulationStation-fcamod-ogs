@@ -4,7 +4,6 @@
 #include "EsLocale.h"
 #include "SystemConf.h"
 #include "Settings.h"
-#include "Window.h"
 
 #define OSK_WIDTH (Renderer::isSmallScreen() ? Renderer::getScreenWidth() : Renderer::getScreenWidth() * 0.78f)
 #define OSK_HEIGHT (Renderer::isSmallScreen() ? Renderer::getScreenHeight() : Renderer::getScreenHeight() * 0.60f)
@@ -272,42 +271,54 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 	});
 
 
+	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
+	float height_ratio = 1.0f;
+	if ( change_height )
+		height_ratio = 0.95f;
+
 	// If multiline, set all diminsions back to default, else draw size for keyboard.
-	float new_x = 0.f,
-		  new_y = 0.f,
-		  width = OSK_WIDTH,
-		  height = !mMultiLine ? OSK_HEIGHT : mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40,
-		  width_ratio = 1.0f;
-
-	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
-		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
-	else
-	{  // !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
-		if (Settings::getInstance()->getBool("AutoMenuWidth"))
+	if (mMultiLine)
 	{
-			float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
+		float width = OSK_WIDTH,
+					height = mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40;
 
-			width_ratio = 1.2f;
-			if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
-				width_ratio = 1.4f;
-			else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
-				width_ratio = 1.7f;
-			else if ((font_size >= FONT_SIZE_LARGE))
-				width_ratio = 2.0f;
-		}
+		height = Renderer::getScreenHeight() * height_ratio;
 
-		width = (float)Math::min((int)(width * width_ratio), Renderer::getScreenWidth());
+		width = (float)Math::min((int)width, Renderer::getScreenWidth());
 
 		setSize(width, height);
 
-		new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
+		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
 					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-	}
-	setPosition(new_x, new_y);
 
-	if (!mMultiLine)
+		if ( change_height )
+			new_y = 0.f;
+
+		setPosition(new_x, new_y);
+	}
+	else
+	{
+		//setSize(OSK_WIDTH, mTitle->getFont()->getHeight() + textHeight + 40 + (Renderer::getScreenHeight() * 0.085f) * 6);
+
+		float width = OSK_WIDTH,
+					height = OSK_HEIGHT;
+
+		height = (float)Math::min((int) height, (int) (Renderer::getScreenHeight() * height_ratio));
+
+		width = (float)Math::min((int) width, Renderer::getScreenWidth());
+
+		setSize(width, height);
+
+		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
+					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+
+		if ( change_height )
+			new_y = 0.f;
+
+		setPosition(new_x, new_y);
 		animateTo(Vector2f(new_x, new_y));
 	}
+}
 
 
 void GuiTextEditPopupKeyboard::onSizeChanged()
@@ -324,7 +335,7 @@ void GuiTextEditPopupKeyboard::onSizeChanged()
 	auto pos = mKeyboardGrid->getPosition();
 	auto sz = mKeyboardGrid->getSize();
 
-	mKeyboardGrid->setSize(mSize.x() - OSK_PADDINGX - OSK_PADDINGX, sz.y() - OSK_PADDINGY - mWindow->getHelpComponentHeight()); // Small margin between buttons
+	mKeyboardGrid->setSize(mSize.x() - OSK_PADDINGX - OSK_PADDINGX, sz.y() - OSK_PADDINGY); // Small margin between buttons
 	mKeyboardGrid->setPosition(OSK_PADDINGX, pos.y());
 }
 

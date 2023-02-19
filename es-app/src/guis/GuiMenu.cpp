@@ -51,7 +51,7 @@
 #include "guis/GuiLoading.h"
 
 
-GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
+GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU")), mVersion(window)
 {
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
 	{
@@ -122,36 +122,40 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 	addChild(&mMenu);
 	addVersionInfo();
 
-	// resize & position
-	float width = mSize.x(),
-		  height = mSize.y();
+	// resize
+	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
+	float height_ratio = 1.0f;
+	if ( change_height )
+		height_ratio = 0.95f;
 
 //	setSize(mMenu.getSize());
-	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
-	{
-		width = Renderer::getScreenWidth();
-		height = Renderer::getScreenHeight();
-	}
-	setSize(width, height);
-
-	float x_end = 0.f,
-		  y_end = 0.f;
-
-	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
-	{
-		x_end = (Renderer::getScreenWidth() - mSize.x()) / 2;  // center
-		y_end = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
-	}
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
 
 	if (animate)
 	{
-		float x_start = x_end,
-			  y_start = Renderer::getScreenHeight() * 0.9f;
-		
-		animateTo(Vector2f(x_start, y_start), Vector2f(x_end, y_end));
+		float x_start = (Renderer::getScreenWidth() - mSize.x()) / 2,
+					x_end = (Renderer::getScreenWidth() - mSize.x()) / 2,
+					y_start = Renderer::getScreenHeight() * 0.95f,
+					y_end = (Renderer::getScreenHeight() - mSize.y()) / 2;
+
+		if ( change_height )
+		  y_end = 0.f;
+
+		animateTo(
+			Vector2f(x_start, y_start),
+			Vector2f(x_end, y_end)
+		);
 	}
 	else
-		setPosition(x_end, y_end);
+	{
+		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
+					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+
+		if ( change_height )
+			new_y = 0.f;
+		
+		setPosition(new_x, new_y);
+	}
 }
 
 void GuiMenu::openDisplaySettings()

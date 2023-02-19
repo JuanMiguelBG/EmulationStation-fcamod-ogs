@@ -70,7 +70,7 @@ private:
 	public:
 		OptionListPopup(Window* window, OptionListComponent<T>* parent, const std::string& title, 
 			const std::function<void(T& data, ComponentListRow& row)> callback = nullptr) : GuiComponent(window),
-			mMenu(window, title.c_str(), true), mParent(parent)
+			mMenu(window, title.c_str()), mParent(parent)
 		{
 			auto menuTheme = ThemeData::getMenuTheme();
 			auto font = menuTheme->Text.font;

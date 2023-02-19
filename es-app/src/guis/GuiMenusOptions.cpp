@@ -17,6 +17,7 @@ GuiMenusOptions::~GuiMenusOptions()
 
 void GuiMenusOptions::initializeMenu(Window* window)
 {
+/*
 	if (!Renderer::isSmallScreen())
 	{
 		// Center menus on the screen
@@ -38,7 +39,7 @@ void GuiMenusOptions::initializeMenu(Window* window)
 					setVariable("reloadGuiMenu", true);
 			});
 	}
-
+*/
 	// animated main menu
 	auto animated_main_menu = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("AnimatedMainMenu"));
 	addWithLabel(_("OPEN MAIN MENU WITH ANIMATION"), animated_main_menu);

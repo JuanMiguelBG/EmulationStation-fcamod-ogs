@@ -13,7 +13,7 @@
 
 
 GuiBluetoothPaired::GuiBluetoothPaired(Window* window, const std::string title, const std::string subtitle)
-	: GuiComponent(window), mMenu(window, title.c_str(), true)
+	: GuiComponent(window), mMenu(window, title.c_str())
 {
 	mTitle = title;
 	mWaitingLoad = false;
