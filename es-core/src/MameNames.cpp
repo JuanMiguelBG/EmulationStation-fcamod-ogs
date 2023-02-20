@@ -158,7 +158,7 @@ const bool MameNames::isDevice(const std::string& _deviceName)
 	return (mMameDevices.find(_deviceName) != mMameDevices.cend());
 } // isDevice
 
-const bool MameNames::isVertical(const std::string& _nameName)
+const bool MameNames::isVertical(const std::string& _gameName)
 {
-	return (mVerticalGames.find(_nameName) != mVerticalGames.cend());
-}
+	return (mVerticalGames.find(_gameName) != mVerticalGames.cend());
+} // isVertical

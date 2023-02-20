@@ -180,7 +180,7 @@ void TextComponent::render(const Transform4x4f& parentTrans)
 		Renderer::drawRect(0.0f, 0.0f, mSize.x(), mSize.y(), bgColor, bgColor);
 	}
 
-	if (mAutoScroll)
+	if (mAutoScroll && !mText.empty())
 		Renderer::pushClipRect(Vector2i(trans.translation().x(), trans.translation().y()), Vector2i(mSize.x(), mSize.y()));
 
 	if (mTextCache == nullptr || mFont == nullptr)
@@ -289,7 +289,7 @@ void TextComponent::render(const Transform4x4f& parentTrans)
 		mFont->renderGradientTextCache(mTextCache.get(), colorB, colorT);
 	}
 
-	if (mAutoScroll)
+	if (mAutoScroll && !mText.empty())
 		Renderer::popClipRect();
 }
 
@@ -303,13 +303,13 @@ void TextComponent::calculateExtent()
 
 void TextComponent::onTextChanged()
 {
-	calculateExtent();
-
 	if (!mFont || mText.empty())
 	{
 		mTextCache.reset();
 		return;
 	}
+
+	calculateExtent();
 
 	int sx = mSize.x() - mPadding.x() - mPadding.z();
 	int sy = mSize.y() - mPadding.y() - mPadding.w();
@@ -362,7 +362,7 @@ void TextComponent::update(int deltaTime)
 	int sy = mSize.y() - mPadding.y() - mPadding.w();
 	const bool isMultiline = !mAutoScroll && (mSize.y() == 0 || sy > mFont->getHeight()*1.95f);
 
-	if (mAutoScroll && !isMultiline && mSize.x() > 0)
+	if (mAutoScroll  && !mText.empty() && !isMultiline && mSize.x() > 0)
 	{
 		// always reset the marquee offsets
 		mMarqueeOffset = 0;
