@@ -2786,12 +2786,6 @@ void GuiMenu::addVersionInfo()
 	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 
-	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
-	{
-		mVersion.setVisible(false);
-		return;
-	}
-
 	std::string  buildDate = getBuildTime();
 	auto theme = ThemeData::getMenuTheme();
 
@@ -2845,13 +2839,9 @@ void GuiMenu::openCollectionSystemSettings(bool cursor)
 
 void GuiMenu::onSizeChanged()
 {
-	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
-	{
-		mVersion.setVisible(false);
-		return;
-	}
-
 	float h = mMenu.getButtonGridHeight();
+
+	h += mWindow->getHelpComponentHeight();
 
 	mVersion.setSize(mSize.x(), h);
 	mVersion.setPosition(0, mSize.y() - h); //  mVersion.getSize().y()
