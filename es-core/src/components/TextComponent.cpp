@@ -303,13 +303,13 @@ void TextComponent::calculateExtent()
 
 void TextComponent::onTextChanged()
 {
+	calculateExtent();
+
 	if (!mFont || mText.empty())
 	{
 		mTextCache.reset();
 		return;
 	}
-
-	calculateExtent();
 
 	int sx = mSize.x() - mPadding.x() - mPadding.z();
 	int sy = mSize.y() - mPadding.y() - mPadding.w();

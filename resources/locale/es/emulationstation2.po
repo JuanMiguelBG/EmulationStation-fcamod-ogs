@@ -3316,6 +3316,14 @@ msgid "collections"
 msgstr "colecciones"
 
 #:
+msgid "options"
+msgstr "opciones"
+
+#:
+msgid "Options"
+msgstr "Opciones"
+
+#:
 msgid "Collections"
 msgstr "Colecciones"
 
