@@ -10,7 +10,7 @@
 #include "scrapers/ThreadedScraper.h"
 
 GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
-	mMenu(window, _("SCRAPE NOW"))
+	mMenu(window, _("SCRAPE NOW"), true)
 {
 	mOverwriteMedias = true;
 
@@ -74,18 +74,26 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 	mMenu.addButton(_("START"), _("START"), std::bind(&GuiScraperStart::pressedStart, this));
 	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
 
-	// resize
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height_ratio = 1.0f;
-	if ( change_height )
-		height_ratio = 0.95f;
+	// resize & position
+	float width_ratio = 0.95f,
+		  height_ratio = 0.85f,
+		  width = Renderer::getScreenWidth(),
+		  height = Renderer::getScreenHeight(),
+		  new_x = 0.f,
+		  new_y = 0.f;
 
-	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		width_ratio = 1.0f;
+		height_ratio = 1.0f;
+	}
+	setSize(width * width_ratio, height * height_ratio);
 
-	// center
-	float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-				new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
+	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
+	{
+		new_x = (Renderer::getScreenWidth() - mSize.x()) / 2;  // center
+		new_y = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
+	}
 	setPosition(new_x, new_y);
 }
 

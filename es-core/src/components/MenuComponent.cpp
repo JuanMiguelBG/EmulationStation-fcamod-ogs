@@ -2,8 +2,10 @@
 
 #include "components/ButtonComponent.h"
 #include "components/MultiLineMenuEntry.h"
+#include "components/HelpComponent.h"
 #include "Settings.h"
 #include "resources/Font.h"
+#include "Window.h"
 #include "Log.h"
 
 #define BUTTON_GRID_VERT_PADDING  (Renderer::getScreenHeight()*0.0296296) //32
@@ -12,10 +14,13 @@
 #define TITLE_HEIGHT (mTitle->getFont()->getLetterHeight() + (mSubtitle ? TITLE_WITHSUB_VERT_PADDING : TITLE_VERT_PADDING) + (mSubtitle ? mSubtitle->getSize().y() + SUBTITLE_VERT_PADDING : 0))
 
 MenuComponent::MenuComponent(Window* window, 
+		const std::string title, bool computeHelpComponentSize) : MenuComponent(window, title, Font::get(FONT_SIZE_LARGE), "", computeHelpComponentSize) {}
+
+MenuComponent::MenuComponent(Window* window, 
 	const std::string title, const std::shared_ptr<Font>& titleFont,
-	const std::string subTitle) 
+	const std::string subTitle, bool computeHelpComponentSize) 
 	: GuiComponent(window),
-	mBackground(window), mGrid(window, Vector2i(1, 3))
+	mBackground(window), mGrid(window, Vector2i(1, 3)), mComputeHelpComponentSize(computeHelpComponentSize)
 {
 	mMaxHeight = 0;
 
@@ -250,30 +255,70 @@ float MenuComponent::getButtonGridHeight() const
 
 	return (mButtonGrid ? mButtonGrid->getSize().y() : menuTheme->Text.font->getHeight() + BUTTON_GRID_VERT_PADDING);
 }
-
+/*
 void MenuComponent::setPosition(float x, float y, float z)
 {
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts"),
-			 new_y = y;
-
-	if ( change_height )
+	float new_y = y;
+	if (Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts"))
 		new_y = 0.f;
 
 	GuiComponent::setPosition(x, new_y, z);
 }
-
+*/
 void MenuComponent::updateSize()
 {
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height,
-				height_ratio = 1.0f;
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		LOG(LogDebug) << "MenuComponent::updateSize() - is small screen or not center menus.";
+		Log::flush();
+		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
+		return;
+	}
 
-	if (change_height)
-		height_ratio = 0.95f;
+	LOG(LogDebug) << "MenuComponent::updateSize() - is big screen and center menus.";
+	Log::flush();
 
-	height = (float)Math::min((int)Renderer::getScreenHeight(), (int)(Renderer::getScreenHeight() * height_ratio));
+	// !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
+	float width, height;
+	const float maxHeight = mMaxHeight <= 0 ? Renderer::getScreenHeight() * 0.75f : mMaxHeight;
 
-	setSize(Renderer::getScreenWidth(), height);
+	height = TITLE_HEIGHT + mList->getTotalRowHeight() + getButtonGridHeight() + 2;
+	if (height > maxHeight)
+	{
+		height = TITLE_HEIGHT + getButtonGridHeight();
+		int i = 0;
+		while(i < mList->size())
+		{
+			float rowHeight = mList->getRowHeight(i);
+			if(height + rowHeight < maxHeight)
+				height += rowHeight;
+			else
+				break;
+			i++;
+		}
+	}
+
+	width = Renderer::getScreenWidth() * 0.90f;
+	if (Settings::getInstance()->getBool("AutoMenuWidth"))
+	{
+		float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
+			  ratio = 1.2f;
+
+		width = (float)Math::min((int)width, Renderer::getScreenWidth());
+
+		if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
+			ratio = 1.4f;
+		else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
+			ratio = 1.7f;
+		else if ((font_size >= FONT_SIZE_LARGE))
+			ratio = 2.0f;
+
+		width = width * ratio;
+	}
+
+	height = (float)Math::min((int)height, Renderer::getScreenHeight());
+	width = (float)Math::min((int)width, Renderer::getScreenWidth());
+	setSize(width, height);
 }
 
 void MenuComponent::onSizeChanged()
@@ -311,7 +356,7 @@ void MenuComponent::updateGrid()
 
 	if (mButtons.size())
 	{
-		mButtonGrid = makeButtonGrid(mWindow, mButtons);
+		mButtonGrid = makeButtonGrid(mWindow, mButtons, isComputeHelpComponentSize());
 		mGrid.setEntry(mButtonGrid, Vector2i(0, 2), true, false);
 	}
 }
@@ -319,6 +364,11 @@ void MenuComponent::updateGrid()
 std::vector<HelpPrompt> MenuComponent::getHelpPrompts()
 {
 	return mGrid.getHelpPrompts();
+}
+
+float getHelpComponentHeight(Window* window, bool addHelpComponnetHeight)
+{
+	return window && addHelpComponnetHeight ? window->getHelpComponentHeight() : 0.f;
 }
 
 std::shared_ptr<ComponentGrid> makeMultiDimButtonGrid(Window* window, const std::vector< std::vector< std::shared_ptr<ButtonComponent> > >& buttons, float outerWidth)
@@ -358,7 +408,7 @@ std::shared_ptr<ComponentGrid> makeMultiDimButtonGrid(Window* window, const std:
 	return grid;
 }
 
-std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector< std::shared_ptr<ButtonComponent> >& buttons)
+std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector< std::shared_ptr<ButtonComponent> >& buttons, bool addHelpComponentHeight)
 {
 	std::shared_ptr<ComponentGrid> buttonGrid = std::make_shared<ComponentGrid>(window, Vector2i((int)buttons.size(), 2));
 
@@ -373,8 +423,12 @@ std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector<
 		buttonGrid->setColWidthPerc(i, (buttons.at(i)->getSize().x() + BUTTON_GRID_HORIZ_PADDING) / buttonGridWidth);
 	}
 
-	buttonGrid->setSize(buttonGridWidth, buttons.at(0)->getSize().y() + BUTTON_GRID_VERT_PADDING + 2);
-	buttonGrid->setRowHeightPerc(1, 2 / buttonGrid->getSize().y()); // spacer row to deal with dropshadow to make buttons look centered
+	float helpComponentHeight = getHelpComponentHeight(window, addHelpComponentHeight);
+	LOG(LogDebug) << "MenuComponent::makeButtonGrid() - help component height: " << std::to_string(helpComponentHeight) << ", addHelpComponentHeight: " << Utils::String::boolToString(addHelpComponentHeight);
+	Log::flush();
+	buttonGrid->setSize(buttonGridWidth, buttons.at(0)->getSize().y() + BUTTON_GRID_VERT_PADDING + (helpComponentHeight > 0.f ? helpComponentHeight : 2));
+	// spacer row to deal with dropshadow to make buttons look centered
+	buttonGrid->setRowHeightPerc(1, helpComponentHeight > 0.f ? 0.4f : (2 / buttonGrid->getSize().y()) );
 
 	return buttonGrid;
 }

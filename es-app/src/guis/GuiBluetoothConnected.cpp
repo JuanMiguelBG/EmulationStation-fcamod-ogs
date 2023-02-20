@@ -11,7 +11,7 @@
 
 
 GuiBluetoothConnected::GuiBluetoothConnected(Window* window, const std::string title, const std::string subtitle)
-	: GuiComponent(window), mMenu(window, title.c_str())
+	: GuiComponent(window), mMenu(window, title.c_str(), true)
 {
 	mTitle = title;
 	mWaitingLoad = false;
