@@ -84,6 +84,7 @@ void Settings::setDefaults()
 	mBoolMap["ConfirmToExit"] = true;
 	mBoolMap["ShowQuitMenuWithSelect"] = false;
 	mBoolMap["ShowFastQuitActions"] = false;
+	mBoolMap["HideQuitEsOption"] = true;
 
 	mBoolMap["SplashScreen"] = true;
 	mBoolMap["SplashScreenProgress"] = true;

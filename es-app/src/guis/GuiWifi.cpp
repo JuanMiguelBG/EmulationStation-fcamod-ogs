@@ -64,9 +64,9 @@ void GuiWifi::load(std::vector<std::string> ssids)
 void GuiWifi::onManualInput()
 {
 	if (Settings::getInstance()->getBool("UseOSK"))
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, mTitle, mInitialData, [this](const std::string& value) { return onSave(value); }, false, nullptr));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, mTitle, mInitialData, [this](const std::string& value) { return onSave(value); }, false));
 	else
-		mWindow->pushGui(new GuiTextEditPopup(mWindow, mTitle, mInitialData, [this](const std::string& value) { return onSave(value); }, false, nullptr));
+		mWindow->pushGui(new GuiTextEditPopup(mWindow, mTitle, mInitialData, [this](const std::string& value) { return onSave(value); }, false));
 }
 
 bool GuiWifi::onSave(const std::string& value)

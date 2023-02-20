@@ -2,7 +2,6 @@
 
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
-#include "guis/GuiTextEditPopupKeyboard.h"
 #include "utils/StringUtil.h"
 #include "Settings.h"
 #include "Window.h"

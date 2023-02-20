@@ -114,7 +114,7 @@ std::shared_ptr<TextComponent> GuiScreensaverOptions::addEditableTextComponent(c
 
 	auto updateVal = [ed](const std::string& newVal) { ed->setValue(newVal); return true; }; // ok callback (apply new value to ed)
 	row.makeAcceptInputHandler([this, label, ed, updateVal] {
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, label, ed->getValue(), updateVal, false, nullptr));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, label, ed->getValue(), updateVal, false));
 	});
 
 	ed->setValue(value);
