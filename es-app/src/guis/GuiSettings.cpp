@@ -217,9 +217,9 @@ void GuiSettings::addInputTextRow(std::string title, const char *settingsID, boo
 		if (customEditor != nullptr)
 			customEditor(mWindow, title, data, updateVal);
 		else if (Settings::getInstance()->getBool("UseOSK"))
-			mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, data, updateVal, false, nullptr));
+			mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, data, updateVal, false));
 		else
-			mWindow->pushGui(new GuiTextEditPopup(mWindow, title, data, updateVal, false, nullptr));
+			mWindow->pushGui(new GuiTextEditPopup(mWindow, title, data, updateVal, false));
 	});
 
 	addRow(row);
