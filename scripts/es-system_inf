@@ -83,7 +83,7 @@ get_kernel_info() {
 get_device_name() {
   local DEVICE="$(cat $USER_HOME_PATH/.config/.ARALE_DEVICE)"
 
-  if [ ! -z "$DEVICE" ]
+  if [ ! -z "$DEVICE" ]; then
     echo "$DEVICE"
   fi
 
