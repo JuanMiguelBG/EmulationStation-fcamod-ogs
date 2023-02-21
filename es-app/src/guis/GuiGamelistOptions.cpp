@@ -399,7 +399,7 @@ void GuiGamelistOptions::addCustomCollectionLongName(const std::string& collecti
 
 	row.makeAcceptInputHandler([this, title, fullName, updateVal]
 	{
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, fullName->getValue(), updateVal, false, nullptr));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, title, fullName->getValue(), updateVal, false));
 	});
 
 	mMenu.addRow(row);
@@ -457,7 +457,7 @@ void GuiGamelistOptions::addTextFilterToMenu()
 
 	row.makeAcceptInputHandler([this, updateVal]
 	{
-		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("FILTER GAMES BY TEXT"), mTextFilter->getValue(), updateVal, false, nullptr));
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("FILTER GAMES BY TEXT"), mTextFilter->getValue(), updateVal, false));
 	});
 
 	mMenu.addRow(row);
@@ -627,10 +627,9 @@ void GuiGamelistOptions::close()
 
 void GuiGamelistOptions::onSizeChanged()
 {
-	if (mWindow->getHelpComponentHeight() > 0)
-		return;
+	float h = mMenu.getButtonGridHeight(); 
 
-	float h = mMenu.getButtonGridHeight();
+	h += mWindow->getHelpComponentHeight();
 
 	mSelection.setSize(mSize.x(), h);
 	mSelection.setPosition(0, mSize.y() - h); //  mVersion.getSize().y()
@@ -638,9 +637,6 @@ void GuiGamelistOptions::onSizeChanged()
 
 void GuiGamelistOptions::addSelectionInfo()
 {
-	if (mWindow->getHelpComponentHeight() > 0)
-		return;
-
 	auto theme = ThemeData::getMenuTheme();
 
 	mSelection.setFont(theme->Footer.font);

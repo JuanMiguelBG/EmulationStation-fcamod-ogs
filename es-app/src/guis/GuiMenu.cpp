@@ -42,8 +42,6 @@
 #include "GuiGamelistOptions.h" // grid sizes
 #include "platform.h"
 #include "renderers/Renderer.h" // setSwapInterval()
-#include "guis/GuiTextEditPopup.h"
-#include "guis/GuiTextEditPopupKeyboard.h"
 #include "scrapers/ThreadedScraper.h"
 #include "ApiSystem.h"
 #include "views/gamelist/IGameListView.h"
@@ -2175,10 +2173,10 @@ void GuiMenu::openAdvancedSettings()
 				if (SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected()))
 				{
 					ApiSystem::getInstance()->setSuspendMode(suspend_mode->getSelected());
-					if (suspend_mode->getSelected() == "DISABLED")
+					if (Settings::getInstance()->getBool("ShowOnlyExit")
+						&& ((suspend_mode->getSelected() == "DISABLED") && (Settings::getInstance()->getString("OnlyExitAction") == "suspend")))
 					{
-						if (Settings::getInstance()->setString("OnlyExitAction", "shutdown")
-							&& Settings::getInstance()->getBool("ShowOnlyExit"))
+						if (Settings::getInstance()->setString("OnlyExitAction", "shutdown"))
 							s->setVariable("reloadGuiMenu", true);
 					}
 				}
@@ -2662,7 +2660,7 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 					restartEsFunction();
 			}, "iconRestartEmulationstaion");
 
-		if(Settings::getInstance()->getBool("ShowExit"))
+		if (!Settings::getInstance()->getBool("HideQuitEsOption"))
 		{
 			s->addEntry(_("QUIT EMULATIONSTATION"), false, [window]
 				{
@@ -2788,12 +2786,6 @@ void GuiMenu::addVersionInfo()
 	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
 	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
 
-	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
-	{
-		mVersion.setVisible(false);
-		return;
-	}
-
 	std::string  buildDate = getBuildTime();
 	auto theme = ThemeData::getMenuTheme();
 
@@ -2847,13 +2839,9 @@ void GuiMenu::openCollectionSystemSettings(bool cursor)
 
 void GuiMenu::onSizeChanged()
 {
-	if (Settings::getInstance()->getBool("ShowHelpPrompts"))
-	{
-		mVersion.setVisible(false);
-		return;
-	}
-
 	float h = mMenu.getButtonGridHeight();
+
+	h += mWindow->getHelpComponentHeight();
 
 	mVersion.setSize(mSize.x(), h);
 	mVersion.setPosition(0, mSize.y() - h); //  mVersion.getSize().y()
