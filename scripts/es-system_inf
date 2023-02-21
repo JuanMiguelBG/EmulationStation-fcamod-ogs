@@ -31,12 +31,13 @@ get_system_name() {
     file="/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth"
   fi
 
-  name=$(cat "$file" | grep -iw "title" | awk '{ gsub(/=/," "); print $2}')
+  local name=$(cat "$file" | grep -iw "title" | awk '{ gsub(/=/," "); print $2}')
   echo "$name"
 }
 
 get_system_version() {
   local version=""
+  local file=""
 
   if [ -f "/usr/share/plymouth/themes/text.plymouth" ]; then
     file="/usr/share/plymouth/themes/text.plymouth"
@@ -45,8 +46,8 @@ get_system_version() {
   fi
 
   version=$(cat "$file" | grep -iw "title" | awk '{gsub(/=/," ")}; {for (i=3; i<NF; i++) printf $i " "; print $NF}')
-  if [ -f "/opt/system/.arkosnoid/version" ]; then
-    version_extra=$(cat /opt/system/.arkosnoid/version)
+  if [ -f "/opt/system/.ARALE/version" ]; then
+    local version_extra=$(cat /opt/system/.ARALE/version)
     version="$version $version_extra"
   fi
   echo "$version"

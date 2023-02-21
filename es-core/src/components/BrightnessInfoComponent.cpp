@@ -55,7 +55,7 @@ BrightnessInfoComponent::BrightnessInfoComponent(Window* window, bool actionLine
 
 
 	// FCA TopRight
-	float posX = Renderer::getScreenWidth() - (Renderer::getScreenWidth() * 0.11f);
+	float posX = Renderer::getScreenWidth() - (Renderer::getScreenWidth() * 0.12f);
 	float posY = Renderer::getScreenHeight() * 0.04f;
 
 	setPosition(posX, posY, 0);
