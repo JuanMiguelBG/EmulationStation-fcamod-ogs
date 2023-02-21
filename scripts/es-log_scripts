@@ -35,6 +35,7 @@ print_log()
   local log_level="$2"
   local log_mesage="$3"
   local mdate=""
+  local PID=$$
 
   if [ $ES_LOGGING_ENABLED -eq 1 ]; then
     aceptable_level $log_level
@@ -44,7 +45,7 @@ print_log()
       else
         mdate=$(date '+%d/%m/%Y %H:%M:%S')
       fi
-      local msg="$mdate $log_level $log_mesage"
+      local msg="$mdate [$PID] - $log_level $log_mesage"
       echo "$msg" >> $log_file
     fi
   fi
