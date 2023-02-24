@@ -53,7 +53,7 @@ void ThreadedScraper::search(const ScraperSearchParams& params)
 	std::string idx = std::to_string(mTotal + 1 - mSearchQueue.size()) + "/" + std::to_string(mTotal);
 
 	mWndNotification->updateTitle(GUIICON + _("SCRAPING") + "... " + idx);
-	mWndNotification->updateText(gameName, _("Searching")+"...");
+	mWndNotification->updateText(gameName, _("Searching") + "...");
 	mWndNotification->updatePercent(-1);
 
 	LOG(LogDebug) << "ThreadedScraper::search <<";

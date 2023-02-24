@@ -1064,6 +1064,26 @@ void ApiSystem::setWifiPowerSafe(bool state)
 	executeSystemScript("es-wifi set_wifi_power_safe " + Utils::String::boolToString(state) + " &");
 }
 
+std::vector<std::string> ApiSystem::getKnowedWifiNetworks()
+{
+	LOG(LogInfo) << "ApiSystem::getKnowedWifiNetworks()";
+
+	return executeEnumerationScript("es-wifi knowed_wifis");
+}
+
+bool ApiSystem::forgetWifiNetwork(const std::string ssid)
+{
+	LOG(LogInfo) << "ApiSystem::forgetWifiNetwork() - ssid: '" << ssid << "'";
+
+	return executeSystemScript("es-wifi forget_wifi \"" + ssid + '"');
+}
+
+bool ApiSystem::forgetAllKnowedWifiNetworks()
+{
+	LOG(LogInfo) << "ApiSystem::forgetAllKnowedWifiNetworks()";
+
+	return executeSystemScript("es-wifi forget_all_wifis");
+}
 
 bool ApiSystem::setLanguage(std::string language)
 {

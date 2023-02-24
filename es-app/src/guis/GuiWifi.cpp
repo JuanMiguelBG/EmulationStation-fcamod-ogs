@@ -25,25 +25,13 @@ GuiWifi::GuiWifi(Window* window, const std::string title, const std::string subt
 
 	addChild(&mMenu);
 
-	std::vector<std::string> ssids = ApiSystem::getInstance()->getWifiNetworks();
-	if (ssids.empty())
-		mWindow->postToUiThread([this]() { onRefresh(); });
-	else
-		load(ssids);
-
-	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onRefresh(); });
-	mMenu.addButton(_("MANUAL INPUT"), _("MANUAL INPUT"), [&] { onManualInput(); });
-	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
-
-	if (Renderer::isSmallScreen())
-		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
-	else
-		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
+	mWindow->postToUiThread([this]() { onRefresh(); });
 }
 
 void GuiWifi::load(std::vector<std::string> ssids)
 {
 	mMenu.clear();
+	mMenu.clearButtons();
 
 	if (ssids.size() == 0)
 		mMenu.addEntry(_("NO WIFI NETWORKS FOUND"), false, std::bind(&GuiWifi::onRefresh, this));
@@ -53,10 +41,16 @@ void GuiWifi::load(std::vector<std::string> ssids)
 			mMenu.addEntry(ssid, false, [this, ssid]() { GuiWifi::onSave(ssid); });
 	}
 
+	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onRefresh(); });
+	mMenu.addButton(_("MANUAL INPUT"), _("MANUAL INPUT"), [&] { onManualInput(); });
+	mMenu.addButton(_("BACK"), _("BACK"), [&] { onClose(); });
+
 	mMenu.updateSize();
 
 	if (Renderer::isSmallScreen())
 		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
+	else
+		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
 
 	mWaitingLoad = false;
 }
@@ -77,7 +71,7 @@ bool GuiWifi::onSave(const std::string& value)
 	std::string rep_value = Utils::String::replace(value, SystemConf::getInstance()->get("already.connection.exist.flag"), "");
 	if (mSaveFunction(rep_value))
 	{
-		delete this;
+		onClose();
 		return true;
 	}
 	return false;
@@ -91,7 +85,7 @@ bool GuiWifi::input(InputConfig* config, Input input)
 	if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
 		if (!mWaitingLoad)
-			delete this;
+			onClose();
 
 		return true;
 	}
@@ -134,4 +128,9 @@ void GuiWifi::onRefresh()
 			mWaitingLoad = false;
 			load(ssids);
 		}));
+}
+
+void GuiWifi::onClose()
+{
+	delete this;
 }

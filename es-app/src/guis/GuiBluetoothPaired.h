@@ -27,6 +27,7 @@ private:
 	bool	onAction(const BluetoothDevice& btDeviced);
 	bool	onConnectDevice(const BluetoothDevice& btDeviced);
 	bool	onDisconnectDevice(const BluetoothDevice& btDeviced);
+	void	onClose();
 	void	onRefresh();
 
 	void	onDeleteAll();

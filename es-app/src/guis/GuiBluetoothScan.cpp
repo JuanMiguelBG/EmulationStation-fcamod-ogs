@@ -27,7 +27,7 @@ GuiBluetoothScan::GuiBluetoothScan(Window* window, const std::string title, cons
 	mWindow->postToUiThread([this]() { onScan(); });
 
 	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onScan(); });
-	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
+	mMenu.addButton(_("BACK"), _("BACK"), [&] { onClose(); });
 }
 
 void GuiBluetoothScan::load(std::vector<BluetoothDevice> btDevices)
@@ -105,9 +105,9 @@ void GuiBluetoothScan::displayRestartDialog(Window *window, bool deleteWindow, b
 	else
 	{
 		if (deleteWindow)
-			delete this;
+			onClose();
 		else
-			GuiBluetoothScan::onScan();
+			onScan();
 	}
 }
 
@@ -121,7 +121,7 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 	std::string audio_device = SystemConf::getInstance()->get("bluetooth.audio.device");
 	std:: string msg(_("CONNECTING BLUETOOTH DEVICE"));
 	window->pushGui(new GuiLoading<bool>(window, msg.append(" '").append(btDevice.name).append("'..."), 
-		[this, btDevice, audio_device]
+		[this, btDevice]
 		{
 			mWaitingLoad = true;
 
@@ -130,10 +130,6 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 			// fail paired
 			if (!result)
 				return false;
-
-			bool isAudioDevice = btDevice.isAudioDevice;
-			if (!isAudioDevice && (btDevice.type == "unknown"))
-				isAudioDevice = ApiSystem::getInstance()->isBluetoothAudioDevice(btDevice.id);
 
 			result = ApiSystem::getInstance()->connectBluetoothDevice(btDevice.id);
 			// successfully connected
@@ -151,17 +147,17 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 		[this, window, btDevice, audio_device](bool result)
 		{
 			bool restar_ES = false;
-            std::string msg;
+            std::string message;
 
 			mWaitingLoad = false;
 			if (result)
  			{
-				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE SUCCESSFULLY PAIRED AND CONNECTED"));
+				message.append("'").append(btDevice.name).append("' ").append(_("DEVICE SUCCESSFULLY PAIRED AND CONNECTED"));
 
 				// audio bluetooth connecting changes
 				restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
 
-				window->pushGui(new GuiMsgBox(window, msg,
+				window->pushGui(new GuiMsgBox(window, message,
 					_("OK"),
 						[this, window, result, restar_ES]
 						{
@@ -176,9 +172,9 @@ bool GuiBluetoothScan::onConnectDevice(const BluetoothDevice& btDevice)
 			}
 			else
 			{
-				msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE FAILED TO PAIR AND CONNECT"));
+				message.append("'").append(btDevice.name).append("' ").append(_("DEVICE FAILED TO PAIR AND CONNECT"));
 
-				window->pushGui(new GuiMsgBox(window, msg,
+				window->pushGui(new GuiMsgBox(window, message,
 					_("OK"),
 						[this, window]
 						{
@@ -199,7 +195,7 @@ bool GuiBluetoothScan::input(InputConfig* config, Input input)
 	if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
 		if (!mWaitingLoad)
-			delete this;
+			onClose();
 
 		return true;
 	}
@@ -240,4 +236,9 @@ void GuiBluetoothScan::onScan()
 			mWaitingLoad = false;
 			load(btDevices);
 		}));
+}
+
+void GuiBluetoothScan::onClose()
+{
+	delete this;
 }

@@ -396,7 +396,7 @@ get_paired_devices_offline()
     source "$SYSTEM_VARIABLES_PATH"
 
     if [ -z "$BT_CONTROLLER_ID" ]; then
-      #print_log $LOG_FILE "WARNING" "Executing 'get_paired_devices_offline()' - Blutooth Controller ID is empty, exiting ..."
+      #print_log $LOG_FILE "WARNING" "Executing 'get_paired_devices_offline()' - Bluetooth Controller ID is empty, exiting ..."
       echo ""
       return 1
     fi
@@ -404,7 +404,7 @@ get_paired_devices_offline()
     local bt_content_dir="/var/lib/bluetooth/$BT_CONTROLLER_ID"
 
     if [ ! -d "$bt_content_dir" ]; then
-      #print_log $LOG_FILE "WARNING" "Executing 'get_paired_devices_offline()' - Blutooth Controller directory '$bt_content_dir' doesn't exist, exiting ..."
+      #print_log $LOG_FILE "WARNING" "Executing 'get_paired_devices_offline()' - Bluetooth Controller directory '$bt_content_dir' doesn't exist, exiting ..."
       echo ""
       return 1
     fi
@@ -879,14 +879,14 @@ set_device_alias_offline()
     source "$SYSTEM_VARIABLES_PATH"
 
     if [ -z "$BT_CONTROLLER_ID" ]; then
-      #print_log $LOG_FILE "WARNING" "Executing 'set_device_alias_offline()' - Blutooth Controller ID is empty, skipping ..."
+      #print_log $LOG_FILE "WARNING" "Executing 'set_device_alias_offline()' - Bluetooth Controller ID is empty, skipping ..."
       return 1
     fi
 
     local bt_content_dir="/var/lib/bluetooth/$BT_CONTROLLER_ID"
 
     if [ ! -d "$bt_content_dir" ]; then
-      #print_log $LOG_FILE "WARNING" "Executing 'set_device_alias_offline()' - Blutooth Controller directory '$bt_content_dir' doesn't exist, skipping ..."
+      #print_log $LOG_FILE "WARNING" "Executing 'set_device_alias_offline()' - Bluetooth Controller directory '$bt_content_dir' doesn't exist, skipping ..."
       return 1
     fi
 
