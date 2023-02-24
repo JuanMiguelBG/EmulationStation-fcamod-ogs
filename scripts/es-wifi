@@ -151,15 +151,24 @@ do_connect() {
 
     #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - New connection to '$SSID'"
 
+    if [ -z "$SSID" ]; then
+      #print_log $LOG_FILE "WARNING" "Executing 'do_connect()' - SSID is empty, skipping ..."
+      return 1
+    fi
+
     do_start
 
     local output=""
     local actual_network=`iw dev wlan0 info | grep ssid | cut -c 7-30`
     if [ ! -z "$actual_network" ]; then
+      if [ "$actual_network" == "$SSID" ]; then
+        #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Network '$SSID' already connected, exit."
+        return 0
+      fi
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Disconnecting of '$actual_network'"
       sudo nmcli con down "$actual_network" > /dev/null 2>&1
     fi
-    local net_regexp=`echo "$SSID\.nmconnection" " | tr -s " "`
+    local net_regexp=`echo "$SSID\.nmconnection" | tr -s " "`
     net_regexp=${net_regexp=// /\s}
     #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()': network regexp: '$net_regexp'"
     local exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")

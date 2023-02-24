@@ -22,6 +22,7 @@ GuiKnowedWifis::GuiKnowedWifis(Window* window, const std::string title, const st
 	mForgetConnectedWifi = false;
 	mCloseFunction = closeFunction;
 	mWaitingLoad = false;
+	hasDevices = false;
 	mMenu.setSubTitle(subtitle);
 
 	auto theme = ThemeData::getMenuTheme();
@@ -84,7 +85,7 @@ bool GuiKnowedWifis::onForget(const std::string& ssid)
 				[this, ssid]
 				{
 					mWaitingLoad = true;
-					return ApiSystem::getInstance()->forgetWifiNetwork(ssid);
+					return ApiSystem::getInstance()->forgetWifiNetwork(Utils::String::replace(ssid, SystemConf::getInstance()->get("already.connection.exist.flag"), ""));
 				},
 				[this, window, ssid](bool result)
 				{
