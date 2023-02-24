@@ -1062,9 +1062,7 @@ bool setCurrentTimezone(std::string timezone)
 	if (timezone.empty())
 		return false;
 
-	if (Utils::FileSystem::exists("/usr/local/bin/timezones"))
-		return executeSystemScript("/usr/local/bin/timezones set \"" + timezone + "\" &");
-	else if (Utils::FileSystem::exists("/usr/bin/timedatectl"))
+	if (Utils::FileSystem::exists("/usr/bin/timedatectl"))
 		return executeSystemScript("/usr/bin/sudo timedatectl set-timezone \"" + timezone + "\" &");
 
 	return executeSystemScript("sudo ln -sf \"/usr/share/zoneinfo/" + timezone +"\" /etc/localtime &");
