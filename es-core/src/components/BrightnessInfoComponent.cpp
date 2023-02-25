@@ -5,8 +5,8 @@
 #include "components/NinePatchComponent.h"
 #include "components/TextComponent.h"
 #include "EsLocale.h"
-#include "platform.h"
 #include "Window.h"
+#include "BrightnessControl.h"
 
 #define PADDING_PX			(Renderer::getScreenWidth()*0.006)
 #define PADDING_BAR			(Renderer::isSmallScreen() ? Renderer::getScreenWidth()*0.02 : Renderer::getScreenWidth()*0.006)
@@ -96,7 +96,7 @@ void BrightnessInfoComponent::update(int deltaTime)
 
 	mCheckTime = 0;
 
-	int brightness = queryBrightnessLevel();
+	int brightness = BrightnessControl::getInstance()->getBrightnessLevel();
 
 	if (brightness != mBrightness)
 	{

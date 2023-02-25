@@ -17,7 +17,7 @@ struct InputConfigStructure
 	const char* icon;
 };
 
-static const int inputCount = 25;
+static const int inputCount = 24;
 static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 {
 	{ "Up",               false, "D-PAD UP",           ":/help/dpad_up_gt.svg" },
@@ -48,7 +48,7 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 	{ "RightAnalogDown",  true,  "RIGHT ANALOG DOWN",  ":/help/analog_down_gt.svg" },
 	{ "RightAnalogLeft",  true,  "RIGHT ANALOG LEFT",  ":/help/analog_left_gt.svg" },
 	{ "RightAnalogRight", true,  "RIGHT ANALOG RIGHT", ":/help/analog_right_gt.svg" },
-	{ "hotkeyEnable",     true,  "HOTKEY",             ":/help/button_hotkey_gt_gt.svg" }
+//	{ "HotKeyEnable",     true,  "HOTKEY",             ":/help/button_hotkey_gt_gt.svg" }
 };
 
 //MasterVolUp and MasterVolDown are also hooked up, but do not appear on this screen.
@@ -93,7 +93,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	else {
 	  snprintf(strbuf, 64, _("GAMEPAD %i").c_str(), target->getDeviceId() + 1); // batocera
 	}
-	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(strbuf), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
+	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(std::string(strbuf).append(" - ").append(target->getDeviceName())), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
 	mGrid.setEntry(mSubtitle1, Vector2i(0, 2), false, true);
 
 	mSubtitle2 = std::make_shared<TextComponent>(mWindow, _("HOLD ANY BUTTON TO SKIP"), Font::get(FONT_SIZE_SMALL), 0x999999FF, ALIGN_CENTER);
@@ -208,7 +208,8 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("OK"), _("OK"), [this, okFunction] {
 		// check if the hotkey enable button is set. if not prompt the user to use select or nothing.
 		Input input;
-		if (!mTargetConfig->getInputByName("hotkeyEnable", &input)) {
+		if (!mTargetConfig->getInputByName("HotKeyEnable", &input)) {
+/*
 			mWindow->pushGui(new GuiMsgBox(mWindow,
 				_("NO HOTKEY BUTTON HAS BEEN ASSIGNED. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON AS YOUR HOTKEY?"), 
 				_("SET SELECT AS HOTKEY"), [this, okFunction] {
@@ -220,12 +221,17 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 				_("DO NOT ASSIGN HOTKEY"), [this, okFunction] {
 					// for a disabled hotkey enable button, set to a key with id 0,
 					// so the input configuration script can be backwards compatible.
-					mTargetConfig->mapInput("HotKeyEnable", Input(DEVICE_KEYBOARD, TYPE_KEY, 0, 1, true));
+					mTargetConfig->mapInput("HotKeyEnable", Input(DEVICE_KEYBOARD, TYPE_KEY, SDLK_UNKNOWN, 1, true));
 					okFunction();
 				}
 			));
+*/
+			if (mTargetConfig->isDefaultInput())
+				mTargetConfig->mapInput("system_hk", Input(mTargetConfig->getDeviceId(), TYPE_BUTTON, 10, 1, true));
+			else
+				mTargetConfig->mapInput("system_hk", Input(DEVICE_KEYBOARD, TYPE_KEY, SDLK_UNKNOWN, 1, true));
 		}
-		else
+//		else
 			okFunction();
 
 	}));

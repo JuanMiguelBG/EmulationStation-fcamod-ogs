@@ -14,6 +14,7 @@
 #include "components/AsyncNotificationComponent.h"
 #include "AudioManager.h"
 #include "VolumeControl.h"
+#include "BrightnessControl.h"
 #include "InputManager.h"
 #include "EsLocale.h"
 #include <algorithm>
@@ -550,7 +551,14 @@ DisplayAndGpuInformation ApiSystem::getDisplayAndGpuInformation(bool summary)
 {
 	LOG(LogInfo) << "ApiSystem::getDisplayAndGpuInformation()";
 
-	return queryDisplayAndGpuInformation(summary); // platform.h
+	DisplayAndGpuInformation dagi = queryDisplayAndGpuInformation(summary); // platform.h
+	dagi.brightness_level = getBrightnessLevel();
+	if (!summary)
+	{
+		dagi.brightness_system = getBrightness();
+		dagi.brightness_system_max = BrightnessControl::getInstance()->getMaxBrightness();
+	}
+	return dagi;
 }
 
 SoftwareInformation ApiSystem::getSoftwareInformation(bool summary)
@@ -574,35 +582,35 @@ int ApiSystem::getBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightnessLevel()";
 
-	return queryBrightnessLevel();
+	return BrightnessControl::getInstance()->getBrightnessLevel();
 }
 
 void ApiSystem::setBrightnessLevel(int brightnessLevel)
 {
 	LOG(LogInfo) << "ApiSystem::setBrightnessLevel()";
 
-	saveBrightnessLevel(brightnessLevel);
+	BrightnessControl::getInstance()->setBrightnessLevel(brightnessLevel);
 }
 
 int ApiSystem::getBrightness()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightness()";
 
-	return queryBrightness();
+	return BrightnessControl::getInstance()->getBrightness();
 }
 
 void ApiSystem::backupBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::backupBrightnessLevel()";
 
-	Settings::getInstance()->setInt("BrightnessBackup", ApiSystem::getInstance()->getBrightnessLevel());
+	Settings::getInstance()->setInt("BrightnessBackup", getBrightnessLevel());
 }
 
 void ApiSystem::restoreBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::restoreBrightnessLevel()";
 
-	ApiSystem::getInstance()->setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
+	setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
 }
 
 int ApiSystem::getVolume()

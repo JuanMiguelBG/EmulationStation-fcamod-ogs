@@ -743,7 +743,6 @@ DisplayAndGpuInformation queryDisplayAndGpuInformation(bool summary)
 	try
 	{
 		data.temperature = queryTemperatureGpu();
-		data.brightness_level = queryBrightnessLevel();
 
 		if (!summary)
 		{
@@ -772,9 +771,6 @@ DisplayAndGpuInformation queryDisplayAndGpuInformation(bool summary)
 				data.frequency_min = std::atoi( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/min_freq)").c_str() );
 				data.frequency_min = data.frequency_min / 1000000; // MHZ
 			}
-
-			data.brightness_system = queryBrightness();
-			data.brightness_system_max = queryMaxBrightness();
 		}
 	} catch (...) {
 		LOG(LogError) << "Platform::queryDisplayAndGpuInformation() - Error reading display and GPU data!!!";
@@ -810,122 +806,6 @@ int queryFrequencyGpu()
 		LOG(LogError) << "Platform::queryFrequencyGpu() - Error reading GPU frequency data!!!";
 	}
 	return 0;
-}
-
-const char* BACKLIGHT_BRIGHTNESS_NAME = "/sys/class/backlight/backlight/brightness";
-const char* BACKLIGHT_BRIGHTNESS_MAX_NAME = "/sys/class/backlight/backlight/max_brightness";
-#define BACKLIGHT_BUFFER_SIZE 127
-
-int queryBrightness()
-{
-	if (Utils::FileSystem::exists("/usr/bin/brightnessctl"))
-		return std::atoi( getShOutput(R"(/usr/bin/brightnessctl g)").c_str() );
-	else if (Utils::FileSystem::exists("/sys/devices/platform/backlight/backlight/backlight/actual_brightness"))
-		return std::atoi( getShOutput(R"(cat /sys/devices/platform/backlight/backlight/backlight/actual_brightness)").c_str() );
-
-	return 0;
-}
-
-int queryMaxBrightness()
-{
-	if (Utils::FileSystem::exists("/usr/bin/brightnessctl"))
-		return std::atoi( getShOutput(R"(/usr/bin/brightnessctl m)").c_str() );
-	else if (Utils::FileSystem::exists(BACKLIGHT_BRIGHTNESS_MAX_NAME))
-		return std::atoi( getShOutput("cat " + *BACKLIGHT_BRIGHTNESS_MAX_NAME).c_str() );
-
-	return 0;
-}
-
-int queryBrightnessLevel()
-{
-	if (Utils::FileSystem::exists("/usr/bin/brightnessctl"))
-		return std::atoi( getShOutput(R"(brightnessctl -m | awk -F',|%' '{print $4}')").c_str() );
-
-	int value,
-			fd,
-			max = 255;
-	char buffer[BACKLIGHT_BUFFER_SIZE + 1];
-	ssize_t count;
-
-	fd = open(BACKLIGHT_BRIGHTNESS_MAX_NAME, O_RDONLY);
-	if (fd < 0)
-		return false;
-
-	memset(buffer, 0, BACKLIGHT_BUFFER_SIZE + 1);
-
-	count = read(fd, buffer, BACKLIGHT_BUFFER_SIZE);
-	if (count > 0)
-		max = atoi(buffer);
-
-	close(fd);
-
-	if (max == 0)
-		return 0;
-
-	fd = open(BACKLIGHT_BRIGHTNESS_NAME, O_RDONLY);
-	if (fd < 0)
-		return false;
-
-	memset(buffer, 0, BACKLIGHT_BUFFER_SIZE + 1);
-
-	count = read(fd, buffer, BACKLIGHT_BUFFER_SIZE);
-	if (count > 0)
-		value = atoi(buffer);
-
-	close(fd);
-
-	return (uint32_t) ((value / (float)max * 100.0f) + 0.5f);
-}
-
-void saveBrightnessLevel(int brightness_level)
-{
-	bool setted = false;
-	if (Utils::FileSystem::exists("/usr/bin/brightnessctl"))
-		setted = executeSystemScript("/usr/bin/brightnessctl s " + std::to_string(brightness_level) + "% &");
-
-	if (!setted)
-	{
-		if (brightness_level < 5)
-			brightness_level = 5;
-
-		if (brightness_level > 100)
-			brightness_level = 100;
-
-		int fd,
-				max = 255;
-		char buffer[BACKLIGHT_BUFFER_SIZE + 1];
-		ssize_t count;
-
-		fd = open(BACKLIGHT_BRIGHTNESS_MAX_NAME, O_RDONLY);
-		if (fd < 0)
-			return;
-
-		memset(buffer, 0, BACKLIGHT_BUFFER_SIZE + 1);
-
-		count = read(fd, buffer, BACKLIGHT_BUFFER_SIZE);
-		if (count > 0)
-			max = atoi(buffer);
-
-		close(fd);
-
-		if (max == 0)
-			return;
-
-		fd = open(BACKLIGHT_BRIGHTNESS_NAME, O_WRONLY);
-		if (fd < 0)
-			return;
-
-		float percent = (brightness_level / 100.0f * (float)max) + 0.5f;
-		sprintf(buffer, "%d\n", (uint32_t)percent);
-
-		count = write(fd, buffer, strlen(buffer));
-		if (count < 0)
-			LOG(LogError) << "Platform::saveBrightnessLevel failed";
-		else
-			setted = true;
-
-		close(fd);
-	}
 }
 
 std::string queryHostname()
@@ -974,6 +854,8 @@ DeviceInformation queryDeviceInformation(bool summary)
 		{
 			di.hardware = getShOutput(R"(cat /proc/cpuinfo | grep -iw hardware | awk '{print $3 " " $4}')");
 			di.revision = getShOutput(R"(cat /proc/cpuinfo | grep Revision | awk '{print $3 " " $4}')");
+			if (di.revision.empty())
+				di.revision = "CSM-101 T-800 Version 2.4 - (Cyberdyne Systems)";
 			di.serial = Utils::String::toUpper( getShOutput(R"(cat /proc/cpuinfo | grep -iw serial | awk '{print $3 " " $4}')") );
 		}
 		if ( Utils::FileSystem::exists("/usr/bin/hostnamectl") )
