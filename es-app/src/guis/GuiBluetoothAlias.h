@@ -26,6 +26,7 @@ private:
 
 	bool	onManageDeviceAlias(const BluetoothDevice& btDeviced);
 	void	onScan();
+	void	onClose();
 
 	MenuComponent mMenu;
 

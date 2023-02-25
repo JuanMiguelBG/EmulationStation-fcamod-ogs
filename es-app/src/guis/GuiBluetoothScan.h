@@ -26,6 +26,7 @@ private:
 
 	bool	onConnectDevice(const BluetoothDevice& btDeviced);
 	void	onScan();
+	void	onClose();
 
 	void	displayRestartDialog(Window *window, bool deleteWindow, bool restarES);
 

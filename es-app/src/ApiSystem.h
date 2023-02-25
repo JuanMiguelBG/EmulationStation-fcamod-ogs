@@ -197,6 +197,9 @@ public:
 	std::string getWifiNetworkExistFlag();
 	bool isWifiPowerSafeEnabled();
 	void setWifiPowerSafe(bool state);
+	std::vector<std::string> getKnowedWifiNetworks();
+	bool forgetWifiNetwork(const std::string ssid);
+	bool forgetAllKnowedWifiNetworks();
 
 	bool setLanguage(std::string language);
 

@@ -62,7 +62,7 @@ void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 	if (hasDevices)
 		mMenu.addButton(_("UNPAIR ALL"), _("UNPAIR ALL"), [&] { onDeleteAll(); });
 
-	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
+	mMenu.addButton(_("BACK"), _("BACK"), [&] { onClose(); });
 
 	mMenu.updateSize();
 
@@ -108,7 +108,7 @@ void GuiBluetoothPaired::displayRestartDialog(Window *window, const std::string 
 			else
 			{
 				if (deleteWindow)
-					delete this;
+					onClose();
 				else
 					GuiBluetoothPaired::onRefresh();
 			}
@@ -227,7 +227,7 @@ bool GuiBluetoothPaired::input(InputConfig* config, Input input)
 	if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
 		if (!mWaitingLoad)
-			delete this;
+			onClose();
 
 		return true;
 	}
@@ -331,6 +331,11 @@ void GuiBluetoothPaired::onDeleteAll()
 				}));
 		},
 		_("NO"), nullptr));
+}
+
+void GuiBluetoothPaired::onClose()
+{
+	delete this;
 }
 
 std::string GuiBluetoothPaired::getDeviceName(const BluetoothDevice& btDevice) const

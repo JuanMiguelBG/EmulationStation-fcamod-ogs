@@ -1,6 +1,7 @@
 #include "InputManager.h"
 
 #include "utils/FileSystemUtil.h"
+#include "utils/StringUtil.h"
 #include "CECInput.h"
 #include "Log.h"
 #include "platform.h"
@@ -340,6 +341,12 @@ bool InputManager::loadInputConfig(InputConfig* config)
 	if(!configNode)
 		return false;
 
+	pugi::xml_attribute defaultDevideNode = configNode.attribute("deviceDefault");
+	bool defaultDevice = false;
+	if (defaultDevideNode)
+		defaultDevice = defaultDevideNode.as_bool();
+	
+	config->setDefaultInput(defaultDevice);
 	config->loadFromXML(configNode);
 	return true;
 }

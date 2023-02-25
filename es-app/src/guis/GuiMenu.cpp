@@ -18,6 +18,7 @@
 #include "guis/GuiQuitOptions.h"
 #include "guis/GuiSystemHotkeyEventsOptions.h"
 #include "guis/GuiWifi.h"
+#include "guis/GuiKnowedWifis.h"
 #include "guis/GuiBluetoothAlias.h"
 #include "guis/GuiBluetoothScan.h"
 #include "guis/GuiBluetoothPaired.h"
@@ -1367,6 +1368,19 @@ void GuiMenu::openRemoteServicesSettings()
 	window->pushGui(new GuiRemoteServicesOptions(window));
 }
 
+void GuiMenu::openManageKnowedWifiNetworks(GuiSettings *gui)
+{
+	Window* window = mWindow;
+	
+	std::function<void(bool)> closeFunction = [this, gui](bool closedConnectedWifi)
+	{
+		if (closedConnectedWifi)
+			resetNetworkSettings(gui);
+	}; // close callback
+
+	window->pushGui(new GuiKnowedWifis(window, "MANAGE KNOWED WIFI NETWORKS", _("\"(**)\" CONNECTED WIFI NETWORK"), closeFunction));
+}
+
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)
 {
 	const bool baseWifiEnabled = SystemConf::getInstance()->getBool("wifi.enabled"),
@@ -1410,6 +1424,8 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		{
 			ApiSystem::getInstance()->setWifiPowerSafe( wifi_powersave->getState() );
 		});
+
+	s->addEntry(_("MANAGE KNOWED WIFI NETWORKS"), true, [this, s] { openManageKnowedWifiNetworks(s); });
 
 	// Wifi enable
 	auto enable_wifi = std::make_shared<SwitchComponent>(window, baseWifiEnabled);
@@ -1711,9 +1727,6 @@ void GuiMenu::resetNetworkSettings(GuiSettings *gui)
 	SystemConf::getInstance()->set("wifi.dns1", "");
 	SystemConf::getInstance()->set("wifi.dns2", "");
 
-	Window* window = mWindow;
-	window->peekGui();
-	window->removeGui(gui);
 	delete gui;
 	openNetworkSettings(true, false);
 }
@@ -2015,7 +2028,6 @@ void GuiMenu::openUpdateSettings()
 	window->pushGui(s);
 
 }
-
 
 void GuiMenu::openAdvancedSettings()
 {

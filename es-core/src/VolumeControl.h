@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ES_APP_VOLUME_CONTROL_H
-#define ES_APP_VOLUME_CONTROL_H
+#ifndef ES_CORE_VOLUME_CONTROL_H
+#define ES_CORE_VOLUME_CONTROL_H
 
 #include <memory>
 #include <unistd.h>
@@ -44,4 +44,4 @@ public:
 	~VolumeControl();
 };
 
-#endif // ES_APP_VOLUME_CONTROL_H
+#endif // ES_CORE_VOLUME_CONTROL_H

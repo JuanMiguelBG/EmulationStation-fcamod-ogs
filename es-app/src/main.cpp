@@ -621,7 +621,7 @@ void updateMetadataStartupGame()
 
 int main(int argc, char* argv[])
 {
-	//signal(SIGABRT, signalHandler);
+	signal(SIGABRT, signalHandler);
 	signal(SIGFPE, signalHandler);
 	signal(SIGILL, signalHandler);
 	signal(SIGINT, signalHandler);

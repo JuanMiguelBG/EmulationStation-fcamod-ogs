@@ -26,6 +26,7 @@ private:
 
 	bool	onDisconnectDevice(const BluetoothDevice& btDeviced);
 	void	onRefresh();
+	void	onClose();
 
 	void	onDisconnectAll();
 
