@@ -155,7 +155,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		setPosition(x_end, y_end);
 }
 
-void GuiMenu::openDisplaySettings()
+void GuiMenu::openDisplaySettings(bool cursor)
 {
 	auto pthis = this;
 	Window* window = mWindow;
@@ -237,12 +237,7 @@ void GuiMenu::openDisplaySettings()
 			});
 			s->addWithLabel(_("HUE"), hue);
 
-			s->addEntry(_("DEFAULT VALUES").c_str(), false,
-				[this, s] {
-					ApiSystem::getInstance()->resetDisplayPanelSettings();
-					delete s;
-					openDisplaySettings();
-				});
+			s->addEntry(_("DEFAULT VALUES").c_str(), false,	[this, s] { resetDisplayPanelSettings(s); }, "", false, cursor);
 		}
 	}
 
@@ -257,6 +252,13 @@ void GuiMenu::openDisplaySettings()
 	});
 
 	window->pushGui(s);
+}
+
+void GuiMenu::resetDisplayPanelSettings(GuiSettings *gui)
+{
+	ApiSystem::getInstance()->resetDisplayPanelSettings();
+	delete gui;
+	openDisplaySettings(true);
 }
 
 void GuiMenu::openDisplayAutoDimSettings()
