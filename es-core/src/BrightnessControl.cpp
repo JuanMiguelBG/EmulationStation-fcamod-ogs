@@ -19,7 +19,7 @@ BrightnessControl::BrightnessControl()
 {
 	mBrightnessctlExist = false;
 	init();
-	LOG(LogInfo) << "BrightnessControl::BrightnessControl() - Initialized, command 'brightnessctl' exist: " << Utils::String::boolToString(mBrightnessctlExist);
+	LOG(LogInfo) << "BrightnessControl::BrightnessControl() - Initialized, command '" << BRIGHTNESSCTL_PATH << "' exist: " << Utils::String::boolToString(mBrightnessctlExist);
 }
 
 BrightnessControl::~BrightnessControl()
@@ -56,7 +56,7 @@ void BrightnessControl::deinit()
 int BrightnessControl::getBrightness()
 {
 	if (mBrightnessctlExist)
-		return std::atoi( getShOutput(*BRIGHTNESSCTL_PATH + " g").c_str() );
+		return std::atoi( getShOutput(std::string(BRIGHTNESSCTL_PATH).append(" g")).c_str() );
 	else if (Utils::FileSystem::exists(ACTUAL_BRIGHTNESS_MAX_NAME))
 		return std::atoi( getShOutput("cat " + *ACTUAL_BRIGHTNESS_MAX_NAME).c_str() );
 
@@ -66,7 +66,7 @@ int BrightnessControl::getBrightness()
 int BrightnessControl::getMaxBrightness() const
 {
 	if (mBrightnessctlExist)
-		return std::atoi( getShOutput(*BRIGHTNESSCTL_PATH + " m").c_str() );
+		return std::atoi( getShOutput(std::string(BRIGHTNESSCTL_PATH).append(" m")).c_str() );
 	else if (Utils::FileSystem::exists(BACKLIGHT_BRIGHTNESS_MAX_NAME))
 		return std::atoi( getShOutput("cat " + *BACKLIGHT_BRIGHTNESS_MAX_NAME).c_str() );
 
@@ -76,7 +76,8 @@ int BrightnessControl::getMaxBrightness() const
 int BrightnessControl::getBrightnessLevel()
 {
 	if (mBrightnessctlExist)
-		return std::atoi( getShOutput(*BRIGHTNESSCTL_PATH + " -m | awk -F',|%' '{print $4}')").c_str() );
+		return std::atoi( getShOutput(std::string(BRIGHTNESSCTL_PATH).append(" -m | awk -F',|%' '{print $4}'")).c_str() );
+
 
 	int value,
 			fd,
@@ -118,7 +119,7 @@ void BrightnessControl::setBrightnessLevel(int brightness_level)
 {
 	bool setted = false;
 	if (mBrightnessctlExist)
-		setted = executeSystemScript(*BRIGHTNESSCTL_PATH + " s " + std::to_string(brightness_level) + "% &");
+		setted = executeSystemScript(std::string(BRIGHTNESSCTL_PATH).append(" s ").append(std::to_string(brightness_level)).append("% &"));
 
 	if (!setted)
 	{

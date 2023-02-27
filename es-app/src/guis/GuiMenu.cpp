@@ -155,7 +155,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 		setPosition(x_end, y_end);
 }
 
-void GuiMenu::openDisplaySettings()
+void GuiMenu::openDisplaySettings(bool cursor)
 {
 	auto pthis = this;
 	Window* window = mWindow;
@@ -168,9 +168,8 @@ void GuiMenu::openDisplaySettings()
 	s->addWithLabel(_("BRIGHTNESS"), brightness);
 	brightness->setOnValueChanged([window, s](const float &newVal)
 		{
-			int brightness_level = (int)Math::round( newVal );
 			window->getBrightnessInfoComponent()->reset();
-			ApiSystem::getInstance()->setBrightnessLevel(brightness_level);
+			ApiSystem::getInstance()->setBrightnessLevel((int)Math::round( newVal ));
 			s->setVariable("reloadGuiMenu", true);
 		});
 
@@ -199,6 +198,46 @@ void GuiMenu::openDisplaySettings()
 				});
 
 			s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
+
+			s->addGroup(_("PANEL SETTINGS"));
+
+		    // Panel Gamma
+			auto gamma = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+			gamma->setValue((float) ApiSystem::getInstance()->getGammaLevel());
+			gamma->setOnValueChanged([](const float &newVal)
+			{
+				ApiSystem::getInstance()->setGammaLevel((int)Math::round(newVal));
+			});
+			s->addWithLabel(_("GAMMA"), gamma);
+
+			//Panel Contrast
+			auto contrast = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+			contrast->setValue((float) ApiSystem::getInstance()->getContrastLevel());
+			contrast->setOnValueChanged([](const float &newVal)
+			{
+				ApiSystem::getInstance()->setContrastLevel((int)Math::round(newVal));
+			});
+			s->addWithLabel(_("CONTRAST"), contrast);
+
+			//Panel Saturation
+			auto saturation = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+			saturation->setValue((float) ApiSystem::getInstance()->getSaturationLevel());
+			saturation->setOnValueChanged([](const float &newVal)
+			{
+				ApiSystem::getInstance()->setSaturationLevel((int)Math::round(newVal));
+			});
+			s->addWithLabel(_("SATURATION"), saturation);
+
+			//Panel Hue
+			auto hue = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+			hue->setValue((float) ApiSystem::getInstance()->getHueLevel());	
+			hue->setOnValueChanged([](const float &newVal)
+			{
+				ApiSystem::getInstance()->setHueLevel((int)Math::round(newVal));
+			});
+			s->addWithLabel(_("HUE"), hue);
+
+			s->addEntry(_("DEFAULT VALUES").c_str(), false,	[this, s] { resetDisplayPanelSettings(s); }, "", false, cursor);
 		}
 	}
 
@@ -213,6 +252,13 @@ void GuiMenu::openDisplaySettings()
 	});
 
 	window->pushGui(s);
+}
+
+void GuiMenu::resetDisplayPanelSettings(GuiSettings *gui)
+{
+	ApiSystem::getInstance()->resetDisplayPanelSettings();
+	delete gui;
+	openDisplaySettings(true);
 }
 
 void GuiMenu::openDisplayAutoDimSettings()
@@ -1378,7 +1424,7 @@ void GuiMenu::openManageKnowedWifiNetworks(GuiSettings *gui)
 			resetNetworkSettings(gui);
 	}; // close callback
 
-	window->pushGui(new GuiKnowedWifis(window, "MANAGE KNOWED WIFI NETWORKS", _("\"(**)\" CONNECTED WIFI NETWORK"), closeFunction));
+	window->pushGui(new GuiKnowedWifis(window, _("MANAGE KNOWED WIFI NETWORKS"), _("\"(**)\" CONNECTED WIFI NETWORK"), closeFunction));
 }
 
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)

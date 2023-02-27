@@ -33,6 +33,7 @@
 #include "resources/TextureData.h"
 #include <FreeImage.h>
 #include "AudioManager.h"
+#include "BrightnessControl.h"
 #include "NetworkThread.h"
 #include "scrapers/ThreadedScraper.h"
 #include "ImageIO.h"
@@ -707,6 +708,7 @@ int main(int argc, char* argv[])
 	ViewController::init(&window);
 	CollectionSystemManager::init(&window);
 	VideoVlcComponent::init();
+	BrightnessControl::getInstance()->init();
 
 	MameNames::init();
 	window.pushGui(ViewController::get());
@@ -783,6 +785,8 @@ int main(int argc, char* argv[])
 //		else
 //			window.pushGui(new GuiDetectDevice(&window, true, [] { ViewController::get()->goToStart(true); }));
 	}
+
+	BrightnessControl::getInstance()->init();
 
 	window.endRenderLoadingScreen();
 
@@ -863,6 +867,7 @@ int main(int argc, char* argv[])
 	ThreadedScraper::stop();
 
 	ApiSystem::getInstance()->deinit();
+	BrightnessControl::getInstance()->deinit();
 
 	while(window.peekGui() != ViewController::get())
 		delete window.peekGui();

@@ -18,6 +18,7 @@ set(CORE_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Sound.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ThemeData.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/BrightnessControl.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/DisplayPanelControl.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/VolumeControl.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Window.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/EsLocale.h
@@ -115,6 +116,7 @@ set(CORE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Sound.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ThemeData.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/BrightnessControl.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/DisplayPanelControl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/VolumeControl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/Window.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/EsLocale.cpp

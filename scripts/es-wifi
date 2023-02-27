@@ -173,9 +173,16 @@ do_connect() {
     #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()': network regexp: '$net_regexp'"
     local exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
 
+    local success=""
     if [ ! -z "$exist" ]; then
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Connection '$SSID' already exist"
       output=`sudo nmcli con up "$SSID"`
+      success=`echo "$output" | grep successfully`
+      if [ -z "$success" ]; then
+        # NOT connected, the network info is wrong, remove
+        #print_log $LOG_FILE "WARNING" "Executing 'do_connect()' - Connection '$SSID' already exist, but it's info is wrong, removing..."
+        do_remove "$SSID" &
+      fi
     else
       # try to connect
 
@@ -197,9 +204,9 @@ do_connect() {
           output=`sudo nmcli con up "$SSID"`
           #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()' - apply workaround for WPA3 networks, result: '$output'"
       fi
+      success=`echo "$output" | grep successfully`
     fi
 
-    local success=`echo "$output" | grep successfully`
     if [ -z "$success" ]; then
       # NOT connected
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - NOT connected, reason:'$output'"

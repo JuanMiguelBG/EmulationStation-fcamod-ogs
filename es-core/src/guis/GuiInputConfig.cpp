@@ -32,8 +32,8 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west_gt.svg" },
 	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east_gt.svg" },
 
-	{ "LeftShoulder",     true,  "L1 / Page Up",       ":/help/button_l_gt.svg" },
-	{ "RightShoulder",    true,  "R1 / Page Down",     ":/help/button_r_gt.svg" },
+	{ "LeftShoulder",     true,  "L1",                 ":/help/button_l_gt.svg" },
+	{ "RightShoulder",    true,  "R1",                 ":/help/button_r_gt.svg" },
 	{ "LeftTrigger",      true,  "L2",                 ":/help/button_lt_gt.svg" },
 	{ "RightTrigger",     true,  "R2",                 ":/help/button_rt_gt.svg" },
 	{ "LeftThumb",        true,  "L3",                 ":/help/analog_thumb_gt.svg" },
@@ -68,7 +68,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 
 	mGrid.setSeparatorColor(theme->Text.separatorColor);
 
-	LOG(LogInfo) << "Configuring device " << target->getDeviceId() << " (" << target->getDeviceName() << ").";
+	LOG(LogInfo) << "Configuring device " << target->getDeviceId() << " (" << target->getDeviceName() << "), default input: " << Utils::String::boolToString(target->isDefaultInput()) <<  '.';
 
 	if(reconfigureAll)
 		target->clear();
@@ -93,7 +93,17 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	else {
 	  snprintf(strbuf, 64, _("GAMEPAD %i").c_str(), target->getDeviceId() + 1); // batocera
 	}
-	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(std::string(strbuf).append(" - ").append(target->getDeviceName())), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
+
+	// get device name
+	std::string name = target->getDeviceName();
+	if (Settings::getInstance()->getBool("bluetooth.use.alias"))
+	{
+		std::string alias = Settings::getInstance()->getString(name + ".bluetooth.input_gaming.alias");
+		if (!alias.empty())
+			name = alias;
+	}
+
+	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(std::string(strbuf).append(" - ").append(name)), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
 	mGrid.setEntry(mSubtitle1, Vector2i(0, 2), false, true);
 
 	mSubtitle2 = std::make_shared<TextComponent>(mWindow, _("HOLD ANY BUTTON TO SKIP"), Font::get(FONT_SIZE_SMALL), 0x999999FF, ALIGN_CENTER);
@@ -119,10 +129,16 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		spacer->setSize(16, 0);
 		row.addElement(spacer, false);
 
-		auto text = std::make_shared<TextComponent>(mWindow, GUI_INPUT_CONFIG_LIST[i].dispName, ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
+		std::string input_name = GUI_INPUT_CONFIG_LIST[i].dispName;
+		if ((input_name != "SELECT") && (input_name != "START"))
+			input_name = _(input_name);
+
+		auto text = std::make_shared<TextComponent>(mWindow, input_name, ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
+		text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 		row.addElement(text, true);
 
 		auto mapping = std::make_shared<TextComponent>(mWindow, _("-NOT DEFINED-"), Font::get(FONT_SIZE_MEDIUM, FONT_PATH_LIGHT), 0x999999FF, ALIGN_RIGHT);
+		mapping->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 		setNotDefined(mapping); // overrides text and color set above
 		row.addElement(mapping, true);
 		mMappings.push_back(mapping);
@@ -202,14 +218,15 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		if(okCallback)
 			okCallback();
 
-		Scripting::fireEvent("control-mapped", std::to_string(mTargetConfig->getDeviceId()), mTargetConfig->getDeviceName(), mTargetConfig->getDeviceGUIDString());
+		Scripting::fireEvent("control-mapped", std::to_string(mTargetConfig->getDeviceId()), mTargetConfig->getDeviceName(),
+							 mTargetConfig->getDeviceGUIDString(), Utils::String::boolToString(mTargetConfig->isDefaultInput()));
 		delete this;
 	};
 	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("OK"), _("OK"), [this, okFunction] {
 		// check if the hotkey enable button is set. if not prompt the user to use select or nothing.
 		Input input;
-		if (!mTargetConfig->getInputByName("HotKeyEnable", &input)) {
 /*
+		if (!mTargetConfig->getInputByName("HotKeyEnable", &input)) {
 			mWindow->pushGui(new GuiMsgBox(mWindow,
 				_("NO HOTKEY BUTTON HAS BEEN ASSIGNED. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON AS YOUR HOTKEY?"), 
 				_("SET SELECT AS HOTKEY"), [this, okFunction] {
@@ -226,15 +243,16 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 				}
 			));
 */
-			if (mTargetConfig->isDefaultInput())
+			if (mTargetConfig->isDefaultInput()) // system_hk is F button
 				mTargetConfig->mapInput("system_hk", Input(mTargetConfig->getDeviceId(), TYPE_BUTTON, 10, 1, true));
-			else
-				mTargetConfig->mapInput("system_hk", Input(DEVICE_KEYBOARD, TYPE_KEY, SDLK_UNKNOWN, 1, true));
-		}
+//			else
+//				mTargetConfig->mapInput("system_hk", Input(DEVICE_KEYBOARD, TYPE_KEY, SDLK_UNKNOWN, 1, true));
+//		}
 //		else
 			okFunction();
 
 	}));
+	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("CANCEL"), _("CANCEL"), [this] { delete this; }));
 	mButtonGrid = makeButtonGrid(mWindow, buttons);
 	mGrid.setEntry(mButtonGrid, Vector2i(0, 6), true, false);
 
@@ -327,24 +345,28 @@ void GuiInputConfig::rowDone()
 void GuiInputConfig::setPress(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("PRESS ANYTHING"));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(0x656565FF);
 }
 
 void GuiInputConfig::setNotDefined(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("-NOT DEFINED-"));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(0x999999FF);
 }
 
 void GuiInputConfig::setAssignedTo(const std::shared_ptr<TextComponent>& text, Input input)
 {
-	text->setText(Utils::String::toUpper(input.string()));
+	text->setText(_(Utils::String::toUpper(input.string())));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(ThemeData::getMenuTheme()->Text.color);
 }
 
 void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("ALREADY TAKEN"));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(0x656565FF);
 }
 
