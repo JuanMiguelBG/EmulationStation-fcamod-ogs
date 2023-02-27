@@ -19,7 +19,7 @@ BrightnessControl::BrightnessControl()
 {
 	mBrightnessctlExist = false;
 	init();
-	LOG(LogInfo) << "BrightnessControl::BrightnessControl() - Initialized, command 'brightnessctl' exist: " << Utils::String::boolToString(mBrightnessctlExist);
+	LOG(LogInfo) << "BrightnessControl::BrightnessControl() - Initialized, command '" << BRIGHTNESSCTL_PATH << "' exist: " << Utils::String::boolToString(mBrightnessctlExist);
 }
 
 BrightnessControl::~BrightnessControl()
@@ -76,10 +76,8 @@ int BrightnessControl::getMaxBrightness() const
 int BrightnessControl::getBrightnessLevel()
 {
 	if (mBrightnessctlExist)
-	{
-		std::string result = getShOutput(std::string(BRIGHTNESSCTL_PATH).append(" -m | awk -F',|%' '{print $4}'"));
-		return std::atoi( result.c_str() );
-	}
+		return std::atoi( getShOutput(std::string(BRIGHTNESSCTL_PATH).append(" -m | awk -F',|%' '{print $4}'")).c_str() );
+
 
 	int value,
 			fd,

@@ -11,8 +11,8 @@
 #define OFFSET_X 12 // move the entire thing right by this amount (px)
 #define OFFSET_Y 12 // move the entire thing up by this amount (px)
 
-#define ICON_TEXT_SPACING 8 // space between [icon] and [text] (px)
-#define ENTRY_SPACING 16 // space between [text] and next [icon] (px)
+#define ICON_TEXT_SPACING 6 // space between [icon] and [text] (px)
+#define ENTRY_SPACING 14 // space between [text] and next [icon] (px)
 
 static const std::map<std::string, const char*> ICON_PATH_MAP {
 	{ "up/down",            ":/help/dpad_updown_gt.svg" },

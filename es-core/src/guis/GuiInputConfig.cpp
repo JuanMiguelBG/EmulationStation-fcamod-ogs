@@ -129,7 +129,11 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		spacer->setSize(16, 0);
 		row.addElement(spacer, false);
 
-		auto text = std::make_shared<TextComponent>(mWindow, _(GUI_INPUT_CONFIG_LIST[i].dispName), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
+		std::string input_name = GUI_INPUT_CONFIG_LIST[i].dispName;
+		if ((input_name != "SELECT") && (input_name != "START"))
+			input_name = _(input_name);
+
+		auto text = std::make_shared<TextComponent>(mWindow, input_name, ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
 		text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 		row.addElement(text, true);
 

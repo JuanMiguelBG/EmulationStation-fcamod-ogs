@@ -142,6 +142,15 @@ public:
 	void setBrightnessLevel(int brightnessLevel);
 	void backupBrightnessLevel();
 	void restoreBrightnessLevel();
+	void setGammaLevel(int gammaLevel);
+	int getGammaLevel();
+	void setContrastLevel(int contrastLevel);
+	int getContrastLevel();
+	void setSaturationLevel(int saturationLevel);
+	int getSaturationLevel();
+	void setHueLevel(int hueLevel);
+	int getHueLevel();
+	void resetDisplayPanelSettings();
 
 	int getVolume();
 	void setVolume(int volumeLevel);

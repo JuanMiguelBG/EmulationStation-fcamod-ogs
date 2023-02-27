@@ -509,16 +509,16 @@ void GuiGamelistOptions::openMetaDataEd()
 	// open metadata editor
 	// get the FileData that hosts the original metadata
 	FileData* fileData = getGamelist()->getCursor()->getSourceFileData();
-	ScraperSearchParams p;
-	p.game = fileData;
-	p.system = fileData->getSystem();
+	ScraperSearchParams ssp;
+	ssp.game = fileData;
+	ssp.system = fileData->getSystem();
 
 	std::function<void()> deleteBtnFunc = nullptr;
 
 	if (fileData->getType() == GAME)
 		deleteBtnFunc = [fileData] { GuiGamelistOptions::deleteGame(fileData); };
 
-	mWindow->pushGui(new GuiMetaDataEd(mWindow, &fileData->getMetadata(), fileData->getMetadata().getMDD(), p, Utils::FileSystem::getFileName(fileData->getPath()),
+	mWindow->pushGui(new GuiMetaDataEd(mWindow, &fileData->getMetadata(), fileData->getMetadata().getMDD(), ssp, Utils::FileSystem::getFileName(fileData->getPath()),
 		std::bind(&IGameListView::onFileChanged, ViewController::get()->getGameListView(fileData->getSystem()).get(), fileData, FILE_METADATA_CHANGED), deleteBtnFunc, fileData));
 }
 

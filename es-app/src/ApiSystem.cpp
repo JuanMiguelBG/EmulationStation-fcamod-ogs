@@ -15,6 +15,7 @@
 #include "AudioManager.h"
 #include "VolumeControl.h"
 #include "BrightnessControl.h"
+#include "DisplayPanelControl.h"
 #include "InputManager.h"
 #include "EsLocale.h"
 #include <algorithm>
@@ -587,7 +588,7 @@ int ApiSystem::getBrightnessLevel()
 
 void ApiSystem::setBrightnessLevel(int brightnessLevel)
 {
-	LOG(LogInfo) << "ApiSystem::setBrightnessLevel()";
+	LOG(LogInfo) << "ApiSystem::setBrightnessLevel() - brightnessLevel: " << std::to_string(brightnessLevel);
 
 	BrightnessControl::getInstance()->setBrightnessLevel(brightnessLevel);
 }
@@ -611,6 +612,70 @@ void ApiSystem::restoreBrightnessLevel()
 	LOG(LogInfo) << "ApiSystem::restoreBrightnessLevel()";
 
 	setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
+}
+
+void ApiSystem::setGammaLevel(int gammaLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setGammaLevel() - gamma level: " << std::to_string(gammaLevel);
+
+	DisplayPanelControl::getInstance()->setGammaLevel(gammaLevel);
+}
+
+int ApiSystem::getGammaLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getGammaLevel()";
+
+	return DisplayPanelControl::getInstance()->getGammaLevel();
+}
+
+void ApiSystem::setContrastLevel(int contrastLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setContrastLevel() - contrast level: " << std::to_string(contrastLevel);
+
+	DisplayPanelControl::getInstance()->setContrastLevel(contrastLevel);
+}
+
+int ApiSystem::getContrastLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getGammaLevel()";
+
+	return DisplayPanelControl::getInstance()->getContrastLevel();
+}
+
+void ApiSystem::setSaturationLevel(int saturationLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setSaturationLevel() - saturation level: " << std::to_string(saturationLevel);
+
+	DisplayPanelControl::getInstance()->setSaturationLevel(saturationLevel);
+}
+
+int ApiSystem::getSaturationLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getSaturationLevel()";
+
+	return DisplayPanelControl::getInstance()->getSaturationLevel();
+}
+
+void ApiSystem::setHueLevel(int hueLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setHueLevel() - hue level: " << std::to_string(hueLevel);
+
+	DisplayPanelControl::getInstance()->setHueLevel(hueLevel);
+}
+
+int ApiSystem::getHueLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getHueLevel()";
+
+	return DisplayPanelControl::getInstance()->getHueLevel();
+}
+
+
+void ApiSystem::resetDisplayPanelSettings()
+{
+	LOG(LogInfo) << "ApiSystem::resetDisplayPanelSettings()";
+
+	return DisplayPanelControl::getInstance()->resetDisplayPanelSettings();
 }
 
 int ApiSystem::getVolume()
