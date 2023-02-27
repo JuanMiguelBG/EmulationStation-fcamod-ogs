@@ -1540,6 +1540,7 @@ void ApiSystem::launchExternalWindow_before(Window *window, const std::string co
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
 	InputManager::getInstance()->deinit();
+	BrightnessControl::getInstance()->deinit();
 	window->deinit();
 
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before OK";
@@ -1557,6 +1558,7 @@ void ApiSystem::launchExternalWindow_after(Window *window, const std::string com
 	ApiSystem::restoreAfterGameValues();
 
 	window->init();
+	BrightnessControl::getInstance()->init();
 	InputManager::getInstance()->init();
 	VolumeControl::getInstance()->init();
 	AudioManager::getInstance()->init();

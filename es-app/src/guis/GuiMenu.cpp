@@ -1378,7 +1378,7 @@ void GuiMenu::openManageKnowedWifiNetworks(GuiSettings *gui)
 			resetNetworkSettings(gui);
 	}; // close callback
 
-	window->pushGui(new GuiKnowedWifis(window, "MANAGE KNOWED WIFI NETWORKS", _("\"(**)\" CONNECTED WIFI NETWORK"), closeFunction));
+	window->pushGui(new GuiKnowedWifis(window, _("MANAGE KNOWED WIFI NETWORKS"), _("\"(**)\" CONNECTED WIFI NETWORK"), closeFunction));
 }
 
 void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDnsEnable)

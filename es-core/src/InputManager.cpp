@@ -98,13 +98,15 @@ void InputManager::addJoystickByDeviceIndex(int id)
 	mInputConfigs[joyId] = new InputConfig(joyId, SDL_JoystickName(joy), guid);
 	if (!loadInputConfig(mInputConfigs[joyId]))
 	{
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick '" << SDL_JoystickName(joy) << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ").";
-		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id));
+		std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick '" << SDL_JoystickName(joy) << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
+		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id), is_defalut_config);
 	}
 	else
 	{
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick '" << SDL_JoystickName(joy) << "' (instance ID: " << joyId << ", device index: " << id << ")";
-		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id));
+		std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick '" << SDL_JoystickName(joy) << "' (instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
+		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id), is_defalut_config);
 	}
 
 	// set up the prevAxisValues
@@ -341,10 +343,13 @@ bool InputManager::loadInputConfig(InputConfig* config)
 	if(!configNode)
 		return false;
 
-	pugi::xml_attribute defaultDevideNode = configNode.attribute("deviceDefault");
+	pugi::xml_attribute defaultDevideAtt = configNode.attribute("deviceDefault");
 	bool defaultDevice = false;
-	if (defaultDevideNode)
-		defaultDevice = defaultDevideNode.as_bool();
+	if (defaultDevideAtt)
+	{
+		LOG(LogInfo) << "InputManager::loadInputConfig() - devide default input config";
+		defaultDevice = defaultDevideAtt.as_bool();
+	}
 	
 	config->setDefaultInput(defaultDevice);
 	config->loadFromXML(configNode);

@@ -2488,44 +2488,68 @@ msgid "SELECT NONE"
 msgstr "SELECCIONAR NINGUNO"
 
 #:
-msgid "UP"
-msgstr "ARRIBA"
+msgid "D-PAD UP"
+msgstr "D-PAD ARRIBA"
 
 #:
-msgid "DOWN"
-msgstr "ABAJO"
+msgid "D-PAD DOWN"
+msgstr "D-PAD ABAJO"
 
 #:
-msgid "LEFT"
-msgstr "IZQUIERDA"
+msgid "D-PAD LEFT"
+msgstr "D-PAD IZQUIERDA"
 
 #:
-msgid "RIGHT"
-msgstr "DERECHA"
+msgid "D-PAD RIGHT"
+msgstr "D-PAD DERECHA"
 
 #:
-msgid "JOYSTICK 1 UP"
-msgstr "JOYSTICK 1 ARRIBA"
+msgid "BUTTON X / NORTH"
+msgstr "BOTÓN X / NORTE"
 
 #:
-msgid "JOYSTICK 1 LEFT"
-msgstr "JOYSTICK 1 IZQUIERDA"
+msgid "BUTTON B / SOUTH"
+msgstr "BOTÓN B / SUR"
 
 #:
-msgid "JOYSTICK 2 UP"
-msgstr "JOYSTICK 2 ARRIBA"
+msgid "BUTTON Y / WEST"
+msgstr "BOTÓN Y / OESTE"
 
 #:
-msgid "JOYSTICK 2 LEFT"
-msgstr "JOYSTICK 2 IZQUIERDA"
+msgid "BUTTON A / EAST"
+msgstr "BOTÓN A / ESTE"
 
 #:
-msgid "PAGE UP"
-msgstr "L1 (PÁGINA SIGUIENTE)"
+msgid "LEFT ANALOG UP"
+msgstr "ANALÓGICO IZQUIERDO; ARRIBA"
 
 #:
-msgid "PAGE DOWN"
-msgstr "R1 (PÁGINA ANTERIOR)"
+msgid "LEFT ANALOG DOWN"
+msgstr "ANALÓGICO IZQUIERDO; ABAJO"
+
+#:
+msgid "LEFT ANALOG LEFT"
+msgstr "ANALÓGICO IZQUIERDO; IZQUIERDA"
+
+#:
+msgid "LEFT ANALOG RIGHT"
+msgstr "ANALÓGICO IZQUIERDO; DERECHA"
+
+#:
+msgid "RIGHT ANALOG UP"
+msgstr "ANALÓGICO DERECHO; ARRIBA"
+
+#:
+msgid "RIGHT ANALOG DOWN"
+msgstr "ANALÓGICO DERECHO; ABAJO"
+
+#:
+msgid "RIGHT ANALOG LEFT"
+msgstr "ANALÓGICO DERECHO; IZQUIERDA"
+
+#:
+msgid "RIGHT ANALOG RIGHT"
+msgstr "ANALÓGICO DERECHO; DERECHA"
 
 #:
 msgid "HOTKEY"
