@@ -131,7 +131,7 @@ void DisplayPanelControl::resetDisplayPanelSettings()
 	if (!mExistPanelDrmTool)
 		return;
 	
-	executeSystemScript(R"(es-display reset_panel_settings &)");
+	executeSystemScript(R"(es-display reset_panel_settings)");
 }
 
 bool DisplayPanelControl::isAvailable()
