@@ -57,7 +57,7 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 #define HOLD_TO_SKIP_MS 1000
 
 GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfigureAll, const std::function<void()>& okCallback) : GuiComponent(window),
-	mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 7)),
+	mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)),
 	mTargetConfig(target), mHoldingInput(false), mBusyAnim(window)
 {
 	auto theme = ThemeData::getMenuTheme();
@@ -83,7 +83,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	mGrid.setEntry(std::make_shared<GuiComponent>(mWindow), Vector2i(0, 0), false);
 
 	mTitle = std::make_shared<TextComponent>(mWindow, _("CONFIGURING"), Font::get(FONT_SIZE_LARGE), 0x555555FF, ALIGN_CENTER);
-	mGrid.setEntry(mTitle, Vector2i(0, 1), false, true);
+	mGrid.setEntry(mTitle, Vector2i(0, 0), false, true);
 
 	char strbuf[64];
 	if(target->getDeviceId() == DEVICE_KEYBOARD)
@@ -104,15 +104,15 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	}
 
 	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(std::string(strbuf).append(" - ").append(name)), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
-	mGrid.setEntry(mSubtitle1, Vector2i(0, 2), false, true);
+	mGrid.setEntry(mSubtitle1, Vector2i(0, 1), false, true);
 
 	mSubtitle2 = std::make_shared<TextComponent>(mWindow, _("HOLD ANY BUTTON TO SKIP"), Font::get(FONT_SIZE_SMALL), 0x999999FF, ALIGN_CENTER);
-	mGrid.setEntry(mSubtitle2, Vector2i(0, 3), false, true);
+	mGrid.setEntry(mSubtitle2, Vector2i(0, 2), false, true);
 
-	// 4 is a spacer row
+	// 3 is a spacer row
 
 	mList = std::make_shared<ComponentList>(mWindow);
-	mGrid.setEntry(mList, Vector2i(0, 5), true, true);
+	mGrid.setEntry(mList, Vector2i(0, 4), true, true);
 	for(int i = 0; i < inputCount; i++)
 	{
 		ComponentListRow row;
@@ -254,7 +254,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	}));
 	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("CANCEL"), _("CANCEL"), [this] { delete this; }));
 	mButtonGrid = makeButtonGrid(mWindow, buttons);
-	mGrid.setEntry(mButtonGrid, Vector2i(0, 6), true, false);
+	mGrid.setEntry(mButtonGrid, Vector2i(0, 5), true, false);
 
 
 	float width = Renderer::getScreenWidth(),
@@ -281,12 +281,12 @@ void GuiInputConfig::onSizeChanged()
 	mGrid.setSize(mSize);
 
 	//mGrid.setRowHeightPerc(0, 0.025f);
-	mGrid.setRowHeightPerc(1, mTitle->getFont()->getHeight()*0.75f / mSize.y());
-	mGrid.setRowHeightPerc(2, mSubtitle1->getFont()->getHeight() / mSize.y());
-	mGrid.setRowHeightPerc(3, mSubtitle2->getFont()->getHeight() / mSize.y());
-	//mGrid.setRowHeightPerc(4, 0.03f);
-	mGrid.setRowHeightPerc(5, (mList->getRowHeight(0) * 5 + 2) / mSize.y());
-	mGrid.setRowHeightPerc(6, mButtonGrid->getSize().y() / mSize.y());
+	mGrid.setRowHeightPerc(0, mTitle->getFont()->getHeight()*0.75f / mSize.y());
+	mGrid.setRowHeightPerc(1, mSubtitle1->getFont()->getHeight() / mSize.y());
+	mGrid.setRowHeightPerc(2, mSubtitle2->getFont()->getHeight() / mSize.y());
+	//mGrid.setRowHeightPerc(3, 0.03f);
+	mGrid.setRowHeightPerc(4, (mList->getRowHeight(0) * 7 + 2) / mSize.y());
+	mGrid.setRowHeightPerc(5, mButtonGrid->getSize().y() / mSize.y());
 
 	mBusyAnim.setSize(mSize);
 }
