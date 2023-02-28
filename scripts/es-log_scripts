@@ -60,19 +60,19 @@ get_compatible_es_log_level()
   fi
 
   case "$1" in
-     "error")
+     "error"|"ERROR")
          log_level=$LOG_LEVEL_ERROR
        ;;
-     "warning")
+     "warning"|"WARNING")
          log_level=$LOG_LEVEL_WARNING
         ;;
-      "default")
+     "default"|"DEFAULT")
           log_level=$LOG_LEVEL_INFO
         ;;
-      "debug")
+     "debug"|"DEBUG")
           log_level=$LOG_LEVEL_DEBUG
         ;;
-      "disabled")
+     "disabled"|"DISABLED")
           log_level=$LOG_LEVEL_DISABLED
         ;;
       *)

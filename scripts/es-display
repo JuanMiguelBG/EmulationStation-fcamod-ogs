@@ -5,14 +5,15 @@ do_help() {
 	echo "$0 get <KEY>" >&2
 	echo "        Valid keys: blink_low_battery, auto_dim_stay_awake_while_charging, auto_dim_time, auto_dim_timeout, auto_dim_brightness" >&2
 	echo "" >&2
-	echo "" >&2
 	echo "$0 set_auto_dim_all_values [auto_dim_stay_awake_while_charging_value] [auto_dim_time_value] [auto_dim_timeout_value] [auto_dim_brightness_value]" >&2
-	echo "" >&2
 	echo "" >&2
 	echo "$0 reset_panel_settings" >&2
 	echo "$0 set_panel <KEY> <VALUE>" >&2
 	echo "$0 get_panel <KEY>" >&2
 	echo "        Valid keys: gamma, contrast, saturation, hue" >&2
+	echo "" >&2
+	echo "$0 is_hdmi_mode" >&2
+	echo "$0 test_hdmi_mode" >&2
 }
 
 AUTO_DIM_CONFIG_FILE="/usr/local/etc/auto_dim.conf"
@@ -160,6 +161,51 @@ do_reset_panel_settings()
 	done
 }
 
+is_hdmi_mode()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_hdmi_mode()'"
+
+	local hdmi_dir_path="/sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1"
+	if [ -d "$hdmi_dir_path" ]; then
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - directory '$hdmi_dir_path' exist"
+
+		if [ "$(cat /sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1/status)" == "connected" ]; then
+			#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI status value: 'connected'"
+
+			if [ "$(cat /sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1/enabled)" == "enabled" ]; then
+				#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI enabled value: 'enabled'"
+				# HDMI mode connected
+				return 0
+			fi
+		fi
+
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
+		# HDMI mode NOT connected
+		return 1
+	fi
+
+	local hdmi_file_path="/var/run/drmConn"
+	if [ -f "$hdmi_file_path" ]; then
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - file '$hdmi_file_path' exist, HMDI node connected"
+		return 0
+	fi
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
+	# HDMI mode NOT connected
+	return 1
+}
+
+test_hdmi_mode()
+{
+	is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		echo "HDMI mode connected"
+		return
+	fi
+
+	echo "HDMI mode NOT connected"
+}
+
 # ******************************************************************************************
 
 # Configure ES commons variables
@@ -210,6 +256,12 @@ case "${ACTION}" in
     ;;
     "set_auto_dim_all_values")
         config_set_auto_dim_all_values "$1" "$2" "$3" "$4" || exit_execution 1 "$1" "$2" "$3" "$4"
+    ;;
+    "is_hdmi_mode")
+        is_hdmi_mode || exit_execution 1
+    ;;
+    "test_hdmi_mode")
+        test_hdmi_mode
     ;;
     *)
         do_help

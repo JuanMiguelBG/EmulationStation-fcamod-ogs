@@ -12,13 +12,13 @@ maxbright=$(cat /sys/class/backlight/backlight/max_brightness);
 
 blink () {
 	create_brightness_lock_file
-	brightnessctl s 25 > /dev/null
+	brightnessctl s 1 > /dev/null
 
 	create_brightness_lock_file
 	brightnessctl s 225 > /dev/null
 
 	create_brightness_lock_file
-	brightnessctl s 25 > /dev/null
+	brightnessctl s 1 > /dev/null
 
 	create_brightness_lock_file
 	brightnessctl s 225 > /dev/null
@@ -45,8 +45,12 @@ remove_brightness_lock_file () {
 
 
 # Configure ES commons variables
-. /usr/local/bin/es-commons
+. es-commons
 
+$ES_SCRIPTS_PATH/es-display is_hdmi_mode
+if [ $? -eq 0 ]; then
+	return
+fi
 
 for i in $(seq 1 $number_blinks); do
 	blink
