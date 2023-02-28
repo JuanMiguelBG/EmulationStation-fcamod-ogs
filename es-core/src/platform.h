@@ -213,8 +213,10 @@ struct DisplayAndGpuInformation
 		frequency_max = 0;
 		frequency_min = 0;
 		brightness_level = 0;
-		brightness_system = 0;
-		brightness_system_max = 0;
+		gamma_level = 0;
+		contrast_level = 0;
+		saturation_level = 0;
+		hue_level = 0;
 	}
 
 	std::string gpu_model;
@@ -226,17 +228,16 @@ struct DisplayAndGpuInformation
 	int frequency_max;
 	int frequency_min;
 	int brightness_level;
-	int brightness_system;
-	int brightness_system_max;
+	int gamma_level;
+	int contrast_level;
+	int saturation_level;
+	int hue_level;
 };
 
 DisplayAndGpuInformation queryDisplayAndGpuInformation(bool summary);
 float queryTemperatureGpu();
 int queryFrequencyGpu();
-int queryBrightness();
-int queryMaxBrightness();
-int queryBrightnessLevel();
-void saveBrightnessLevel(int brightness_level);
+bool queryHdmiMode();
 
 struct SoftwareInformation
 {

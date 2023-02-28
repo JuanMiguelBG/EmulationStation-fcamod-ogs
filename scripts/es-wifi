@@ -27,6 +27,9 @@ do_help() {
     echo "$0 get_network_exist_flag" >&2
     echo "$0 is_wifi_power_safe_enabled" >&2
     echo "$0 set_wifi_power_safe [true/false]" >&2
+    echo "$0 knowed_wifis" >&2
+    echo "$0 forget_wifi <SSID>" >&2
+    echo "$0 forget_all_wifis" >&2
     echo "$0 test_network_manager" >&2
 }
 
@@ -66,7 +69,7 @@ enable_network_manager() {
       # inactive
       #print_log $LOG_FILE "INFO" "disable_network_manager() - NetworkManager is inactive, activing..."
       sudo systemctl stop networkwatchdaemon --quiet && \
-      sudo systemctl start NetworkManager --quiet 
+      sudo systemctl start NetworkManager --quiet
       sudo systemctl disable networkwatchdaemon --quiet && \
       sudo systemctl enable NetworkManager --quiet && \
       sudo systemctl daemon-reload --quiet &
@@ -110,9 +113,9 @@ do_list() {
     local result=""
     while IFS= read -r line; do
       #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - line: '$line'"
-      local net_regexp=`echo "$line" | tr -s " "`
+      local net_regexp=`echo "$line\.nmconnection" | tr -s " "`
       net_regexp=${net_regexp=// /\s}
-      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - net_regexp: '$net_regexp'"
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_list()': network regexp: '$net_regexp'"
       local exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
       #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - exist: '$exist'"
       # skip empty values
@@ -148,28 +151,45 @@ do_connect() {
 
     #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - New connection to '$SSID'"
 
+    if [ -z "$SSID" ]; then
+      #print_log $LOG_FILE "WARNING" "Executing 'do_connect()' - SSID is empty, skipping ..."
+      return 1
+    fi
+
     do_start
 
     local output=""
     local actual_network=`iw dev wlan0 info | grep ssid | cut -c 7-30`
     if [ ! -z "$actual_network" ]; then
+      if [ "$actual_network" == "$SSID" ]; then
+        #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Network '$SSID' already connected, exit."
+        return 0
+      fi
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Disconnecting of '$actual_network'"
       sudo nmcli con down "$actual_network" > /dev/null 2>&1
     fi
-    local net_regexp=`echo "$SSID" | tr -s " "`
+    local net_regexp=`echo "$SSID\.nmconnection" | tr -s " "`
     net_regexp=${net_regexp=// /\s}
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()': network regexp: '$net_regexp'"
     local exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
 
+    local success=""
     if [ ! -z "$exist" ]; then
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Connection '$SSID' already exist"
       output=`sudo nmcli con up "$SSID"`
+      success=`echo "$output" | grep successfully`
+      if [ -z "$success" ]; then
+        # NOT connected, the network info is wrong, remove
+        #print_log $LOG_FILE "WARNING" "Executing 'do_connect()' - Connection '$SSID' already exist, but it's info is wrong, removing..."
+        do_remove "$SSID" &
+      fi
     else
       # try to connect
 
       # Fix WPA3 networks
       local is_WPA3=`sudo nmcli -f ALL --mode tabular --terse --fields SSID,SECURITY dev wifi | grep "$SSID" | grep WPA3`
       #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()' - is WPA3 network: '$is_WPA3'"
-      
+
       output=`sudo nmcli device wifi connect "$SSID" password "$PSK"`
       #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()' - result: '$output'"
 
@@ -184,9 +204,9 @@ do_connect() {
           output=`sudo nmcli con up "$SSID"`
           #print_log $LOG_FILE "DEBUG" "Executing 'do_connect()' - apply workaround for WPA3 networks, result: '$output'"
       fi
+      success=`echo "$output" | grep successfully`
     fi
 
-    local success=`echo "$output" | grep successfully`
     if [ -z "$success" ]; then
       # NOT connected
       #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - NOT connected, reason:'$output'"
@@ -373,8 +393,9 @@ is_network_exist()
 {
     local SSID=$1
 
-    local net_regexp=`echo "$SSID" | tr -s " "`
+    local net_regexp=`echo "$SSID\.nmconnection" | tr -s " "`
     net_regexp=${net_regexp=// /\s}
+    #print_log $LOG_FILE "DEBUG" "Executing 'is_network_exist()': network regexp: '$net_regexp'"
     exist=$(sudo ls -1 /etc/NetworkManager/system-connections/ | egrep "$net_regexp")
     if [ ! -z "$exist" ]; then
       # Exist
@@ -421,6 +442,133 @@ set_wifi_power_safe()
       sudo iw wlan0 set power_save off
       sudo sed -i '/wifi.powersave \=/c\wifi.powersave = 2' "$POWER_SAFE_FILE"
     fi
+}
+
+get_knowed_wifis()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'get_knowed_wifis()'"
+
+    local connections_dir="/etc/NetworkManager/system-connections/"
+
+    if [ ! -d "$connections_dir" ]; then
+      #print_log $LOG_FILE "WARNING" "Executing 'get_knowed_wifis()' - Knowed Wifi connections directory '$connections_dir' doesn't exist, exiting ..."
+      echo ""
+      return 1
+    fi
+
+    local connected_ssid="$(get_ssid)"
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_knowed_wifis()' - conected SSID: '$connected_ssid'"
+    local result=""
+    IFS=$'\n'
+    for file in $(sudo find $connections_dir -type f | grep .nmconnection | grep -v ethernet-); do
+      #print_log $LOG_FILE "DEBUG" "Executing 'get_knowed_wifis()' - process file '$file'"
+      if [ ! -z "$file" ]; then
+        local filename="${file##*/}"
+        local conexion_ssid="${filename%.nmconnection}"
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_knowed_wifis()' - conexion SSID: '$conexion_ssid'"
+        result="$result\n$conexion_ssid"
+        if [ "$conexion_ssid" == "$connected_ssid" ]; then
+          #print_log $LOG_FILE "DEBUG" "Executing 'get_knowed_wifis()' - conexion SSID is the actual connected Wifi: '$conexion_ssid'"
+          result="$result$EXIST_CONNECTION_FLAG"
+        fi
+      fi
+    done
+    if [ -z "$result" ]; then
+      echo ""
+    else
+      echo -e "${result:2:${#result}}"
+    fi
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'get_knowed_wifis()' - result: '$result'"
+}
+
+do_forget_wifi()
+{
+    local ssid=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_forget_wifi()' - Forget Wifi SSID: '$ssid'"
+
+
+    if [ -z "$ssid" ]; then
+      #print_log $LOG_FILE "WARNING" "Executing 'do_forget_wifi()' - SSID is empty, exiting ..."
+      return 0
+    fi
+
+    is_network_manager_active
+    if [ $? -eq 0 ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_forget_wifi()' - NetworkManager is active"
+
+      local connected_ssid="$(get_ssid)"
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_forget_wifi()' - conected SSID: '$connected_ssid'"
+      if [ "$ssid" == "$connected_ssid" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_forget_wifi()' - conexion SSID '$ssid' is the actual connected Wifi '$connected_ssid', reseting ..."
+        do_reset "$ssid"
+        if [ $? -eq 1 ]; then
+          #print_log $LOG_FILE "INFO" "Executing 'do_forget_wifi()' - conexion SSID '$ssid' problem to forget with reset"
+          return 1
+        fi
+      else
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_forget_wifi()' - conexion SSID '$ssid' NOT is the actual connected Wifi '$connected_ssid', removing ..."
+        do_remove "$ssid"
+        if [ $? -eq 1 ]; then
+          #print_log $LOG_FILE "INFO" "Executing 'do_forget_wifi()' - conexion SSID '$ssid' problem to forget with remove"
+          return 1
+        fi
+      fi
+    else
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_forget_wifi()' - NetworkManager is NOT active"
+
+      local connections_dir="/etc/NetworkManager/system-connections/"
+
+      if [ ! -d "$connections_dir" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_forget_wifi()' - Knowed Wifi connections directory '$connections_dir' doesn't exist, exiting ..."
+        return 1
+      fi
+
+      sudo rm -f "$connections_dir/$ssid"
+      if [ $? -eq 1 ]; then
+        #print_log $LOG_FILE "INFO" "Executing 'do_forget_wifi()' - conexion SSID '$ssid' problem to forget with 'rm -f' command"
+        return 1
+      fi
+    fi
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_forget_wifi()' - Exiting of forget Wifi SSID: '$ssid'"
+}
+
+do_forget_all_wifis()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_forget_all_wifis()' - Forget all Wifis"
+
+    local connections_dir="/etc/NetworkManager/system-connections/"
+
+    if [ ! -d "$connections_dir" ]; then
+      #print_log $LOG_FILE "WARNING" "Executing 'do_forget_all_wifis()' - Knowed Wifi connections directory '$connections_dir' doesn't exist, exiting ..."
+      echo ""
+      return 1
+    fi
+
+    local error=0
+
+    IFS=$'\n'
+    for file in $(sudo find $connections_dir -type f | grep .nmconnection | grep -v ethernet-); do
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_forget_all_wifis()' - process file '$file'"
+      if [ ! -z "$file" ]; then
+        local filename="${file##*/}"
+        local conexion_ssid="${filename%.nmconnection}"
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_forget_all_wifis()' - conexion SSID: '$conexion_ssid'"
+        do_forget_wifi "$conexion_ssid"
+        if [ $? -eq 1 ]; then
+          error=1
+        fi
+      fi
+    done
+
+    if [ $error -eq 1 ]; then
+      # any fail
+      #print_log $LOG_FILE "INFO" "Executing 'do_forget_all_wifis()' - Exiting Forget all Wifis with some errors"
+      return 1
+    fi
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_forget_all_wifis()' - Exiting Forget all Wifis without errors"
 }
 
 # ******************************************************************************************
@@ -535,6 +683,15 @@ case "${ACTION}" in
     ;;
     "set_wifi_power_safe")
         set_wifi_power_safe "$1" || exit_execution 1 "$1"
+    ;;
+    "knowed_wifis")
+        get_knowed_wifis
+    ;;
+    "forget_wifi")
+        do_forget_wifi "$1" || exit_execution 1 "$1"
+    ;;
+    "forget_all_wifis")
+        do_forget_all_wifis || exit_execution 1
     ;;
     *)
         do_help

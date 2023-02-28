@@ -35,22 +35,14 @@ namespace Scripting
 				}
 
 				std::string script = *it;
-				if (arg1.length() > 0)
-				{
-					script += " \"" + arg1 + "\"";
-					if (arg2.length() > 0)
-					{
-						script += " \"" + arg2 + "\"";
-						if (arg3.length() > 0)
-						{
-							script += " \"" + arg3 + "\"";
-							if (arg4.length() > 0)
-							{
-								script += " \"" + arg4 + "\"";
-							}
-						}
-					}
-				}
+
+                for (auto arg : { arg1, arg2, arg3, arg4 })
+                {
+                    if (arg.empty())
+                        break;
+
+                    script += " \"" + arg + "\"";
+                }
 
 				LOG(LogDebug) << "Scripting::fireEvent() - executing: " << script;
 				ret = runSystemCommand(script, "", NULL);

@@ -142,6 +142,16 @@ public:
 	void setBrightnessLevel(int brightnessLevel);
 	void backupBrightnessLevel();
 	void restoreBrightnessLevel();
+	void setGammaLevel(int gammaLevel);
+	int getGammaLevel();
+	void setContrastLevel(int contrastLevel);
+	int getContrastLevel();
+	void setSaturationLevel(int saturationLevel);
+	int getSaturationLevel();
+	void setHueLevel(int hueLevel);
+	int getHueLevel();
+	void resetDisplayPanelSettings();
+	bool isHdmiMode();
 
 	int getVolume();
 	void setVolume(int volumeLevel);
@@ -197,6 +207,9 @@ public:
 	std::string getWifiNetworkExistFlag();
 	bool isWifiPowerSafeEnabled();
 	void setWifiPowerSafe(bool state);
+	std::vector<std::string> getKnowedWifiNetworks();
+	bool forgetWifiNetwork(const std::string ssid);
+	bool forgetAllKnowedWifiNetworks();
 
 	bool setLanguage(std::string language);
 

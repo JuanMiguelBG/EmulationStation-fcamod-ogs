@@ -14,12 +14,14 @@
 #include "components/AsyncNotificationComponent.h"
 #include "AudioManager.h"
 #include "VolumeControl.h"
+#include "DisplayPanelControl.h"
 #include "InputManager.h"
 #include "EsLocale.h"
 #include <algorithm>
 #include "guis/GuiMsgBox.h"
 #include "Scripting.h"
 #include "EmulationStation.h"
+#include "SystemConf.h"
 
 UpdateState::State ApiSystem::state = UpdateState::State::NO_UPDATE;
 
@@ -550,7 +552,16 @@ DisplayAndGpuInformation ApiSystem::getDisplayAndGpuInformation(bool summary)
 {
 	LOG(LogInfo) << "ApiSystem::getDisplayAndGpuInformation()";
 
-	return queryDisplayAndGpuInformation(summary); // platform.h
+	DisplayAndGpuInformation dagi = queryDisplayAndGpuInformation(summary); // platform.h
+	dagi.brightness_level = getBrightnessLevel();
+	if (!summary && !SystemConf::getInstance()->getBool("hdmi.mode"))
+	{
+		dagi.gamma_level = getGammaLevel();
+		dagi.contrast_level = getContrastLevel();
+		dagi.saturation_level = getSaturationLevel();
+		dagi.hue_level = getHueLevel();
+	}
+	return dagi;
 }
 
 SoftwareInformation ApiSystem::getSoftwareInformation(bool summary)
@@ -574,35 +585,105 @@ int ApiSystem::getBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightnessLevel()";
 
-	return queryBrightnessLevel();
+	return DisplayPanelControl::getInstance()->getBrightnessLevel();
 }
 
 void ApiSystem::setBrightnessLevel(int brightnessLevel)
 {
-	LOG(LogInfo) << "ApiSystem::setBrightnessLevel()";
+	LOG(LogInfo) << "ApiSystem::setBrightnessLevel() - brightnessLevel: " << std::to_string(brightnessLevel);
 
-	saveBrightnessLevel(brightnessLevel);
+	DisplayPanelControl::getInstance()->setBrightnessLevel(brightnessLevel);
 }
 
 int ApiSystem::getBrightness()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightness()";
 
-	return queryBrightness();
+	return DisplayPanelControl::getInstance()->getBrightness();
 }
 
 void ApiSystem::backupBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::backupBrightnessLevel()";
 
-	Settings::getInstance()->setInt("BrightnessBackup", ApiSystem::getInstance()->getBrightnessLevel());
+	Settings::getInstance()->setInt("BrightnessBackup", getBrightnessLevel());
 }
 
 void ApiSystem::restoreBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::restoreBrightnessLevel()";
 
-	ApiSystem::getInstance()->setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
+	setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
+}
+
+void ApiSystem::setGammaLevel(int gammaLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setGammaLevel() - gamma level: " << std::to_string(gammaLevel);
+
+	DisplayPanelControl::getInstance()->setGammaLevel(gammaLevel);
+}
+
+int ApiSystem::getGammaLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getGammaLevel()";
+
+	return DisplayPanelControl::getInstance()->getGammaLevel();
+}
+
+void ApiSystem::setContrastLevel(int contrastLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setContrastLevel() - contrast level: " << std::to_string(contrastLevel);
+
+	DisplayPanelControl::getInstance()->setContrastLevel(contrastLevel);
+}
+
+int ApiSystem::getContrastLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getGammaLevel()";
+
+	return DisplayPanelControl::getInstance()->getContrastLevel();
+}
+
+void ApiSystem::setSaturationLevel(int saturationLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setSaturationLevel() - saturation level: " << std::to_string(saturationLevel);
+
+	DisplayPanelControl::getInstance()->setSaturationLevel(saturationLevel);
+}
+
+int ApiSystem::getSaturationLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getSaturationLevel()";
+
+	return DisplayPanelControl::getInstance()->getSaturationLevel();
+}
+
+void ApiSystem::setHueLevel(int hueLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setHueLevel() - hue level: " << std::to_string(hueLevel);
+
+	DisplayPanelControl::getInstance()->setHueLevel(hueLevel);
+}
+
+int ApiSystem::getHueLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getHueLevel()";
+
+	return DisplayPanelControl::getInstance()->getHueLevel();
+}
+
+void ApiSystem::resetDisplayPanelSettings()
+{
+	LOG(LogInfo) << "ApiSystem::resetDisplayPanelSettings()";
+
+	return DisplayPanelControl::getInstance()->resetDisplayPanelSettings();
+}
+
+bool ApiSystem::isHdmiMode()
+{
+	LOG(LogInfo) << "ApiSystem::isHdmiMode()";
+
+	return queryHdmiMode();
 }
 
 int ApiSystem::getVolume()
@@ -1064,6 +1145,26 @@ void ApiSystem::setWifiPowerSafe(bool state)
 	executeSystemScript("es-wifi set_wifi_power_safe " + Utils::String::boolToString(state) + " &");
 }
 
+std::vector<std::string> ApiSystem::getKnowedWifiNetworks()
+{
+	LOG(LogInfo) << "ApiSystem::getKnowedWifiNetworks()";
+
+	return executeEnumerationScript("es-wifi knowed_wifis");
+}
+
+bool ApiSystem::forgetWifiNetwork(const std::string ssid)
+{
+	LOG(LogInfo) << "ApiSystem::forgetWifiNetwork() - ssid: '" << ssid << "'";
+
+	return executeSystemScript("es-wifi forget_wifi \"" + ssid + '"');
+}
+
+bool ApiSystem::forgetAllKnowedWifiNetworks()
+{
+	LOG(LogInfo) << "ApiSystem::forgetAllKnowedWifiNetworks()";
+
+	return executeSystemScript("es-wifi forget_all_wifis");
+}
 
 bool ApiSystem::setLanguage(std::string language)
 {
@@ -1512,6 +1613,7 @@ void ApiSystem::launchExternalWindow_before(Window *window, const std::string co
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
 	InputManager::getInstance()->deinit();
+	DisplayPanelControl::getInstance()->deinit();
 	window->deinit();
 
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before OK";
@@ -1529,6 +1631,7 @@ void ApiSystem::launchExternalWindow_after(Window *window, const std::string com
 	ApiSystem::restoreAfterGameValues();
 
 	window->init();
+	DisplayPanelControl::getInstance()->init();
 	InputManager::getInstance()->init();
 	VolumeControl::getInstance()->init();
 	AudioManager::getInstance()->init();

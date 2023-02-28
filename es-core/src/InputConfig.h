@@ -133,11 +133,15 @@ public:
 
 	bool isConfigured();
 
+	bool isDefaultInput() const { return mDefaultInput; };
+	void setDefaultInput(bool defaultInput) { mDefaultInput = defaultInput; };
+
 private:
 	std::map<std::string, Input> mNameMap;
 	const int mDeviceId;
 	const std::string mDeviceName;
 	const std::string mDeviceGUID;
+	bool mDefaultInput;
 
 public:
 	static void AssignActionButtons();

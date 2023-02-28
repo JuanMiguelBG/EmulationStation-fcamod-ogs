@@ -1,32 +1,47 @@
-#!/bin/sh
+#!/bin/bash
 
-if [ ! "$1" ];then
-	printf "usage : es-display [set key value|get key]\n"
-	printf "Valid keys: blink_low_battery, auto_dim_stay_awake_while_charging, auto_dim_time, auto_dim_timeout, auto_dim_brightness\n"
-	printf "or\n"
-	printf "usage : es-display set_auto_dim_all_values [auto_dim_stay_awake_while_charging_value] [auto_dim_time_value] [auto_dim_timeout_value] [auto_dim_brightness_value]\n"
-	exit 1
-fi
+do_help() {
+	echo "$0 set <KEY> <VALUE>" >&2
+	echo "$0 get <KEY>" >&2
+	echo "        Valid keys: blink_low_battery, auto_dim_stay_awake_while_charging, auto_dim_time, auto_dim_timeout, auto_dim_brightness" >&2
+	echo "" >&2
+	echo "$0 set_auto_dim_all_values [auto_dim_stay_awake_while_charging_value] [auto_dim_time_value] [auto_dim_timeout_value] [auto_dim_brightness_value]" >&2
+	echo "" >&2
+	echo "$0 reset_panel_settings" >&2
+	echo "$0 set_panel <KEY> <VALUE>" >&2
+	echo "$0 get_panel <KEY>" >&2
+	echo "        Valid keys: gamma, contrast, saturation, hue" >&2
+	echo "" >&2
+	echo "$0 is_hdmi_mode" >&2
+	echo "$0 test_hdmi_mode" >&2
+}
 
-configFile="/usr/local/etc/auto_dim.conf"
-blinkLowBatteryRules="/etc/udev/rules.d/99-lowbat.rules"
+AUTO_DIM_CONFIG_FILE="/usr/local/etc/auto_dim.conf"
+BLINK_LOW_BATTERY_RULES="/etc/udev/rules.d/99-lowbat.rules"
+PANEL_DRM_TOOL="/usr/local/bin/panel_drm_tool"
+DEFAULT_DISPLAY_CARD="/dev/dri/card0"
 
 deactive_udev_rule () {
-	sudo rm -f "$blinkLowBatteryRules"
-	echo "# " | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+	#print_log $LOG_FILE "INFO" "Executing 'deactive_udev_rule()'"
+	sudo rm -f "$BLINK_LOW_BATTERY_RULES"
+	echo "# " | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
 }
 
 active_udev_rule () {
-		echo "# Blink the display with low battery" | sudo tee "$blinkLowBatteryRules" > /dev/null
-		echo "# the display blink one time at battery levels 29 and 25" | sudo tee "$blinkLowBatteryRules" > /dev/null
-		echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"2[59]\", RUN+=\"/usr/local/bin/blink-screen 1\"" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
-		echo "# the display blink two times at battery levels 19, 16 and 13" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
-		echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"1[369]\", RUN+=\"/usr/local/bin/blink-screen 2\"" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
-		echo "# the display blink three times at battery levels from 9 to 0" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
-		echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"[0-9]\", RUN+=\"/usr/local/bin/blink-screen 3\"" | sudo tee -a "$blinkLowBatteryRules" > /dev/null
+	#print_log $LOG_FILE "INFO" "Executing 'active_udev_rule()'"
+	echo "# Blink the display with low battery" | sudo tee "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "# the display blink one time at battery levels 29 and 25" | sudo tee "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"2[59]\", RUN+=\"/usr/local/bin/blink-screen 1\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "# the display blink two times at battery levels 19, 16 and 13" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"1[369]\", RUN+=\"/usr/local/bin/blink-screen 2\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "# the display blink three times at battery levels from 9 to 0" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"[0-9]\", RUN+=\"/usr/local/bin/blink-screen 3\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
 }
 
 config_blink_low_battery() {
+	local value=$1
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_blink_low_battery()' - acticate: '$value'"
 
 	if [ "$1" = "enabled" ]; then
 		active_udev_rule
@@ -36,76 +51,223 @@ config_blink_low_battery() {
 
 	sudo udevadm control --reload-rules
 	sudo systemctl restart udev.service
-
-	exit 0
 }
 
 config_set_value () {
-	key=$1
-	value=$2
+	local key=$1
+	local value=$2
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()' - key: '$key', value: '$value'"
 
 	[ -z "$value" ] && value=0
-	cat "$configFile" | grep -iw "$key" > /dev/null
+	cat "$AUTO_DIM_CONFIG_FILE" | grep -iw "$key" > /dev/null
 	valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
-		echo "$key=$value" | sudo tee -a "$configFile" > /dev/null
+		echo "$key=$value" | sudo tee -a "$AUTO_DIM_CONFIG_FILE" > /dev/null
 	else
-		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$configFile" > /dev/null
+		sudo sed -i "s/#\?$key=.*/$key=$value/g" "$AUTO_DIM_CONFIG_FILE" > /dev/null
 	fi
 
 	sudo systemctl restart oga_events.service
 }
 
 config_get_value () {
-	key=$1
-	sed -rn "s/^$key=([^\n]+)$/\1/p" "$configFile"
+	local key=$1
+	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()' - key: '$key'"
+
+	sed -rn "s/^$key=([^\n]+)$/\1/p" "$AUTO_DIM_CONFIG_FILE"
 }
 
 config_set_auto_dim_all_values () {
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_auto_dim_all_values()' - auto_dim_stay_awake_while_charging_value: '$1', auto_dim_time_value: '$2', auto_dim_timeout_value: '$3', auto_dim_brightness_value: '$4'"
 	config_file $1 $2 $3 $4
 
 	sudo systemctl restart oga_events.service
 }
 
 config_file () {
-	echo "#The display auto dim configuration file\nauto_dim_stay_awake_while_charging=$1\nauto_dim_time=$2\nauto_dim_timeout=$3\nauto_dim_brightness=$4\n" | sudo tee "$configFile" > /dev/null
+	#print_log $LOG_FILE "INFO" "Executing 'config_file()' - auto_dim_stay_awake_while_charging_value: '$1', auto_dim_time_value: '$2', auto_dim_timeout_value: '$3', auto_dim_brightness_value: '$4'"
+	echo "#The display auto dim configuration file\nauto_dim_stay_awake_while_charging=$1\nauto_dim_time=$2\nauto_dim_timeout=$3\nauto_dim_brightness=$4\n" | sudo tee "$AUTO_DIM_CONFIG_FILE" > /dev/null
 }
 
+do_check_exist_auto_dim_config_file()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_check_exist_auto_dim_config_file()'"
+	if [ ! -f "$AUTO_DIM_CONFIG_FILE" ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'do_check_exist_auto_dim_config_file()' - file '$AUTO_DIM_CONFIG_FILE' doesn't exist, creating with default values"
+		# config with default values
+		config_file "disabled" "disabled" "5" "25"
+	fi
+}
+
+do_set()
+{
+	local key="$1"
+	local value="$2"
+
+	#print_log $LOG_FILE "INFO" "Executing 'do_set()' - key: '$key', value '$value'"
+
+	do_check_exist_auto_dim_config_file
+	if [ "$key" = "gamma" ] || [ "$key" = "contrast" ] || [ "$key" = "saturation" ] || [ "$key" = "hue" ]; then
+		set_panel_setting "$key" "$value"
+	elif [ "$key" = "blink_low_battery" ]; then
+		config_blink_low_battery "$value"
+	else
+		config_set_value "$key" "$value"
+	fi
+}
+
+do_get()
+{
+	local key="$1"
+
+	#print_log $LOG_FILE "INFO" "Executing 'do_get()' - key: '$key'"
+
+	do_check_exist_auto_dim_config_file
+	config_get_value $key
+}
+
+do_set_panel() { # gamma/brightness contrast saturation hue
+	local key=$1
+	local value=$2
+
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_panel()' - key: '$key', value '$value'"
+	if [ "$key" == "gamma" ]; then
+		key="brightness"
+	fi
+	sudo "$PANEL_DRM_TOOL" set "$DEFAULT_DISPLAY_CARD" 133 "$key" "$value" > /dev/null
+}
+
+do_get_panel() {
+	local key=$1
+
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_panel()' - key: '$key'"
+	if [ "$key" == "gamma" ]; then
+		key="brightness"
+	fi
+	sudo "$PANEL_DRM_TOOL" list | grep -A 9 133 | grep "$key" | awk -F ' = ' '{print $2}'
+}
+
+do_reset_panel_settings()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_reset_panel_settings()'"
+
+	panel_settings_list=( gamma contrast saturation hue )
+
+	for setting in "${panel_settings_list[@]}"
+	do
+		do_set_panel $setting 50
+	done
+}
+
+is_hdmi_mode()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_hdmi_mode()'"
+
+	local hdmi_dir_path="/sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1"
+	if [ -d "$hdmi_dir_path" ]; then
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - directory '$hdmi_dir_path' exist"
+
+		if [ "$(cat /sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1/status)" == "connected" ]; then
+			#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI status value: 'connected'"
+
+			if [ "$(cat /sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1/enabled)" == "enabled" ]; then
+				#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI enabled value: 'enabled'"
+				# HDMI mode connected
+				return 0
+			fi
+		fi
+
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
+		# HDMI mode NOT connected
+		return 1
+	fi
+
+	local hdmi_file_path="/var/run/drmConn"
+	if [ -f "$hdmi_file_path" ]; then
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - file '$hdmi_file_path' exist, HMDI node connected"
+		return 0
+	fi
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
+	# HDMI mode NOT connected
+	return 1
+}
+
+test_hdmi_mode()
+{
+	is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		echo "HDMI mode connected"
+		return
+	fi
+
+	echo "HDMI mode NOT connected"
+}
 
 # ******************************************************************************************
 
+# Configure ES commons variables
+. es-log_scripts
 
-if [ ! -f "$configFile" ]; then
-	#echo "The display auto dim configuration file '$configFile' doesn't exist, creating it."
-	# config with default values
-	config_file "disabled" "disabled" "5" "25"
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-display.log"
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    local param3=$4
+    local param4=$5
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2 $param3 $param4', exit code: '$return' #####"
+    exit $return
+}
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
 fi
 
-command="$1"
+ACTION=$1
+shift
 
-if [ "$#" -eq 3 ]; then
-	pkey="$2"
-	pvalue="$3"
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1 $2 $3 $4' #####"
 
-	if [ "$command" = "set" ]; then
-		if [ "$pkey" = "blink_low_battery" ]; then
-			config_blink_low_battery $pvalue
-		else
-			config_set_value $pkey $pvalue
-		fi
+case "${ACTION}" in
+    "set")
+        do_set "$1" "$2" || exit_execution 1 "$1" "$2"
+    ;;
+    "get")
+        do_get "$1"
+    ;;
+    "set_panel")
+        do_set_panel "$1" "$2" || exit_execution 1 "$1" "$2"
+    ;;
+    "get_panel")
+        do_get_panel "$1"
+    ;;
+    "reset_panel_settings")
+        do_reset_panel_settings || exit_execution 1
+    ;;
+    "set_auto_dim_all_values")
+        config_set_auto_dim_all_values "$1" "$2" "$3" "$4" || exit_execution 1 "$1" "$2" "$3" "$4"
+    ;;
+    "is_hdmi_mode")
+        is_hdmi_mode || exit_execution 1
+    ;;
+    "test_hdmi_mode")
+        test_hdmi_mode
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
 
-		exit 0
-	fi
-elif [ "$#" -eq 2 ]; then
-	pkey="$2"
-
-	if [ "$command" = "get" ]; then
-		config_get_value $pkey
-	fi
-elif [ "$#" -eq 5 ]; then
-	if [ "$command" = "set_auto_dim_all_values" ]; then
-		config_set_auto_dim_all_values "$2" "$3" "$4" "$5"
-	fi
-	exit 0
-fi
+exit_execution 0 "$1" "$2" "$3" "$4"

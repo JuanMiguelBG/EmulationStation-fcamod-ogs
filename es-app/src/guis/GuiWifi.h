@@ -22,6 +22,7 @@ private:
 	bool	onSave(const std::string& value);
 	void	onManualInput();
 	void	onRefresh();
+	void	onClose();
 
 	MenuComponent mMenu;
 

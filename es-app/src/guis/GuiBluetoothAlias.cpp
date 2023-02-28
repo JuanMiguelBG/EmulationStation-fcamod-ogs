@@ -26,7 +26,7 @@ GuiBluetoothAlias::GuiBluetoothAlias(Window* window, const std::string title, co
 	mWindow->postToUiThread([this]() { onScan(); });
 
 	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onScan(); });
-	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
+	mMenu.addButton(_("BACK"), _("BACK"), [&] { onClose(); });
 }
 
 void GuiBluetoothAlias::load(std::vector<BluetoothDevice> btDevices)
@@ -98,7 +98,7 @@ bool GuiBluetoothAlias::input(InputConfig* config, Input input)
 	if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
 		if (!mWaitingLoad)
-			delete this;
+			onClose();
 
 		return true;
 	}
@@ -145,4 +145,9 @@ void GuiBluetoothAlias::onScan()
 			mWaitingLoad = false;
 			load(btDevices);
 		}));
+}
+
+void GuiBluetoothAlias::onClose()
+{
+	delete this;
 }

@@ -33,6 +33,7 @@
 #include "resources/TextureData.h"
 #include <FreeImage.h>
 #include "AudioManager.h"
+#include "DisplayPanelControl.h"
 #include "NetworkThread.h"
 #include "scrapers/ThreadedScraper.h"
 #include "ImageIO.h"
@@ -354,6 +355,9 @@ void loadOtherSettings()
 				SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
 				SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
 			}
+		});
+	Utils::Async::run( [] (void)
+		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
 			{
 				bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
@@ -365,8 +369,13 @@ void loadOtherSettings()
 				SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 			}
+		});
+	Utils::Async::run( [] (void)
+		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
 				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
+			
+			SystemConf::getInstance()->setBool("hdmi.mode", ApiSystem::getInstance()->isHdmiMode());
 		});
 		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
@@ -621,7 +630,7 @@ void updateMetadataStartupGame()
 
 int main(int argc, char* argv[])
 {
-	//signal(SIGABRT, signalHandler);
+	signal(SIGABRT, signalHandler);
 	signal(SIGFPE, signalHandler);
 	signal(SIGILL, signalHandler);
 	signal(SIGINT, signalHandler);
@@ -707,6 +716,7 @@ int main(int argc, char* argv[])
 	ViewController::init(&window);
 	CollectionSystemManager::init(&window);
 	VideoVlcComponent::init();
+	DisplayPanelControl::getInstance()->init();
 
 	MameNames::init();
 	window.pushGui(ViewController::get());
@@ -863,6 +873,7 @@ int main(int argc, char* argv[])
 	ThreadedScraper::stop();
 
 	ApiSystem::getInstance()->deinit();
+	DisplayPanelControl::getInstance()->deinit();
 
 	while(window.peekGui() != ViewController::get())
 		delete window.peekGui();

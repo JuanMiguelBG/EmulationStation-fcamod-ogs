@@ -41,6 +41,7 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiQuitOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemHotkeyEventsOptions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiWifi.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiKnowedWifis.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothAlias.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothScan.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothPaired.h
@@ -119,6 +120,7 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiQuitOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiSystemHotkeyEventsOptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiWifi.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiKnowedWifis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothAlias.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothScan.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/GuiBluetoothPaired.cpp
