@@ -318,7 +318,7 @@ bool queryBatteryCharging()
 {
 	std::string batteryStatusPath = queryBatteryRootPath() + "/status";
 	if ( Utils::FileSystem::exists(batteryStatusPath) )
-		return Utils::String::equalsIgnoreCase( Utils::String::replace(Utils::FileSystem::readAllText(batteryStatusPath), "\n", ""), "discharging" );
+		return Utils::String::equalsIgnoreCase( Utils::String::replace(Utils::FileSystem::readAllText(batteryStatusPath), "\n", ""), "charging" );
 
 	return false;
 }
