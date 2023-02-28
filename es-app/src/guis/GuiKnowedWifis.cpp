@@ -65,6 +65,7 @@ void GuiKnowedWifis::load(std::vector<std::string> ssids)
 	else
 		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
 
+	updateHelpPrompts();
 	mWaitingLoad = false;
 }
 

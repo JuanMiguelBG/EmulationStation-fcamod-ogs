@@ -1460,7 +1460,7 @@ msgstr "OLVIDAR TODAS"
 
 #:
 msgid "DISCONNECT & FORGET"
-msgstr "DESCONECTART Y OLVIDAR"
+msgstr "DESCONECTAR Y OLVIDAR"
 
 #:
 msgid "FORGET"
