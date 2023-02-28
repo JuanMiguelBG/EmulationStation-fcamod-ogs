@@ -6,7 +6,7 @@
 #include "components/TextComponent.h"
 #include "EsLocale.h"
 #include "Window.h"
-#include "BrightnessControl.h"
+#include "DisplayPanelControl.h"
 
 #define PADDING_PX			(Renderer::getScreenWidth()*0.006)
 #define PADDING_BAR			(Renderer::isSmallScreen() ? Renderer::getScreenWidth()*0.02 : Renderer::getScreenWidth()*0.006)
@@ -96,7 +96,7 @@ void BrightnessInfoComponent::update(int deltaTime)
 
 	mCheckTime = 0;
 
-	int brightness = BrightnessControl::getInstance()->getBrightnessLevel();
+	int brightness = DisplayPanelControl::getInstance()->getBrightnessLevel();
 
 	if (brightness != mBrightness)
 	{
