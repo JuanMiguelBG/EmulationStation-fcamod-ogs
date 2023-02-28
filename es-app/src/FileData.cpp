@@ -14,7 +14,7 @@
 #include "Scripting.h"
 #include "SystemData.h"
 #include "VolumeControl.h"
-#include "BrightnessControl.h"
+#include "DisplayPanelControl.h"
 #include "Window.h"
 #include "views/UIModeController.h"
 #include <assert.h>
@@ -408,7 +408,7 @@ void FileData::launchGame(Window* window)
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
 	InputManager::getInstance()->deinit();
-	BrightnessControl::getInstance()->deinit();
+	DisplayPanelControl::getInstance()->deinit();
 
 	bool hideWindow = Settings::getInstance()->getBool("HideWindow");
 	window->deinit(hideWindow);
@@ -443,7 +443,7 @@ void FileData::launchGame(Window* window)
 	ApiSystem::getInstance()->restoreAfterGameValues();
 
 	window->init(hideWindow);
-	BrightnessControl::getInstance()->init();
+	DisplayPanelControl::getInstance()->init();
 	InputManager::getInstance()->init();
 	VolumeControl::getInstance()->init();
 	AudioManager::getInstance()->init();

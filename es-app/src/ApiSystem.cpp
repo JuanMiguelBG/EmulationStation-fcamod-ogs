@@ -14,7 +14,6 @@
 #include "components/AsyncNotificationComponent.h"
 #include "AudioManager.h"
 #include "VolumeControl.h"
-#include "BrightnessControl.h"
 #include "DisplayPanelControl.h"
 #include "InputManager.h"
 #include "EsLocale.h"
@@ -22,6 +21,7 @@
 #include "guis/GuiMsgBox.h"
 #include "Scripting.h"
 #include "EmulationStation.h"
+#include "SystemConf.h"
 
 UpdateState::State ApiSystem::state = UpdateState::State::NO_UPDATE;
 
@@ -554,10 +554,12 @@ DisplayAndGpuInformation ApiSystem::getDisplayAndGpuInformation(bool summary)
 
 	DisplayAndGpuInformation dagi = queryDisplayAndGpuInformation(summary); // platform.h
 	dagi.brightness_level = getBrightnessLevel();
-	if (!summary)
+	if (!summary && !SystemConf::getInstance()->getBool("hdmi.mode"))
 	{
-		dagi.brightness_system = getBrightness();
-		dagi.brightness_system_max = BrightnessControl::getInstance()->getMaxBrightness();
+		dagi.gamma_level = getGammaLevel();
+		dagi.contrast_level = getContrastLevel();
+		dagi.saturation_level = getSaturationLevel();
+		dagi.hue_level = getHueLevel();
 	}
 	return dagi;
 }
@@ -583,21 +585,21 @@ int ApiSystem::getBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightnessLevel()";
 
-	return BrightnessControl::getInstance()->getBrightnessLevel();
+	return DisplayPanelControl::getInstance()->getBrightnessLevel();
 }
 
 void ApiSystem::setBrightnessLevel(int brightnessLevel)
 {
 	LOG(LogInfo) << "ApiSystem::setBrightnessLevel() - brightnessLevel: " << std::to_string(brightnessLevel);
 
-	BrightnessControl::getInstance()->setBrightnessLevel(brightnessLevel);
+	DisplayPanelControl::getInstance()->setBrightnessLevel(brightnessLevel);
 }
 
 int ApiSystem::getBrightness()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightness()";
 
-	return BrightnessControl::getInstance()->getBrightness();
+	return DisplayPanelControl::getInstance()->getBrightness();
 }
 
 void ApiSystem::backupBrightnessLevel()
@@ -670,12 +672,18 @@ int ApiSystem::getHueLevel()
 	return DisplayPanelControl::getInstance()->getHueLevel();
 }
 
-
 void ApiSystem::resetDisplayPanelSettings()
 {
 	LOG(LogInfo) << "ApiSystem::resetDisplayPanelSettings()";
 
 	return DisplayPanelControl::getInstance()->resetDisplayPanelSettings();
+}
+
+bool ApiSystem::isHdmiMode()
+{
+	LOG(LogInfo) << "ApiSystem::isHdmiMode()";
+
+	return queryHdmiMode();
 }
 
 int ApiSystem::getVolume()
@@ -1605,7 +1613,7 @@ void ApiSystem::launchExternalWindow_before(Window *window, const std::string co
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
 	InputManager::getInstance()->deinit();
-	BrightnessControl::getInstance()->deinit();
+	DisplayPanelControl::getInstance()->deinit();
 	window->deinit();
 
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before OK";
@@ -1623,7 +1631,7 @@ void ApiSystem::launchExternalWindow_after(Window *window, const std::string com
 	ApiSystem::restoreAfterGameValues();
 
 	window->init();
-	BrightnessControl::getInstance()->init();
+	DisplayPanelControl::getInstance()->init();
 	InputManager::getInstance()->init();
 	VolumeControl::getInstance()->init();
 	AudioManager::getInstance()->init();

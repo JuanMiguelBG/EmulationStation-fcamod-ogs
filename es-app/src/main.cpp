@@ -33,7 +33,7 @@
 #include "resources/TextureData.h"
 #include <FreeImage.h>
 #include "AudioManager.h"
-#include "BrightnessControl.h"
+#include "DisplayPanelControl.h"
 #include "NetworkThread.h"
 #include "scrapers/ThreadedScraper.h"
 #include "ImageIO.h"
@@ -355,6 +355,9 @@ void loadOtherSettings()
 				SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
 				SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
 			}
+		});
+	Utils::Async::run( [] (void)
+		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
 			{
 				bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
@@ -366,8 +369,13 @@ void loadOtherSettings()
 				SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 			}
+		});
+	Utils::Async::run( [] (void)
+		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
 				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
+			
+			SystemConf::getInstance()->setBool("hdmi.mode", ApiSystem::getInstance()->isHdmiMode());
 		});
 		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
@@ -708,7 +716,7 @@ int main(int argc, char* argv[])
 	ViewController::init(&window);
 	CollectionSystemManager::init(&window);
 	VideoVlcComponent::init();
-	BrightnessControl::getInstance()->init();
+	DisplayPanelControl::getInstance()->init();
 
 	MameNames::init();
 	window.pushGui(ViewController::get());
@@ -785,8 +793,6 @@ int main(int argc, char* argv[])
 //		else
 //			window.pushGui(new GuiDetectDevice(&window, true, [] { ViewController::get()->goToStart(true); }));
 	}
-
-	BrightnessControl::getInstance()->init();
 
 	window.endRenderLoadingScreen();
 
@@ -867,7 +873,7 @@ int main(int argc, char* argv[])
 	ThreadedScraper::stop();
 
 	ApiSystem::getInstance()->deinit();
-	BrightnessControl::getInstance()->deinit();
+	DisplayPanelControl::getInstance()->deinit();
 
 	while(window.peekGui() != ViewController::get())
 		delete window.peekGui();

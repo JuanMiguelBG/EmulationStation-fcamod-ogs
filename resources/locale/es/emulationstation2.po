@@ -1013,12 +1013,8 @@ msgid "DIM AFTER"
 msgstr "ATENUAR DESPUES DE"
 
 #:
-msgid "SYSTEM BRIGHTNESS"
-msgstr "BRILLO DEL SISTEMA"
-
-#:
-msgid "MAX SYSTEM BRIGHTNESS"
-msgstr "BRILLO MÁXIMO DEL SISTEMA"
+msgid "HDMI MODE"
+msgstr "MODO HDMI"
 
 #:
 msgid "PANEL SETTINGS"

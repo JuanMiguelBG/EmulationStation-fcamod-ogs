@@ -44,7 +44,8 @@ std::vector<const char*> settings_dont_save {
 	{ "bluetooth.audio.device" },
 	{ "BrightnessBackup" },
 	{ "VolumeBackup" },
-	{ "suspend.device.mode" }
+	{ "suspend.device.mode" },
+	{ "hdmi.mode" }
 };
 
 Settings::Settings()
@@ -245,6 +246,7 @@ void Settings::setDefaults()
 	mBoolMap["AutoMenuWidth"] = false;
 
 	mStringMap["suspend.device.mode"] = "LIGHT";
+	mBoolMap["hdmi.mode"] = false;
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

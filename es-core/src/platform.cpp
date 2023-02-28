@@ -318,7 +318,7 @@ bool queryBatteryCharging()
 {
 	std::string batteryStatusPath = queryBatteryRootPath() + "/status";
 	if ( Utils::FileSystem::exists(batteryStatusPath) )
-		return Utils::String::compareIgnoreCase( Utils::String::replace(Utils::FileSystem::readAllText(batteryStatusPath), "\n", ""), "discharging" );
+		return Utils::String::equalsIgnoreCase( Utils::String::replace(Utils::FileSystem::readAllText(batteryStatusPath), "\n", ""), "discharging" );
 
 	return false;
 }
@@ -749,7 +749,9 @@ DisplayAndGpuInformation queryDisplayAndGpuInformation(bool summary)
 			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/gpuinfo"))
 				data.gpu_model = getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/gpuinfo | awk '{print $1}')");
 
-			if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes"))
+			if (Utils::FileSystem::exists("/sys/class/graphics/fb0/modes"))
+				data.resolution = getShOutput(R"(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)')");
+			else if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes"))
 				data.resolution = getShOutput(R"(cat /sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes)");
 
 			if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/graphics/fb0/bits_per_pixel"))
@@ -806,6 +808,22 @@ int queryFrequencyGpu()
 		LOG(LogError) << "Platform::queryFrequencyGpu() - Error reading GPU frequency data!!!";
 	}
 	return 0;
+}
+
+bool queryHdmiMode()
+{
+	if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1"))
+	{ 
+		std::string hdmi_connected = getShOutput(R"(cat /sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1/status)");		
+		if ( Utils::String::equalsIgnoreCase( Utils::String::replace(hdmi_connected, "\n", ""), "connected" ))
+		{
+			std::string hdmi_enabled = getShOutput(R"(cat /sys/devices/platform/display-subsystem/drm/card0/card0-HDMI-A-1/enabled)");
+			if ( Utils::String::equalsIgnoreCase( Utils::String::replace(hdmi_enabled, "\n", ""), "enabled" ))
+				return true;
+		}
+		return false;
+	}
+	return Utils::FileSystem::exists("/var/run/drmConn");
 }
 
 std::string queryHostname()

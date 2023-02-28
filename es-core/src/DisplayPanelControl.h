@@ -23,6 +23,11 @@ public:
 
 	bool isAvailable();
 
+	int getBrightness();
+	int getMaxBrightness() const;
+	int getBrightnessLevel();
+	void setBrightnessLevel(int brightness_level);
+
 	void setGammaLevel(int gammaLevel);
 	int getGammaLevel();
 	void setContrastLevel(int contrastLevel);
@@ -37,8 +42,11 @@ public:
 
 private:
 	int checkValue(int value);
+	std::string getCommnad(const std::string property);
+	std::string setCommnad(const std::string property, int value);
 
 	bool mExistPanelDrmTool;
+	bool mExistBrightnessctl;
 };
 
 #endif // ES_CORE_DISPLAY_PANEL_CONTROL_H

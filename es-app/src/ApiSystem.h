@@ -151,6 +151,7 @@ public:
 	void setHueLevel(int hueLevel);
 	int getHueLevel();
 	void resetDisplayPanelSettings();
+	bool isHdmiMode();
 
 	int getVolume();
 	void setVolume(int volumeLevel);
