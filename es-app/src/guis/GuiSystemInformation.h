@@ -31,7 +31,7 @@ private:
 
 	static std::string formatTemperature  (float temp_raw, bool warning = false);
 	static std::string formatFrequency    (int freq_raw);
-	static std::string formatBattery      (int bat_level);
+	static std::string formatPercent      (int bat_level);
 	static std::string formatWifiSignal   (int wifi_signal);
 	static std::string formatMemory       (float mem_raw, float total_memory = 0.f, bool show_percent = false);
 	static std::string formatLoadCpu      (float cpu_load);

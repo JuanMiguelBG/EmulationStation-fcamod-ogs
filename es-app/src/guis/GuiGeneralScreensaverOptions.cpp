@@ -27,7 +27,7 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, std::
 	bool isDisplayAutoDim = ApiSystem::getInstance()->isDisplayAutoDimByTime();
 	bool isDeviceAutoSuspend = ApiSystem::getInstance()->isDeviceAutoSuspend();
 
-	if ((screensaver_behavior_value == "suspend") && isDeviceAutoSuspend)
+	if (screensaver_behavior_value == "suspend")
 		screensaver_behavior_value = "none";
 
 	if ((screensaver_behavior_value == "dim") && isDisplayAutoDim)
@@ -44,9 +44,6 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, std::
 	screensavers.push_back("black");
 	screensavers.push_back("random video");
 	screensavers.push_back("slideshow");
-
-	if (!isDeviceAutoSuspend)
-		screensavers.push_back("suspend");
 
 	for(auto it = screensavers.cbegin(); it != screensavers.cend(); it++)
 		screensaver_behavior->add(_(it->c_str()), *it, screensaver_behavior_value == *it);

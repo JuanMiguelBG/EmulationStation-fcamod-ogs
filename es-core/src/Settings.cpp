@@ -39,12 +39,13 @@ std::vector<const char*> settings_dont_save {
 //	{ "wifi.ssid" },
 	{ "wifi.dns1" },
 	{ "wifi.dns2" },
-	{ "wait.process.loading" },
-//	{ "bluetooth.enabled" },
+	{ "bluetooth.enabled" },
 	{ "bluetooth.audio.connected" },
 	{ "bluetooth.audio.device" },
 	{ "BrightnessBackup" },
-	{ "VolumeBackup" }
+	{ "VolumeBackup" },
+	{ "suspend.device.mode" },
+	{ "hdmi.mode" }
 };
 
 Settings::Settings()
@@ -84,6 +85,7 @@ void Settings::setDefaults()
 	mBoolMap["ConfirmToExit"] = true;
 	mBoolMap["ShowQuitMenuWithSelect"] = false;
 	mBoolMap["ShowFastQuitActions"] = false;
+	mBoolMap["HideQuitEsOption"] = true;
 
 	mBoolMap["SplashScreen"] = true;
 	mBoolMap["SplashScreenProgress"] = true;
@@ -231,13 +233,20 @@ void Settings::setDefaults()
 
 	mBoolMap["GuiEditMetadataCloseAllWindows"] = false;
 
-	mBoolMap["wait.process.loading"] = false;
-
 	mBoolMap["RestoreBrightnesAfterGame"] = true;
 	mBoolMap["RestoreVolumeAfterGame"] = true;
 	mIntMap["BrightnessBackup"] = 50;
 	mIntMap["VolumeBackup"] = 75;
 	mIntMap["bluetooth.boot.game.timeout"] = 10; // seconds
+	mBoolMap["bluetooth.use.alias"] = false;
+
+	// Menus settings
+	mBoolMap["AutoscrollMenuEntries"] = true;
+	mBoolMap["CenterMenus"] = false;
+	mBoolMap["AutoMenuWidth"] = false;
+
+	mStringMap["suspend.device.mode"] = "LIGHT";
+	mBoolMap["hdmi.mode"] = false;
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

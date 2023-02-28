@@ -142,6 +142,16 @@ public:
 	void setBrightnessLevel(int brightnessLevel);
 	void backupBrightnessLevel();
 	void restoreBrightnessLevel();
+	void setGammaLevel(int gammaLevel);
+	int getGammaLevel();
+	void setContrastLevel(int contrastLevel);
+	int getContrastLevel();
+	void setSaturationLevel(int saturationLevel);
+	int getSaturationLevel();
+	void setHueLevel(int hueLevel);
+	int getHueLevel();
+	void resetDisplayPanelSettings();
+	bool isHdmiMode();
 
 	int getVolume();
 	void setVolume(int volumeLevel);
@@ -197,6 +207,9 @@ public:
 	std::string getWifiNetworkExistFlag();
 	bool isWifiPowerSafeEnabled();
 	void setWifiPowerSafe(bool state);
+	std::vector<std::string> getKnowedWifiNetworks();
+	bool forgetWifiNetwork(const std::string ssid);
+	bool forgetAllKnowedWifiNetworks();
 
 	bool setLanguage(std::string language);
 
@@ -217,10 +230,13 @@ public:
 	bool setRetroachievementsValues(bool retroachievements_state, bool hardcore_state, bool leaderboards_state, bool verbose_state, bool automatic_screenshot_state, bool challenge_indicators_state, bool richpresence_state, bool badges_state, bool test_unofficial_state, bool start_active_state, const std::string sound, const std::string username, const std::string password);
 
 	bool setOptimizeSystem(bool state);
-	bool isEsScriptsLoggingActivated();
-	bool setEsScriptsLoggingActivated(bool state, const std::string level = "default");
-	bool setEsScriptsLoggingLevel(const std::string level = "default");
+	std::vector<std::string> getSuspendModes();
+	std::string getSuspendMode();
+	bool setSuspendMode(const std::string suspend_mode);
 
+	bool isEsScriptsLoggingActivated();
+	bool setEsScriptsLoggingActivated(bool state, const std::string level = "default", bool logWithNanoSeconds = false);
+	
 	bool setShowRetroarchFps(bool state);
 	bool isShowRetroarchFps();
 
@@ -278,6 +294,7 @@ public:
 	bool stopBluetoothLiveScan();
 	bool startAutoConnectBluetoothAudioDevice();
 	bool stopAutoConnectBluetoothAudioDevice();
+	bool setBluetoothDeviceAlias(const std::string id, const std::string alias);
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();

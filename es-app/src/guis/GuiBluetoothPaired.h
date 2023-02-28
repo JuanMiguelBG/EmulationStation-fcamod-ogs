@@ -27,11 +27,14 @@ private:
 	bool	onAction(const BluetoothDevice& btDeviced);
 	bool	onConnectDevice(const BluetoothDevice& btDeviced);
 	bool	onDisconnectDevice(const BluetoothDevice& btDeviced);
+	void	onClose();
 	void	onRefresh();
 
 	void	onDeleteAll();
 
 	void	displayRestartDialog(Window *window, const std::string message, bool deleteWindow, bool restarES);
+
+	std::string getDeviceName(const BluetoothDevice& btDevice) const;
 
 	MenuComponent mMenu;
 

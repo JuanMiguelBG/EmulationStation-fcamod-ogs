@@ -72,21 +72,26 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 	mButtonGrid = makeButtonGrid(mWindow, buttons);
 	mGrid.setEntry(mButtonGrid, Vector2i(0, 4), true, false);
 
-	// resize
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height_ratio = 1.0f;
-	if ( change_height )
-		height_ratio = 0.95f;
+	// resize & position
+	float width_ratio = 0.95f,
+		  height_ratio = 0.85f,
+		  width = Renderer::getScreenWidth(),
+		  height = Renderer::getScreenHeight(),
+		  new_x = 0.f,
+		  new_y = 0.f;
 
-	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight() * height_ratio);
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+	{
+		width_ratio = 1.0f;
+		height_ratio = 1.0f;
+	}
+	setSize(width * width_ratio, height * height_ratio);
 
-	// center
-	float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-				new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-	if ( change_height )
-		new_y = 0.f;
-
+	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
+	{
+		new_x = (Renderer::getScreenWidth() - mSize.x()) / 2;  // center
+		new_y = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
+	}
 	setPosition(new_x, new_y);
 
 	doNextSearch();
@@ -94,9 +99,15 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 
 GuiScraperMulti::~GuiScraperMulti()
 {
-	// view type probably changed (basic -> detailed)
-	for(auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
-		ViewController::get()->reloadGameListView(*it, false);
+	if (mTotalSuccessful > 0)
+	{
+		// view type probably changed (basic -> detailed)
+		for (auto system : SystemData::sSystemVector)
+		{
+			if (system->isVisible())
+				ViewController::get()->reloadGameListView(system, false);
+		}
+	}
 }
 
 void GuiScraperMulti::onSizeChanged()
@@ -112,7 +123,7 @@ void GuiScraperMulti::onSizeChanged()
 
 void GuiScraperMulti::doNextSearch()
 {
-	if(mSearchQueue.empty())
+	if (mSearchQueue.empty())
 	{
 		finish();
 		return;
@@ -144,6 +155,7 @@ void GuiScraperMulti::acceptResult(const ScraperSearchResult& result)
 	mSearchQueue.pop();
 	mCurrentGame++;
 	mTotalSuccessful++;
+
 	doNextSearch();
 }
 
@@ -158,16 +170,18 @@ void GuiScraperMulti::skip()
 void GuiScraperMulti::finish()
 {
 	std::stringstream ss;
-	if(mTotalSuccessful == 0)
+	if (mTotalSuccessful == 0)
 	{
 		ss << _("NO GAMES WERE SCRAPED") << ".";
-	}else{
-		
+	}
+	else
+	{
 		char csstrbuf[64];
 		snprintf(csstrbuf, 64, EsLocale::nGetText("%i GAME SUCCESSFULLY SCRAPED!", "%i GAMES SUCCESSFULLY SCRAPED!", mTotalSuccessful).c_str(), mTotalSuccessful);
 		ss << csstrbuf;
 
-		if(mTotalSkipped > 0) {
+		if (mTotalSkipped > 0)
+		{
 			char skrbuf[64];
 			snprintf(skrbuf, 64, EsLocale::nGetText("%i GAME SKIPPED.", "%i GAMES SKIPPED.", mTotalSuccessful).c_str(), mTotalSuccessful);
 			ss << "\n" << skrbuf;

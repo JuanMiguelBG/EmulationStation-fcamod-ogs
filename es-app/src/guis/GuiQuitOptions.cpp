@@ -5,6 +5,7 @@
 #include "components/OptionListComponent.h"
 #include "Window.h"
 #include "ApiSystem.h"
+#include "SystemConf.h"
 
 
 GuiQuitOptions::GuiQuitOptions(Window* window) : GuiSettings(window, _("\"QUIT\" SETTINGS").c_str())
@@ -71,20 +72,16 @@ void GuiQuitOptions::initializeMenu()
 	std::string only_exit_action = Settings::getInstance()->getString("OnlyExitAction");
 	auto only_exit_action_list = std::make_shared< OptionListComponent< std::string > >(mWindow, _("ACTION TO EXECUTE"), false);
 
-	only_exit_action_list->add(_("shutdown"), "shutdown", only_exit_action == "shutdown");
-	only_exit_action_list->add(_("suspend"), "suspend", only_exit_action == "suspend");
-	only_exit_action_list->add(_("QUIT EMULATIONSTATION"), "exit_es", only_exit_action == "exit_es");
+	if (((only_exit_action == "suspend") && (SystemConf::getInstance()->get("suspend.device.mode") == "DISABLED"))
+		||  ((only_exit_action == "exit_es") && Settings::getInstance()->getBool("HideQuitEsOption")))
+		only_exit_action = "shutdown"; // default value
 
-	addWithLabel(_("ACTION TO EXECUTE"), only_exit_action_list);
-	addSaveFunc([this, only_exit_action_list]
-		{
-			std::string old_value = Settings::getInstance()->getString("OnlyExitAction");
-			if (old_value != only_exit_action_list->getSelected())
-			{
-				Settings::getInstance()->setString("OnlyExitAction", only_exit_action_list->getSelected());
-				setVariable("reloadGuiMenu", true);
-			}
-		});
+	only_exit_action_list->add(_("shutdown"), "shutdown", only_exit_action == "shutdown");
+	if (SystemConf::getInstance()->get("suspend.device.mode") != "DISABLED")
+		only_exit_action_list->add(_("suspend"), "suspend", only_exit_action == "suspend");
+	
+	if (!Settings::getInstance()->getBool("HideQuitEsOption"))
+		only_exit_action_list->add(_("QUIT EMULATIONSTATION"), "exit_es", only_exit_action == "exit_es");
 
 	if (!only_exit_action_list->hasSelection())
 	{
@@ -92,16 +89,35 @@ void GuiQuitOptions::initializeMenu()
 		only_exit_action = only_exit_action_list->getSelected();
 	}
 
+	addWithLabel(_("ACTION TO EXECUTE"), only_exit_action_list);
+	addSaveFunc([this, only_exit_action_list]
+		{
+			if (Settings::getInstance()->setString("OnlyExitAction", only_exit_action_list->getSelected()))
+				setVariable("reloadGuiMenu", true);
+		});
+
 	// confirm to exit
 	auto show_action_menu = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("ShowOnlyExitActionAsMenu"));
 	addWithLabel(_("SHOW ACTION NAME AS MENU OPTION"), show_action_menu);
 	addSaveFunc([this, show_action_menu]
 		{
-			bool old_value = Settings::getInstance()->getBool("ShowOnlyExitActionAsMenu");
-			if (old_value != show_action_menu->getState())
-			{
-				Settings::getInstance()->setBool("ShowOnlyExitActionAsMenu", show_action_menu->getState());
+			if (Settings::getInstance()->setBool("ShowOnlyExitActionAsMenu", show_action_menu->getState()))
 				setVariable("reloadGuiMenu", true);
-			}
 		});
+
+	// hide "quit emulationstation"
+	auto hide_quit_es = std::make_shared<SwitchComponent>(mWindow, Settings::getInstance()->getBool("HideQuitEsOption"));
+	addWithLabel(_("HIDE \"QUIT EMULATIONSTATION\" OPTION"), hide_quit_es);
+	addSaveFunc([this, hide_quit_es]
+		{
+			if (Settings::getInstance()->setBool("HideQuitEsOption", hide_quit_es->getState()))
+			{		
+				if (Settings::getInstance()->getBool("ShowOnlyExit")
+					&& hide_quit_es->getState() && (Settings::getInstance()->getString("OnlyExitAction") == "exit_es"))
+				{
+					if (Settings::getInstance()->setString("OnlyExitAction", "shutdown"))
+						setVariable("reloadGuiMenu", true);
+				}
+			}
+		});	
 }

@@ -56,7 +56,9 @@ void ISimpleGameListView::onThemeChanged(const std::shared_ptr<ThemeData>& theme
 	{
 		removeChild(&mHeaderText);
 		addChild(&mHeaderImage);
-	}else{
+	}
+	else
+	{
 		addChild(&mHeaderText);
 		removeChild(&mHeaderImage);
 	}
@@ -67,7 +69,8 @@ void ISimpleGameListView::onFileChanged(FileData* /*file*/, FileChangeType /*cha
 	// we could be tricky here to be efficient;
 	// but this shouldn't happen very often so we'll just always repopulate
 	FileData* cursor = getCursor();
-	if (!cursor->isPlaceHolder()) {
+	if (!cursor->isPlaceHolder())
+	{
 		populateList(cursor->getParent()->getChildrenListToDisplay());
 		setCursor(cursor);
 	}

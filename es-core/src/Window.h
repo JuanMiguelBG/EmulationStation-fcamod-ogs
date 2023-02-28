@@ -110,6 +110,8 @@ public:
 
 	HelpComponent* getHelpComponent() { return mHelp; };
 
+	float getHelpComponentHeight();
+
 private:
 	void processPostedFunctions();
 

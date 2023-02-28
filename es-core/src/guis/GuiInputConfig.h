@@ -20,7 +20,7 @@ public:
 	void onSizeChanged() override;
 
 private:
-	void error(const std::shared_ptr<TextComponent>& text, const std::string& msg); // set text to "msg" + not greyed out
+	void error(const std::shared_ptr<TextComponent>& text); // set text to "ALREADY TAKEN" + not greyed out
 
 	void setPress(const std::shared_ptr<TextComponent>& text); // set text to "PRESS ANYTHING" + not greyed out
 	void setNotDefined(const std::shared_ptr<TextComponent>& text); // set text to -NOT DEFINED- + greyed out

@@ -33,6 +33,7 @@
 #include "resources/TextureData.h"
 #include <FreeImage.h>
 #include "AudioManager.h"
+#include "DisplayPanelControl.h"
 #include "NetworkThread.h"
 #include "scrapers/ThreadedScraper.h"
 #include "ImageIO.h"
@@ -335,30 +336,48 @@ bool parseArgs(int argc, char* argv[])
 
 void loadOtherSettings()
 {
+	LOG(LogDebug) << "MAIN::loadOtherSettings() - Enter function";
 	Utils::Async::run( [] (void)
 		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 			{
 				SystemConf::getInstance()->set("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
-				bool wifi_enabled = ApiSystem::getInstance()->isWifiEnabled();
-				if (wifi_enabled)
-				{
-					SystemConf::getInstance()->setBool("wifi.enabled", wifi_enabled);
-//					std::string ssid = ApiSystem::getInstance()->getWifiSsid();
-//					if (SystemConf::getInstance()->setBool("wifi.ssid") != ssid)
-//						SystemConf::getInstance()->setBool("wifi.ssid", ssid);
-				}
-			}
+				SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
+				SystemConf::getInstance()->set("system.hostname", ApiSystem::getInstance()->getHostname());
 
-			bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
-			SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
-			if (btEnabled)
+				std::string ssid = ApiSystem::getInstance()->getWifiSsid();
+				if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
+					SystemConf::getInstance()->set("wifi.ssid", ssid);
+
+				if (!SystemConf::getInstance()->get("wifi.ssid").empty())
+					SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(ssid));
+
+				SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
+				SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
+			}
+		});
+	Utils::Async::run( [] (void)
+		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
 			{
-				std::string btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
+				bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
+				SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
+				std::string btAudioDevice = "";
+				if (btEnabled)
+					btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
+
 				SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
 				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
 			}
 		});
+	Utils::Async::run( [] (void)
+		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
+				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
+			
+			SystemConf::getInstance()->setBool("hdmi.mode", ApiSystem::getInstance()->isHdmiMode());
+		});
+		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
 
 bool verifyHomeFolderExists()
@@ -547,6 +566,10 @@ void signalHandler(int signum)
 		LOG(LogError) << "Interrupt signal SIGFPE received.\n";
 	else if (signum == SIGFPE)
 		LOG(LogError) << "Interrupt signal SIGFPE received.\n";
+	else if (signum == SIGABRT)
+		LOG(LogError) << "Interrupt signal SIGABRT received.\n";
+	else if (signum == SIGTERM)
+		LOG(LogError) << "Interrupt signal SIGTERM received.\n";
 	else
 		LOG(LogError) << "Interrupt signal (" << signum << ") received.\n";
 
@@ -554,12 +577,8 @@ void signalHandler(int signum)
 	exit(signum);
 }
 
-void launchStartupGame()
+void launchStartupGame(const std::string gamePath)
 {
-	auto gamePath = SystemConf::getInstance()->get("global.bootgame.path");
-	if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
-		return;
-
 	auto command = SystemConf::getInstance()->get("global.bootgame.cmd");
 	if (command.empty())
 		return;
@@ -611,12 +630,12 @@ void updateMetadataStartupGame()
 
 int main(int argc, char* argv[])
 {
-	// signal(SIGABRT, signalHandler);
+	signal(SIGABRT, signalHandler);
 	signal(SIGFPE, signalHandler);
 	signal(SIGILL, signalHandler);
 	signal(SIGINT, signalHandler);
 	signal(SIGSEGV, signalHandler);
-	// signal(SIGTERM, signalHandler);
+	//signal(SIGTERM, signalHandler);
 
 	srand((unsigned int)time(NULL));
 
@@ -669,10 +688,22 @@ int main(int argc, char* argv[])
 	//always close the log on exit
 	atexit(&onExit);
 
-	if (bootGame.enable_startup_game) {
-		waitForBluetoothDevices();
-		// Run boot game, before Window Create for linux
-		launchStartupGame();
+	if (bootGame.enable_startup_game)
+	{
+		std::string gamePath = SystemConf::getInstance()->get("global.bootgame.path");
+		if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
+		{ // clean bootgame settings
+			SystemConf::getInstance()->set("global.bootgame.path", "");
+			SystemConf::getInstance()->set("global.bootgame.cmd", "");
+			SystemConf::getInstance()->set("global.bootgame.info", "");
+		}
+		else
+		{
+			// wait for BT devices
+			waitForBluetoothDevices();
+			// Run boot game, before Window Create for linux
+			launchStartupGame(gamePath);
+		}
 	}
 
 	// metadata init
@@ -684,6 +715,8 @@ int main(int argc, char* argv[])
 	PowerSaver::init();
 	ViewController::init(&window);
 	CollectionSystemManager::init(&window);
+	VideoVlcComponent::init();
+	DisplayPanelControl::getInstance()->init();
 
 	MameNames::init();
 	window.pushGui(ViewController::get());
@@ -840,6 +873,7 @@ int main(int argc, char* argv[])
 	ThreadedScraper::stop();
 
 	ApiSystem::getInstance()->deinit();
+	DisplayPanelControl::getInstance()->deinit();
 
 	while(window.peekGui() != ViewController::get())
 		delete window.peekGui();

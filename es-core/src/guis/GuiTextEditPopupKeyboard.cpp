@@ -1,10 +1,10 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "components/MenuComponent.h"
 #include "utils/StringUtil.h"
-#include "Log.h"
 #include "EsLocale.h"
 #include "SystemConf.h"
 #include "Settings.h"
+#include "Window.h"
 
 #define OSK_WIDTH (Renderer::isSmallScreen() ? Renderer::getScreenWidth() : Renderer::getScreenWidth() * 0.78f)
 #define OSK_HEIGHT (Renderer::isSmallScreen() ? Renderer::getScreenHeight() : Renderer::getScreenHeight() * 0.60f)
@@ -13,6 +13,11 @@
 #define OSK_PADDINGY (Renderer::getScreenWidth() * 0.01f)
 
 #define BUTTON_GRID_HORIZ_PADDING (Renderer::getScreenWidth()*0.0052083333)
+
+std::vector<const char*> keyb_last_line_small = { "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "-colspan-", "CANCEL", "-colspan-", "-colspan-" };
+std::vector<const char*> keyb_last_line_big = { "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" };
+
+std::vector<const char*> keyb_last_line = Renderer::isSmallScreen() ? keyb_last_line_small : keyb_last_line_big;
 
 std::vector<std::vector<const char*>> kbUs {
 
@@ -32,9 +37,9 @@ std::vector<std::vector<const char*>> kbUs {
 	{ "`", "Z", "X", "C", "V", "B", "N", "M", "<", ">", "/", "ALT", "-colspan-" },
 	{ "€", "", "", "", "", "", "", "", "", "", "", "ALT", "-colspan-" },
 
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" }
+	keyb_last_line,
+	keyb_last_line,
+	keyb_last_line
 };
 
 std::vector<std::vector<const char*>> kbFr {
@@ -54,9 +59,9 @@ std::vector<std::vector<const char*>> kbFr {
 	{ ">", "W", "X", "C", "V", "B", "N", "?", ".", "/", "+", "ALT", "-colspan-" },
 	{ "€", "", "", "", "", "", "", "", "", "", "", "ALT", "-colspan-" },
 
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" }
+	keyb_last_line,
+	keyb_last_line,
+	keyb_last_line
 };
 
 std::vector<std::vector<const char*>> kbEs {
@@ -76,19 +81,25 @@ std::vector<std::vector<const char*>> kbEs {
 	{ ">", "Z", "X", "C", "V", "B", "N", "M", "~", "`", "\\", "ALT", "-colspan-" },
 	{ "£", "$", "¨", "/", "º", "ª", "@", "#", "*", "", "", "ALT", "-colspan-" },
 
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" },
-	{ "SHIFT", "-colspan-", "SPACE", "-colspan-", "-colspan-", "-colspan-", "-colspan-", "CUR_LEFT", "CUR_RIGHT", "RESET", "-colspan-", "CANCEL", "-colspan-" }
+	keyb_last_line,
+	keyb_last_line,
+	keyb_last_line
 };
 
+GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
+		const std::function<bool(const std::string&)>& okCallback, bool multiLine,
+		const std::function<void(const std::string&)>& backCallback) :
+	GuiTextEditPopupKeyboard(window, title, initValue, okCallback, multiLine, "OK", backCallback) {}
 
 GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::string& title, const std::string& initValue,
-	const std::function<bool(const std::string&)>& okCallback, bool multiLine, const std::string acceptBtnText)
-	: GuiComponent(window), mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)), mMultiLine(multiLine)
+	const std::function<bool(const std::string&)>& okCallback, bool multiLine, const char* acceptPromptText,
+	const std::function<void(const std::string&)>& backCallback)
+	: GuiComponent(window), mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)), mMultiLine(multiLine), mAcceptPromptText(acceptPromptText)
 {
 	setTag("popup");
 
 	mOkCallback = okCallback;
+	mBackCallback = backCallback;
 
 	auto theme = ThemeData::getMenuTheme();
 	mBackground.setImagePath(theme->Background.path);
@@ -172,7 +183,7 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 				if (lower == "SHIFT")
 				{
 					// Special case for shift key
-					mShiftButton = std::make_shared<ButtonComponent>(mWindow, _U("\u21E7"), _("SHIFTS FOR UPPER,LOWER, AND SPECIAL"), [this] { shiftKeys(); }, false);
+					mShiftButton = std::make_shared<ButtonComponent>(mWindow, _U("\u21E7"), _("SHIFTS FOR UPPER, LOWER, AND SPECIAL"), [this] { shiftKeys(); }, false);
 					button = mShiftButton;
 				}
 				else if (lower == "ALT")
@@ -266,53 +277,41 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 	});
 
 
-	bool change_height = Renderer::isSmallScreen() && Settings::getInstance()->getBool("ShowHelpPrompts");
-	float height_ratio = 1.0f;
-	if ( change_height )
-		height_ratio = 0.95f;
-
 	// If multiline, set all diminsions back to default, else draw size for keyboard.
-	if (mMultiLine)
-	{
-		float width = OSK_WIDTH,
-					height = mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40;
+	float new_x = 0.f,
+		  new_y = 0.f,
+		  width = OSK_WIDTH,
+		  height = !mMultiLine ? OSK_HEIGHT : mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40,
+		  width_ratio = 1.0f;
 
-		height = Renderer::getScreenHeight() * height_ratio;
-
-		width = (float)Math::min((int)width, Renderer::getScreenWidth());
-
-		setSize(width, height);
-
-		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if ( change_height )
-			new_y = 0.f;
-
-		setPosition(new_x, new_y);
-	}
+	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
+		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 	else
-	{
-		//setSize(OSK_WIDTH, mTitle->getFont()->getHeight() + textHeight + 40 + (Renderer::getScreenHeight() * 0.085f) * 6);
+	{  // !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
+		if (Settings::getInstance()->getBool("AutoMenuWidth"))
+		{
+			float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
+				
+			width_ratio = 1.2f;
+			if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
+				width_ratio = 1.4f;
+			else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
+				width_ratio = 1.7f;
+			else if ((font_size >= FONT_SIZE_LARGE))
+				width_ratio = 2.0f;
+		}
 
-		float width = OSK_WIDTH,
-					height = OSK_HEIGHT;
-
-		height = (float)Math::min((int) height, (int) (Renderer::getScreenHeight() * height_ratio));
-
-		width = (float)Math::min((int) width, Renderer::getScreenWidth());
+		width = (float)Math::min((int)(width * width_ratio), Renderer::getScreenWidth());
 
 		setSize(width, height);
 
-		float new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-
-		if ( change_height )
-			new_y = 0.f;
-
-		setPosition(new_x, new_y);
-		animateTo(Vector2f(new_x, new_y));
+		new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
+		new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
 	}
+	setPosition(new_x, new_y);
+
+	if (!mMultiLine)
+		animateTo(Vector2f(new_x, new_y));
 }
 
 
@@ -330,7 +329,7 @@ void GuiTextEditPopupKeyboard::onSizeChanged()
 	auto pos = mKeyboardGrid->getPosition();
 	auto sz = mKeyboardGrid->getSize();
 
-	mKeyboardGrid->setSize(mSize.x() - OSK_PADDINGX - OSK_PADDINGX, sz.y() - OSK_PADDINGY); // Small margin between buttons
+	mKeyboardGrid->setSize(mSize.x() - OSK_PADDINGX - OSK_PADDINGX, sz.y() - OSK_PADDINGY - mWindow->getHelpComponentHeight()); // Small margin between buttons
 	mKeyboardGrid->setPosition(OSK_PADDINGX, pos.y());
 }
 
@@ -359,6 +358,9 @@ bool GuiTextEditPopupKeyboard::input(InputConfig* config, Input input)
 		// pressing back when not text editing closes us
 		if (config->isMappedTo(BUTTON_BACK, input))
 		{
+			if (mBackCallback != nullptr)
+				mBackCallback(mText->getValue());
+
 			delete this;
 			return true;
 		}
@@ -478,8 +480,8 @@ std::vector<HelpPrompt> GuiTextEditPopupKeyboard::getHelpPrompts()
 		prompts.push_back(HelpPrompt("x", _("RESET")));
 
 	prompts.push_back(HelpPrompt("y", _("SHIFT")));
-	prompts.push_back(HelpPrompt("start", _("OK")));
-	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
+	prompts.push_back(HelpPrompt("start", _(mAcceptPromptText)));
+	prompts.push_back(HelpPrompt(BUTTON_BACK, _("DISCARD CHANGES")));
 	prompts.push_back(HelpPrompt(BUTTON_R2, _("SPACE")));
 	prompts.push_back(HelpPrompt(BUTTON_L2, _("DELETE")));
 	return prompts;

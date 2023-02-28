@@ -595,8 +595,7 @@ bool SystemView::input(InputConfig* config, Input input)
 			}
 			else if (config->isMappedTo("select", input) && Settings::getInstance()->getBool("ScreenSaverControls"))
 			{
-				std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-				if (mWindow->isScreenSaverEnabled() && (screensaver_behavior != "suspend"))
+				if (mWindow->isScreenSaverEnabled())
 				{
 					mWindow->startScreenSaver();
 					mWindow->renderScreenSaver(true);
@@ -692,16 +691,7 @@ void SystemView::showNavigationBar(const std::string& title, const std::function
 	w = Math::max(w, Renderer::getScreenWidth() / 3.0f);
 
 	// resize
-	bool change_height = Settings::getInstance()->getBool("ShowHelpPrompts"); //&& Renderer::isSmallScreen();
-	float height_ratio = 1.0f;
-	if ( change_height )
-		height_ratio = 0.95f;
-
-//	float height_ratio = 1.0f;
-//	if ( Settings::getInstance()->getBool("ShowHelpPrompts") && !Renderer::isSmallScreen() )
-//		height_ratio = 0.93f;
-
-	gs->getMenu().setSize(w, Renderer::getScreenHeight() * height_ratio);
+	gs->getMenu().setSize(w, Renderer::getScreenHeight());
 
 	gs->getMenu().animateTo(
 		Vector2f(-w, 0),
@@ -1039,8 +1029,7 @@ std::vector<HelpPrompt> SystemView::getHelpPrompts()
 	}
 	else
 	{
-		std::string screensaver_behavior = Settings::getInstance()->getString("ScreenSaverBehavior");
-		if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && ((screensaver_behavior != "suspend") && mWindow->isScreenSaverEnabled()))
+		if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && mWindow->isScreenSaverEnabled() )
 			prompts.push_back(HelpPrompt("select", _("LAUNCH SCREENSAVER")));
 	}
 

@@ -14,11 +14,14 @@
 #include "components/AsyncNotificationComponent.h"
 #include "AudioManager.h"
 #include "VolumeControl.h"
+#include "DisplayPanelControl.h"
 #include "InputManager.h"
 #include "EsLocale.h"
 #include <algorithm>
 #include "guis/GuiMsgBox.h"
 #include "Scripting.h"
+#include "EmulationStation.h"
+#include "SystemConf.h"
 
 UpdateState::State ApiSystem::state = UpdateState::State::NO_UPDATE;
 
@@ -446,7 +449,6 @@ bool ApiSystem::isBatteryLimit(float battery_level, int limit) // %
 	return battery_level < limit;
 }
 
-
 std::string ApiSystem::getVersion()
 {
 	LOG(LogInfo) << "ApiSystem::getVersion()";
@@ -550,14 +552,26 @@ DisplayAndGpuInformation ApiSystem::getDisplayAndGpuInformation(bool summary)
 {
 	LOG(LogInfo) << "ApiSystem::getDisplayAndGpuInformation()";
 
-	return queryDisplayAndGpuInformation(summary); // platform.h
+	DisplayAndGpuInformation dagi = queryDisplayAndGpuInformation(summary); // platform.h
+	dagi.brightness_level = getBrightnessLevel();
+	if (!summary && !SystemConf::getInstance()->getBool("hdmi.mode"))
+	{
+		dagi.gamma_level = getGammaLevel();
+		dagi.contrast_level = getContrastLevel();
+		dagi.saturation_level = getSaturationLevel();
+		dagi.hue_level = getHueLevel();
+	}
+	return dagi;
 }
 
 SoftwareInformation ApiSystem::getSoftwareInformation(bool summary)
 {
 	LOG(LogInfo) << "ApiSystem::getSoftwareInformation()";
 
-	return querySoftwareInformation(summary); // platform.h
+	SoftwareInformation si = querySoftwareInformation(summary); // platform.h
+	si.es_version = Utils::String::toUpper(PROGRAM_VERSION_STRING);
+	si.es_built = PROGRAM_BUILT_STRING;
+	return si;
 }
 
 DeviceInformation ApiSystem::getDeviceInformation(bool summary)
@@ -571,35 +585,105 @@ int ApiSystem::getBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightnessLevel()";
 
-	return queryBrightnessLevel();
+	return DisplayPanelControl::getInstance()->getBrightnessLevel();
 }
 
 void ApiSystem::setBrightnessLevel(int brightnessLevel)
 {
-	LOG(LogInfo) << "ApiSystem::setBrightnessLevel()";
+	LOG(LogInfo) << "ApiSystem::setBrightnessLevel() - brightnessLevel: " << std::to_string(brightnessLevel);
 
-	saveBrightnessLevel(brightnessLevel);
+	DisplayPanelControl::getInstance()->setBrightnessLevel(brightnessLevel);
 }
 
 int ApiSystem::getBrightness()
 {
 	LOG(LogInfo) << "ApiSystem::getBrightness()";
 
-	return queryBrightness();
+	return DisplayPanelControl::getInstance()->getBrightness();
 }
 
 void ApiSystem::backupBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::backupBrightnessLevel()";
 
-	Settings::getInstance()->setInt("BrightnessBackup", ApiSystem::getInstance()->getBrightnessLevel());
+	Settings::getInstance()->setInt("BrightnessBackup", getBrightnessLevel());
 }
 
 void ApiSystem::restoreBrightnessLevel()
 {
 	LOG(LogInfo) << "ApiSystem::restoreBrightnessLevel()";
 
-	ApiSystem::getInstance()->setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
+	setBrightnessLevel(Settings::getInstance()->getInt("BrightnessBackup"));
+}
+
+void ApiSystem::setGammaLevel(int gammaLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setGammaLevel() - gamma level: " << std::to_string(gammaLevel);
+
+	DisplayPanelControl::getInstance()->setGammaLevel(gammaLevel);
+}
+
+int ApiSystem::getGammaLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getGammaLevel()";
+
+	return DisplayPanelControl::getInstance()->getGammaLevel();
+}
+
+void ApiSystem::setContrastLevel(int contrastLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setContrastLevel() - contrast level: " << std::to_string(contrastLevel);
+
+	DisplayPanelControl::getInstance()->setContrastLevel(contrastLevel);
+}
+
+int ApiSystem::getContrastLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getGammaLevel()";
+
+	return DisplayPanelControl::getInstance()->getContrastLevel();
+}
+
+void ApiSystem::setSaturationLevel(int saturationLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setSaturationLevel() - saturation level: " << std::to_string(saturationLevel);
+
+	DisplayPanelControl::getInstance()->setSaturationLevel(saturationLevel);
+}
+
+int ApiSystem::getSaturationLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getSaturationLevel()";
+
+	return DisplayPanelControl::getInstance()->getSaturationLevel();
+}
+
+void ApiSystem::setHueLevel(int hueLevel)
+{
+	LOG(LogInfo) << "ApiSystem::setHueLevel() - hue level: " << std::to_string(hueLevel);
+
+	DisplayPanelControl::getInstance()->setHueLevel(hueLevel);
+}
+
+int ApiSystem::getHueLevel()
+{
+	LOG(LogInfo) << "ApiSystem::getHueLevel()";
+
+	return DisplayPanelControl::getInstance()->getHueLevel();
+}
+
+void ApiSystem::resetDisplayPanelSettings()
+{
+	LOG(LogInfo) << "ApiSystem::resetDisplayPanelSettings()";
+
+	return DisplayPanelControl::getInstance()->resetDisplayPanelSettings();
+}
+
+bool ApiSystem::isHdmiMode()
+{
+	LOG(LogInfo) << "ApiSystem::isHdmiMode()";
+
+	return queryHdmiMode();
 }
 
 int ApiSystem::getVolume()
@@ -1061,6 +1145,26 @@ void ApiSystem::setWifiPowerSafe(bool state)
 	executeSystemScript("es-wifi set_wifi_power_safe " + Utils::String::boolToString(state) + " &");
 }
 
+std::vector<std::string> ApiSystem::getKnowedWifiNetworks()
+{
+	LOG(LogInfo) << "ApiSystem::getKnowedWifiNetworks()";
+
+	return executeEnumerationScript("es-wifi knowed_wifis");
+}
+
+bool ApiSystem::forgetWifiNetwork(const std::string ssid)
+{
+	LOG(LogInfo) << "ApiSystem::forgetWifiNetwork() - ssid: '" << ssid << "'";
+
+	return executeSystemScript("es-wifi forget_wifi \"" + ssid + '"');
+}
+
+bool ApiSystem::forgetAllKnowedWifiNetworks()
+{
+	LOG(LogInfo) << "ApiSystem::forgetAllKnowedWifiNetworks()";
+
+	return executeSystemScript("es-wifi forget_all_wifis");
+}
 
 bool ApiSystem::setLanguage(std::string language)
 {
@@ -1208,6 +1312,27 @@ bool ApiSystem::setOptimizeSystem(bool state)
 	return executeSystemScript("es-optimize_system active_optimize_system " + Utils::String::boolToString(state));
 }
 
+std::vector<std::string> ApiSystem::getSuspendModes()
+{
+	LOG(LogInfo) << "ApiSystem::getSuspendModes()";
+
+	return executeEnumerationScript("es-optimize_system get_sleep_modes");
+}
+
+std::string ApiSystem::getSuspendMode()
+{
+	LOG(LogInfo) << "ApiSystem::getSuspendMode()";
+
+	return getShOutput(R"(es-optimize_system get_sleep_mode)");
+}
+
+bool ApiSystem::setSuspendMode(const std::string suspend_mode)
+{
+	LOG(LogInfo) << "ApiSystem::setSuspendMode() - " << suspend_mode;
+
+	return executeSystemScript("es-optimize_system set_sleep_mode " + suspend_mode);
+}
+
 bool ApiSystem::isEsScriptsLoggingActivated()
 {
 	LOG(LogInfo) << "ApiSystem::isEsScriptsLoggingActivated()";
@@ -1215,18 +1340,11 @@ bool ApiSystem::isEsScriptsLoggingActivated()
 	return Utils::String::toBool( getShOutput(R"(es-log_scripts is_actived_scripts_log)") );
 }
 
-bool ApiSystem::setEsScriptsLoggingActivated(bool state, const std::string level)
+bool ApiSystem::setEsScriptsLoggingActivated(bool state, const std::string level, bool logWithNanoSeconds)
 {
 	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingActivated()";
 
-	return executeSystemScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " &");
-}
-
-bool ApiSystem::setEsScriptsLoggingLevel(const std::string level)
-{
-	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingLevel()";
-
-	return executeSystemScript("es-log_scripts set_es_scripts_log_level " + level + " &");
+	return executeSystemScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " " + Utils::String::boolToString(logWithNanoSeconds) + " &");
 }
 
 bool ApiSystem::setShowRetroarchFps(bool state)
@@ -1495,6 +1613,7 @@ void ApiSystem::launchExternalWindow_before(Window *window, const std::string co
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
 	InputManager::getInstance()->deinit();
+	DisplayPanelControl::getInstance()->deinit();
 	window->deinit();
 
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before OK";
@@ -1512,6 +1631,7 @@ void ApiSystem::launchExternalWindow_after(Window *window, const std::string com
 	ApiSystem::restoreAfterGameValues();
 
 	window->init();
+	DisplayPanelControl::getInstance()->init();
 	InputManager::getInstance()->init();
 	VolumeControl::getInstance()->init();
 	AudioManager::getInstance()->init();
@@ -1617,7 +1737,7 @@ bool ApiSystem::isBluetoothAudioDeviceConnected()
 
 std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std::string> btDevices)
 {
-	LOG(LogInfo) << "ApiSystem::getBluetoothDevices()";
+	LOG(LogInfo) << "ApiSystem::toBluetoothDevicesVector()";
 
 	std::vector<BluetoothDevice> result;
 	for (auto btDevice : btDevices)
@@ -1628,9 +1748,10 @@ std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std
 		{
 			bt_device.id = Utils::String::extractString(btDevice, "id=\"", "\"", false);
 			bt_device.name = Utils::String::extractString(btDevice, "name=\"", "\"", false);
+			bt_device.alias = Utils::String::extractString(btDevice, "alias=\"", "\"", false);
 			bt_device.type = Utils::String::extractString(btDevice, "type=\"", "\"", false);
-			bt_device.connected = Utils::String::toBool( Utils::String::extractString(btDevice, "connected=\"", "\"", false) );
 			bt_device.paired = Utils::String::toBool( Utils::String::extractString(btDevice, "paired=\"", "\"", false) );
+			bt_device.connected = Utils::String::toBool( Utils::String::extractString(btDevice, "connected=\"", "\"", false) );
 
 			if (Utils::String::startsWith(bt_device.type, "audio-"))
 				bt_device.isAudioDevice = true;
@@ -1683,9 +1804,10 @@ BluetoothDevice ApiSystem::getBluetoothDeviceInfo(const std::string id)
 	{
 		bt_device.id = Utils::String::extractString(device_info, "id=\"", "\"", false);
 		bt_device.name = Utils::String::extractString(device_info, "name=\"", "\"", false);
+		bt_device.alias = Utils::String::extractString(device_info, "alias=\"", "\"", false);
 		bt_device.type = Utils::String::extractString(device_info, "type=\"", "\"", false);
-		bt_device.connected = Utils::String::toBool( Utils::String::extractString(device_info, "connected=\"", "\"", false) );
 		bt_device.paired = Utils::String::toBool( Utils::String::extractString(device_info, "paired=\"", "\"", false) );
+		bt_device.connected = Utils::String::toBool( Utils::String::extractString(device_info, "connected=\"", "\"", false) );
 
 		if (Utils::String::startsWith(bt_device.type, "audio-"))
 			bt_device.isAudioDevice = true;
@@ -1764,6 +1886,13 @@ bool ApiSystem::stopAutoConnectBluetoothAudioDevice()
 	LOG(LogInfo) << "ApiSystem::stopAutoConnectBluetoothAudioDevice()";
 
 	return executeSystemScript("es-bluetooth auto_connect_audio_device_off &");
+}
+
+bool ApiSystem::setBluetoothDeviceAlias(const std::string id, const std::string alias)
+{
+	LOG(LogInfo) << "ApiSystem::setBluetoothDeviceAlias() - id: " << id << ", alias: " << alias;
+
+	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + "\"" );
 }
 
 void ApiSystem::backupAfterGameValues()

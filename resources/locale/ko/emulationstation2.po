@@ -1043,7 +1043,7 @@ msgstr "빠른 시스템 종료"
 msgid "ON SCREEN KEYBOARD"
 msgstr "온스크린 키보드"
 
-msgid "SHIFTS FOR UPPER,LOWER, AND SPECIAL"
+msgid "SHIFTS FOR UPPER, LOWER, AND SPECIAL"
 msgstr "시프트키로 대소문자 및 특수문자 전환"
 
 msgid "SPACE"

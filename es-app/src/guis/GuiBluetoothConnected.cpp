@@ -5,17 +5,13 @@
 #include <string>
 #include "ApiSystem.h"
 #include "EsLocale.h"
-#include "guis/GuiTextEditPopup.h"
-#include "guis/GuiTextEditPopupKeyboard.h"
 #include "guis/GuiLoading.h"
 #include "SystemConf.h"
-#include "AudioManager.h"
-#include "VolumeControl.h"
 #include "Log.h"
 
 
 GuiBluetoothConnected::GuiBluetoothConnected(Window* window, const std::string title, const std::string subtitle)
-	: GuiComponent(window), mMenu(window, title.c_str())
+	: GuiComponent(window), mMenu(window, title.c_str(), true)
 {
 	mTitle = title;
 	mWaitingLoad = false;
@@ -31,24 +27,41 @@ GuiBluetoothConnected::GuiBluetoothConnected(Window* window, const std::string t
 
 void GuiBluetoothConnected::load(std::vector<BluetoothDevice> btDevices)
 {
+	hasDevices = false;
 	mMenu.clear();
 	mMenu.clearButtons();
 
-	hasDevices = false;
 	if (btDevices.size() == 0)
 		mMenu.addEntry(_("NO BLUETOOTH DEVICES FOUND"), false, std::bind(&GuiBluetoothConnected::onRefresh, this));
 	else
 	{
 		hasDevices = true;
 		for (auto btDevice : btDevices)
-			mMenu.addWithDescription(btDevice.name, btDevice.id, nullptr, [this, btDevice]() { GuiBluetoothConnected::onDisconnectDevice(btDevice); }, btDevice.type);
+		{
+			std::string device_name = btDevice.name,
+						device_value = btDevice.name,
+						device_id;
+			device_value.append(" - ").append(btDevice.id);
+
+			if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty())
+			{
+				device_name = btDevice.alias;
+				device_value = btDevice.alias;
+				device_value.append(" - ").append(btDevice.id).append(SystemConf::getInstance()->get("already.connection.exist.flag"));
+				device_id.append(btDevice.name).append(" - ");
+			}
+			device_id.append(btDevice.id);
+
+			mMenu.addWithDescription(device_name, device_id, [this, btDevice]() { GuiBluetoothConnected::onDisconnectDevice(btDevice); },
+									 btDevice.type, device_value);
+		}
 	}
 
 	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onRefresh(); });
 	if (hasDevices)
 		mMenu.addButton(_("DISCONNECT ALL"), _("DISCONNECT ALL"), [&] { GuiBluetoothConnected::onDisconnectAll(); });
 	
-	mMenu.addButton(_("BACK"), _("BACK"), [&] { delete this; });
+	mMenu.addButton(_("BACK"), _("BACK"), [&] { onClose(); });
 
 	mMenu.updateSize();
 
@@ -67,8 +80,6 @@ void GuiBluetoothConnected::displayRestartDialog(Window *window, const std::stri
 			// checking if a reset audio configuration is needed
 			if (restarES)
 			{
-				//LOG(LogDebug) << "GuiBluetoothConnected::displayRestartDialog() - Audio BT device changed, restarting ES.";
-				//Log::flush();
 				ApiSystem::getInstance()->stopBluetoothLiveScan();
 
 				std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
@@ -84,7 +95,7 @@ void GuiBluetoothConnected::displayRestartDialog(Window *window, const std::stri
 			else
 			{
 				if (deleteWindow)
-					delete this;
+					onClose();
 				else
 					GuiBluetoothConnected::onRefresh();
 			}
@@ -102,34 +113,22 @@ bool GuiBluetoothConnected::onDisconnectDevice(const BluetoothDevice& btDevice)
 		_("YES"), [this, window, btDevice]
 		{
 			std::string msg = (_("DISCONNECTING BLUETOOTH DEVICE"));
-			msg.append(" '").append(btDevice.name).append("' ...");
+			msg.append(" '").append(getDeviceName(btDevice)).append("' ...");
 			
 			std::string audio_device = SystemConf::getInstance()->get("bluetooth.audio.device");
-			//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectDevice() - actual BT audio device: '" << audio_device << "'";
-			//Log::flush();
 
 			window->pushGui(new GuiLoading<bool>(window, msg, 
 				[this, btDevice, audio_device]
 				{
 					mWaitingLoad = true;
 
-					bool result = false;
-
-					//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectDevice() - calling --> ApiSystem::getInstance()->disconnectBluetoothDevice(" << btDevice.id << "', type: '" << btDevice.type << ')';
-					//Log::flush();
-					result = ApiSystem::getInstance()->disconnectBluetoothDevice(btDevice.id);
-					
-					//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectDevice() - tried to disconnect from '" << btDevice.name << "' device, result: " << Utils::String::boolToString(result);
-					//Log::flush();
-
+					bool result = ApiSystem::getInstance()->disconnectBluetoothDevice(btDevice.id);
 					// successfully connected
 					if (result)
 					{
 						// BT 4.2, only one audio device allowed
 						// reload BT audio device info
 						std::string new_audio_device = ApiSystem::getInstance()->getBluetoothAudioDevice();
-						//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectDevice() - new BT audio device: '" << new_audio_device << "'";
-						//Log::flush();
 
 						SystemConf::getInstance()->setBool("bluetooth.audio.connected", !new_audio_device.empty());
 						SystemConf::getInstance()->set("bluetooth.audio.device", new_audio_device);
@@ -144,16 +143,13 @@ bool GuiBluetoothConnected::onDisconnectDevice(const BluetoothDevice& btDevice)
 
 					if (result)
 					{
-						msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE SUCCESSFULLY DISCONNECTED"));
+						msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE SUCCESSFULLY DISCONNECTED"));
 
 						// audio bluetooth connecting changes
 						restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
 					}
 					else
-						msg.append("'").append(btDevice.name).append("' ").append(_("DEVICE FAILED TO DISCONNECT"));
-
-					//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectDevice() - message: " << msg;
-					//Log::flush();
+						msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE FAILED TO DISCONNECT"));
 
 					mWaitingLoad = false;
 					GuiBluetoothConnected::displayRestartDialog(window, msg, result, restar_ES);
@@ -172,7 +168,7 @@ bool GuiBluetoothConnected::input(InputConfig* config, Input input)
 	if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
 		if (!mWaitingLoad)
-			delete this;
+			onClose();
 
 		return true;
 	}
@@ -199,7 +195,10 @@ std::vector<HelpPrompt> GuiBluetoothConnected::getHelpPrompts()
 	if (hasDevices)
 	{
 		prompts.push_back(HelpPrompt("y", _("DISCONNECT ALL")));
-		prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
+
+		std::string selected = mMenu.getSelected();
+		if (!selected.empty())
+			prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
 	}
 	else
 		prompts.push_back(HelpPrompt(BUTTON_OK, _("REFRESH")));
@@ -237,8 +236,6 @@ void GuiBluetoothConnected::onDisconnectAll()
 		_("YES"), [this, window]
 		{
 			std::string audio_device = SystemConf::getInstance()->get("bluetooth.audio.device");
-			//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectAll() - BT audio device connected: '" << Utils::String::boolToString(!audio_device.empty()) << "'";
-			//Log::flush();
 
 			mWindow->pushGui(new GuiLoading<bool>(window, _("PLEASE WAIT..."),
 				[this, window, audio_device]()
@@ -248,9 +245,6 @@ void GuiBluetoothConnected::onDisconnectAll()
 					bool result = ApiSystem::getInstance()->disconnectAllBluetoothDevices();
 
 					std::string new_audio_device = ApiSystem::getInstance()->getBluetoothAudioDevice();
-					//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectDevice() - not all devices are disconnected, BT audio device: '" << new_audio_device << "'";
-					//Log::flush();
-
 					SystemConf::getInstance()->setBool("bluetooth.audio.connected", !new_audio_device.empty());
 					SystemConf::getInstance()->set("bluetooth.audio.device", new_audio_device);
 
@@ -268,13 +262,23 @@ void GuiBluetoothConnected::onDisconnectAll()
 
 					// audio bluetooth connecting changes
 					restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
-
-					//LOG(LogDebug) << "GuiBluetoothConnected::onDisconnectDevice() - message: '" << msg << "'";
-					//Log::flush();
-
 					mWaitingLoad = false;
 					GuiBluetoothConnected::displayRestartDialog(window, _(msg), result, restar_ES);
 				}));
 		},
 		_("NO"), nullptr));
+}
+
+void GuiBluetoothConnected::onClose()
+{
+	delete this;
+}
+
+std::string GuiBluetoothConnected::getDeviceName(const BluetoothDevice& btDevice) const
+{
+	std::string name = btDevice.name;
+	if (Settings::getInstance()->getBool("bluetooth.use.alias") && !btDevice.alias.empty())
+		name = btDevice.alias;
+
+	return name;
 }

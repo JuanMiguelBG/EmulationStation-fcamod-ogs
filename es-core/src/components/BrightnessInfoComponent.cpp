@@ -5,8 +5,8 @@
 #include "components/NinePatchComponent.h"
 #include "components/TextComponent.h"
 #include "EsLocale.h"
-#include "platform.h"
 #include "Window.h"
+#include "DisplayPanelControl.h"
 
 #define PADDING_PX			(Renderer::getScreenWidth()*0.006)
 #define PADDING_BAR			(Renderer::isSmallScreen() ? Renderer::getScreenWidth()*0.02 : Renderer::getScreenWidth()*0.006)
@@ -55,7 +55,7 @@ BrightnessInfoComponent::BrightnessInfoComponent(Window* window, bool actionLine
 
 
 	// FCA TopRight
-	float posX = Renderer::getScreenWidth() - (Renderer::getScreenWidth() * 0.07f);
+	float posX = Renderer::getScreenWidth() - (Renderer::getScreenWidth() * 0.12f);
 	float posY = Renderer::getScreenHeight() * 0.04f;
 
 	setPosition(posX, posY, 0);
@@ -96,7 +96,7 @@ void BrightnessInfoComponent::update(int deltaTime)
 
 	mCheckTime = 0;
 
-	int brightness = queryBrightnessLevel();
+	int brightness = DisplayPanelControl::getInstance()->getBrightnessLevel();
 
 	if (brightness != mBrightness)
 	{

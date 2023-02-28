@@ -18,6 +18,7 @@ public:
 	virtual ~GuiGamelistOptions();
 
 	virtual bool input(InputConfig* config, Input input) override;
+	void onSizeChanged() override;
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 	virtual HelpStyle getHelpStyle() override;
 
@@ -37,6 +38,7 @@ private:
 	void exitEditMode();
 	void jumpToLetter();
 	void addCustomCollectionLongName(const std::string& collectionName);
+	void addSelectionInfo();
 
 	MenuComponent mMenu;
 
@@ -58,6 +60,8 @@ private:
 	std::vector< std::function<void()> > mSaveFuncs;
 	bool mReloadAll;
 	bool mReloadSystems;
+
+	TextComponent mSelection;
 };
 
 #endif // ES_APP_GUIS_GUI_GAME_LIST_OPTIONS_H

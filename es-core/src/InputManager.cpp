@@ -1,6 +1,7 @@
 #include "InputManager.h"
 
 #include "utils/FileSystemUtil.h"
+#include "utils/StringUtil.h"
 #include "CECInput.h"
 #include "Log.h"
 #include "platform.h"
@@ -10,6 +11,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <assert.h>
+#include "Scripting.h"
 
 #define KEYBOARD_GUID_STRING          "-1"
 #define CEC_GUID_STRING               "-2"
@@ -94,11 +96,17 @@ void InputManager::addJoystickByDeviceIndex(int id)
 
 	// create the InputConfig
 	mInputConfigs[joyId] = new InputConfig(joyId, SDL_JoystickName(joy), guid);
-	if(!loadInputConfig(mInputConfigs[joyId]))
+	if (!loadInputConfig(mInputConfigs[joyId]))
 	{
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick '" << SDL_JoystickName(joy) << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ").";
-	}else{
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick '" << SDL_JoystickName(joy) << "' (instance ID: " << joyId << ", device index: " << id << ")";
+		std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick '" << SDL_JoystickName(joy) << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
+		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id), is_defalut_config);
+	}
+	else
+	{
+		std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick '" << SDL_JoystickName(joy) << "' (instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
+		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id), is_defalut_config);
 	}
 
 	// set up the prevAxisValues
@@ -123,12 +131,18 @@ void InputManager::removeJoystickByJoystickID(SDL_JoystickID joyId)
 
 	// close the joystick
 	auto joyIt = mJoysticks.find(joyId);
-	if(joyIt != mJoysticks.cend())
+	if (joyIt != mJoysticks.cend())
 	{
 		LOG(LogInfo) << "InputManager::removeJoystickByJoystickID() - Removed joystick '" << SDL_JoystickName(joyIt->second) << "' (instance ID: " << joyId << ")";
+		char guid[65];
+		SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joyIt->second), guid, 65);
+		Scripting::fireEvent("input-controller-removed", SDL_JoystickName(joyIt->second), guid);
+
 		SDL_JoystickClose(joyIt->second);
 		mJoysticks.erase(joyIt);
-	}else{
+	}
+	else
+	{
 		LOG(LogError) << "InputManager::removeJoystickByJoystickID() - Could not find joystick to close (instance ID: " << joyId << ")";
 	}
 }
@@ -329,6 +343,15 @@ bool InputManager::loadInputConfig(InputConfig* config)
 	if(!configNode)
 		return false;
 
+	pugi::xml_attribute defaultDevideAtt = configNode.attribute("deviceDefault");
+	bool defaultDevice = false;
+	if (defaultDevideAtt)
+	{
+		LOG(LogInfo) << "InputManager::loadInputConfig() - devide default input config";
+		defaultDevice = defaultDevideAtt.as_bool();
+	}
+	
+	config->setDefaultInput(defaultDevice);
 	config->loadFromXML(configNode);
 	return true;
 }
@@ -415,7 +438,7 @@ void InputManager::writeDeviceConfig(InputConfig* config)
 	doc.save_file(path.c_str());
 
 	Scripting::fireEvent("config-changed");
-	Scripting::fireEvent("controls-changed");
+	Scripting::fireEvent("controls-changed", std::to_string(config->getDeviceId()), config->getDeviceName(), config->getDeviceGUIDString());
 
 	// execute any onFinish commands and re-load the config for changes
 	doOnFinish();

@@ -7,6 +7,7 @@
 #include "Log.h"
 #include "Window.h"
 #include "EsLocale.h"
+#include "Scripting.h"
 
 struct InputConfigStructure
 {
@@ -16,38 +17,38 @@ struct InputConfigStructure
 	const char* icon;
 };
 
-static const int inputCount = 25;
+static const int inputCount = 24;
 static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 {
-	{ "Up",               false, "D-PAD UP",           ":/help/dpad_up.svg" },
-	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down.svg" },
-	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left.svg" },
-	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right.svg" },
-	{ "Start",            true,  "START",              ":/help/button_start.svg" },
-	{ "Select",           true,  "SELECT",             ":/help/button_select.svg" },
+	{ "Up",               false, "D-PAD UP",           ":/help/dpad_up_gt.svg" },
+	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down_gt.svg" },
+	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left_gt.svg" },
+	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right_gt.svg" },
+	{ "Select",           true,  "SELECT",             ":/help/button_select_gt.svg" },
+	{ "Start",            true,  "START",              ":/help/button_start_gt.svg" },
 
-	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east.svg" },
-	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south.svg" },
-	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north.svg" },
-	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west.svg" },
+	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north_gt.svg" },
+	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south_gt.svg" },
+	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west_gt.svg" },
+	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east_gt.svg" },
 
-	{ "L1",               true,  "L1 / Page Up",       ":/help/button_l.svg" },
-	{ "R1",               true,  "R1 / Page Down",     ":/help/button_r.svg" },
-	{ "L2",               true,  "L2",                 ":/help/button_lt.svg" },
-	{ "R2",               true,  "R2",                 ":/help/button_rt.svg" },
-	{ "L3",               true,  "L3",                 ":/help/analog_thumb.svg" },
-	{ "R3",               true,  "R3",                 ":/help/analog_thumb.svg" },
+	{ "LeftShoulder",     true,  "L1",                 ":/help/button_l_gt.svg" },
+	{ "RightShoulder",    true,  "R1",                 ":/help/button_r_gt.svg" },
+	{ "LeftTrigger",      true,  "L2",                 ":/help/button_lt_gt.svg" },
+	{ "RightTrigger",     true,  "R2",                 ":/help/button_rt_gt.svg" },
+	{ "LeftThumb",        true,  "L3",                 ":/help/analog_thumb_gt.svg" },
+	{ "RightThumb",       true,  "R3",                 ":/help/analog_thumb_gt.svg" },
 
-	{ "LeftAnalogUp",     true,  "LEFT ANALOG UP",     ":/help/analog_up.svg" },
-	{ "LeftAnalogDown",   true,  "LEFT ANALOG DOWN",   ":/help/analog_down.svg" },
-	{ "LeftAnalogLeft",   true,  "LEFT ANALOG LEFT",   ":/help/analog_left.svg" },
-	{ "LeftAnalogRight",  true,  "LEFT ANALOG RIGHT",  ":/help/analog_right.svg" },
+	{ "LeftAnalogUp",     true,  "LEFT ANALOG UP",     ":/help/analog_up_gt.svg" },
+	{ "LeftAnalogDown",   true,  "LEFT ANALOG DOWN",   ":/help/analog_down_gt.svg" },
+	{ "LeftAnalogLeft",   true,  "LEFT ANALOG LEFT",   ":/help/analog_left_gt.svg" },
+	{ "LeftAnalogRight",  true,  "LEFT ANALOG RIGHT",  ":/help/analog_right_gt.svg" },
 
-	{ "RightAnalogUp",    true,  "RIGHT ANALOG UP",    ":/help/analog_up.svg" },
-	{ "RightAnalogDown",  true,  "RIGHT ANALOG DOWN",  ":/help/analog_down.svg" },
-	{ "RightAnalogLeft",  true,  "RIGHT ANALOG LEFT",  ":/help/analog_left.svg" },
-	{ "RightAnalogRight", true,  "RIGHT ANALOG RIGHT", ":/help/analog_right.svg" },
-	{ "hotkeyEnable",     true,  "HOTKEY",             ":/help/button_hotkey.svg" }
+	{ "RightAnalogUp",    true,  "RIGHT ANALOG UP",    ":/help/analog_up_gt.svg" },
+	{ "RightAnalogDown",  true,  "RIGHT ANALOG DOWN",  ":/help/analog_down_gt.svg" },
+	{ "RightAnalogLeft",  true,  "RIGHT ANALOG LEFT",  ":/help/analog_left_gt.svg" },
+	{ "RightAnalogRight", true,  "RIGHT ANALOG RIGHT", ":/help/analog_right_gt.svg" },
+//	{ "HotKeyEnable",     true,  "HOTKEY",             ":/help/button_hotkey_gt_gt.svg" }
 };
 
 //MasterVolUp and MasterVolDown are also hooked up, but do not appear on this screen.
@@ -56,7 +57,7 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 #define HOLD_TO_SKIP_MS 1000
 
 GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfigureAll, const std::function<void()>& okCallback) : GuiComponent(window),
-	mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 7)),
+	mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)),
 	mTargetConfig(target), mHoldingInput(false), mBusyAnim(window)
 {
 	auto theme = ThemeData::getMenuTheme();
@@ -67,7 +68,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 
 	mGrid.setSeparatorColor(theme->Text.separatorColor);
 
-	LOG(LogInfo) << "Configuring device " << target->getDeviceId() << " (" << target->getDeviceName() << ").";
+	LOG(LogInfo) << "Configuring device " << target->getDeviceId() << " (" << target->getDeviceName() << "), default input: " << Utils::String::boolToString(target->isDefaultInput()) <<  '.';
 
 	if(reconfigureAll)
 		target->clear();
@@ -82,7 +83,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	mGrid.setEntry(std::make_shared<GuiComponent>(mWindow), Vector2i(0, 0), false);
 
 	mTitle = std::make_shared<TextComponent>(mWindow, _("CONFIGURING"), Font::get(FONT_SIZE_LARGE), 0x555555FF, ALIGN_CENTER);
-	mGrid.setEntry(mTitle, Vector2i(0, 1), false, true);
+	mGrid.setEntry(mTitle, Vector2i(0, 0), false, true);
 
 	char strbuf[64];
 	if(target->getDeviceId() == DEVICE_KEYBOARD)
@@ -92,16 +93,26 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	else {
 	  snprintf(strbuf, 64, _("GAMEPAD %i").c_str(), target->getDeviceId() + 1); // batocera
 	}
-	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(strbuf), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
-	mGrid.setEntry(mSubtitle1, Vector2i(0, 2), false, true);
+
+	// get device name
+	std::string name = target->getDeviceName();
+	if (Settings::getInstance()->getBool("bluetooth.use.alias"))
+	{
+		std::string alias = Settings::getInstance()->getString(name + ".bluetooth.input_gaming.alias");
+		if (!alias.empty())
+			name = alias;
+	}
+
+	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(std::string(strbuf).append(" - ").append(name)), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
+	mGrid.setEntry(mSubtitle1, Vector2i(0, 1), false, true);
 
 	mSubtitle2 = std::make_shared<TextComponent>(mWindow, _("HOLD ANY BUTTON TO SKIP"), Font::get(FONT_SIZE_SMALL), 0x999999FF, ALIGN_CENTER);
-	mGrid.setEntry(mSubtitle2, Vector2i(0, 3), false, true);
+	mGrid.setEntry(mSubtitle2, Vector2i(0, 2), false, true);
 
-	// 4 is a spacer row
+	// 3 is a spacer row
 
 	mList = std::make_shared<ComponentList>(mWindow);
-	mGrid.setEntry(mList, Vector2i(0, 5), true, true);
+	mGrid.setEntry(mList, Vector2i(0, 4), true, true);
 	for(int i = 0; i < inputCount; i++)
 	{
 		ComponentListRow row;
@@ -118,10 +129,16 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		spacer->setSize(16, 0);
 		row.addElement(spacer, false);
 
-		auto text = std::make_shared<TextComponent>(mWindow, GUI_INPUT_CONFIG_LIST[i].dispName, ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
+		std::string input_name = GUI_INPUT_CONFIG_LIST[i].dispName;
+		if ((input_name != "SELECT") && (input_name != "START"))
+			input_name = _(input_name);
+
+		auto text = std::make_shared<TextComponent>(mWindow, input_name, ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
+		text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 		row.addElement(text, true);
 
 		auto mapping = std::make_shared<TextComponent>(mWindow, _("-NOT DEFINED-"), Font::get(FONT_SIZE_MEDIUM, FONT_PATH_LIGHT), 0x999999FF, ALIGN_RIGHT);
+		mapping->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 		setNotDefined(mapping); // overrides text and color set above
 		row.addElement(mapping, true);
 		mMappings.push_back(mapping);
@@ -200,36 +217,60 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		InputManager::getInstance()->writeDeviceConfig(mTargetConfig); // save
 		if(okCallback)
 			okCallback();
+
+		Scripting::fireEvent("control-mapped", std::to_string(mTargetConfig->getDeviceId()), mTargetConfig->getDeviceName(),
+							 mTargetConfig->getDeviceGUIDString(), Utils::String::boolToString(mTargetConfig->isDefaultInput()));
 		delete this;
 	};
 	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("OK"), _("OK"), [this, okFunction] {
 		// check if the hotkey enable button is set. if not prompt the user to use select or nothing.
 		Input input;
-		if (!mTargetConfig->getInputByName("hotkeyEnable", &input)) {
+/*
+		if (!mTargetConfig->getInputByName("HotKeyEnable", &input)) {
 			mWindow->pushGui(new GuiMsgBox(mWindow,
-				_("YOU DIDN'T CHOOSE A HOTKEY ENABLE BUTTON. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON DEFAULT ? PLEASE ANSWER YES TO USE SELECT OR NO TO NOT SET A HOTKEY ENABLE BUTTON."),
-				_("YES"), [this, okFunction] {
+				_("NO HOTKEY BUTTON HAS BEEN ASSIGNED. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON AS YOUR HOTKEY?"), 
+				_("SET SELECT AS HOTKEY"), [this, okFunction] {
 					Input input;
 					mTargetConfig->getInputByName("Select", &input);
 					mTargetConfig->mapInput("HotKeyEnable", input);
 					okFunction();
 					},
-				_("NO"), [this, okFunction] {
+				_("DO NOT ASSIGN HOTKEY"), [this, okFunction] {
 					// for a disabled hotkey enable button, set to a key with id 0,
 					// so the input configuration script can be backwards compatible.
-					mTargetConfig->mapInput("HotKeyEnable", Input(DEVICE_KEYBOARD, TYPE_KEY, 0, 1, true));
+					mTargetConfig->mapInput("HotKeyEnable", Input(DEVICE_KEYBOARD, TYPE_KEY, SDLK_UNKNOWN, 1, true));
 					okFunction();
 				}
 			));
-		} else {
+*/
+			if (mTargetConfig->isDefaultInput()) // system_hk is F button
+				mTargetConfig->mapInput("system_hk", Input(mTargetConfig->getDeviceId(), TYPE_BUTTON, 10, 1, true));
+//			else
+//				mTargetConfig->mapInput("system_hk", Input(DEVICE_KEYBOARD, TYPE_KEY, SDLK_UNKNOWN, 1, true));
+//		}
+//		else
 			okFunction();
-		}
-	}));
-	mButtonGrid = makeButtonGrid(mWindow, buttons);
-	mGrid.setEntry(mButtonGrid, Vector2i(0, 6), true, false);
 
-	setSize(Renderer::getScreenWidth() * 0.6f, Renderer::getScreenHeight() * 0.75f);
-	setPosition((Renderer::getScreenWidth() - mSize.x()) / 2, (Renderer::getScreenHeight() - mSize.y()) / 2);
+	}));
+	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("CANCEL"), _("CANCEL"), [this] { delete this; }));
+	mButtonGrid = makeButtonGrid(mWindow, buttons);
+	mGrid.setEntry(mButtonGrid, Vector2i(0, 5), true, false);
+
+
+	float width = Renderer::getScreenWidth(),
+		  height = Renderer::getScreenHeight(),
+		  x = 0.f,
+		  y = 0.f;
+	if (!Renderer::isSmallScreen())
+	{
+		width = width * 0.6f;
+		height = height * 0.75f;
+		x = (Renderer::getScreenWidth() - mSize.x()) / 2;
+		y = (Renderer::getScreenHeight() - mSize.y()) / 2;
+	}
+
+	setSize(width, height);
+	setPosition(x, y);
 }
 
 void GuiInputConfig::onSizeChanged()
@@ -240,12 +281,12 @@ void GuiInputConfig::onSizeChanged()
 	mGrid.setSize(mSize);
 
 	//mGrid.setRowHeightPerc(0, 0.025f);
-	mGrid.setRowHeightPerc(1, mTitle->getFont()->getHeight()*0.75f / mSize.y());
-	mGrid.setRowHeightPerc(2, mSubtitle1->getFont()->getHeight() / mSize.y());
-	mGrid.setRowHeightPerc(3, mSubtitle2->getFont()->getHeight() / mSize.y());
-	//mGrid.setRowHeightPerc(4, 0.03f);
-	mGrid.setRowHeightPerc(5, (mList->getRowHeight(0) * 5 + 2) / mSize.y());
-	mGrid.setRowHeightPerc(6, mButtonGrid->getSize().y() / mSize.y());
+	mGrid.setRowHeightPerc(0, mTitle->getFont()->getHeight()*0.75f / mSize.y());
+	mGrid.setRowHeightPerc(1, mSubtitle1->getFont()->getHeight() / mSize.y());
+	mGrid.setRowHeightPerc(2, mSubtitle2->getFont()->getHeight() / mSize.y());
+	//mGrid.setRowHeightPerc(3, 0.03f);
+	mGrid.setRowHeightPerc(4, (mList->getRowHeight(0) * 7 + 2) / mSize.y());
+	mGrid.setRowHeightPerc(5, mButtonGrid->getSize().y() / mSize.y());
 
 	mBusyAnim.setSize(mSize);
 }
@@ -304,24 +345,28 @@ void GuiInputConfig::rowDone()
 void GuiInputConfig::setPress(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("PRESS ANYTHING"));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(0x656565FF);
 }
 
 void GuiInputConfig::setNotDefined(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("-NOT DEFINED-"));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(0x999999FF);
 }
 
 void GuiInputConfig::setAssignedTo(const std::shared_ptr<TextComponent>& text, Input input)
 {
-	text->setText(Utils::String::toUpper(input.string()));
+	text->setText(_(Utils::String::toUpper(input.string())));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(ThemeData::getMenuTheme()->Text.color);
 }
 
-void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text, const std::string& /*msg*/)
+void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text)
 {
 	text->setText(_("ALREADY TAKEN"));
+	text->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	text->setColor(0x656565FF);
 }
 
@@ -333,7 +378,7 @@ bool GuiInputConfig::assign(Input input, int inputId)
 	// (if it's the same as what it was before, allow it)
 	if(mTargetConfig->getMappedTo(input).size() > 0 && !mTargetConfig->isMappedTo(GUI_INPUT_CONFIG_LIST[inputId].name, input) && strcmp(GUI_INPUT_CONFIG_LIST[inputId].name, "HotKeyEnable") != 0)
 	{
-		error(mMappings.at(inputId), _("Already mapped!"));
+		error(mMappings.at(inputId));
 		return false;
 	}
 

@@ -2,7 +2,6 @@
 
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
-#include "guis/GuiTextEditPopupKeyboard.h"
 #include "utils/StringUtil.h"
 #include "Settings.h"
 #include "Window.h"
@@ -85,6 +84,7 @@ void GuiSlideshowScreensaverOptions::addWithLabel(ComponentListRow row, const st
 	row.elements.clear();
 
 	auto lbl = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), ThemeData::getMenuTheme()->Text.font, ThemeData::getMenuTheme()->Text.color);
+	lbl->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	row.addElement(lbl, true); // label
 
 	row.addElement(component, false, true);

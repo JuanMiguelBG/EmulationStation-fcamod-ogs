@@ -213,8 +213,10 @@ struct DisplayAndGpuInformation
 		frequency_max = 0;
 		frequency_min = 0;
 		brightness_level = 0;
-		brightness_system = 0;
-		brightness_system_max = 0;
+		gamma_level = 0;
+		contrast_level = 0;
+		saturation_level = 0;
+		hue_level = 0;
 	}
 
 	std::string gpu_model;
@@ -226,17 +228,16 @@ struct DisplayAndGpuInformation
 	int frequency_max;
 	int frequency_min;
 	int brightness_level;
-	int brightness_system;
-	int brightness_system_max;
+	int gamma_level;
+	int contrast_level;
+	int saturation_level;
+	int hue_level;
 };
 
 DisplayAndGpuInformation queryDisplayAndGpuInformation(bool summary);
 float queryTemperatureGpu();
 int queryFrequencyGpu();
-int queryBrightness();
-int queryMaxBrightness();
-int queryBrightnessLevel();
-void saveBrightnessLevel(int brightness_level);
+bool queryHdmiMode();
 
 struct SoftwareInformation
 {
@@ -247,6 +248,8 @@ struct SoftwareInformation
 		version = "N/A";
 		so_base = "N/A";
 		vlinux = "N/A";
+		es_version = "";
+		es_built = "";
 	}
 
 	std::string hostname;
@@ -254,6 +257,8 @@ struct SoftwareInformation
 	std::string version;
 	std::string so_base;
 	std::string vlinux;
+	std::string es_version;
+	std::string es_built;
 };
 
 std::string queryHostname();
@@ -314,10 +319,6 @@ std::string getRemoteServicePlatformName(RemoteServicesId id = RemoteServicesId:
 RemoteServiceInformation queryRemoteServiceStatus(RemoteServicesId id = RemoteServicesId::UNKNOWN);
 bool setRemoteServiceStatus(RemoteServiceInformation service);
 
-#ifdef _DEBUG
-uint32_t getVolume();
-#endif
-
 std::string getShOutput(const std::string& mStr);
 
 std::string stateToString(bool state, const std::string &active_value = "enabled", const std::string &not_active_value = "disabled");
@@ -328,6 +329,7 @@ struct BluetoothDevice
 	BluetoothDevice()
 	{
 		name = "N/A";
+		alias = "N/A";
 		id = "N/A";
 		type = "N/A";
 		connected = false;
@@ -336,6 +338,7 @@ struct BluetoothDevice
 	}
 
 	std::string name;
+	std::string alias;
 	std::string id;
 	std::string type;
 	bool connected;
