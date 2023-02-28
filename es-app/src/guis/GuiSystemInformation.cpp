@@ -12,6 +12,7 @@
 #include "components/UpdatableTextComponent.h"
 #include "ApiSystem.h"
 #include "renderers/Renderer.h"
+#include "SystemConf.h"
 
 
 GuiSystemInformation::GuiSystemInformation(Window* window) : UpdatableGuiSettings(window, _("SYSTEM INFORMATION").c_str())
@@ -401,6 +402,8 @@ void GuiSystemInformation::openDisplayAndGpu()
 	// bits per pixel
 	s->addWithLabel(_("BITS PER PIXEL"), std::make_shared<TextComponent>(window, std::to_string( di.bits_per_pixel ), font, color));
 
+	s->addWithLabel(_("HDMI MODE"), std::make_shared<TextComponent>(window, ( SystemConf::getInstance()->getBool("hdmi.mode") ? _("YES") : _("NO")), font, color));
+
 	// temperature
 	bool warning = ApiSystem::getInstance()->isTemperatureLimit( di.temperature );
 	auto temperature = std::make_shared<UpdatableTextComponent>(window, formatTemperature( di.temperature, warning ), font, warning ? 0xFF0000FF : color);
@@ -434,25 +437,25 @@ void GuiSystemInformation::openDisplayAndGpu()
 	// minimus frequency
 	s->addWithLabel(_("FREQUENCY MIN"), std::make_shared<TextComponent>(window, formatFrequency( di.frequency_min ), font, color));
 
-	// brightness %
-	auto brightness = std::make_shared<UpdatableTextComponent>(window, formatBattery( di.brightness_level ), font, color);
+	if (!SystemConf::getInstance()->getBool("hdmi.mode"))
+	{
+		// brightness %
+		auto brightness = std::make_shared<UpdatableTextComponent>(window, formatPercent( di.brightness_level ), font, color);
+		brightness->setUpdatableFunction([brightness]
+			{
+				//LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update brightness display";
+				brightness->setText(formatPercent( ApiSystem::getInstance()->getBrightnessLevel() ));
+			}, 5000);
+		s->addUpdatableComponent(brightness.get());
+		s->addWithLabel(_("BRIGHTNESS"), brightness);
 
-	// brightness raw
-	auto brightness_system = std::make_shared<TextComponent>(window, std::to_string( di.brightness_system ), font, color);
-	brightness->setUpdatableFunction([brightness, brightness_system]
-		{
-			//LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update brightness display";
-			brightness->setText(formatBattery( ApiSystem::getInstance()->getBrightnessLevel() ));
-			brightness_system->setText( std::to_string( ApiSystem::getInstance()->getBrightness() ) );
-		}, 5000);
-	s->addUpdatableComponent(brightness.get());
-
-	s->addWithLabel(_("BRIGHTNESS"), brightness);
-	s->addWithLabel(_("SYSTEM BRIGHTNESS"), brightness_system);
-
-	// maximus brightness raw
-	s->addWithLabel(_("MAX SYSTEM BRIGHTNESS"), std::make_shared<TextComponent>(window, std::to_string( di.brightness_system_max ), font, color));
-
+		// Display panel values
+		s->addWithLabel(_("GAMMA"), std::make_shared<TextComponent>(window, formatPercent( di.gamma_level ), font, color));
+		s->addWithLabel(_("CONTRAST"), std::make_shared<TextComponent>(window, formatPercent( di.contrast_level ), font, color));
+		s->addWithLabel(_("SATURATION"), std::make_shared<TextComponent>(window, formatPercent( di.saturation_level ), font, color));
+		s->addWithLabel(_("HUE"), std::make_shared<TextComponent>(window, formatPercent( di.hue_level ), font, color));
+	}
+	
 	window->pushGui(s);
 }
 
@@ -621,13 +624,13 @@ void GuiSystemInformation::openBattery(const BatteryInformation *bi)
 
 	// level
 	bool warning = ApiSystem::getInstance()->isBatteryLimit(bi->level);
-	auto level = std::make_shared<UpdatableTextComponent>(window, formatBattery( bi->level ), font, warning ? 0xFF0000FF : color);
+	auto level = std::make_shared<UpdatableTextComponent>(window, formatPercent( bi->level ), font, warning ? 0xFF0000FF : color);
 	level->setUpdatableFunction([level, color]
 		{
 			//LOG(LogDebug) << "GuiSystemInformation::showSummarySystemInfo() - update battery level";
 			int battery_level_value = ApiSystem::getInstance()->getBatteryLevel();
 			bool warning = ApiSystem::getInstance()->isBatteryLimit( battery_level_value );
-			level->setText(formatBattery( battery_level_value ));
+			level->setText(formatPercent( battery_level_value ));
 			level->setColor(warning ? 0xFF0000FF : color);
 		}, 30000);
 	s->addUpdatableComponent(level.get());
@@ -763,14 +766,14 @@ std::string GuiSystemInformation::formatFrequency(int freq_raw)
 	return freq;
 }
 
-std::string GuiSystemInformation::formatBattery(int bat_level)
+std::string GuiSystemInformation::formatPercent(int bat_level)
 {
 	return std::to_string( bat_level ) + " %";
 }
 
 std::string GuiSystemInformation::formatWifiSignal(int wifi_signal)
 {
-	return formatBattery( wifi_signal );
+	return formatPercent( wifi_signal );
 }
 
 std::string GuiSystemInformation::formatMemory(float mem_raw, float total_memory, bool show_percent)

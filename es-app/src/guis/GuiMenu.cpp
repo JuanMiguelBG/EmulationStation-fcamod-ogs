@@ -66,7 +66,8 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 			}, "iconKodi");
 	}
 
-	addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay");
+	if (!SystemConf::getInstance()->getBool("hdmi.mode"))
+		addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay");
 
 	auto theme = ThemeData::getMenuTheme();
 
@@ -201,40 +202,40 @@ void GuiMenu::openDisplaySettings(bool cursor)
 
 			s->addGroup(_("PANEL SETTINGS"));
 
-		    // Panel Gamma
+			// Panel Gamma
 			auto gamma = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
 			gamma->setValue((float) ApiSystem::getInstance()->getGammaLevel());
 			gamma->setOnValueChanged([](const float &newVal)
-			{
-				ApiSystem::getInstance()->setGammaLevel((int)Math::round(newVal));
-			});
+				{
+					ApiSystem::getInstance()->setGammaLevel((int)Math::round(newVal));
+				});
 			s->addWithLabel(_("GAMMA"), gamma);
 
 			//Panel Contrast
 			auto contrast = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
 			contrast->setValue((float) ApiSystem::getInstance()->getContrastLevel());
 			contrast->setOnValueChanged([](const float &newVal)
-			{
-				ApiSystem::getInstance()->setContrastLevel((int)Math::round(newVal));
-			});
+				{
+					ApiSystem::getInstance()->setContrastLevel((int)Math::round(newVal));
+				});
 			s->addWithLabel(_("CONTRAST"), contrast);
 
 			//Panel Saturation
 			auto saturation = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
 			saturation->setValue((float) ApiSystem::getInstance()->getSaturationLevel());
 			saturation->setOnValueChanged([](const float &newVal)
-			{
-				ApiSystem::getInstance()->setSaturationLevel((int)Math::round(newVal));
-			});
+				{
+					ApiSystem::getInstance()->setSaturationLevel((int)Math::round(newVal));
+				});
 			s->addWithLabel(_("SATURATION"), saturation);
 
 			//Panel Hue
 			auto hue = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
 			hue->setValue((float) ApiSystem::getInstance()->getHueLevel());	
 			hue->setOnValueChanged([](const float &newVal)
-			{
-				ApiSystem::getInstance()->setHueLevel((int)Math::round(newVal));
-			});
+				{
+					ApiSystem::getInstance()->setHueLevel((int)Math::round(newVal));
+				});
 			s->addWithLabel(_("HUE"), hue);
 
 			s->addEntry(_("DEFAULT VALUES").c_str(), false,	[this, s] { resetDisplayPanelSettings(s); }, "", false, cursor);
