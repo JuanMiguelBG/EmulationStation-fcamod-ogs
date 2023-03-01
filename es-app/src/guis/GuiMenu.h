@@ -59,8 +59,8 @@ private:
 	void openUpdateSettings();
 	void openEmulatorSettings();
 	void openSystemEmulatorSettings(SystemData* system);
-	void openDisplaySettings(bool cursor = false);
-	void resetDisplayPanelSettings(GuiSettings *gui);
+	void openDisplaySettings();
+	void openDisplayPanelOptions();
 	void openDisplayAutoDimSettings();
 	void openRemoteServicesSettings();
 
