@@ -9,11 +9,12 @@
 
 class ComponentList;
 class TextComponent;
+class SliderComponent;
 
 class GuiDisplayPanelOptions : public GuiComponent
 {
 public:
-	GuiDisplayPanelOptions(Window* window, bool cursor = false);
+	GuiDisplayPanelOptions(Window* window);
 	
 	void addRow(const ComponentListRow& row, bool setCursorHere = false, bool doUpdateSize = true);
 	void addWithLabel(const std::string& label, const std::shared_ptr<GuiComponent>& comp, bool setCursorHere = false, bool invert_when_selected = true);
@@ -24,10 +25,10 @@ public:
     void updateSize();
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 
-	static void openDisplayPanelOptions(Window* window, bool cursor = false);
+    void update(int deltaTime);
 
 private:
-	void resetDisplayPanelSettings(Window* window, GuiComponent *gui);
+	void resetDisplayPanelSettings();
     float getButtonGridHeight() const;
 
 	NinePatchComponent mBackground;
@@ -38,6 +39,13 @@ private:
 	std::shared_ptr<ComponentList> mList;
 	std::shared_ptr<ComponentGrid> mImagesGrid;
 	std::shared_ptr<ComponentGrid> mButtonGrid;
+
+	std::shared_ptr<SliderComponent> mGamma;
+	std::shared_ptr<SliderComponent> mContrast;
+	std::shared_ptr<SliderComponent> mSaturation;
+	std::shared_ptr<SliderComponent> mHue;
+
+    bool mNeedResetValues;
 };
 
 #endif // ES_APP_GUIS_GUI_DISPLAY_PANEL_OPTIONS_H

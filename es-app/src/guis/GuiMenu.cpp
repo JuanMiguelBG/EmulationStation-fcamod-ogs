@@ -201,7 +201,7 @@ void GuiMenu::openDisplaySettings()
 
 			s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
 
-			s->addEntry(_("PANEL SETTINGS"), true, [window] { GuiDisplayPanelOptions::openDisplayPanelOptions(window); });		
+			s->addEntry(_("PANEL SETTINGS"), true, [this] { openDisplayPanelOptions(); });		
 		}
 	}
 
@@ -216,6 +216,12 @@ void GuiMenu::openDisplaySettings()
 	});
 
 	window->pushGui(s);
+}
+
+void GuiMenu::openDisplayPanelOptions()
+{
+	Window *window = mWindow;
+	window->pushGui(new GuiDisplayPanelOptions(window));
 }
 
 void GuiMenu::openDisplayAutoDimSettings()

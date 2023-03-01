@@ -15,10 +15,12 @@
 
 #define BUTTON_GRID_VERT_PADDING  (Renderer::getScreenHeight()*0.0296296) //32
 
-GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window, bool cursor) : GuiComponent(window),
+GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window) : GuiComponent(window),
 	mBackground(window, ":/frame.png"),
 	mGrid(window, Vector2i(1, 4))
 {
+    mNeedResetValues = false;
+
 	auto theme = ThemeData::getMenuTheme();
 	mBackground.setImagePath(theme->Background.path); // ":/frame.png"
 	mBackground.setEdgeColor(theme->Background.color);
@@ -40,42 +42,42 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window, bool cursor) : Gu
 	mGrid.setEntry(mList, Vector2i(0, 1), true, true);
 
     // Panel Gamma
-	auto gamma = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
-	gamma->setValue((float) ApiSystem::getInstance()->getGammaLevel());
-	gamma->setOnValueChanged([](const float &newVal)
+	mGamma = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+	mGamma->setValue((float) ApiSystem::getInstance()->getGammaLevel());
+	mGamma->setOnValueChanged([](const float &newVal)
 	{
 		ApiSystem::getInstance()->setGammaLevel((int)Math::round(newVal));
 	});
-	addWithLabel(_("GAMMA"), gamma);
+	addWithLabel(_("GAMMA"), mGamma);
 
 	//Panel Contrast
-	auto contrast = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
-	contrast->setValue((float) ApiSystem::getInstance()->getContrastLevel());
-	contrast->setOnValueChanged([](const float &newVal)
+	mContrast = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+	mContrast->setValue((float) ApiSystem::getInstance()->getContrastLevel());
+	mContrast->setOnValueChanged([](const float &newVal)
 	{
 		ApiSystem::getInstance()->setContrastLevel((int)Math::round(newVal));
 	});
-	addWithLabel(_("CONTRAST"), contrast);
+	addWithLabel(_("CONTRAST"), mContrast);
 
 	//Panel Saturation
-	auto saturation = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
-	saturation->setValue((float) ApiSystem::getInstance()->getSaturationLevel());
-	saturation->setOnValueChanged([](const float &newVal)
+	mSaturation = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+	mSaturation->setValue((float) ApiSystem::getInstance()->getSaturationLevel());
+	mSaturation->setOnValueChanged([](const float &newVal)
 	{
 		ApiSystem::getInstance()->setSaturationLevel((int)Math::round(newVal));
 	});
-	addWithLabel(_("SATURATION"), saturation);
+	addWithLabel(_("SATURATION"), mSaturation);
 
 	//Panel Hue
-	auto hue = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
-	hue->setValue((float) ApiSystem::getInstance()->getHueLevel());	
-	hue->setOnValueChanged([](const float &newVal)
+	mHue = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
+	mHue->setValue((float) ApiSystem::getInstance()->getHueLevel());	
+	mHue->setOnValueChanged([](const float &newVal)
 	{
 		ApiSystem::getInstance()->setHueLevel((int)Math::round(newVal));
 	});
-	addWithLabel(_("HUE"), hue);
+	addWithLabel(_("HUE"), mHue);
 
-	addEntry(_("DEFAULT VALUES").c_str(), [this, window] { resetDisplayPanelSettings(window, this); }, cursor);
+	addEntry(_("DEFAULT VALUES").c_str(), [this] { resetDisplayPanelSettings(); });
 
 
 	// Image Grid
@@ -234,14 +236,23 @@ void GuiDisplayPanelOptions::addEntry(const std::string name, const std::functio
 	addRow(row, setCursorHere, doUpdateSize);
 }
 
-void GuiDisplayPanelOptions::openDisplayPanelOptions(Window* window, bool cursor)
-{
-	window->pushGui(new GuiDisplayPanelOptions(window, cursor));
-}
-
-void GuiDisplayPanelOptions::resetDisplayPanelSettings(Window* window, GuiComponent *gui)
+void GuiDisplayPanelOptions::resetDisplayPanelSettings()
 {
 	ApiSystem::getInstance()->resetDisplayPanelSettings();
-	delete gui;
-	openDisplayPanelOptions(window, true);
+    mNeedResetValues = true;
+}
+
+void GuiDisplayPanelOptions::update(int deltaTime)
+{
+	GuiComponent::update(deltaTime);
+
+    if (mNeedResetValues)
+    {
+	    mGamma->setValue(50.f);
+	    mContrast->setValue(50.f);
+	    mSaturation->setValue(50.f);
+	    mHue->setValue(50.f);
+
+        mNeedResetValues = false;
+    }
 }

@@ -60,6 +60,7 @@ private:
 	void openEmulatorSettings();
 	void openSystemEmulatorSettings(SystemData* system);
 	void openDisplaySettings();
+	void openDisplayPanelOptions();
 	void openDisplayAutoDimSettings();
 	void openRemoteServicesSettings();
 
