@@ -22,14 +22,14 @@ public:
 
 	bool input(InputConfig* config, Input input) override;
 	void onSizeChanged() override;
-    void updateSize();
+	void updateSize();
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 
-    void update(int deltaTime);
+	void update(int deltaTime);
 
 private:
 	void resetDisplayPanelSettings();
-    float getButtonGridHeight() const;
+	float getButtonGridHeight() const;
 
 	NinePatchComponent mBackground;
 	ComponentGrid mGrid;
@@ -45,7 +45,7 @@ private:
 	std::shared_ptr<SliderComponent> mSaturation;
 	std::shared_ptr<SliderComponent> mHue;
 
-    bool mNeedResetValues;
+	bool mNeedResetValues;
 };
 
 #endif // ES_APP_GUIS_GUI_DISPLAY_PANEL_OPTIONS_H
