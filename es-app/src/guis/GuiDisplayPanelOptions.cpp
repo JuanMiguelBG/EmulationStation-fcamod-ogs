@@ -19,7 +19,7 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window) : GuiComponent(wi
 	mBackground(window, ":/frame.png"),
 	mGrid(window, Vector2i(1, 4))
 {
-    mNeedResetValues = false;
+	mNeedResetValues = false;
 
 	auto theme = ThemeData::getMenuTheme();
 	mBackground.setImagePath(theme->Background.path); // ":/frame.png"
@@ -41,7 +41,7 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window) : GuiComponent(wi
 	mList = std::make_shared<ComponentList>(mWindow);
 	mGrid.setEntry(mList, Vector2i(0, 1), true, true);
 
-    // Panel Gamma
+	// Panel Gamma
 	mGamma = std::make_shared<SliderComponent>(mWindow, 1.f, 100.f, 1.f, "%");
 	mGamma->setValue((float) ApiSystem::getInstance()->getGammaLevel());
 	mGamma->setOnValueChanged([](const float &newVal)
@@ -91,8 +91,8 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window) : GuiComponent(wi
 
 	mImagesGrid->setEntry(imageGame, Vector2i(0, 0), false, true);
 	mImagesGrid->setEntry(imageBars, Vector2i(1, 0), false, true);
-    mImagesGrid->setColWidthPerc(0, 0.5f);
-    mImagesGrid->setColWidthPerc(1, 0.5f);
+	mImagesGrid->setColWidthPerc(0, 0.5f);
+	mImagesGrid->setColWidthPerc(1, 0.5f);
 
 	//imageGame->setResize(Vector2f(0, mImagesGrid->getRowHeight(0)));
 	//imageBars->setResize(Vector2f(0, mImagesGrid->getRowHeight(0)));
@@ -159,7 +159,7 @@ void GuiDisplayPanelOptions::onSizeChanged()
 	const float titleHeight = mTitle->getFont()->getLetterHeight();
 
 	mGrid.setRowHeightPerc(0, (titleHeight + TITLE_VERT_PADDING) / mSize.y());
-    mGrid.setRowHeightPerc(3, getButtonGridHeight() / mSize.y());
+	mGrid.setRowHeightPerc(3, getButtonGridHeight() / mSize.y());
 }
 
 bool GuiDisplayPanelOptions::input(InputConfig* config, Input input)
@@ -239,20 +239,20 @@ void GuiDisplayPanelOptions::addEntry(const std::string name, const std::functio
 void GuiDisplayPanelOptions::resetDisplayPanelSettings()
 {
 	ApiSystem::getInstance()->resetDisplayPanelSettings();
-    mNeedResetValues = true;
+	mNeedResetValues = true;
 }
 
 void GuiDisplayPanelOptions::update(int deltaTime)
 {
 	GuiComponent::update(deltaTime);
 
-    if (mNeedResetValues)
-    {
-	    mGamma->setValue(50.f);
-	    mContrast->setValue(50.f);
-	    mSaturation->setValue(50.f);
-	    mHue->setValue(50.f);
+	if (mNeedResetValues)
+	{
+		mGamma->setValue(50.f);
+		mContrast->setValue(50.f);
+		mSaturation->setValue(50.f);
+		mHue->setValue(50.f);
 
-        mNeedResetValues = false;
-    }
+		mNeedResetValues = false;
+	}
 }
