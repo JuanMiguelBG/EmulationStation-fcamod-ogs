@@ -83,14 +83,14 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window) : GuiComponent(wi
 	// Image Grid
 	mImagesGrid = std::make_shared<ComponentGrid>(mWindow, Vector2i(2, 1));
 
-	auto imageGame = std::make_shared<ImageComponent>(mWindow);
-	imageGame->setImage(ResourceManager::getInstance()->getResourcePath(":/panel/game.jpg"));
+	auto leftImage = std::make_shared<ImageComponent>(mWindow);
+	leftImage->setImage(ResourceManager::getInstance()->getResourcePath(":/panel/left-side.jpg"));
 
-	auto imageBars = std::make_shared<ImageComponent>(mWindow);
-	imageBars->setImage(ResourceManager::getInstance()->getResourcePath(":/panel/bars.jpg"));
+	auto rigthImage = std::make_shared<ImageComponent>(mWindow);
+	rigthImage->setImage(ResourceManager::getInstance()->getResourcePath(":/panel/rigth-side.jpg"));
 
-	mImagesGrid->setEntry(imageGame, Vector2i(0, 0), false, true);
-	mImagesGrid->setEntry(imageBars, Vector2i(1, 0), false, true);
+	mImagesGrid->setEntry(leftImage, Vector2i(0, 0), false, true);
+	mImagesGrid->setEntry(rigthImage, Vector2i(1, 0), false, true);
 	mImagesGrid->setColWidthPerc(0, 0.5f);
 	mImagesGrid->setColWidthPerc(1, 0.5f);
 
