@@ -28,6 +28,7 @@ public:
 
 private:
 	void resetDisplayPanelSettings(Window* window, GuiComponent *gui);
+    float getButtonGridHeight() const;
 
 	NinePatchComponent mBackground;
 	ComponentGrid mGrid;
@@ -36,7 +37,7 @@ private:
 	std::shared_ptr<ComponentGrid> mHeaderGrid;
 	std::shared_ptr<ComponentList> mList;
 	std::shared_ptr<ComponentGrid> mImagesGrid;
-	std::shared_ptr<ComponentGrid> mButtons;
+	std::shared_ptr<ComponentGrid> mButtonGrid;
 };
 
 #endif // ES_APP_GUIS_GUI_DISPLAY_PANEL_OPTIONS_H

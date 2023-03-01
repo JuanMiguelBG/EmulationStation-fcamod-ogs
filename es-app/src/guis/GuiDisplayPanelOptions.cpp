@@ -13,6 +13,8 @@
 #include "ApiSystem.h"
 
 
+#define BUTTON_GRID_VERT_PADDING  (Renderer::getScreenHeight()*0.0296296) //32
+
 GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window, bool cursor) : GuiComponent(window),
 	mBackground(window, ":/frame.png"),
 	mGrid(window, Vector2i(1, 4))
@@ -27,9 +29,10 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window, bool cursor) : Gu
 	addChild(&mGrid);
 
 	// Header Grid
-	mHeaderGrid = std::make_shared<ComponentGrid>(mWindow, Vector2i(1, 2));
+	mHeaderGrid = std::make_shared<ComponentGrid>(mWindow, Vector2i(1, 1));
 	mTitle = std::make_shared<TextComponent>(mWindow, _("PANEL SETTINGS"), theme->Title.font, theme->Title.color, ALIGN_CENTER);
 	mHeaderGrid->setEntry(mTitle, Vector2i(0, 0), false, true);
+   	mHeaderGrid->setRowHeightPerc(0, 1);
 	mGrid.setEntry(mHeaderGrid, Vector2i(0, 0), false, true);
 
 	// Options list
@@ -89,8 +92,8 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window, bool cursor) : Gu
     mImagesGrid->setColWidthPerc(0, 0.5f);
     mImagesGrid->setColWidthPerc(1, 0.5f);
 
-	imageGame->setResize(Vector2f(mImagesGrid->getColWidth(0) * 0.9f, 0));
-	imageBars->setResize(Vector2f(mImagesGrid->getColWidth(1) * 0.9f, 0));
+	//imageGame->setResize(Vector2f(0, mImagesGrid->getRowHeight(0)));
+	//imageBars->setResize(Vector2f(0, mImagesGrid->getRowHeight(0)));
 
 	mGrid.setEntry(mImagesGrid, Vector2i(0, 2), true, true);
 
@@ -98,8 +101,8 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window, bool cursor) : Gu
 	// Buttons Grid
 	std::vector< std::shared_ptr<ButtonComponent> > buttons;
 	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, _("BACK"), _("BACK"), [&] { delete this; }));
-	mButtons = makeButtonGrid(mWindow, buttons);
-	mGrid.setEntry(mButtons, Vector2i(0, 3), true, false);
+	mButtonGrid = makeButtonGrid(mWindow, buttons);
+	mGrid.setEntry(mButtonGrid, Vector2i(0, 3), true, false);
 
 	mGrid.setUnhandledInputCallback([this](InputConfig* config, Input input) -> bool {
 		if (config->isMappedLike("down", input)) {
@@ -138,6 +141,13 @@ GuiDisplayPanelOptions::GuiDisplayPanelOptions(Window* window, bool cursor) : Gu
 	setPosition(new_x, new_y);
 }
 
+float GuiDisplayPanelOptions::getButtonGridHeight() const
+{
+	auto menuTheme = ThemeData::getMenuTheme();
+
+	return (mButtonGrid ? mButtonGrid->getSize().y() : menuTheme->Text.font->getHeight() + BUTTON_GRID_VERT_PADDING);
+}
+
 void GuiDisplayPanelOptions::onSizeChanged()
 {
 	mBackground.fitTo(mSize, Vector3f::Zero(), Vector2f(-32, -32));
@@ -147,9 +157,7 @@ void GuiDisplayPanelOptions::onSizeChanged()
 	const float titleHeight = mTitle->getFont()->getLetterHeight();
 
 	mGrid.setRowHeightPerc(0, (titleHeight + TITLE_VERT_PADDING) / mSize.y());
-	mGrid.setRowHeightPerc(3, mButtons->getSize().y() / mSize.y());
-
-	mHeaderGrid->setRowHeightPerc(1, titleHeight / mHeaderGrid->getSize().y());
+    mGrid.setRowHeightPerc(3, getButtonGridHeight() / mSize.y());
 }
 
 bool GuiDisplayPanelOptions::input(InputConfig* config, Input input)
