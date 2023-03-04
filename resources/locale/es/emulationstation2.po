@@ -732,6 +732,10 @@ msgid "CLOSE"
 msgstr "CERRAR"
 
 #:
+msgid "LAUNCH"
+msgstr "EJECUTAR"
+
+#:
 msgid "PARENT FOLDER"
 msgstr "CARPETA PRINCIPAL"
 
