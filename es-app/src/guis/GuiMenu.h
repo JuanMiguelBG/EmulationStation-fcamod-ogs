@@ -77,7 +77,6 @@ private:
 
 	MenuComponent mMenu;
 	TextComponent mVersion;
-	bool mIsFullUI;
 };
 
 #endif // ES_APP_GUIS_GUI_MENU_H
