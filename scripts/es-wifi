@@ -183,7 +183,9 @@ do_connect() {
         #print_log $LOG_FILE "WARNING" "Executing 'do_connect()' - Connection '$SSID' already exist, but it's info is wrong, removing..."
         do_remove "$SSID" &
       fi
-    else
+    fi
+
+    if [ -z "$success" ]; then
       # try to connect
 
       # Fix WPA3 networks
