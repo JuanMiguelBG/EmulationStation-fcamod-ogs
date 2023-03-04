@@ -2604,6 +2604,14 @@ msgstr "BIENVENIDO"
 msgid "CONFIGURE INPUT"
 msgstr "CONFIGURAR CONTROL"
 
+#:
+msgid "TEST INPUT"
+msgstr "PROBAR CONTROL"
+
+#:
+msgid "CALIBRATE TV"
+msgstr "CALIBRAR TV"
+
 #, c-format
 msgid "%i GAMEPAD DETECTED"
 msgid_plural "%i GAMEPADS DETECTED"
