@@ -193,12 +193,15 @@ void MenuComponent::addEntry(const std::string name, bool add_arrow, const std::
 	text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 	row.addElement(text_comp, true, invert_when_selected);
 
+	std::string real_user_data = userData;
 	if (add_arrow)
 		row.addElement(makeArrow(mWindow), false);
+	else if (func && userData.empty())
+		real_user_data = "action";
 
 	row.makeAcceptInputHandler(func, onButtonRelease);
 
-	addRow(row, setCursorHere, doUpdateSize, userData);
+	addRow(row, setCursorHere, doUpdateSize, real_user_data);
 }
 
 void MenuComponent::setTitle(const std::string title, const std::shared_ptr<Font>& font)
@@ -363,7 +366,15 @@ void MenuComponent::updateGrid()
 
 std::vector<HelpPrompt> MenuComponent::getHelpPrompts()
 {
-	return mGrid.getHelpPrompts();
+	std::vector<HelpPrompt> prompts = mGrid.getHelpPrompts();
+
+	if (hasElements())
+	{
+		std::string selected = getSelected();
+		if (!selected.empty() && (selected == "action"))
+			prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH")));
+	}	
+	return prompts;
 }
 
 float getHelpComponentHeight(Window* window, bool addHelpComponnetHeight)

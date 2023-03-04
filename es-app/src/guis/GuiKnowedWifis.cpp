@@ -218,7 +218,7 @@ void GuiKnowedWifis::onForgetAll()
 						mForgetConnectedWifi = true;
 
 					mWaitingLoad = false;
-					window->pushGui(new GuiMsgBox(window, msg));
+					window->pushGui(new GuiMsgBox(window, _(msg)));
 
 					GuiKnowedWifis::onRefresh();
 				}));

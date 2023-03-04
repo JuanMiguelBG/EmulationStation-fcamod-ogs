@@ -188,6 +188,12 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case KODI:
 				executables.push_back("Kodi.sh");
 				break;
+		case TEST_INPUT:
+				executables.push_back("TestControls.sh");
+				break;
+		case CALIBRATE_TV:
+				executables.push_back("CalibrateTv.sh");
+				break;
 	}
 
 	for (auto executable : executables)
@@ -1675,9 +1681,27 @@ bool ApiSystem::launchKodi(Window *window)
 	return exitCode == 0;
 }
 
-bool ApiSystem::launchBluetoothConfigurator(Window *window)
+bool ApiSystem::launchTestControls(Window *window)
 {
-	std::string command = "Bluetooth.sh";
+	std::string command = "TestControls.sh";
+
+	ApiSystem::launchExternalWindow_before(window, command);
+
+	int exitCode = system(command.c_str());
+
+	// WIFEXITED returns a nonzero value if the child process terminated normally with exit or _exit.
+	// https://www.gnu.org/software/libc/manual/html_node/Process-Completion-Status.html
+	if (WIFEXITED(exitCode))
+		exitCode = WEXITSTATUS(exitCode);
+
+	ApiSystem::launchExternalWindow_after(window, command);
+
+	return exitCode == 0;
+}
+
+bool ApiSystem::launchCalibrateTv(Window *window)
+{
+	std::string command = "CalibrateTv.sh";
 
 	ApiSystem::launchExternalWindow_before(window, command);
 

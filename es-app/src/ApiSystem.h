@@ -61,7 +61,9 @@ public:
 		BLUETOOTH = 13,
 		KODI = 14,
 		REMOTE_SERVICES = 15,
-		LOG_SCRIPTS = 16
+		LOG_SCRIPTS = 16,
+		TEST_INPUT = 17,
+		CALIBRATE_TV = 18
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -271,7 +273,8 @@ public:
 	bool configRemoteService(RemoteServiceInformation service);
 
 	virtual bool launchKodi(Window *window);
-	virtual bool launchBluetoothConfigurator(Window *window);
+	virtual bool launchTestControls(Window *window);
+	virtual bool launchCalibrateTv(Window *window);
 
 	bool isBluetoothActive();
 	bool isBluetoothEnabled();

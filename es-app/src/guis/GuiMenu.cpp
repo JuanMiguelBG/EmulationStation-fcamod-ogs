@@ -55,6 +55,10 @@
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
 {
+	auto theme = ThemeData::getMenuTheme();
+
+	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
+
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
 	{
 		addEntry(_("KODI MEDIA CENTER").c_str(), false, [this]
@@ -67,17 +71,13 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 			}, "iconKodi");
 	}
 
-	if (!SystemConf::getInstance()->getBool("hdmi.mode"))
+	if (!SystemConf::getInstance()->getBool("hdmi.mode") 
+		|| ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))
 		addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay");
-
-	auto theme = ThemeData::getMenuTheme();
-
-	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
 
 	if (isFullUI)
 	{
 		addEntry(_("UI SETTINGS"), true, [this] { openUISettings(); }, "iconUI");
-		//addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); }, "iconControllers");
 		addEntry(_("CONTROLLERS SETTINGS").c_str(), true, [this] { openControllersSettings(); }, "iconControllers");
 	}
 
@@ -164,56 +164,69 @@ void GuiMenu::openDisplaySettings()
 
 	auto s = new GuiSettings(window, _("DISPLAY SETTINGS"));
 
-	// Brightness
-	auto brightness = std::make_shared<SliderComponent>(window, 1.0f, 100.f, 1.0f, "%");
-	brightness->setValue((float) ApiSystem::getInstance()->getBrightnessLevel());
-	s->addWithLabel(_("BRIGHTNESS"), brightness);
-	brightness->setOnValueChanged([window, s](const float &newVal)
-		{
-			window->getBrightnessInfoComponent()->reset();
-			ApiSystem::getInstance()->setBrightnessLevel((int)Math::round( newVal ));
-			s->setVariable("reloadGuiMenu", true);
-		});
-
-	if (UIModeController::getInstance()->isUIModeFull())
+	if (!SystemConf::getInstance()->getBool("hdmi.mode"))
 	{
-		// brightness overlay
-		s->addSwitch(_("SHOW OVERLAY WHEN BRIGHTNESS CHANGES"), "BrightnessPopup", true);
+		// Brightness
+		auto brightness = std::make_shared<SliderComponent>(window, 1.0f, 100.f, 1.0f, "%");
+		brightness->setValue((float) ApiSystem::getInstance()->getBrightnessLevel());
+		s->addWithLabel(_("BRIGHTNESS"), brightness);
+		brightness->setOnValueChanged([window, s](const float &newVal)
+			{
+				window->getBrightnessInfoComponent()->reset();
+				ApiSystem::getInstance()->setBrightnessLevel((int)Math::round( newVal ));
+				s->setVariable("reloadGuiMenu", true);
+			});
 
-		// restore brightness
-		s->addSwitch(_("RESTORE BRIGHTNESS AFTER GAME"), "RestoreBrightnesAfterGame", true);
-
-		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
+		if (UIModeController::getInstance()->isUIModeFull())
 		{
-			// blink with low battery
-			bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
-			auto blink_low_battery = std::make_shared<SwitchComponent>(window, blink_low_battery_value);
-			s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
-			s->addSaveFunc([blink_low_battery, blink_low_battery_value]
-				{
-					bool new_blink_low_battery_value = blink_low_battery->getState();
-					if (blink_low_battery_value != new_blink_low_battery_value)
+			// brightness overlay
+			s->addSwitch(_("SHOW OVERLAY WHEN BRIGHTNESS CHANGES"), "BrightnessPopup", true);
+
+			// restore brightness
+			s->addSwitch(_("RESTORE BRIGHTNESS AFTER GAME"), "RestoreBrightnesAfterGame", true);
+
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
+			{
+				// blink with low battery
+				bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
+				auto blink_low_battery = std::make_shared<SwitchComponent>(window, blink_low_battery_value);
+				s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
+				s->addSaveFunc([blink_low_battery, blink_low_battery_value]
 					{
-						Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
-						ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
-					}
-				});
+						bool new_blink_low_battery_value = blink_low_battery->getState();
+						if (blink_low_battery_value != new_blink_low_battery_value)
+						{
+							Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
+							ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
+						}
+					});
 
-			s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
+				s->addEntry(_("AUTO DIM SETTINGS"), true, [this] { openDisplayAutoDimSettings(); });
 
-			s->addEntry(_("PANEL SETTINGS"), true, [this] { openDisplayPanelOptions(); });		
+				s->addEntry(_("PANEL SETTINGS"), true, [this] { openDisplayPanelOptions(); });		
+			}
 		}
-	}
 
-	s->onFinalize([s, pthis, window]
-	{
-		if (s->getVariable("reloadGuiMenu"))
+		s->onFinalize([s, pthis, window]
 		{
-			if (pthis)
-				delete pthis;
-			window->pushGui(new GuiMenu(window, false));
-		}
-	});
+			if (s->getVariable("reloadGuiMenu"))
+			{
+				if (pthis)
+					delete pthis;
+				window->pushGui(new GuiMenu(window, false));
+			}
+		});
+	}
+	else if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))
+	{	// HDMI
+		addEntry(_("CALIBRATE TV").c_str(), false, [this]
+			{
+				Window *window = mWindow;
+				delete this;
+				if (!ApiSystem::getInstance()->launchCalibrateTv(window))
+					LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Calibrate TV terminated with non-zero result!";
+			});
+	}
 
 	window->pushGui(s);
 }
@@ -271,6 +284,18 @@ void GuiMenu::openControllersSettings()
 		});
 
 	s->addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); } );
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::TEST_INPUT))
+	{
+		s->addEntry(_("TEST INPUT").c_str(), false, [this]
+			{
+				Window *window = mWindow;
+				delete this;
+				if (!ApiSystem::getInstance()->launchTestControls(window))
+					LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Test Controller terminated with non-zero result!";
+
+			});
+	}
 
 	s->onFinalize([s, pthis, window]
 	{
