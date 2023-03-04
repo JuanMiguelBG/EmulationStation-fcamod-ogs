@@ -287,7 +287,7 @@ void GuiMenu::openControllersSettings()
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::TEST_INPUT))
 	{
-		addEntry(_("TEST INPUT").c_str(), false, [this]
+		s->addEntry(_("TEST INPUT").c_str(), false, [this]
 			{
 				Window *window = mWindow;
 				delete this;
