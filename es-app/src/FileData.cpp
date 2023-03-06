@@ -191,19 +191,26 @@ const std::string FileData::getVideoPath()
 	// no video, try to use local video
 	if (video.empty() && Settings::getInstance()->getBool("LocalArt"))
 	{
-		std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-video.mp4";
-		if (Utils::FileSystem::exists(path))
+		const char* directories[2] = { "images", "videos" };
+		for (int i = 0; i < 2; i++)
 		{
-			setMetadata(MetaDataId::Video, path);
-			video = path;
-		}
-		else
-		{
-			path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + ".mp4";
-			if (Utils::FileSystem::exists(path))
+			if (video.empty())
 			{
-				setMetadata(MetaDataId::Video, path);
-				video = path;
+				std::string path = getSystemEnvData()->mStartPath + "/" + directories[i] + "/" + getDisplayName() + "-video.mp4";
+				if (Utils::FileSystem::exists(path))
+				{
+					setMetadata(MetaDataId::Video, path);
+					video = path;
+				}
+				else
+				{
+					path = getSystemEnvData()->mStartPath + "/" + directories[i] + "/" + getDisplayName() + ".mp4";
+					if (Utils::FileSystem::exists(path))
+					{
+						setMetadata(MetaDataId::Video, path);
+						video = path;
+					}
+				}
 			}
 		}
 	}
