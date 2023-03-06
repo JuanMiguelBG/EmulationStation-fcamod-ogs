@@ -68,6 +68,7 @@ enable_network_manager() {
     if [ $? -eq 1 ]; then
       # inactive
       #print_log $LOG_FILE "INFO" "disable_network_manager() - NetworkManager is inactive, activing..."
+      sudo systemctl start nmbd.service --quiet &
       sudo systemctl stop networkwatchdaemon --quiet && \
       sudo systemctl start NetworkManager --quiet
       sudo systemctl disable networkwatchdaemon --quiet && \
