@@ -35,7 +35,7 @@ public:
 		GuiMsgBoxIcon icon = ICON_AUTOMATIC);
 
 	GuiMsgBox(Window* window, const std::string& text,
-		const std::string& name1 = "OK", const std::function<void()>& func1 = nullptr,
+		const std::string& name1 = _("OK"), const std::function<void()>& func1 = nullptr,
 		GuiMsgBoxIcon icon = ICON_AUTOMATIC);
 
 	GuiMsgBox(Window* window, const std::string& text,
