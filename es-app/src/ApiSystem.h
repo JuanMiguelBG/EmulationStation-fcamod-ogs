@@ -59,11 +59,12 @@ public:
 		PRELOAD_VLC = 11,
 		SOUND = 12,
 		BLUETOOTH = 13,
-		KODI = 14,
-		REMOTE_SERVICES = 15,
-		LOG_SCRIPTS = 16,
-		TEST_INPUT = 17,
-		CALIBRATE_TV = 18
+		REMOTE_SERVICES = 14,
+		LOG_SCRIPTS = 15,
+		GAMELIST = 16,
+		KODI = 17,
+		TEST_INPUT = 18,
+		CALIBRATE_TV = 19
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -301,6 +302,8 @@ public:
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();
+
+	bool clearLastPlayedData(const std::string system = "");
 };
 
 #endif

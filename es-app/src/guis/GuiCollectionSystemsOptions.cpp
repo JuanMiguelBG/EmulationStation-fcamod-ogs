@@ -12,6 +12,7 @@
 #include "CollectionSystemManager.h"
 #include "Window.h"
 #include "SystemConf.h"
+#include "ApiSystem.h"
 
 GuiCollectionSystemsOptions::GuiCollectionSystemsOptions(Window* window, bool cursor)
 	: GuiSettings(window, _("GAME COLLECTION SETTINGS").c_str())
@@ -333,6 +334,9 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 	});
 
 	addEntry(_("UPDATE GAMES LISTS"), false, [this, window] { GuiMenu::updateGameLists(window); }); // Game List Update
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::GAMELIST) && (SystemData::getSystem("recent") != nullptr))
+		addEntry(_("CLEAR \"LAST PLAYED\" DATA"), false, [window] { GuiMenu::clearLastPlayedData(window); });
 
 	if (CollectionSystemManager::getInstance()->isEditing())
 		addEntry((_("FINISH EDITING COLLECTION") + " : " + Utils::String::toUpper(CollectionSystemManager::getInstance()->getEditingCollection())).c_str(), false, std::bind(&GuiCollectionSystemsOptions::exitEditMode, this));

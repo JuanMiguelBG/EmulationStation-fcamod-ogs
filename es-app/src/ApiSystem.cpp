@@ -194,6 +194,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case CALIBRATE_TV:
 				executables.push_back("CalibrateTv.sh");
 				break;
+		case GAMELIST:
+				executables.push_back("es-gamelist");
+				break;
 	}
 
 	for (auto executable : executables)
@@ -1466,7 +1469,7 @@ std::string ApiSystem::getCRC32(std::string fileName, bool fromZipContents)
 		LOG(LogDebug) << "ApiSystem::getCRC32() is using 7z";
 
 		std::string fn = Utils::FileSystem::getFileName(fileName);
-		auto cmd = getSevenZipCommand() + " l -slt \"" + fileName + "\"";
+		auto cmd = getSevenZipCommand() + " l -slt \"" + fileName + '"';
 		auto lines = executeEnumerationScript(cmd);
 		for (std::string all : lines)
 		{
@@ -1547,7 +1550,7 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 
 	LOG(LogDebug) << "ApiSystem::unzipFile() is using 7z";
 
-	std::string cmd = getSevenZipCommand() + " x \"" + Utils::FileSystem::getPreferredPath(fileName) + "\" -y -o\"" + Utils::FileSystem::getPreferredPath(destFolder) + "\"";
+	std::string cmd = getSevenZipCommand() + " x \"" + Utils::FileSystem::getPreferredPath(fileName) + "\" -y -o\"" + Utils::FileSystem::getPreferredPath(destFolder) + '"';
 	bool ret = executeSystemScript(cmd);
 	LOG(LogDebug) << "ApiSystem::unzipFile() <<";
 	return ret;
@@ -1749,7 +1752,7 @@ bool ApiSystem::isBluetoothAudioDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::isBluetoothAudioDevice() - ID: " << id;
 
-	return executeSystemBoolScript("es-bluetooth is_bluetooth_audio_device \"" + id + "\"" );
+	return executeSystemBoolScript("es-bluetooth is_bluetooth_audio_device \"" + id + '"' );
 }
 
 bool ApiSystem::isBluetoothAudioDeviceConnected()
@@ -1813,14 +1816,14 @@ bool ApiSystem::pairBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::pairBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth pair_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth pair_device \"" + id + '"' );
 }
 
 BluetoothDevice ApiSystem::getBluetoothDeviceInfo(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::getBluetoothDeviceInfo() - ID: " << id;
 
-	std::string device_info = getShOutput("es-bluetooth info_device \"" + id + "\"" );
+	std::string device_info = getShOutput("es-bluetooth info_device \"" + id + '"' );
 
 	BluetoothDevice bt_device;
 
@@ -1846,14 +1849,14 @@ bool ApiSystem::connectBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::connectBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth connect_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth connect_device \"" + id + '"' );
 }
 
 bool ApiSystem::disconnectBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::disconnectBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth disconnect_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth disconnect_device \"" + id + '"' );
 }
 
 bool ApiSystem::disconnectAllBluetoothDevices()
@@ -1867,7 +1870,7 @@ bool ApiSystem::deleteBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::deleteBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth delete_device_connection \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth delete_device_connection \"" + id + '"' );
 }
 
 bool ApiSystem::deleteAllBluetoothDevices()
@@ -1916,7 +1919,7 @@ bool ApiSystem::setBluetoothDeviceAlias(const std::string id, const std::string 
 {
 	LOG(LogInfo) << "ApiSystem::setBluetoothDeviceAlias() - id: " << id << ", alias: " << alias;
 
-	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + "\"" );
+	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + '"' );
 }
 
 void ApiSystem::backupAfterGameValues()
@@ -1939,4 +1942,15 @@ void ApiSystem::restoreAfterGameValues()
 
 	if (Settings::getInstance()->getBool("RestoreVolumeAfterGame"))
 		ApiSystem::restoreVolume();
+}
+
+bool ApiSystem::clearLastPlayedData(const std::string system)
+{
+	LOG(LogInfo) << "ApiSystem::clearLastPlayedData() - system: " << system;
+
+	if (system.empty())
+		return executeSystemScript("es-gamelist clear_all_last_played_data" );
+	else
+		return executeSystemScript("es-gamelist clear_last_played_data \"" + system + '"' );
+
 }

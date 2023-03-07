@@ -55,6 +55,8 @@
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
 {
+	mWaitingLoad = false;
+
 	auto theme = ThemeData::getMenuTheme();
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
@@ -533,10 +535,14 @@ void GuiMenu::openSoundSettings()
 			else
 			{
 				// audio card
-				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(window, _("BLUETOOTH AUDIO"), font, color));
+				auto audio_card = std::make_shared<TextComponent>(window, _("BLUETOOTH AUDIO"), font, color);
+				audio_card->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+				s->addWithLabel(_("AUDIO CARD"), audio_card);
 
 				// volume control device
-				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, SystemConf::getInstance()->get("bluetooth.audio.device"), font, color));
+				auto volume_control = std::make_shared<TextComponent>(window, SystemConf::getInstance()->get("bluetooth.audio.device"), font, color);
+				volume_control->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+				s->addWithLabel(_("AUDIO DEVICE"), volume_control);
 			}
 		}
 	}
@@ -1371,6 +1377,8 @@ void GuiMenu::openEmulatorSettings()
 
 void GuiMenu::updateGameLists(Window* window, bool confirm)
 {
+	LOG(LogInfo) << "GuiMenu::updateGameLists() - updating games lists";
+
 	if (ThreadedScraper::isRunning())
 	{
 		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"),
@@ -1380,14 +1388,48 @@ void GuiMenu::updateGameLists(Window* window, bool confirm)
 		return;
 	}
 
-	if (!confirm)
+	std::function<void(Window*)> reloadAllGamesFunction = [](Window* window)
 	{
 		ViewController::reloadAllGames(window, true);
+	}; // close callback
+
+	if (!confirm)
+	{
+		reloadAllGamesFunction(window);
 		return;
 	}
 
 	window->pushGui(new GuiMsgBox(window, _("REALLY UPDATE GAMES LISTS ?"), _("YES"),
-		[window] { ViewController::reloadAllGames(window, true); },
+		[window, reloadAllGamesFunction] { reloadAllGamesFunction(window); },
+		_("NO"), nullptr));
+}
+
+void GuiMenu::clearLastPlayedData(Window* window, const std::string system, bool confirm)
+{
+	LOG(LogInfo) << "GuiMenu::clearLastPlayedData() - deleting last played data of system: " << (system.empty() ? "ALL" : system);
+
+	if (ThreadedScraper::isRunning())
+	{
+		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"),
+			_("YES"), [] { ThreadedScraper::stop(); },
+			_("NO"), nullptr));
+
+		return;
+	}
+
+	std::function<void(Window*, const std::string)> clearLastPlayedDataFunction = [](Window* window, const std::string system)
+	{
+		ViewController::reloadAllGames(window, true, "CLEARING \"LAST PLAYED\" DATA...", [system]() { ApiSystem::getInstance()->clearLastPlayedData(system); });
+	}; // close callback
+
+	if (!confirm)
+	{
+		clearLastPlayedDataFunction(window, system);
+		return;
+	}
+
+	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO CLEAR \"LAST PLAYED\" DATA?"),
+		_("YES"), [window, system, clearLastPlayedDataFunction] { clearLastPlayedDataFunction(window, system); },
 		_("NO"), nullptr));
 }
 
@@ -2944,10 +2986,13 @@ bool GuiMenu::input(InputConfig* config, Input input)
 
 	if ((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("start", input)) && input.value != 0)
 	{
-		auto pthis = this;
-		if (pthis)
-			delete pthis;
-		return true;
+		if (!mWaitingLoad)
+		{
+			auto pthis = this;
+			if (pthis)
+				delete pthis;
+			return true;
+		}
 	}
 
 	return false;

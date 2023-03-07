@@ -18,6 +18,7 @@
 #include "scrapers/ThreadedScraper.h"
 #include "guis/GuiMenu.h"
 #include "SystemConf.h"
+#include "ApiSystem.h"
 
 std::vector<std::string> GuiGamelistOptions::gridSizes {
 	"automatic",
@@ -208,6 +209,10 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 
 	// update game lists
 	mMenu.addEntry(_("UPDATE GAMES LISTS"), false, [this] { GuiMenu::updateGameLists(mWindow); }); // Game List Update
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::GAMELIST) && (SystemData::getSystem("recent") != nullptr)
+			&& !fromPlaceholder && !mSystem->isCollection() && !(fileData->getType() == FOLDER))
+		mMenu.addEntry(_("CLEAR \"LAST PLAYED\" DATA"), false, [window, system] { GuiMenu::clearLastPlayedData(window, system->getName()); });
 
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
