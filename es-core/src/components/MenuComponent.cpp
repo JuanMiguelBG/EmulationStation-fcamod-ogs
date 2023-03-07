@@ -272,14 +272,14 @@ void MenuComponent::updateSize()
 {
 	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
 	{
-		LOG(LogDebug) << "MenuComponent::updateSize() - is small screen or not center menus.";
-		Log::flush();
+//		LOG(LogDebug) << "MenuComponent::updateSize() - is small screen or not center menus.";
+//		Log::flush();
 		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 		return;
 	}
 
-	LOG(LogDebug) << "MenuComponent::updateSize() - is big screen and center menus.";
-	Log::flush();
+//	LOG(LogDebug) << "MenuComponent::updateSize() - is big screen and center menus.";
+//	Log::flush();
 
 	// !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
 	float width, height;
@@ -326,7 +326,7 @@ void MenuComponent::updateSize()
 
 void MenuComponent::onSizeChanged()
 {
-	LOG(LogDebug) << "MenuComponent::onSizeChanged()";
+//	LOG(LogDebug) << "MenuComponent::onSizeChanged()";
 	mBackground.fitTo(mSize, Vector3f::Zero(), Vector2f(-32, -32));
 
 	// update grid row/col sizes
@@ -435,8 +435,8 @@ std::shared_ptr<ComponentGrid> makeButtonGrid(Window* window, const std::vector<
 	}
 
 	float helpComponentHeight = getHelpComponentHeight(window, addHelpComponentHeight);
-	LOG(LogDebug) << "MenuComponent::makeButtonGrid() - help component height: " << std::to_string(helpComponentHeight) << ", addHelpComponentHeight: " << Utils::String::boolToString(addHelpComponentHeight);
-	Log::flush();
+//	LOG(LogDebug) << "MenuComponent::makeButtonGrid() - help component height: " << std::to_string(helpComponentHeight) << ", addHelpComponentHeight: " << Utils::String::boolToString(addHelpComponentHeight);
+//	Log::flush();
 	buttonGrid->setSize(buttonGridWidth, buttons.at(0)->getSize().y() + BUTTON_GRID_VERT_PADDING + (helpComponentHeight > 0.f ? helpComponentHeight : 2));
 	// spacer row to deal with dropshadow to make buttons look centered
 	buttonGrid->setRowHeightPerc(1, helpComponentHeight > 0.f ? 0.4f : (2 / buttonGrid->getSize().y()) );
