@@ -159,7 +159,7 @@ do_systemd_inactive()
 
 do_filebrowser_active()
 {
-    sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db -r &
+    sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db -r / &
 
     sleep 1
 
@@ -328,7 +328,7 @@ do_remote_services_active()
     sudo systemctl start NetworkManager-wait-online --quiet &
 
     if [ -f "/usr/local/bin/filebrowser" ]; then
-      sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db -r &
+      sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db -r / &
     fi
 
     return 0
