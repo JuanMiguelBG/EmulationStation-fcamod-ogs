@@ -309,6 +309,7 @@ get_new_devices_list()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - device is empty, skipped"
         continue
       fi
 
@@ -322,6 +323,7 @@ get_new_devices_list()
       #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - is new device: '$is_new_device'"
       # skip knowed devices
       if [ -z "$is_new_device" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - device '$ITEM' is knowed, skipped"
         continue
       fi
 
@@ -477,6 +479,7 @@ get_paired_devices_online()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices_online()' - device is empty, skipped"
         continue
       fi
 
@@ -486,6 +489,7 @@ get_paired_devices_online()
 
       local fail=`echo "$device_data" | grep "not available"`
       if [ ! -z "$fail" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices_online()' - device '$ID' not available, skipped"
         continue
       fi
 
@@ -557,6 +561,7 @@ get_connected_devices()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device is empty, skipped"
         continue
       fi
 
@@ -566,6 +571,7 @@ get_connected_devices()
 
       local fail=`echo "$device_data" | grep "not available"`
       if [ ! -z "$fail" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device '$ID' not available, skipped"
         continue
       fi
 
@@ -573,6 +579,7 @@ get_connected_devices()
       #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device '$ID' is connected: '$is_connected'"
       # skip NOT connected
       if [ -z "$is_connected" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device '$ID' not connected, skipped"
         continue
       fi
 
@@ -642,6 +649,7 @@ do_disconnect_all_devices()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device is empty, skipped"
         continue
       fi
 
@@ -653,6 +661,7 @@ do_disconnect_all_devices()
       #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device '$ID' is connected: '$is_connected'"
       # skip NOT connected
       if [ -z "$is_connected" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device '$ID' not connected, skipped"
         continue
       fi
 
@@ -1001,6 +1010,7 @@ do_delete_all_device_connections()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device is empty, skipped"
         continue
       fi
 
@@ -1014,10 +1024,12 @@ do_delete_all_device_connections()
     #print_log $LOG_FILE "DEBUG" "Executing 'do_delete_all_device_connections()' - error: $error"
     if [ "$error" == "false" ]; then
       # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_delete_all_device_connections()' - succesfully deleted all connections"
       return 0
     fi
 
     # fail
+    #print_log $LOG_FILE "INFO" "Executing 'do_delete_all_device_connections()' - fail to delete all connections, cause: $error"
     return 1
 }
 

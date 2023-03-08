@@ -10,6 +10,7 @@ do_help() {
     echo "$0 get_status <SERVICE>" >&2
     echo "$0 set_status <SERVICE> <ENABLED_STATUS> <ACTIVE_STATUS>" >&2
     echo "$0 get_status_detail <SERVICE>" >&2
+    echo "$0 get_all_status" >&2
 }
 
 is_systemd_actived()
@@ -159,6 +160,8 @@ do_systemd_inactive()
 
 do_filebrowser_active()
 {
+    #print_log $LOG_FILE "INFO" "Executing 'do_filebrowser_active()'"
+
     sudo filebrowser -a 0.0.0.0 -p 80 -d $USER_HOME_PATH/.config/filebrowser.db -r / &
 
     sleep 1
@@ -181,6 +184,7 @@ do_active()
     is_actived "$1"
     if [ $? -eq 0 ]; then
       # if active exit
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_active()' - service '$SERVICE' is already actived, skipping ..."
       return 0
     fi
 
@@ -277,6 +281,50 @@ do_get_status_detail()
     echo "$result"
 }
 
+do_get_all_status()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_all_status()'"
+
+    local result=""
+
+    local services=( "ntp" "smbd.service" "nmbd.service" "ssh.service" "filebrowser" "NetworkManager-wait-online" )
+
+    for service in "${services[@]}"
+    do
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_get_all_status()' - service: '$service'"
+
+      # skip empty values
+      if [ -z "$service" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_get_all_status()' - service is empty, skipped"
+        continue
+      fi
+
+      local boot="false"
+      is_actived "$service"
+      if [ $? -eq 0 ]; then
+        boot="true"
+      fi
+
+      local active="false"
+      is_enabled "$service"
+      if [ $? -eq 0 ]; then
+        active="true"
+      fi
+
+      result="$result\n<service name=\"$service\" active=\"$active\" boot=\"$boot\" />"
+    done
+
+    if [ -z "$result" ]; then
+      echo ""
+    else
+      # remove first \n
+      result="${result:2:${#result}}"
+      echo -e "$result"
+    fi
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_get_all_status()' - result: '$result'"
+}
+
 do_enable()
 {
     local SERVICE=$1
@@ -305,6 +353,7 @@ do_disable()
     is_enabled "$1"
     if [ $? -eq 1 ]; then
       # if disabled exit
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_disable()' - service '$SERVICE' is already disabled, skipping ..."
       return 0
     fi
 
@@ -424,14 +473,17 @@ case "${ACTION}" in
     "is_actived")
         is_actived "$1" || exit_execution 1 "$1"
     ;;
+    "set_status")
+        do_set_status "$1" "$2" "$3" || exit_execution 1 "$1" "$2" "$3"
+    ;;
     "get_status")
         do_get_status "$1"
     ;;
     "get_status_detail")
         do_get_status_detail "$1"
     ;;
-    "set_status")
-        do_set_status "$1" "$2" "$3" || exit_execution 1 "$1" "$2" "$3"
+    "get_all_status")
+        do_get_all_status
     ;;
     *)
         do_help

@@ -28,6 +28,7 @@ class ApiSystem
 {
 private:
 	std::vector<BluetoothDevice> toBluetoothDevicesVector(std::vector<std::string> btDevices);
+	std::map<RemoteServicesId, RemoteServiceInformation> toRemoteServicesStatusVector(std::vector<std::string> remoteServices);
 
 protected:
 	ApiSystem();
@@ -270,6 +271,7 @@ public:
 	std::string getOutputDevice();
 	bool setOutputDevice(const std::string device);
 
+	std::map<RemoteServicesId, RemoteServiceInformation> getAllRemoteServiceStatus();
 	RemoteServiceInformation getRemoteServiceStatus(RemoteServicesId id);
 	bool configRemoteService(RemoteServiceInformation service);
 

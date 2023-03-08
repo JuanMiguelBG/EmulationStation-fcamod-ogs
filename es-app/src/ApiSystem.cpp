@@ -1598,6 +1598,42 @@ bool ApiSystem::setOutputDevice(const std::string device)
 	return executeSystemScript("es-sound set output_device \"" + device + '"');
 }
 
+std::map<RemoteServicesId, RemoteServiceInformation> ApiSystem::toRemoteServicesStatusVector(std::vector<std::string> remoteServices)
+{
+	LOG(LogInfo) << "ApiSystem::toRemoteServicesStatusVector()";
+
+	std::map<RemoteServicesId, RemoteServiceInformation> result;
+	for (auto remoteService : remoteServices)
+	{
+		RemoteServiceInformation remote_service;
+
+		if (Utils::String::startsWith(remoteService, "<service "))
+		{
+			remote_service.platformName = Utils::String::extractString(remoteService, "name=\"", "\"", false);
+			remote_service.name = getRemoteServiceNameFromPlatformName(remote_service.platformName);
+			remote_service.id = getRemoteServiceIdFromPlatformName(remote_service.platformName);
+			remote_service.isActive = Utils::String::toBool( Utils::String::extractString(remoteService, "active=\"", "\"", false) );
+			remote_service.isStartOnBoot = Utils::String::toBool( Utils::String::extractString(remoteService, "boot=\"", "\"", false) );
+		}
+		else
+		{
+			remote_service.platformName = remoteService;
+			remote_service.name = getRemoteServiceNameFromPlatformName(remoteService);
+			remote_service.id = getRemoteServiceIdFromPlatformName(remoteService);
+		}
+
+		result[remote_service.id] = remote_service;
+	}
+	return result;
+}
+
+std::map<RemoteServicesId, RemoteServiceInformation> ApiSystem::getAllRemoteServiceStatus()
+{
+	LOG(LogInfo) << "ApiSystem::getAllRemoteServiceStatus()";
+
+	return toRemoteServicesStatusVector( executeEnumerationScript("es-remote_services get_all_status") );
+}
+
 RemoteServiceInformation ApiSystem::getRemoteServiceStatus(RemoteServicesId id)
 {
 	LOG(LogInfo) << "ApiSystem::getRemoteServiceStatus() - id: " << std::to_string(id);

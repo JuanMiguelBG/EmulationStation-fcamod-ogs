@@ -52,9 +52,11 @@ void GuiRemoteServicesOptions::configRemoteService(Window* window, RemoteService
 
 void GuiRemoteServicesOptions::initializeMenu(Window* window)
 {
+	std::map<RemoteServicesId, RemoteServiceInformation> services = ApiSystem::getInstance()->getAllRemoteServiceStatus();
+
 	// NTP
 	addGroup(_("NTP"));
-	RemoteServiceInformation ntp = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::NTP);
+	RemoteServiceInformation ntp = services[RemoteServicesId::NTP];
 
 	auto ntp_active = std::make_shared<SwitchComponent>(window, ntp.isActive);
 	addWithLabel(_("ACTIVATE"), ntp_active);
@@ -69,7 +71,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// SAMBA
 	addGroup(_("SAMBA"));
-	RemoteServiceInformation samba = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::SAMBA);
+	RemoteServiceInformation samba = services[RemoteServicesId::SAMBA];
 
 	auto samba_active = std::make_shared<SwitchComponent>(window, samba.isActive);
 	addWithLabel(_("ACTIVATE"), samba_active);
@@ -84,7 +86,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// NetBIOS
 	addGroup(_("NetBIOS"));
-	RemoteServiceInformation netbios = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::NETBIOS);
+	RemoteServiceInformation netbios = services[RemoteServicesId::NETBIOS];
 
 	auto netbios_active = std::make_shared<SwitchComponent>(window, netbios.isActive);
 	addWithLabel(_("ACTIVATE"), netbios_active);
@@ -99,7 +101,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// SSH
 	addGroup(_("SSH"));
-	RemoteServiceInformation ssh = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::SSH);
+	RemoteServiceInformation ssh = services[RemoteServicesId::SSH];
 
 	auto ssh_active = std::make_shared<SwitchComponent>(window, ssh.isActive);
 	addWithLabel(_("ACTIVATE"), ssh_active);
@@ -114,7 +116,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// File-Browser
 	addGroup(_("File-Browser"));
-	RemoteServiceInformation fileBrowser = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::FILE_BROWSER);
+	RemoteServiceInformation fileBrowser = services[RemoteServicesId::FILE_BROWSER];
 
 	auto file_browser_active = std::make_shared<SwitchComponent>(window, fileBrowser.isActive);
 	addWithLabel(_("ACTIVATE"), file_browser_active);
@@ -129,7 +131,7 @@ void GuiRemoteServicesOptions::initializeMenu(Window* window)
 
 	// NetworkManager-wait-online
 	addGroup(_("NETWORK MANAGER WAIT ONLINE"));
-	RemoteServiceInformation nmwo = ApiSystem::getInstance()->getRemoteServiceStatus(RemoteServicesId::NETWORK_MANAGER_WAIT_ONLINE);
+	RemoteServiceInformation nmwo = services[RemoteServicesId::NETWORK_MANAGER_WAIT_ONLINE];
 
 	auto nmwo_active = std::make_shared<SwitchComponent>(window, nmwo.isActive);
 	addWithLabel(_("ACTIVATE"), nmwo_active);
