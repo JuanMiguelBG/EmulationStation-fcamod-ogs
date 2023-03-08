@@ -109,8 +109,11 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 			for (auto groupName : groupNames)
 			{
 				bool isGroupActive = std::find(checkedItems.cbegin(), checkedItems.cend(), groupName) != checkedItems.cend();
-				if (Settings::getInstance()->setBool(groupName + ".ungroup", !isGroupActive))
+				if (Settings::getInstance()->getBool(groupName + ".ungroup") != !isGroupActive)
+				{
+					Settings::getInstance()->setBool(groupName + ".ungroup", !isGroupActive);
 					setVariable("reloadSystems", true);
+				}
 			}
 		});
 	}
@@ -184,11 +187,14 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 	addWithLabel(_("SORT SYSTEMS"), sortType);
 	addSaveFunc([this, sortType]
 	{
-		if (Settings::getInstance()->setString("SortSystems", sortType->getSelected()))
-		if (sortType->getSelected() == "") // force default es_system.cfg order
-			setVariable("reloadSystems", true);
-		else
-			setVariable("reloadAll", true);
+		if (Settings::getInstance()->getString("SortSystems") != sortType->getSelected())
+		{
+			Settings::getInstance()->setString("SortSystems", sortType->getSelected());
+			if (sortType->getSelected() == "") // force default es_system.cfg order
+				setVariable("reloadSystems", true);
+			else
+				setVariable("reloadAll", true);
+		}
 	});
 
 	// force full-name on sort systems
@@ -196,8 +202,9 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 	addWithLabel(_("USE FULL SYSTEM NAME IN SORT"), forceFullName);
 	addSaveFunc([this, forceFullName, sortType]
 		{
-			if (Settings::getInstance()->setBool("ForceFullNameSortSystems", forceFullName->getState()))
+			if (Settings::getInstance()->getBool("ForceFullNameSortSystems") != forceFullName->getState())
 			{
+				Settings::getInstance()->setBool("ForceFullNameSortSystems", forceFullName->getState());
 				if ((sortType->getSelected() != "") && (sortType->getSelected() != "alpha"))
 					setVariable("reloadAll", true);
 			}
@@ -208,8 +215,9 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 	addWithLabel(_("SPECIAL ALPHA SORT"), specialAlphaSort);
 	addSaveFunc([this, specialAlphaSort, sortType]
 		{
-			if (Settings::getInstance()->setBool("SpecialAlphaSort", specialAlphaSort->getState()))
+			if (Settings::getInstance()->getBool("SpecialAlphaSort"), specialAlphaSort->getState())
 			{
+				Settings::getInstance()->setBool("SpecialAlphaSort", specialAlphaSort->getState());
 				if (sortType->getSelected() == "alpha")
 					setVariable("reloadAll", true);
 			}
@@ -300,16 +308,22 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 	addWithLabel(_("GROUP UNTHEMED CUSTOM COLLECTIONS"), bundleCustomCollections);
 	addSaveFunc([this, bundleCustomCollections]
 	{
-		if (Settings::getInstance()->setBool("UseCustomCollectionsSystem", bundleCustomCollections->getState()))
+		if (Settings::getInstance()->getBool("UseCustomCollectionsSystem") != bundleCustomCollections->getState())
+		{
+			Settings::getInstance()->setBool("UseCustomCollectionsSystem", bundleCustomCollections->getState());
 			setVariable("reloadAll", true);
+		}
 	});
 
 	std::shared_ptr<SwitchComponent> toggleSystemNameInCollections = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("CollectionShowSystemInfo"));
 	addWithLabel(_("SHOW SYSTEM NAME IN COLLECTIONS"), toggleSystemNameInCollections);
 	addSaveFunc([this, toggleSystemNameInCollections]
 	{
-		if (Settings::getInstance()->setBool("CollectionShowSystemInfo", toggleSystemNameInCollections->getState()))
+		if (Settings::getInstance()->getBool("CollectionShowSystemInfo") != toggleSystemNameInCollections->getState())
+		{
+			Settings::getInstance()->setBool("CollectionShowSystemInfo", toggleSystemNameInCollections->getState());
 			setVariable("reloadAll", true);
+		}
 	});
 
 /*
@@ -329,8 +343,11 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 	addWithLabel(_("SHOW FAVORITES ON TOP"), favoritesFirstSwitch);
 	addSaveFunc([this, favoritesFirstSwitch]
 	{
-		if (Settings::getInstance()->setBool("FavoritesFirst", favoritesFirstSwitch->getState()))
+		if (Settings::getInstance()->getBool("FavoritesFirst") != favoritesFirstSwitch->getState())
+		{
+			Settings::getInstance()->setBool("FavoritesFirst", favoritesFirstSwitch->getState());
 			setVariable("reloadAll", true);
+		}
 	});
 
 	addEntry(_("UPDATE GAMES LISTS"), false, [this, window] { GuiMenu::updateGameLists(window); }); // Game List Update
@@ -346,11 +363,13 @@ void GuiCollectionSystemsOptions::initializeMenu(Window* window, bool cursor)
 		std::string newAutoSettings = Utils::String::vectorToCommaString(autoOptionList->getSelectedObjects());
 		std::string newCustomSettings = Utils::String::vectorToCommaString(customOptionList->getSelectedObjects());
 
-		bool dirty = Settings::getInstance()->setString("CollectionSystemsAuto", newAutoSettings);
-		dirty |= Settings::getInstance()->setString("CollectionSystemsCustom", newCustomSettings);
-
-		if (dirty)
+		if ((Settings::getInstance()->getString("CollectionSystemsAuto") != newAutoSettings)
+			|| (Settings::getInstance()->getString("CollectionSystemsCustom") != newCustomSettings))
+		{
+			Settings::getInstance()->setString("CollectionSystemsAuto", newAutoSettings);
+			Settings::getInstance()->setString("CollectionSystemsCustom", newCustomSettings);
 			setVariable("reloadAll", true);
+		}
 	});
 
 	onFinalize([this, window]

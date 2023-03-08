@@ -177,8 +177,11 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 	mMenu.addWithLabel(_("SHOW FAVORITES ON TOP"), favoritesFirstSwitch);
 	addSaveFunc([favoritesFirstSwitch, this]
 	{
-		if (Settings::getInstance()->setBool("FavoritesFirst", favoritesFirstSwitch->getState()))
+		if (Settings::getInstance()->getBool("FavoritesFirst") != favoritesFirstSwitch->getState())
+		{
+			Settings::getInstance()->setBool("FavoritesFirst", favoritesFirstSwitch->getState());
 			mReloadAll = true;
+		}
 	});
 
 	// hidden files
@@ -186,8 +189,11 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 	mMenu.addWithLabel(_("SHOW HIDDEN FILES"), hidden_files);
 	addSaveFunc([hidden_files, this]
 	{
-		if (Settings::getInstance()->setBool("ShowHiddenFiles", hidden_files->getState()))
+		if (Settings::getInstance()->getBool("ShowHiddenFiles") != hidden_files->getState())
+		{
+			Settings::getInstance()->setBool("ShowHiddenFiles", hidden_files->getState());
 			mReloadAll = true;
+		}
 	});
 
 	// Folder View Mode
@@ -203,8 +209,11 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system, bool 
 	mMenu.addWithLabel(_("SHOW FOLDERS"), foldersBehavior);
 	addSaveFunc([this, foldersBehavior] 
 	{
-		if (Settings::getInstance()->setString("FolderViewMode", foldersBehavior->getSelected()))
+		if (Settings::getInstance()->getString("FolderViewMode") != foldersBehavior->getSelected())
+		{
+			Settings::getInstance()->setString("FolderViewMode", foldersBehavior->getSelected());
 			mReloadAll = true;
+		}
 	});
 
 	// update game lists

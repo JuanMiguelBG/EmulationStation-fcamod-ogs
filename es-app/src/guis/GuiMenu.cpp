@@ -190,16 +190,14 @@ void GuiMenu::openDisplaySettings()
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
 			{
 				// blink with low battery
-				bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
-				auto blink_low_battery = std::make_shared<SwitchComponent>(window, blink_low_battery_value);
+				auto blink_low_battery = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("DisplayBlinkLowBattery"));
 				s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
-				s->addSaveFunc([blink_low_battery, blink_low_battery_value]
+				s->addSaveFunc([blink_low_battery]
 					{
-						bool new_blink_low_battery_value = blink_low_battery->getState();
-						if (blink_low_battery_value != new_blink_low_battery_value)
+						if (Settings::getInstance()->getBool("DisplayBlinkLowBattery") != blink_low_battery->getState())
 						{
-							Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
-							ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
+							Settings::getInstance()->setBool("DisplayBlinkLowBattery", blink_low_battery->getState());
+							ApiSystem::getInstance()->setDisplayBlinkLowBattery(blink_low_battery->getState());
 						}
 					});
 
@@ -256,8 +254,9 @@ void GuiMenu::openControllersSettings()
 	s->addWithLabel(_("SWITCH A/B BUTTONS IN EMULATIONSTATION"), invert_AB_buttons);
 	s->addSaveFunc([this, s, invert_AB_buttons]
 		{
-			if (Settings::getInstance()->setBool("InvertButtonsAB", invert_AB_buttons->getState()))
+			if (Settings::getInstance()->getBool("InvertButtonsAB") != invert_AB_buttons->getState())
 			{
+				Settings::getInstance()->setBool("InvertButtonsAB", invert_AB_buttons->getState());
 				InputConfig::AssignActionButtons();
 				s->setVariable("reloadAll", true);
 			}
@@ -267,8 +266,9 @@ void GuiMenu::openControllersSettings()
 	s->addWithLabel(_("SWITCH \"PAGE UP\" TO L1 IN EMULATIONSTATION"), invert_pu_buttons);
 	s->addSaveFunc([this, s, invert_pu_buttons]
 		{
-			if (Settings::getInstance()->setBool("InvertButtonsPU", invert_pu_buttons->getState()))
+			if (Settings::getInstance()->getBool("InvertButtonsPU") != invert_pu_buttons->getState())
 			{
+				Settings::getInstance()->setBool("InvertButtonsPU", invert_pu_buttons->getState());
 				InputConfig::AssignActionButtons();
 				s->setVariable("reloadAll", true);
 			}
@@ -278,8 +278,9 @@ void GuiMenu::openControllersSettings()
 	s->addWithLabel(_("SWITCH \"PAGE DOWN\" TO R1 IN EMULATIONSTATION"), invert_pd_buttons);
 	s->addSaveFunc([this, s, invert_pd_buttons]
 		{
-			if (Settings::getInstance()->setBool("InvertButtonsPD", invert_pd_buttons->getState()))
+			if (Settings::getInstance()->getBool("InvertButtonsPD") != invert_pd_buttons->getState())
 			{
+				Settings::getInstance()->setBool("InvertButtonsPD", invert_pd_buttons->getState());
 				InputConfig::AssignActionButtons();
 				s->setVariable("reloadAll", true);
 			}
@@ -494,13 +495,32 @@ void GuiMenu::openSoundSettings()
 			std::shared_ptr<Font> font = theme->Text.font;
 			unsigned int color = theme->Text.color;
 
-			if (!SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
+			if (SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
+			{
+				// audio card
+				auto audio_card = std::make_shared<TextComponent>(window, _("BLUETOOTH AUDIO"), font, color);
+				audio_card->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+				s->addWithLabel(_("AUDIO CARD"), audio_card);
+
+				// volume control device
+				auto volume_control = std::make_shared<TextComponent>(window, SystemConf::getInstance()->get("bluetooth.audio.device"), font, color);
+				volume_control->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+				s->addWithLabel(_("AUDIO DEVICE"), volume_control);
+			}
+			else if (SystemConf::getInstance()->getBool("hdmi.mode"))
+			{
+				// audio card
+				auto audio_card = std::make_shared<TextComponent>(window, _("HDMI"), font, color);
+				audio_card->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+				s->addWithLabel(_("AUDIO CARD"), audio_card);
+			}
+			else
 			{
 				// audio card
 				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(window, Utils::String::toUpper(_("default")), font, color));
 
 				// volume control device
-				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, Utils::String::toUpper(_("Playback")), font, color));
+				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, Utils::String::toUpper(_("Master")), font, color));
 
 				if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
 				{
@@ -531,18 +551,6 @@ void GuiMenu::openSoundSettings()
 							ApiSystem::getInstance()->setOutputDevice(newVal);
 						});
 				}
-			}
-			else
-			{
-				// audio card
-				auto audio_card = std::make_shared<TextComponent>(window, _("BLUETOOTH AUDIO"), font, color);
-				audio_card->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
-				s->addWithLabel(_("AUDIO CARD"), audio_card);
-
-				// volume control device
-				auto volume_control = std::make_shared<TextComponent>(window, SystemConf::getInstance()->get("bluetooth.audio.device"), font, color);
-				volume_control->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
-				s->addWithLabel(_("AUDIO DEVICE"), volume_control);
 			}
 		}
 	}
@@ -1013,8 +1021,9 @@ void GuiMenu::openUISettings()
 			s->addWithLabel(_("GAMELIST VIEW STYLE"), gamelist_style);
 			s->addSaveFunc([s, gamelist_style, window] 
 			{
-				if (Settings::getInstance()->setString("GamelistViewStyle", gamelist_style->getSelected()))
+				if (Settings::getInstance()->getString("GamelistViewStyle") != gamelist_style->getSelected())
 				{
+					Settings::getInstance()->setString("GamelistViewStyle", gamelist_style->getSelected());
 					s->setVariable("reloadAll", true);
 					s->setVariable("reloadGuiMenu", true);
 				}
@@ -1055,9 +1064,9 @@ void GuiMenu::openUISettings()
 			msg += _("Do you want to proceed?");
 			window->pushGui(new GuiMsgBox(window, msg,
 				_("YES"), [selectedMode] {
-				//LOG(LogDebug) << "GuiMenu::openUISettings() - Setting UI mode to " << selectedMode;
-				Settings::getInstance()->setString("UIMode", selectedMode);
-				Settings::getInstance()->saveFile();
+					//LOG(LogDebug) << "GuiMenu::openUISettings() - Setting UI mode to " << selectedMode;
+					Settings::getInstance()->setString("UIMode", selectedMode);
+					Settings::getInstance()->saveFile();
 			}, _("NO"), nullptr));
 		}
 	});
@@ -1078,7 +1087,7 @@ void GuiMenu::openUISettings()
 
 	s->addWithLabel(_("TRANSITION STYLE"), transition_style);
 	s->addSaveFunc([transition_style] {
-		if (Settings::getInstance()->getString("TransitionStyle") == "instant"
+		if ((Settings::getInstance()->getString("TransitionStyle") == "instant")
 			&& transition_style->getSelected() != "instant"
 			&& PowerSaver::getMode() == PowerSaver::INSTANT)
 		{
@@ -1117,11 +1126,11 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("HIDE SYSTEM VIEW"), hideSystemView);
 	s->addSaveFunc([hideSystemView] 
 	{ 
-		bool hideSysView = Settings::getInstance()->getBool("HideSystemView");
-		Settings::getInstance()->setBool("HideSystemView", hideSystemView->getState());
-
-		if (!hideSysView && hideSystemView->getState())
+		if (Settings::getInstance()->getBool("HideSystemView") != hideSystemView->getState())
+		{
+			Settings::getInstance()->setBool("HideSystemView", hideSystemView->getState());
 			ViewController::get()->goToStart(true);
+		}
 	});
 
 	// quick system select (left/right in game list view)
@@ -1133,8 +1142,7 @@ void GuiMenu::openUISettings()
 	auto move_carousel = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("MoveCarousel"));
 	s->addWithLabel(_("CAROUSEL TRANSITIONS"), move_carousel);
 	s->addSaveFunc([move_carousel] {
-		if (move_carousel->getState()
-			&& !Settings::getInstance()->getBool("MoveCarousel")
+		if ((Settings::getInstance()->getBool("MoveCarousel") != move_carousel->getState())
 			&& PowerSaver::getMode() == PowerSaver::INSTANT)
 		{
 			Settings::getInstance()->setString("PowerSaverMode", "default");
@@ -1168,8 +1176,9 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("ON-SCREEN HELP"), show_help);
 	s->addSaveFunc([window, s, show_help]
 	{
-		if (Settings::getInstance()->setBool("ShowHelpPrompts", show_help->getState()))
+		if (Settings::getInstance()->getBool("ShowHelpPrompts") != show_help->getState())
 		{
+			Settings::getInstance()->setBool("ShowHelpPrompts", show_help->getState());
 			if (window->getHelpComponent())
 				window->getHelpComponent()->setVisible(show_help->getState());
 
@@ -1186,9 +1195,7 @@ void GuiMenu::openUISettings()
 		s->addWithLabel(_("SHOW BATTERY STATUS"), batteryStatus);
 		s->addSaveFunc([batteryStatus]
 		{
-			std::string old_value = Settings::getInstance()->getString("ShowBattery");
-			if (old_value != batteryStatus->getSelected())
-				Settings::getInstance()->setString("ShowBattery", batteryStatus->getSelected());
+			Settings::getInstance()->setString("ShowBattery", batteryStatus->getSelected());
 		});
 	}
 
@@ -1197,8 +1204,9 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("SHOW FILENAMES IN LISTS"), hidden_files);
 	s->addSaveFunc([hidden_files, s] 
 	{ 
-		if (Settings::getInstance()->setBool("ShowFilenames", hidden_files->getState()))
+		if (Settings::getInstance()->getBool("ShowFilenames") != hidden_files->getState())
 		{
+			Settings::getInstance()->setBool("ShowFilenames", hidden_files->getState());
 			FileData::resetSettings();
 			s->setVariable("reloadCollections", true);
 			s->setVariable("reloadAll", true);
@@ -1210,9 +1218,9 @@ void GuiMenu::openUISettings()
 	auto enable_filter = std::make_shared<SwitchComponent>(window, !Settings::getInstance()->getBool("ForceDisableFilters"));
 	s->addWithLabel(_("ENABLE FILTERS"), enable_filter);
 	s->addSaveFunc([enable_filter, s] { 
-		bool filter_is_enabled = !Settings::getInstance()->getBool("ForceDisableFilters");
-		if (Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState()))
+		if (Settings::getInstance()->getBool("ForceDisableFilters") != !enable_filter->getState())
 		{
+			Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState());
 			s->setVariable("reloadAll", true);
 			s->setVariable("reloadGuiMenu", true);
 		}
@@ -1223,8 +1231,9 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("IGNORE LEADING ARTICLES WHEN SORTING"), ignoreArticles);
 	s->addSaveFunc([s, ignoreArticles]
 	{
-		if (Settings::getInstance()->setBool("IgnoreLeadingArticles", ignoreArticles->getState()))
+		if (Settings::getInstance()->getBool("IgnoreLeadingArticles") != ignoreArticles->getState())
 		{
+			Settings::getInstance()->setBool("IgnoreLeadingArticles", ignoreArticles->getState());
 			s->setVariable("reloadAll", true);
 			s->setVariable("reloadGuiMenu", true);
 		}
@@ -1913,8 +1922,10 @@ void GuiMenu::openBluetoothSettings()
 			auto theme = ThemeData::getMenuTheme();
 			std::shared_ptr<Font> font = theme->Text.font;
 			unsigned int color = theme->Text.color;
-
-			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color));
+			// volume control device
+			auto volume_control = std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color);
+			volume_control->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+			s->addWithLabel(_("AUDIO DEVICE"), volume_control);
 		}
 	}
 	else
@@ -2258,8 +2269,9 @@ void GuiMenu::openAdvancedSettings()
 		s->addWithLabel(_("SUSPEND MODES"), suspend_mode);
 		s->addSaveFunc([this, s, suspend_mode]
 			{
-				if (SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected()))
+				if (SystemConf::getInstance()->get("suspend.device.mode") != suspend_mode->getSelected())
 				{
+					SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected());
 					ApiSystem::getInstance()->setSuspendMode(suspend_mode->getSelected());
 					if (Settings::getInstance()->getBool("ShowOnlyExit")
 						&& ((suspend_mode->getSelected() == "DISABLED") && (Settings::getInstance()->getString("OnlyExitAction") == "suspend")))
@@ -2434,14 +2446,7 @@ void GuiMenu::openAdvancedSettings()
 /*
 	auto activity = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("ShowControllerActivity"));
 	s->addWithLabel(_("SHOW CONTROLLER ACTIVITY"), activity);
-	s->addSaveFunc([activity]
-	{
-		bool old_value = Settings::getInstance()->getBool("ShowControllerActivity");
-		if (old_value != activity->getState())
-		{
-			Settings::getInstance()->setBool("ShowControllerActivity", activity->getState());
-		}
-	});
+	s->addSaveFunc([activity] { Settings::getInstance()->setBool("ShowControllerActivity", activity->getState()); });
 */
 	// Battery Indicator
 	auto battery = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("ShowBatteryIndicator"));
@@ -2493,8 +2498,9 @@ void GuiMenu::openAdvancedSettings()
 	s->addWithLabel(_("LOG LEVEL"), logLevel);
 	s->addSaveFunc([this, logLevel]
 	{
-		if (Settings::getInstance()->setString("LogLevel", logLevel->getSelected() == "default" ? "" : logLevel->getSelected()))
+		if (Settings::getInstance()->getString("LogLevel") != logLevel->getSelected())
 		{
+			Settings::getInstance()->setString("LogLevel", logLevel->getSelected() == "default" ? "" : logLevel->getSelected());
 			Log::setupReportingLevel();
 			Log::init();
 		}
@@ -2503,8 +2509,9 @@ void GuiMenu::openAdvancedSettings()
 	auto logWithMilliseconds = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("LogWithMilliseconds"));
 	s->addWithLabel(_("LOG WITH MILLISECONDS"), logWithMilliseconds);
 	s->addSaveFunc([logWithMilliseconds] {
-		if (Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState()))
+		if (Settings::getInstance()->getBool("LogWithMilliseconds") != logWithMilliseconds->getState())
 		{
+			Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState());
 			Log::setupReportingLevel();
 			Log::init();
 		}
