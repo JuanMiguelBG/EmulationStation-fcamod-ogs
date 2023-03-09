@@ -529,21 +529,28 @@ void GuiMenu::openSoundSettings()
 					std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
 					std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
 					//LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
-					for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
+					if (output_devices.empty())
 					{
-						std::string out_dev_label;
-						if (*od == "OFF")
-							out_dev_label = "MUTE";
-						else if (*od == "SPK")
-							out_dev_label = "SPEAKER";
-						else if (*od == "HP")
-							out_dev_label = "HEADPHONES";
-						else if (*od == "SPK_HP")
-							out_dev_label = "SPEAKER AND HEADPHONES";
-						else
-							out_dev_label = *od;
+						out_dev->add(_("SPEAKER"), "SPK", true);
+					}
+					else
+					{
+						for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
+						{
+							std::string out_dev_label;
+							if (*od == "OFF")
+								out_dev_label = "MUTE";
+							else if (*od == "SPK")
+								out_dev_label = "SPEAKER";
+							else if (*od == "HP")
+								out_dev_label = "HEADPHONES";
+							else if (*od == "SPK_HP")
+								out_dev_label = "SPEAKER AND HEADPHONES";
+							else
+								out_dev_label = *od;
 
-						out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+							out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+						}
 					}
 					s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
 					out_dev->setSelectedChangedCallback([](const std::string &newVal)
