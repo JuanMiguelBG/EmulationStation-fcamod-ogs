@@ -13,7 +13,6 @@ clear_clear_last_played_data_on_file()
     sudo cp -f "$FILE" "$FILE.$(date +'%Y%m%d')"
     sudo grep -e lastplayed -e playcount -v "$FILE" > "$FILE.tmp"
     sudo mv -f "$FILE.tmp" "$FILE"
-
 }
 
 do_clear_last_played_data() {
