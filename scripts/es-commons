@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export USER_HOME_PATH="/home/ark"
 export ES_HOME_PATH="$USER_HOME_PATH/.emulationstation"
@@ -28,6 +28,11 @@ trim()
 {
   local trimmed="$1"
 
+  if [ -z "$trimmed" ]; then
+    echo ""
+    return
+  fi
+
   # Strip leading spaces.
   while [[ $trimmed == ' '* ]]; do
      trimmed="${trimmed## }"
@@ -38,5 +43,45 @@ trim()
   done
 
   echo "$trimmed"
+}
+
+replace()
+{
+  local original="$1"
+  local target="$2"
+  local replacement="$3"
+
+  if [ -z "$original" ]; then
+    echo ""
+    return
+  fi
+
+  echo "${original/target/replacement}"
+}
+
+replace_all()
+{
+  local original="$1"
+  local target="$2"
+  local replacement="$3"
+
+  if [ -z "$original" ]; then
+    echo ""
+    return
+  fi
+
+  echo "${original//target/replacement}"
+}
+
+uppercase()
+{
+  local string="$1"
+  echo "${string^^}"
+}
+
+lowercase()
+{
+  local string="$1"
+  echo "${string,,}"
 }
 #******************* END - ES Scripts String functions ********************
