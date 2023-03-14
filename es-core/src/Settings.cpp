@@ -202,6 +202,7 @@ void Settings::setDefaults()
 	mBoolMap["bluetooth.enabled"] = false;
 	mBoolMap["bluetooth.audio.connected"] = false;
 	mStringMap["bluetooth.audio.device"] = "";
+	mBoolMap["bluetooth.xbox_one.compatible"] = false;
 
 	mStringMap["UIMode"] = "Full";
 	mStringMap["UIMode_passkey"] = "uuddlrlrba";

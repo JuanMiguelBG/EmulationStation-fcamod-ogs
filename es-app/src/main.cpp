@@ -345,35 +345,12 @@ void loadOtherSettings()
 	Utils::Async::run( [] (void)
 		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-			{
-				SystemConf::getInstance()->set("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());
-				SystemConf::getInstance()->setBool("wifi.enabled", ApiSystem::getInstance()->isWifiEnabled());
-				SystemConf::getInstance()->set("system.hostname", ApiSystem::getInstance()->getHostname());
-
-				std::string ssid = ApiSystem::getInstance()->getWifiSsid();
-				if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
-					SystemConf::getInstance()->set("wifi.ssid", ssid);
-
-				if (!SystemConf::getInstance()->get("wifi.ssid").empty())
-					SystemConf::getInstance()->set("wifi.key", ApiSystem::getInstance()->getWifiPsk(ssid));
-
-				SystemConf::getInstance()->set("wifi.dns1", ApiSystem::getInstance()->getDnsOne());
-				SystemConf::getInstance()->set("wifi.dns2", ApiSystem::getInstance()->getDnsTwo());
-			}
+				ApiSystem::getInstance()->loadSystemWifiInfo();
 		});
 	Utils::Async::run( [] (void)
 		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
-			{
-				bool btEnabled = ApiSystem::getInstance()->isBluetoothEnabled();
-				SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
-				std::string btAudioDevice = "";
-				if (btEnabled)
-					btAudioDevice = ApiSystem::getInstance()->getBluetoothAudioDevice();
-
-				SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
-				SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
-			}
+				ApiSystem::getInstance()->loadSystemBluetoothInfo();
 		});
 	Utils::Async::run( [] (void)
 		{
@@ -514,6 +491,15 @@ void waitPreloadVlc(Window *window)
 	}
 }
 
+void configSystemAudio(std::string &log)
+{
+	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+		return;
+
+	log.append("MAIN::configSystemAudio()\n");
+	ApiSystem::getInstance()->configSystemAudio();
+}
+
 void startAutoConnectBluetoothAudioDevice(std::string &log)
 {
 	if (!ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH)
@@ -651,10 +637,11 @@ int main(int argc, char* argv[])
 	
 	init_log.append("MAIN::main(), MAIN : ") .append(std::to_string(Utils::Async::getThreadId())).append("\n");
 
+	configSystemAudio(init_log);
 	startAutoConnectBluetoothAudioDevice(init_log);
 	checkPreloadVlc();
 
-	if(!parseArgs(argc, argv))
+	if (!parseArgs(argc, argv))
 		return 0;
 
 	// start the logger
@@ -677,7 +664,7 @@ int main(int argc, char* argv[])
 #endif
 
 	//if ~/.emulationstation doesn't exist and cannot be created, bail
-	if(!verifyHomeFolderExists())
+	if (!verifyHomeFolderExists())
 	{
 		Log::flush();
 		return 1;

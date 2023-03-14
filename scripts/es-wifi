@@ -31,6 +31,7 @@ do_help() {
     echo "$0 forget_wifi <SSID>" >&2
     echo "$0 forget_all_wifis" >&2
     echo "$0 test_network_manager" >&2
+    echo "$0 get_wifi_info" >&2
 }
 
 is_network_manager_active() {
@@ -124,9 +125,9 @@ do_list() {
       #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - line_aux: '$line_aux'"
       if [ ! -z "$line_aux" ]; then
         if [ ! -z "$exist" ]; then
-          result="$result\n$line_aux$EXIST_CONNECTION_FLAG"
+          result+="\n$line_aux$EXIST_CONNECTION_FLAG"
         else
-          result="$result\n$line_aux"
+          result+="\n$line_aux"
         fi
       fi
     done <<< "$networks"
@@ -469,10 +470,10 @@ get_knowed_wifis()
         local filename="${file##*/}"
         local conexion_ssid="${filename%.nmconnection}"
         #print_log $LOG_FILE "DEBUG" "Executing 'get_knowed_wifis()' - conexion SSID: '$conexion_ssid'"
-        result="$result\n$conexion_ssid"
+        result+="\n$conexion_ssid"
         if [ "$conexion_ssid" == "$connected_ssid" ]; then
           #print_log $LOG_FILE "DEBUG" "Executing 'get_knowed_wifis()' - conexion SSID is the actual connected Wifi: '$conexion_ssid'"
-          result="$result$EXIST_CONNECTION_FLAG"
+          result+="$EXIST_CONNECTION_FLAG"
         fi
       fi
     done
@@ -574,6 +575,29 @@ do_forget_all_wifis()
     #print_log $LOG_FILE "INFO" "Executing 'do_forget_all_wifis()' - Exiting Forget all Wifis without errors"
 }
 
+do_get_wifi_info()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_wifi_info()'"
+    local enabled="false"
+    is_enabled
+    if [ $? -eq 0 ]; then
+      enabled="true"
+    fi
+    local ssid="$(get_ssid)"
+    local key=""
+    local flag="$(get_network_exist_flag)"
+    local hostname="$(hostname)"
+    local dns1="$(get_dns1)"
+    local dns2="$(get_dns2)"
+
+    if [ ! -z "$ssid" ]; then
+      key=$(get_ssid_psk "$ssid")
+    fi
+
+    local result="<wifi_info enabled=\"$enabled\" ssid=\"$ssid\" key=\"$key\" hostname=\"$hostname\" dns1=\"$dns1\" dns2=\"$dns2\" flag=\"$flag\"/>"
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_wifi_info()' - result: $result"
+    echo "$result"
+}
 # ******************************************************************************************
 
 # Configure ES commons variables
@@ -695,6 +719,9 @@ case "${ACTION}" in
     ;;
     "forget_all_wifis")
         do_forget_all_wifis || exit_execution 1
+    ;;
+    "get_wifi_info")
+        do_get_wifi_info || exit_execution 1
     ;;
     *)
         do_help

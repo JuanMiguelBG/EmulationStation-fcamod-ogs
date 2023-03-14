@@ -29,7 +29,9 @@ class ApiSystem
 private:
 	std::vector<BluetoothDevice> toBluetoothDevicesVector(std::vector<std::string> btDevices);
 	std::map<RemoteServicesId, RemoteServiceInformation> toRemoteServicesStatusVector(std::vector<std::string> remoteServices);
-	bool loadsystemAudioInfoToSystemConf(const std::string& audioInfo);
+	bool loadSystemAudioInfoToSystemConf(const std::string& audioInfo);
+	bool loadSystemWifiInfoToSystemConf(const std::string& wifiInfo);
+	bool loadSystemBluetoothInfoToSystemConf(const std::string& btInfo);
 
 protected:
 	ApiSystem();
@@ -189,6 +191,7 @@ public:
 	int getDisplayAutoDimBrightness();
 	bool setDisplayAutoDimValues(bool stay_awake_charging_state, bool time_state, int timeout, int brightness_level);
 
+	bool loadSystemWifiInfo();
 	bool getInternetStatus();
 	std::vector<std::string> getWifiNetworks(bool scan = false);
 	bool connectWifi(const std::string ssid, const std::string pwd);
@@ -200,10 +203,6 @@ public:
 	bool enableManualWifiDns(const std::string ssid, const std::string dnsOne, const std::string dnsTwo);
 	bool disableManualWifiDns(const std::string ssid);
 	std::string getWifiSsid();
-	std::string getWifiPsk(const std::string ssid);
-	std::string getDnsOne();
-	std::string getDnsTwo();
-	std::string getWifiNetworkExistFlag();
 	bool isWifiPowerSafeEnabled();
 	void setWifiPowerSafe(bool state);
 	std::vector<std::string> getKnowedWifiNetworks();
@@ -264,6 +263,7 @@ public:
 	void setVolume(int volumeLevel);
 	void backupVolume();
 	void restoreVolume();
+	bool configSystemAudio();
 	bool loadSystemAudioInfo();
 	bool setAudioCard(const std::string& audio_card);
 	bool setOutputDevice(const std::string& device);
@@ -276,6 +276,7 @@ public:
 	virtual bool launchTestControls(Window *window);
 	virtual bool launchCalibrateTv(Window *window);
 
+	bool loadSystemBluetoothInfo();
 	bool isBluetoothActive();
 	bool isBluetoothEnabled();
 	bool enableBluetooth();
@@ -298,6 +299,7 @@ public:
 	bool startAutoConnectBluetoothAudioDevice();
 	bool stopAutoConnectBluetoothAudioDevice();
 	bool setBluetoothDeviceAlias(const std::string id, const std::string alias);
+	bool setBluetoothXboxOneCompatible(bool compatible);
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();

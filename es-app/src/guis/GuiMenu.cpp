@@ -1946,7 +1946,7 @@ void GuiMenu::openBluetoothSettings()
 	}
 
 	// use alias as device name
-	auto alias_as_name = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.use.alias"));
+	auto alias_as_name = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("bluetooth.use.alias"));
 	s->addWithLabel(_("USE ALIAS AS DEVICE NAME"), alias_as_name);
 	alias_as_name->setOnChangedCallback([alias_as_name]
 		{
@@ -1954,7 +1954,7 @@ void GuiMenu::openBluetoothSettings()
 		});	
 
 	// autoconnect audio device on boot
-	auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
+	auto auto_connect = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
 	s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
 	s->addSaveFunc([auto_connect]
 		{
@@ -1962,13 +1962,25 @@ void GuiMenu::openBluetoothSettings()
 		});
 
 	auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
-	auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
+	auto_connect_timeout->setValue( (float)SystemConf::getInstance()->getInt("bluetooth.boot.game.timeout") );
 	s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
 	s->addSaveFunc([auto_connect_timeout]
 		{
 			Settings::getInstance()->setInt("bluetooth.boot.game.timeout", (int)Math::round(auto_connect_timeout->getValue()));
 		});
 
+	auto xbox_one_compatible = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("bluetooth.xbox_one.compatible"));
+	s->addWithLabel(_("XBOX ONE CONTROLLER COMPATIBLE"), xbox_one_compatible);
+	s->addSaveFunc([window, xbox_one_compatible, baseBtEnabled]
+		{
+			if (SystemConf::getInstance()->getBool("bluetooth.xbox_one.compatible") != xbox_one_compatible->getState())
+			{
+				SystemConf::getInstance()->setBool("bluetooth.xbox_one.compatible", xbox_one_compatible->getState());
+				ApiSystem::getInstance()->setBluetoothXboxOneCompatible(xbox_one_compatible->getState());
+				if (baseBtEnabled)
+					window->pushGui(new GuiMsgBox(window, _("RESET BLUETOOTH CONFIG TO CHANGES TAKE EFFECT")));
+			}
+		});
 
 	auto pthis = this;
 

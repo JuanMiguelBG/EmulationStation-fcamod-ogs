@@ -523,6 +523,37 @@ int ApiSystem::getFrequencyGpu()
 	return queryFrequencyGpu();
 }
 
+bool ApiSystem::loadSystemWifiInfoToSystemConf(const std::string& wifiInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemWifiInfoToSystemConf()";
+
+	if (Utils::String::startsWith(wifiInfo, "<wifi_info "))
+	{
+		SystemConf::getInstance()->setBool("wifi.enabled", Utils::String::toBool(Utils::String::extractString(wifiInfo, "enabled=\"", "\"", false)));
+		std::string ssid = Utils::String::extractString(wifiInfo, "ssid=\"", "\"", false);
+		if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
+			SystemConf::getInstance()->set("wifi.ssid", ssid);
+
+		if (!SystemConf::getInstance()->get("wifi.ssid").empty())
+			SystemConf::getInstance()->set("wifi.key", Utils::String::extractString(wifiInfo, "key=\"", "\"", false));
+
+		SystemConf::getInstance()->set("system.hostname", Utils::String::extractString(wifiInfo, "hostname=\"", "\"", false));
+		SystemConf::getInstance()->set("wifi.dns1", Utils::String::extractString(wifiInfo, "dns1=\"", "\"", false));
+		SystemConf::getInstance()->set("wifi.dns2", Utils::String::extractString(wifiInfo, "dns2=\"", "\"", false));
+		SystemConf::getInstance()->set("already.connection.exist.flag", Utils::String::extractString(wifiInfo, "flag=\"", "\"", false));
+		return true;
+	}
+
+	return false;
+}
+
+bool ApiSystem::loadSystemWifiInfo()
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemWifiInfo()";
+
+	return loadSystemWifiInfoToSystemConf( getShOutput(R"(es-wifi get_wifi_info)") );
+}
+
 bool ApiSystem::isNetworkConnected()
 {
 	LOG(LogInfo) << "ApiSystem::isNetworkConnected()";
@@ -1076,34 +1107,6 @@ std::string ApiSystem::getWifiSsid()
 	return queryWifiSsid();
 }
 
-std::string ApiSystem::getWifiPsk(const std::string ssid)
-{
-	LOG(LogInfo) << "ApiSystem::getWifiPsk() - SSID: '" << ssid << "'";
-
-	return queryWifiPsk(ssid);
-}
-
-std::string ApiSystem::getDnsOne()
-{
-	LOG(LogInfo) << "ApiSystem::getDnsOne()";
-
-	return queryDnsOne();
-}
-
-std::string ApiSystem::getDnsTwo()
-{
-	LOG(LogInfo) << "ApiSystem::getDnsTwo()";
-
-	return queryDnsTwo();
-}
-
-std::string ApiSystem::getWifiNetworkExistFlag()
-{
-	LOG(LogInfo) << "ApiSystem::getDnsTwo()";
-
-	return queryWifiNetworkExistFlag();
-}
-
 bool ApiSystem::isWifiPowerSafeEnabled()
 {
 	LOG(LogInfo) << "ApiSystem::isWifiPowerSafeEnabled()";
@@ -1554,9 +1557,14 @@ void ApiSystem::restoreVolume()
 	ApiSystem::getInstance()->setVolume(Settings::getInstance()->getInt("VolumeBackup"));
 }
 
-bool ApiSystem::loadsystemAudioInfoToSystemConf(const std::string& audioInfo)
+bool ApiSystem::configSystemAudio()
 {
-	LOG(LogInfo) << "ApiSystem::toSystemAudioInfo()";
+	return executeSystemScript(R"(es-sound config_sound_card &)");
+}
+
+bool ApiSystem::loadSystemAudioInfoToSystemConf(const std::string& audioInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemAudioInfoToSystemConf()";
 
 	if (Utils::String::startsWith(audioInfo, "<audio_info "))
 	{
@@ -1575,7 +1583,7 @@ bool ApiSystem::loadSystemAudioInfo()
 {
 	LOG(LogInfo) << "ApiSystem::loadSystemAudioInfo()";
 
-	return loadsystemAudioInfoToSystemConf( getShOutput(R"(es-sound get audio_info)") );
+	return loadSystemAudioInfoToSystemConf( getShOutput(R"(es-sound get audio_info)") );
 }
 
 bool ApiSystem::setAudioCard(const std::string& audio_card)
@@ -1748,6 +1756,34 @@ bool ApiSystem::launchCalibrateTv(Window *window)
 	ApiSystem::launchExternalWindow_after(window, command);
 
 	return exitCode == 0;
+}
+
+bool ApiSystem::loadSystemBluetoothInfoToSystemConf(const std::string& btInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemBluetoothInfoToSystemConf()";
+
+	if (Utils::String::startsWith(btInfo, "<bt_info "))
+	{
+		bool btEnabled = Utils::String::toBool(Utils::String::extractString(btInfo, "enabled=\"", "\"", false));
+		SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
+		std::string btAudioDevice = "";
+		if (btEnabled)
+			btAudioDevice = Utils::String::extractString(btInfo, "audio=\"", "\"", false);
+
+		SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
+		SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
+		SystemConf::getInstance()->setBool("bluetooth.xbox_one.compatible", Utils::String::toBool(Utils::String::extractString(btInfo, "xbox_one_compatible=\"", "\"", false)));
+		return true;
+	}
+
+	return false;
+}
+
+bool ApiSystem::loadSystemBluetoothInfo()
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemBluetoothInfo()";
+
+	return loadSystemBluetoothInfoToSystemConf( getShOutput(R"(es-bluetooth get_bt_info)") );
 }
 
 bool ApiSystem::isBluetoothActive()
@@ -1951,6 +1987,21 @@ bool ApiSystem::setBluetoothDeviceAlias(const std::string id, const std::string 
 
 	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + '"' );
 }
+
+bool ApiSystem::setBluetoothXboxOneCompatible(bool compatible)
+{
+	LOG(LogInfo) << "ApiSystem::setBluetoothXboxOneCompatible() - compatible: " << Utils::String::boolToString(compatible);
+
+	std::string command = "es-bluetooth ";
+	if (compatible)
+		command.append("active_xbox_one_pad_compatibility");
+	else
+		command.append("inactive_xbox_one_pad_compatibility");
+
+	command.append(" &");
+	return executeSystemScript(command);
+}
+
 
 void ApiSystem::backupAfterGameValues()
 {
