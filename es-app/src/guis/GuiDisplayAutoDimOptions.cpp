@@ -45,10 +45,10 @@ void GuiDisplayAutoDimOptions::initializeMenu()
 	addWithLabel(_("BRIGHTNESS"), auto_dim_brightness_level);
 
 	addSaveFunc([this, window,
-							stay_awake_charging, stay_awake_charging_value,
-							auto_dim_time, auto_dim_time_value,
-							auto_dim_time_timeout, auto_dim_time_timeout_value,
-							auto_dim_brightness_level, auto_dim_brightness_level_value]
+				stay_awake_charging, stay_awake_charging_value,
+				auto_dim_time, auto_dim_time_value,
+				auto_dim_time_timeout, auto_dim_time_timeout_value,
+				auto_dim_brightness_level, auto_dim_brightness_level_value]
 		{
 			bool stay_awake_charging_new_value = stay_awake_charging->getState();
 			bool auto_dim_time_new_value = auto_dim_time->getState();

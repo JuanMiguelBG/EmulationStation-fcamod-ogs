@@ -16,8 +16,11 @@ GuiSlideshowScreensaverOptions::GuiSlideshowScreensaverOptions(Window* window, c
 	addWithLabel(row, _("SWAP IMAGE AFTER (SECS)"), sss_image_sec);
 	addSaveFunc([sss_image_sec] {
 		int playNextTimeout = (int)Math::round(sss_image_sec->getValue()) * (1000);
-		Settings::getInstance()->setInt("ScreenSaverSwapImageTimeout", playNextTimeout);
-		PowerSaver::updateTimeouts();
+		if (Settings::getInstance()->getInt("ScreenSaverSwapImageTimeout") != playNextTimeout)
+		{
+			Settings::getInstance()->setInt("ScreenSaverSwapImageTimeout", playNextTimeout);
+			PowerSaver::updateTimeouts();
+		}
 	});
 	
 	// SHOW GAME NAME

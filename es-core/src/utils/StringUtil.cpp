@@ -592,7 +592,7 @@ namespace Utils
 			return output;
 		}
 
-		std::vector<std::string> split  (const std::string& s, const std::string& separator, bool removeEmptyEntries)
+		std::vector<std::string> split(const std::string& s, const std::string& separator, bool removeEmptyEntries)
 		{
 			std::vector<std::string> output;
 

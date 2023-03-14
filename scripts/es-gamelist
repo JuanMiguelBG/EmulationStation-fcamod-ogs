@@ -1,0 +1,115 @@
+#!/bin/bash
+
+do_help() {
+    echo "$0 clear_last_played_data <SYSTEM>" >&2
+    echo "$0 clear_all_last_played_data" >&2
+}
+
+clear_clear_last_played_data_on_file()
+{
+    local FILE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'clear_clear_last_played_data_on_file()' - file '$FILE'"
+
+    sudo cp -f "$FILE" "$FILE.$(date +'%Y%m%d')"
+    sudo grep -e lastplayed -e playcount -v "$FILE" > "$FILE.tmp"
+    sudo mv -f "$FILE.tmp" "$FILE"
+}
+
+do_clear_last_played_data() {
+    local system=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_clear_last_played_data()' - system '$system'"
+
+    if [ -z "$system" ]; then
+      #print_log $LOG_FILE "INFO" "Executing 'do_clear_last_played_data()' - system is empty, exiting ..."
+      return 0
+    fi
+
+    local roms_dirs=( "/roms" "/roms2" "$ES_HOME_PATH/gamelists" "$ES_ETC_PATH/gamelists" )
+
+    for roms_dir in "${roms_dirs[@]}"
+    do
+      local system_dir="$roms_dir/$system"
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_last_played_data()' - system_dir: '$system_dir'"
+      if [ -d "$system_dir" ]; then
+        #print_log $LOG_FILE "INFO" "Executing 'do_clear_last_played_data()' - on '$system_dir' directory"
+
+        local gamelist_file="$system_dir/gamelist.xml"
+        while IFS= read -r GAMELIST; do
+          #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_last_played_data()' - file: '$GAMELIST'"
+          if [ -z "$GAMELIST" ]; then
+              #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_last_played_data()' - empty gamelist, skipping ..."
+              continue
+          fi
+
+          clear_clear_last_played_data_on_file "$GAMELIST"
+        done <<< "$(find $system_dir -name gamelist.xml)"
+      fi
+    done
+}
+
+do_clear_all_last_played_data() {
+    #print_log $LOG_FILE "INFO" "Executing 'do_clear_all_last_played_data()'"
+
+    local roms_dirs=( "/roms" "/roms2" "$ES_HOME_PATH/gamelists" "$ES_ETC_PATH/gamelists" "/opt" )
+
+    for roms_dir in "${roms_dirs[@]}"
+    do
+      if [ -d "$roms_dir" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_all_last_played_data()' - roms_dir: '$roms_dir'"
+        while IFS= read -r GAMELIST; do
+          #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_all_last_played_data()' - file: '$GAMELIST'"
+          if [ -z "$GAMELIST" ]; then
+              #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_last_played_data()' - empty gamelist, skipping ..."
+              continue
+          fi
+
+          clear_clear_last_played_data_on_file "$GAMELIST"
+        done <<< "$(find $roms_dir -name gamelist.xml)"
+      fi
+    done
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-log_scripts
+
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-gamelist.log"
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1', exit code: '$return' #####"
+    exit $return
+}
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+shift
+
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1' #####"
+
+case "${ACTION}" in
+    "clear_last_played_data")
+        do_clear_last_played_data "$1" || exit_execution 1 "$1"
+    ;;
+    "clear_all_last_played_data")
+        do_clear_all_last_played_data || exit_execution 1
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
+
+exit_execution 0 "$1"

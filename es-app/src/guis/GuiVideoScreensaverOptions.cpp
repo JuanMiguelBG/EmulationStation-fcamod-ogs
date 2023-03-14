@@ -14,8 +14,11 @@ GuiVideoScreensaverOptions::GuiVideoScreensaverOptions(Window* window, const cha
 	addWithLabel(_("SWAP VIDEO AFTER (SECS)"), swap);
 	addSaveFunc([swap] {
 		int playNextTimeout = (int)Math::round(swap->getValue()) * (1000);
-		Settings::getInstance()->setInt("ScreenSaverSwapVideoTimeout", playNextTimeout);
-		PowerSaver::updateTimeouts();
+		if (Settings::getInstance()->getInt("ScreenSaverSwapVideoTimeout") != playNextTimeout)
+		{
+			Settings::getInstance()->setInt("ScreenSaverSwapVideoTimeout", playNextTimeout);
+			PowerSaver::updateTimeouts();
+		}
 	});
 
 	// Render Video Game Name as subtitles
@@ -24,8 +27,10 @@ GuiVideoScreensaverOptions::GuiVideoScreensaverOptions(Window* window, const cha
 	info_type.push_back("always");
 	info_type.push_back("start & end");
 	info_type.push_back("never");
-	for(auto it = info_type.cbegin(); it != info_type.cend(); it++)
+
+	for (auto it = info_type.cbegin(); it != info_type.cend(); it++)
 		ss_info->add(_(it->c_str()), *it, Settings::getInstance()->getString("ScreenSaverGameInfo") == *it);
+
 	addWithLabel(_("SHOW GAME INFO ON SCREENSAVER"), ss_info);
 	addSaveFunc([ss_info, this] { Settings::getInstance()->setString("ScreenSaverGameInfo", ss_info->getSelected()); });
 

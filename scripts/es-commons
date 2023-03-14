@@ -1,8 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 export USER_HOME_PATH="/home/ark"
 export ES_HOME_PATH="$USER_HOME_PATH/.emulationstation"
 export ES_EXE_PATH="/usr/bin/emulationstation"
+export ES_ETC_PATH="/etc/emulationstation"
 export ES_CONFIG_FILE="$ES_HOME_PATH/es_settings.cfg"
 export ES_BRIGTHNESS_LOCK_FILE="$ES_HOME_PATH/brightness.lock"
 export ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE="$ES_HOME_PATH/skip_auto_connect_bt_audio_device_onboot.lock"
@@ -27,6 +28,11 @@ trim()
 {
   local trimmed="$1"
 
+  if [ -z "$trimmed" ]; then
+    echo ""
+    return
+  fi
+
   # Strip leading spaces.
   while [[ $trimmed == ' '* ]]; do
      trimmed="${trimmed## }"
@@ -37,5 +43,45 @@ trim()
   done
 
   echo "$trimmed"
+}
+
+replace()
+{
+  local original="$1"
+  local target="$2"
+  local replacement="$3"
+
+  if [ -z "$original" ]; then
+    echo ""
+    return
+  fi
+
+  echo "${original/target/replacement}"
+}
+
+replace_all()
+{
+  local original="$1"
+  local target="$2"
+  local replacement="$3"
+
+  if [ -z "$original" ]; then
+    echo ""
+    return
+  fi
+
+  echo "${original//target/replacement}"
+}
+
+uppercase()
+{
+  local string="$1"
+  echo "${string^^}"
+}
+
+lowercase()
+{
+  local string="$1"
+  echo "${string,,}"
 }
 #******************* END - ES Scripts String functions ********************

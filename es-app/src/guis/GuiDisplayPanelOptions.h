@@ -16,7 +16,7 @@ class GuiDisplayPanelOptions : public GuiComponent
 public:
 	GuiDisplayPanelOptions(Window* window);
 	
-	void addRow(const ComponentListRow& row, bool setCursorHere = false, bool doUpdateSize = true);
+	void addRow(const ComponentListRow& row, bool setCursorHere = false, bool doUpdateSize = true, const std::string userData = "");
 	void addWithLabel(const std::string& label, const std::shared_ptr<GuiComponent>& comp, bool setCursorHere = false, bool invert_when_selected = true);
 	void addEntry(const std::string name, const std::function<void()>& func, bool setCursorHere = false, bool invert_when_selected = true, bool doUpdateSize = true);
 
@@ -30,6 +30,8 @@ public:
 private:
 	void resetDisplayPanelSettings();
 	float getButtonGridHeight() const;
+	inline bool hasElements() const { return mList->size() > 0; }
+	inline std::string getSelected() { return mList->getSelected(); }
 
 	NinePatchComponent mBackground;
 	ComponentGrid mGrid;

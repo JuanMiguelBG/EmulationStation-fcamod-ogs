@@ -184,6 +184,14 @@ std::vector<HelpPrompt> GuiDisplayPanelOptions::getHelpPrompts()
 	std::vector<HelpPrompt> prompts = mGrid.getHelpPrompts();
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 	prompts.push_back(HelpPrompt("start", _("CLOSE")));
+
+	if (hasElements())
+	{
+		std::string selected = getSelected();
+		if (!selected.empty() && (selected == "action"))
+			prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH")));
+	}
+
 	return prompts;
 }
 
@@ -196,9 +204,9 @@ void GuiDisplayPanelOptions::updateSize()
 	}
 }
 
-void GuiDisplayPanelOptions::addRow(const ComponentListRow& row, bool setCursorHere, bool doUpdateSize)
+void GuiDisplayPanelOptions::addRow(const ComponentListRow& row, bool setCursorHere, bool doUpdateSize, const std::string userData)
 {
-	mList->addRow(row, setCursorHere, true, "");
+	mList->addRow(row, setCursorHere, true, userData);
 	if (doUpdateSize)
 		updateSize();
 }
@@ -232,8 +240,12 @@ void GuiDisplayPanelOptions::addEntry(const std::string name, const std::functio
 	row.addElement(text_comp, true, invert_when_selected);
 
 	row.makeAcceptInputHandler(func);
+	
+	std::string userData = "";
+	if (func)
+		userData = "action";
 
-	addRow(row, setCursorHere, doUpdateSize);
+	addRow(row, setCursorHere, doUpdateSize, userData);
 }
 
 void GuiDisplayPanelOptions::resetDisplayPanelSettings()

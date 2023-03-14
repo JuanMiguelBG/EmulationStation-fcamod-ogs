@@ -24,8 +24,11 @@ void GuiMenusOptions::initializeMenu(Window* window)
 		addWithLabel(_("CENTER MENUS ON SCREEN"), center_menus);
 		addSaveFunc([this, center_menus, window]
 			{
-				if (Settings::getInstance()->setBool("CenterMenus", center_menus->getState()))
+				if (Settings::getInstance()->getBool("CenterMenus") != center_menus->getState())
+				{
+					Settings::getInstance()->setBool("CenterMenus", center_menus->getState());
 					setVariable("reloadGuiMenu", true);
+				}
 			});
 
 
@@ -34,8 +37,11 @@ void GuiMenusOptions::initializeMenu(Window* window)
 		addWithLabel(_("AUTO SIZE WIDTH BASED ON FONT SIZE"), menu_auto_width);
 		addSaveFunc([this, menu_auto_width, window]
 			{
-				if (Settings::getInstance()->setBool("AutoMenuWidth", menu_auto_width->getState()))
+				if (Settings::getInstance()->getBool("AutoMenuWidth") != menu_auto_width->getState())
+				{
+					Settings::getInstance()->setBool("AutoMenuWidth", menu_auto_width->getState());
 					setVariable("reloadGuiMenu", true);
+				}
 			});
 	}
 
@@ -52,8 +58,11 @@ void GuiMenusOptions::initializeMenu(Window* window)
 	addWithLabel(_("AUTOSCROLL MENU ENTRIES"), autoscroll_menu_entry);
 	addSaveFunc([this, autoscroll_menu_entry]
 		{
-			if (Settings::getInstance()->setBool("AutoscrollMenuEntries", autoscroll_menu_entry->getState()))
+			if (Settings::getInstance()->getBool("AutoscrollMenuEntries") != autoscroll_menu_entry->getState())
+			{
+				Settings::getInstance()->setBool("AutoscrollMenuEntries", autoscroll_menu_entry->getState());
 				setVariable("reloadGuiMenu", true);
+			}
 		});
 
 }
