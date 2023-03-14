@@ -495,70 +495,74 @@ void GuiMenu::openSoundSettings()
 			std::shared_ptr<Font> font = theme->Text.font;
 			unsigned int color = theme->Text.color;
 
-			if (SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
-			{
-				// audio card
-				auto audio_card = std::make_shared<TextComponent>(window, _("BLUETOOTH AUDIO"), font, color);
-				audio_card->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
-				s->addWithLabel(_("AUDIO CARD"), audio_card);
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SOUND))
+				ApiSystem::getInstance()->loadSystemAudioInfo();
+				
+			// audio card
+			std::string aud_card_value = SystemConf::getInstance()->get("sound.card");
+			std::vector<std::string> audio_cards = Utils::String::split(SystemConf::getInstance()->get("sound.cards"), ',', true);
+			auto aud_card_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("AUDIO CARD"), false);
 
-				// volume control device
-				auto volume_control = std::make_shared<TextComponent>(window, SystemConf::getInstance()->get("bluetooth.audio.device"), font, color);
-				volume_control->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
-				s->addWithLabel(_("AUDIO DEVICE"), volume_control);
-			}
-			else if (SystemConf::getInstance()->getBool("hdmi.mode"))
-			{
-				// audio card
-				auto audio_card = std::make_shared<TextComponent>(window, _("HDMI"), font, color);
-				audio_card->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
-				s->addWithLabel(_("AUDIO CARD"), audio_card);
-			}
-			else
-			{
-				// audio card
-				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(window, Utils::String::toUpper(_("default")), font, color));
+			for (auto aud_card : audio_cards)
+				aud_card_cmp->add(_(aud_card), aud_card, aud_card_value == aud_card);
 
-				// volume control device
-				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, Utils::String::toUpper(_("Master")), font, color));
-
-				if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+			s->addWithLabel(_("AUDIO CARD"), aud_card_cmp);
+			s->addSaveFunc(
+				[this, window, aud_card_cmp, aud_card_value]
 				{
-					// output device
-					auto out_dev = std::make_shared< OptionListComponent<std::string> >(window, _("OUTPUT DEVICE"), false);
-					std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
-					std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
-					//LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
-					if (output_devices.empty())
+					if (aud_card_value != aud_card_cmp->getSelected())
 					{
-						out_dev->add(_("SPEAKER"), "SPK", true);
-					}
-					else
-					{
-						for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
+						SystemConf::getInstance()->set("sound.card", aud_card_cmp->getSelected());
+						if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
 						{
-							std::string out_dev_label;
-							if (*od == "OFF")
-								out_dev_label = "MUTE";
-							else if (*od == "SPK")
-								out_dev_label = "SPEAKER";
-							else if (*od == "HP")
-								out_dev_label = "HEADPHONES";
-							else if (*od == "SPK_HP")
-								out_dev_label = "SPEAKER AND HEADPHONES";
-							else
-								out_dev_label = *od;
+							ApiSystem::getInstance()->setAudioCard(aud_card_cmp->getSelected());
 
-							out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
+							std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
+							window->pushGui(new GuiMsgBox(window, msg,
+								_("OK"),
+									[]
+									{
+										if (quitES(QuitMode::RESTART) != 0)
+											LOG(LogWarning) << "GuiMenu::openSoundSettings()() - Restart terminated with non-zero result!";
+									}));
 						}
 					}
-					s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
-					out_dev->setSelectedChangedCallback([](const std::string &newVal)
-						{
-							ApiSystem::getInstance()->setOutputDevice(newVal);
-						});
-				}
+				});
+
+			// audio device
+			auto audio_device_cmp = std::make_shared<TextComponent>(mWindow, _(SystemConf::getInstance()->get("sound.audio.device")), font, color);
+			audio_device_cmp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+			s->addWithLabel(_("AUDIO DEVICE"), audio_device_cmp);
+
+			// output device
+			std::string out_dev_value = SystemConf::getInstance()->get("sound.output.device");
+			std::vector<std::string> output_devices = Utils::String::split(SystemConf::getInstance()->get("sound.output.devices"), ',', true);
+			auto out_dev_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("OUTPUT DEVICE"), false);
+
+			for (auto output_dev : output_devices)
+			{
+				std::string out_dev_label;
+				if (output_dev == "OFF")
+					out_dev_label = "MUTE";
+				else if (output_dev == "SPK")
+					out_dev_label = "SPEAKER";
+				else if (output_dev == "HP")
+					out_dev_label = "HEADPHONES";
+				else if (output_dev == "SPK_HP")
+					out_dev_label = "SPEAKER AND HEADPHONES";
+				else
+					out_dev_label = output_dev;
+
+				out_dev_cmp->add(_(out_dev_label), output_dev, out_dev_value == output_dev);
 			}
+			s->addWithLabel(_("OUTPUT DEVICE"), out_dev_cmp);
+			out_dev_cmp->setSelectedChangedCallback([s, out_dev_value, window](const std::string &newVal)
+				{
+					SystemConf::getInstance()->set("sound.output.device", newVal);
+
+					if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+						ApiSystem::getInstance()->setOutputDevice(newVal);
+				});
 		}
 	}
 

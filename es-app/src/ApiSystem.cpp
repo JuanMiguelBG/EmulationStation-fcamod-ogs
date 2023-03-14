@@ -695,34 +695,6 @@ bool ApiSystem::isHdmiMode()
 	return queryHdmiMode();
 }
 
-int ApiSystem::getVolume()
-{
-	LOG(LogInfo) << "ApiSystem::getVolume()";
-
-	return VolumeControl::getInstance()->getVolume();
-}
-
-void ApiSystem::setVolume(int volumeLevel)
-{
-	LOG(LogInfo) << "ApiSystem::setVolume()";
-
-	VolumeControl::getInstance()->setVolume(volumeLevel);
-}
-
-void ApiSystem::backupVolume()
-{
-	LOG(LogInfo) << "ApiSystem::backupVolume()";
-
-	Settings::getInstance()->setInt("VolumeBackup", ApiSystem::getInstance()->getVolume());
-}
-
-void ApiSystem::restoreVolume()
-{
-	LOG(LogInfo) << "ApiSystem::restoreVolume()";
-
-	ApiSystem::getInstance()->setVolume(Settings::getInstance()->getInt("VolumeBackup"));
-}
-
 int ApiSystem::getBatteryLevel()
 {
 	LOG(LogInfo) << "ApiSystem::getBatteryLevel()";
@@ -1019,18 +991,10 @@ bool ApiSystem::setDisplayAutoDimValues(bool stay_awake_charging_state, bool tim
 	return executeSystemScript("es-display set_auto_dim_all_values " + stateToString(stay_awake_charging_state) + " " + stateToString(time_state) + " " + std::to_string(timeout) + " " + std::to_string(brightness_level) + " &");
 }
 
-bool ApiSystem::ping()
-{
-	if (!executeSystemScript("timeout 1 ping -c 1 -t 255 8.8.8.8")) // ping Google DNS
-		return executeSystemScript("timeout 2 ping -c 1 -t 255 8.8.4.4"); // ping Google secondary DNS & give 2 seconds
-
-	return true;
-}
-
 bool ApiSystem::getInternetStatus()
 {
 	LOG(LogInfo) << "ApiSystem::getInternetStatus()";
-	if (ping())
+	if (doPing())
 		return true;
 
 	return executeSystemBoolScript("es-wifi internet_status");
@@ -1556,44 +1520,74 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 	return ret;
 }
 
-
 void ApiSystem::preloadVLC()
 {
 	LOG(LogInfo) << "ApiSystem::preloadVLC()";
 	executeSystemScript("/usr/local/bin/es-preload_vlc &");
 }
 
-std::vector<std::string> ApiSystem::getAudioCards()
+int ApiSystem::getVolume()
 {
-	LOG(LogInfo) << "ApiSystem::getAudioCards()";
+	LOG(LogInfo) << "ApiSystem::getVolume()";
 
-	return executeSystemEnumerationScript(R"(es-sound get audio_cards)");
+	return VolumeControl::getInstance()->getVolume();
 }
 
-std::vector<std::string> ApiSystem::getAudioDevices()
+void ApiSystem::setVolume(int volumeLevel)
 {
-	LOG(LogInfo) << "ApiSystem::getAudioDevices()";
+	LOG(LogInfo) << "ApiSystem::setVolume()";
 
-	return executeSystemEnumerationScript(R"(es-sound get audio_devices)");
+	VolumeControl::getInstance()->setVolume(volumeLevel);
 }
 
-std::vector<std::string> ApiSystem::getOutputDevices()
+void ApiSystem::backupVolume()
 {
-	LOG(LogInfo) << "ApiSystem::getOutputDevices()";
+	LOG(LogInfo) << "ApiSystem::backupVolume()";
 
-	return executeSystemEnumerationScript(R"(es-sound get output_devices)");
+	Settings::getInstance()->setInt("VolumeBackup", ApiSystem::getInstance()->getVolume());
 }
 
-std::string ApiSystem::getOutputDevice()
+void ApiSystem::restoreVolume()
 {
-	LOG(LogInfo) << "ApiSystem::getOutputDevice()";
+	LOG(LogInfo) << "ApiSystem::restoreVolume()";
 
-	return getShOutput(R"(es-sound get output_device)");
+	ApiSystem::getInstance()->setVolume(Settings::getInstance()->getInt("VolumeBackup"));
 }
 
-bool ApiSystem::setOutputDevice(const std::string device)
+bool ApiSystem::loadsystemAudioInfoToSystemConf(const std::string& audioInfo)
 {
-	LOG(LogInfo) << "ApiSystem::setOutputDevice()";
+	LOG(LogInfo) << "ApiSystem::toSystemAudioInfo()";
+
+	if (Utils::String::startsWith(audioInfo, "<audio_info "))
+	{
+		SystemConf::getInstance()->set("sound.card", Utils::String::extractString(audioInfo, "card=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.cards", Utils::String::extractString(audioInfo, "cards=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.audio.device", Utils::String::extractString(audioInfo, "device=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.output.device", Utils::String::extractString(audioInfo, "output=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.output.devices", Utils::String::extractString(audioInfo, "outputs=\"", "\"", false));
+		return true;
+	}
+
+	return false;
+}
+
+bool ApiSystem::loadSystemAudioInfo()
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemAudioInfo()";
+
+	return loadsystemAudioInfoToSystemConf( getShOutput(R"(es-sound get audio_info)") );
+}
+
+bool ApiSystem::setAudioCard(const std::string& audio_card)
+{
+	LOG(LogInfo) << "ApiSystem::setAudioCard() - " << audio_card;
+
+	return executeSystemScript("es-sound set audio_card \"" + audio_card + '"');
+}
+
+bool ApiSystem::setOutputDevice(const std::string& device)
+{
+	LOG(LogInfo) << "ApiSystem::setOutputDevice() - " << device;
 
 	return executeSystemScript("es-sound set output_device \"" + device + '"');
 }

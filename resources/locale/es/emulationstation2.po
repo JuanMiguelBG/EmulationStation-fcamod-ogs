@@ -1251,6 +1251,10 @@ msgid "SPEAKER AND HEADPHONES"
 msgstr "ALTAVOCES Y AURICULARES"
 
 #:
+msgid "USB AUDIO"
+msgstr "SONIDO POR USB"
+
+#:
 msgid "JACK"
 msgstr "JACK"
 

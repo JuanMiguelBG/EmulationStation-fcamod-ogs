@@ -339,6 +339,11 @@ void loadOtherSettings()
 	LOG(LogDebug) << "MAIN::loadOtherSettings() - Enter function";
 	Utils::Async::run( [] (void)
 		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SOUND))
+				ApiSystem::getInstance()->loadSystemAudioInfo();
+		});
+	Utils::Async::run( [] (void)
+		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 			{
 				SystemConf::getInstance()->set("already.connection.exist.flag", ApiSystem::getInstance()->getWifiNetworkExistFlag());

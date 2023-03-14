@@ -554,6 +554,14 @@ std::string queryIPAddress()
 	return queryNetworkInformation(true).ip_address;
 }
 
+bool doPing()
+{
+	if (!executeSystemScript("sudo timeout 1 ping -c 1 -t 255 8.8.8.8")) // ping Google DNS
+		return executeSystemScript("sudo timeout 2 ping -c 1 -t 255 8.8.4.4"); // ping Google secondary DNS & give 2 seconds
+
+	return true;
+}
+
 bool queryNetworkConnected()
 {
 	return executeSystemBoolScript("es-wifi is_connected");

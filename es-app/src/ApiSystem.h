@@ -29,6 +29,7 @@ class ApiSystem
 private:
 	std::vector<BluetoothDevice> toBluetoothDevicesVector(std::vector<std::string> btDevices);
 	std::map<RemoteServicesId, RemoteServiceInformation> toRemoteServicesStatusVector(std::vector<std::string> remoteServices);
+	bool loadsystemAudioInfoToSystemConf(const std::string& audioInfo);
 
 protected:
 	ApiSystem();
@@ -157,11 +158,6 @@ public:
 	void resetDisplayPanelSettings();
 	bool isHdmiMode();
 
-	int getVolume();
-	void setVolume(int volumeLevel);
-	void backupVolume();
-	void restoreVolume();
-
 	std::string getTimezones();
 	std::string getCurrentTimezone();
 	bool setTimezone(std::string timezone);
@@ -193,7 +189,6 @@ public:
 	int getDisplayAutoDimBrightness();
 	bool setDisplayAutoDimValues(bool stay_awake_charging_state, bool time_state, int timeout, int brightness_level);
 
-	virtual bool ping();
 	bool getInternetStatus();
 	std::vector<std::string> getWifiNetworks(bool scan = false);
 	bool connectWifi(const std::string ssid, const std::string pwd);
@@ -265,11 +260,13 @@ public:
 
 	void preloadVLC();
 
-	std::vector<std::string> getAudioCards();
-	std::vector<std::string> getAudioDevices();
-	std::vector<std::string> getOutputDevices();
-	std::string getOutputDevice();
-	bool setOutputDevice(const std::string device);
+	int getVolume();
+	void setVolume(int volumeLevel);
+	void backupVolume();
+	void restoreVolume();
+	bool loadSystemAudioInfo();
+	bool setAudioCard(const std::string& audio_card);
+	bool setOutputDevice(const std::string& device);
 
 	std::map<RemoteServicesId, RemoteServiceInformation> getAllRemoteServiceStatus();
 	RemoteServiceInformation getRemoteServiceStatus(RemoteServicesId id);

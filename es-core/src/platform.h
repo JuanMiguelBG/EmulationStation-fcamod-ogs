@@ -133,6 +133,7 @@ struct NetworkInformation
 };
 
 NetworkInformation queryNetworkInformation(bool summary);
+bool doPing();
 std::string queryIPAddress();
 bool queryWifiEnabled();
 std::string queryWifiSsid();
