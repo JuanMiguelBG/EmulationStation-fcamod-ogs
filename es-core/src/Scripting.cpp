@@ -8,7 +8,7 @@ namespace Scripting
 {
 	int fireEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4)
 	{
-		LOG(LogInfo) << "Scripting::fireAsyncEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
+		LOG(LogInfo) << "Scripting::fireEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
 		std::list<std::string> scriptDirList;
 		std::string test;
 
