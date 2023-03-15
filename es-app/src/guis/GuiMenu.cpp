@@ -55,6 +55,8 @@
 
 GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
 {
+	mWaitingLoad = false;
+
 	auto theme = ThemeData::getMenuTheme();
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
@@ -188,16 +190,14 @@ void GuiMenu::openDisplaySettings()
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
 			{
 				// blink with low battery
-				bool blink_low_battery_value = Settings::getInstance()->getBool("DisplayBlinkLowBattery");
-				auto blink_low_battery = std::make_shared<SwitchComponent>(window, blink_low_battery_value);
+				auto blink_low_battery = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("DisplayBlinkLowBattery"));
 				s->addWithLabel(_("BLINK WITH LOW BATTERY"), blink_low_battery);
-				s->addSaveFunc([blink_low_battery, blink_low_battery_value]
+				s->addSaveFunc([blink_low_battery]
 					{
-						bool new_blink_low_battery_value = blink_low_battery->getState();
-						if (blink_low_battery_value != new_blink_low_battery_value)
+						if (Settings::getInstance()->getBool("DisplayBlinkLowBattery") != blink_low_battery->getState())
 						{
-							Settings::getInstance()->setBool("DisplayBlinkLowBattery", new_blink_low_battery_value);
-							ApiSystem::getInstance()->setDisplayBlinkLowBattery(new_blink_low_battery_value);
+							Settings::getInstance()->setBool("DisplayBlinkLowBattery", blink_low_battery->getState());
+							ApiSystem::getInstance()->setDisplayBlinkLowBattery(blink_low_battery->getState());
 						}
 					});
 
@@ -254,8 +254,9 @@ void GuiMenu::openControllersSettings()
 	s->addWithLabel(_("SWITCH A/B BUTTONS IN EMULATIONSTATION"), invert_AB_buttons);
 	s->addSaveFunc([this, s, invert_AB_buttons]
 		{
-			if (Settings::getInstance()->setBool("InvertButtonsAB", invert_AB_buttons->getState()))
+			if (Settings::getInstance()->getBool("InvertButtonsAB") != invert_AB_buttons->getState())
 			{
+				Settings::getInstance()->setBool("InvertButtonsAB", invert_AB_buttons->getState());
 				InputConfig::AssignActionButtons();
 				s->setVariable("reloadAll", true);
 			}
@@ -265,8 +266,9 @@ void GuiMenu::openControllersSettings()
 	s->addWithLabel(_("SWITCH \"PAGE UP\" TO L1 IN EMULATIONSTATION"), invert_pu_buttons);
 	s->addSaveFunc([this, s, invert_pu_buttons]
 		{
-			if (Settings::getInstance()->setBool("InvertButtonsPU", invert_pu_buttons->getState()))
+			if (Settings::getInstance()->getBool("InvertButtonsPU") != invert_pu_buttons->getState())
 			{
+				Settings::getInstance()->setBool("InvertButtonsPU", invert_pu_buttons->getState());
 				InputConfig::AssignActionButtons();
 				s->setVariable("reloadAll", true);
 			}
@@ -276,8 +278,9 @@ void GuiMenu::openControllersSettings()
 	s->addWithLabel(_("SWITCH \"PAGE DOWN\" TO R1 IN EMULATIONSTATION"), invert_pd_buttons);
 	s->addSaveFunc([this, s, invert_pd_buttons]
 		{
-			if (Settings::getInstance()->setBool("InvertButtonsPD", invert_pd_buttons->getState()))
+			if (Settings::getInstance()->getBool("InvertButtonsPD") != invert_pd_buttons->getState())
 			{
+				Settings::getInstance()->setBool("InvertButtonsPD", invert_pd_buttons->getState());
 				InputConfig::AssignActionButtons();
 				s->setVariable("reloadAll", true);
 			}
@@ -492,52 +495,74 @@ void GuiMenu::openSoundSettings()
 			std::shared_ptr<Font> font = theme->Text.font;
 			unsigned int color = theme->Text.color;
 
-			if (!SystemConf::getInstance()->getBool("bluetooth.audio.connected"))
-			{
-				// audio card
-				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(window, Utils::String::toUpper(_("default")), font, color));
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SOUND))
+				ApiSystem::getInstance()->loadSystemAudioInfo();
+				
+			// audio card
+			std::string aud_card_value = SystemConf::getInstance()->get("sound.card");
+			std::vector<std::string> audio_cards = Utils::String::split(SystemConf::getInstance()->get("sound.cards"), ',', true);
+			auto aud_card_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("AUDIO CARD"), false);
 
-				// volume control device
-				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, Utils::String::toUpper(_("Playback")), font, color));
+			for (auto aud_card : audio_cards)
+				aud_card_cmp->add(_(aud_card), aud_card, aud_card_value == aud_card);
 
-				if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+			s->addWithLabel(_("AUDIO CARD"), aud_card_cmp);
+			s->addSaveFunc(
+				[this, window, aud_card_cmp, aud_card_value]
 				{
-					// output device
-					auto out_dev = std::make_shared< OptionListComponent<std::string> >(window, _("OUTPUT DEVICE"), false);
-					std::vector<std::string> output_devices = ApiSystem::getInstance()->getOutputDevices();
-					std::string out_dev_value = ApiSystem::getInstance()->getOutputDevice();
-					//LOG(LogDebug) << "GuiMenu::openSoundSettings() - actual output device: " << out_dev_value;
-					for(auto od = output_devices.cbegin(); od != output_devices.cend(); od++)
+					if (aud_card_value != aud_card_cmp->getSelected())
 					{
-						std::string out_dev_label;
-						if (*od == "OFF")
-							out_dev_label = "MUTE";
-						else if (*od == "SPK")
-							out_dev_label = "SPEAKER";
-						else if (*od == "HP")
-							out_dev_label = "HEADPHONES";
-						else if (*od == "SPK_HP")
-							out_dev_label = "SPEAKER AND HEADPHONES";
-						else
-							out_dev_label = *od;
-
-						out_dev->add(_(out_dev_label), *od, out_dev_value == *od);
-					}
-					s->addWithLabel(_("OUTPUT DEVICE"), out_dev);
-					out_dev->setSelectedChangedCallback([](const std::string &newVal)
+						SystemConf::getInstance()->set("sound.card", aud_card_cmp->getSelected());
+						if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
 						{
-							ApiSystem::getInstance()->setOutputDevice(newVal);
-						});
-				}
-			}
-			else
-			{
-				// audio card
-				s->addWithLabel(_("AUDIO CARD"), std::make_shared<TextComponent>(window, _("BLUETOOTH AUDIO"), font, color));
+							ApiSystem::getInstance()->setAudioCard(aud_card_cmp->getSelected());
 
-				// volume control device
-				s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, SystemConf::getInstance()->get("bluetooth.audio.device"), font, color));
+							std::string msg = _("THE AUDIO INTERFACE HAS CHANGED.") + "\n" + _("THE EMULATIONSTATION WILL NOW RESTART.");
+							window->pushGui(new GuiMsgBox(window, msg,
+								_("OK"),
+									[]
+									{
+										if (quitES(QuitMode::RESTART) != 0)
+											LOG(LogWarning) << "GuiMenu::openSoundSettings()() - Restart terminated with non-zero result!";
+									}));
+						}
+					}
+				});
+
+			// audio device
+			auto audio_device_cmp = std::make_shared<TextComponent>(mWindow, _(SystemConf::getInstance()->get("sound.audio.device")), font, color);
+			audio_device_cmp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+			s->addWithLabel(_("AUDIO DEVICE"), audio_device_cmp);
+
+			// output device
+			std::string out_dev_value = SystemConf::getInstance()->get("sound.output.device");
+			std::vector<std::string> output_devices = Utils::String::split(SystemConf::getInstance()->get("sound.output.devices"), ',', true);
+			auto out_dev_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("OUTPUT DEVICE"), false);
+
+			for (auto output_dev : output_devices)
+			{
+				std::string out_dev_label;
+				if (output_dev == "OFF")
+					out_dev_label = "MUTE";
+				else if (output_dev == "SPK")
+					out_dev_label = "SPEAKER";
+				else if (output_dev == "HP")
+					out_dev_label = "HEADPHONES";
+				else if (output_dev == "SPK_HP")
+					out_dev_label = "SPEAKER AND HEADPHONES";
+				else
+					out_dev_label = output_dev;
+
+				out_dev_cmp->add(_(out_dev_label), output_dev, out_dev_value == output_dev);
 			}
+			s->addWithLabel(_("OUTPUT DEVICE"), out_dev_cmp);
+			out_dev_cmp->setSelectedChangedCallback([s, out_dev_value, window](const std::string &newVal)
+				{
+					SystemConf::getInstance()->set("sound.output.device", newVal);
+
+					if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+						ApiSystem::getInstance()->setOutputDevice(newVal);
+				});
 		}
 	}
 
@@ -1007,8 +1032,9 @@ void GuiMenu::openUISettings()
 			s->addWithLabel(_("GAMELIST VIEW STYLE"), gamelist_style);
 			s->addSaveFunc([s, gamelist_style, window] 
 			{
-				if (Settings::getInstance()->setString("GamelistViewStyle", gamelist_style->getSelected()))
+				if (Settings::getInstance()->getString("GamelistViewStyle") != gamelist_style->getSelected())
 				{
+					Settings::getInstance()->setString("GamelistViewStyle", gamelist_style->getSelected());
 					s->setVariable("reloadAll", true);
 					s->setVariable("reloadGuiMenu", true);
 				}
@@ -1049,9 +1075,9 @@ void GuiMenu::openUISettings()
 			msg += _("Do you want to proceed?");
 			window->pushGui(new GuiMsgBox(window, msg,
 				_("YES"), [selectedMode] {
-				//LOG(LogDebug) << "GuiMenu::openUISettings() - Setting UI mode to " << selectedMode;
-				Settings::getInstance()->setString("UIMode", selectedMode);
-				Settings::getInstance()->saveFile();
+					//LOG(LogDebug) << "GuiMenu::openUISettings() - Setting UI mode to " << selectedMode;
+					Settings::getInstance()->setString("UIMode", selectedMode);
+					Settings::getInstance()->saveFile();
 			}, _("NO"), nullptr));
 		}
 	});
@@ -1072,7 +1098,7 @@ void GuiMenu::openUISettings()
 
 	s->addWithLabel(_("TRANSITION STYLE"), transition_style);
 	s->addSaveFunc([transition_style] {
-		if (Settings::getInstance()->getString("TransitionStyle") == "instant"
+		if ((Settings::getInstance()->getString("TransitionStyle") == "instant")
 			&& transition_style->getSelected() != "instant"
 			&& PowerSaver::getMode() == PowerSaver::INSTANT)
 		{
@@ -1111,11 +1137,11 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("HIDE SYSTEM VIEW"), hideSystemView);
 	s->addSaveFunc([hideSystemView] 
 	{ 
-		bool hideSysView = Settings::getInstance()->getBool("HideSystemView");
-		Settings::getInstance()->setBool("HideSystemView", hideSystemView->getState());
-
-		if (!hideSysView && hideSystemView->getState())
+		if (Settings::getInstance()->getBool("HideSystemView") != hideSystemView->getState())
+		{
+			Settings::getInstance()->setBool("HideSystemView", hideSystemView->getState());
 			ViewController::get()->goToStart(true);
+		}
 	});
 
 	// quick system select (left/right in game list view)
@@ -1127,8 +1153,7 @@ void GuiMenu::openUISettings()
 	auto move_carousel = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("MoveCarousel"));
 	s->addWithLabel(_("CAROUSEL TRANSITIONS"), move_carousel);
 	s->addSaveFunc([move_carousel] {
-		if (move_carousel->getState()
-			&& !Settings::getInstance()->getBool("MoveCarousel")
+		if ((Settings::getInstance()->getBool("MoveCarousel") != move_carousel->getState())
 			&& PowerSaver::getMode() == PowerSaver::INSTANT)
 		{
 			Settings::getInstance()->setString("PowerSaverMode", "default");
@@ -1162,8 +1187,9 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("ON-SCREEN HELP"), show_help);
 	s->addSaveFunc([window, s, show_help]
 	{
-		if (Settings::getInstance()->setBool("ShowHelpPrompts", show_help->getState()))
+		if (Settings::getInstance()->getBool("ShowHelpPrompts") != show_help->getState())
 		{
+			Settings::getInstance()->setBool("ShowHelpPrompts", show_help->getState());
 			if (window->getHelpComponent())
 				window->getHelpComponent()->setVisible(show_help->getState());
 
@@ -1180,9 +1206,7 @@ void GuiMenu::openUISettings()
 		s->addWithLabel(_("SHOW BATTERY STATUS"), batteryStatus);
 		s->addSaveFunc([batteryStatus]
 		{
-			std::string old_value = Settings::getInstance()->getString("ShowBattery");
-			if (old_value != batteryStatus->getSelected())
-				Settings::getInstance()->setString("ShowBattery", batteryStatus->getSelected());
+			Settings::getInstance()->setString("ShowBattery", batteryStatus->getSelected());
 		});
 	}
 
@@ -1191,8 +1215,9 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("SHOW FILENAMES IN LISTS"), hidden_files);
 	s->addSaveFunc([hidden_files, s] 
 	{ 
-		if (Settings::getInstance()->setBool("ShowFilenames", hidden_files->getState()))
+		if (Settings::getInstance()->getBool("ShowFilenames") != hidden_files->getState())
 		{
+			Settings::getInstance()->setBool("ShowFilenames", hidden_files->getState());
 			FileData::resetSettings();
 			s->setVariable("reloadCollections", true);
 			s->setVariable("reloadAll", true);
@@ -1204,9 +1229,9 @@ void GuiMenu::openUISettings()
 	auto enable_filter = std::make_shared<SwitchComponent>(window, !Settings::getInstance()->getBool("ForceDisableFilters"));
 	s->addWithLabel(_("ENABLE FILTERS"), enable_filter);
 	s->addSaveFunc([enable_filter, s] { 
-		bool filter_is_enabled = !Settings::getInstance()->getBool("ForceDisableFilters");
-		if (Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState()))
+		if (Settings::getInstance()->getBool("ForceDisableFilters") != !enable_filter->getState())
 		{
+			Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState());
 			s->setVariable("reloadAll", true);
 			s->setVariable("reloadGuiMenu", true);
 		}
@@ -1217,8 +1242,9 @@ void GuiMenu::openUISettings()
 	s->addWithLabel(_("IGNORE LEADING ARTICLES WHEN SORTING"), ignoreArticles);
 	s->addSaveFunc([s, ignoreArticles]
 	{
-		if (Settings::getInstance()->setBool("IgnoreLeadingArticles", ignoreArticles->getState()))
+		if (Settings::getInstance()->getBool("IgnoreLeadingArticles") != ignoreArticles->getState())
 		{
+			Settings::getInstance()->setBool("IgnoreLeadingArticles", ignoreArticles->getState());
 			s->setVariable("reloadAll", true);
 			s->setVariable("reloadGuiMenu", true);
 		}
@@ -1371,6 +1397,8 @@ void GuiMenu::openEmulatorSettings()
 
 void GuiMenu::updateGameLists(Window* window, bool confirm)
 {
+	LOG(LogInfo) << "GuiMenu::updateGameLists() - updating games lists";
+
 	if (ThreadedScraper::isRunning())
 	{
 		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"),
@@ -1380,14 +1408,48 @@ void GuiMenu::updateGameLists(Window* window, bool confirm)
 		return;
 	}
 
-	if (!confirm)
+	std::function<void(Window*)> reloadAllGamesFunction = [](Window* window)
 	{
 		ViewController::reloadAllGames(window, true);
+	}; // close callback
+
+	if (!confirm)
+	{
+		reloadAllGamesFunction(window);
 		return;
 	}
 
 	window->pushGui(new GuiMsgBox(window, _("REALLY UPDATE GAMES LISTS ?"), _("YES"),
-		[window] { ViewController::reloadAllGames(window, true); },
+		[window, reloadAllGamesFunction] { reloadAllGamesFunction(window); },
+		_("NO"), nullptr));
+}
+
+void GuiMenu::clearLastPlayedData(Window* window, const std::string system, bool confirm)
+{
+	LOG(LogInfo) << "GuiMenu::clearLastPlayedData() - deleting last played data of system: " << (system.empty() ? "ALL" : system);
+
+	if (ThreadedScraper::isRunning())
+	{
+		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"),
+			_("YES"), [] { ThreadedScraper::stop(); },
+			_("NO"), nullptr));
+
+		return;
+	}
+
+	std::function<void(Window*, const std::string)> clearLastPlayedDataFunction = [](Window* window, const std::string system)
+	{
+		ViewController::reloadAllGames(window, true, "CLEARING \"LAST PLAYED\" DATA...", [system]() { ApiSystem::getInstance()->clearLastPlayedData(system); });
+	}; // close callback
+
+	if (!confirm)
+	{
+		clearLastPlayedDataFunction(window, system);
+		return;
+	}
+
+	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO CLEAR \"LAST PLAYED\" DATA?"),
+		_("YES"), [window, system, clearLastPlayedDataFunction] { clearLastPlayedDataFunction(window, system); },
 		_("NO"), nullptr));
 }
 
@@ -1871,8 +1933,10 @@ void GuiMenu::openBluetoothSettings()
 			auto theme = ThemeData::getMenuTheme();
 			std::shared_ptr<Font> font = theme->Text.font;
 			unsigned int color = theme->Text.color;
-
-			s->addWithLabel(_("AUDIO DEVICE"), std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color));
+			// volume control device
+			auto volume_control = std::make_shared<TextComponent>(window, baseBtAudioDevice, font, color);
+			volume_control->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
+			s->addWithLabel(_("AUDIO DEVICE"), volume_control);
 		}
 	}
 	else
@@ -1882,7 +1946,7 @@ void GuiMenu::openBluetoothSettings()
 	}
 
 	// use alias as device name
-	auto alias_as_name = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.use.alias"));
+	auto alias_as_name = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("bluetooth.use.alias"));
 	s->addWithLabel(_("USE ALIAS AS DEVICE NAME"), alias_as_name);
 	alias_as_name->setOnChangedCallback([alias_as_name]
 		{
@@ -1890,7 +1954,7 @@ void GuiMenu::openBluetoothSettings()
 		});	
 
 	// autoconnect audio device on boot
-	auto auto_connect = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
+	auto auto_connect = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("bluetooth.audio.device.autoconnect"));
 	s->addWithLabel(_("AUTO CONNECT AUDIO DEVICES ON BOOT"), auto_connect);
 	s->addSaveFunc([auto_connect]
 		{
@@ -1898,13 +1962,25 @@ void GuiMenu::openBluetoothSettings()
 		});
 
 	auto auto_connect_timeout = std::make_shared<SliderComponent>(window, 0.f, 20.f, 1.0f, "s");
-	auto_connect_timeout->setValue( (float)Settings::getInstance()->getInt("bluetooth.boot.game.timeout") );
+	auto_connect_timeout->setValue( (float)SystemConf::getInstance()->getInt("bluetooth.boot.game.timeout") );
 	s->addWithDescription(_("WAIT BEFORE BOOT GAME LAUNCH"), _("TIMEOUT BEFORE LAUNCH THE BOOT GAME"), auto_connect_timeout);
 	s->addSaveFunc([auto_connect_timeout]
 		{
 			Settings::getInstance()->setInt("bluetooth.boot.game.timeout", (int)Math::round(auto_connect_timeout->getValue()));
 		});
 
+	auto xbox_one_compatible = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("bluetooth.xbox_one.compatible"));
+	s->addWithLabel(_("XBOX ONE CONTROLLER COMPATIBLE"), xbox_one_compatible);
+	s->addSaveFunc([window, xbox_one_compatible, baseBtEnabled]
+		{
+			if (SystemConf::getInstance()->getBool("bluetooth.xbox_one.compatible") != xbox_one_compatible->getState())
+			{
+				SystemConf::getInstance()->setBool("bluetooth.xbox_one.compatible", xbox_one_compatible->getState());
+				ApiSystem::getInstance()->setBluetoothXboxOneCompatible(xbox_one_compatible->getState());
+				if (baseBtEnabled)
+					window->pushGui(new GuiMsgBox(window, _("RESET BLUETOOTH CONFIG TO CHANGES TAKE EFFECT")));
+			}
+		});
 
 	auto pthis = this;
 
@@ -2216,8 +2292,9 @@ void GuiMenu::openAdvancedSettings()
 		s->addWithLabel(_("SUSPEND MODES"), suspend_mode);
 		s->addSaveFunc([this, s, suspend_mode]
 			{
-				if (SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected()))
+				if (SystemConf::getInstance()->get("suspend.device.mode") != suspend_mode->getSelected())
 				{
+					SystemConf::getInstance()->set("suspend.device.mode", suspend_mode->getSelected());
 					ApiSystem::getInstance()->setSuspendMode(suspend_mode->getSelected());
 					if (Settings::getInstance()->getBool("ShowOnlyExit")
 						&& ((suspend_mode->getSelected() == "DISABLED") && (Settings::getInstance()->getString("OnlyExitAction") == "suspend")))
@@ -2392,14 +2469,7 @@ void GuiMenu::openAdvancedSettings()
 /*
 	auto activity = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("ShowControllerActivity"));
 	s->addWithLabel(_("SHOW CONTROLLER ACTIVITY"), activity);
-	s->addSaveFunc([activity]
-	{
-		bool old_value = Settings::getInstance()->getBool("ShowControllerActivity");
-		if (old_value != activity->getState())
-		{
-			Settings::getInstance()->setBool("ShowControllerActivity", activity->getState());
-		}
-	});
+	s->addSaveFunc([activity] { Settings::getInstance()->setBool("ShowControllerActivity", activity->getState()); });
 */
 	// Battery Indicator
 	auto battery = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("ShowBatteryIndicator"));
@@ -2451,8 +2521,9 @@ void GuiMenu::openAdvancedSettings()
 	s->addWithLabel(_("LOG LEVEL"), logLevel);
 	s->addSaveFunc([this, logLevel]
 	{
-		if (Settings::getInstance()->setString("LogLevel", logLevel->getSelected() == "default" ? "" : logLevel->getSelected()))
+		if (Settings::getInstance()->getString("LogLevel") != logLevel->getSelected())
 		{
+			Settings::getInstance()->setString("LogLevel", logLevel->getSelected() == "default" ? "" : logLevel->getSelected());
 			Log::setupReportingLevel();
 			Log::init();
 		}
@@ -2461,8 +2532,9 @@ void GuiMenu::openAdvancedSettings()
 	auto logWithMilliseconds = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("LogWithMilliseconds"));
 	s->addWithLabel(_("LOG WITH MILLISECONDS"), logWithMilliseconds);
 	s->addSaveFunc([logWithMilliseconds] {
-		if (Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState()))
+		if (Settings::getInstance()->getBool("LogWithMilliseconds") != logWithMilliseconds->getState())
 		{
+			Settings::getInstance()->setBool("LogWithMilliseconds", logWithMilliseconds->getState());
 			Log::setupReportingLevel();
 			Log::init();
 		}
@@ -2944,10 +3016,13 @@ bool GuiMenu::input(InputConfig* config, Input input)
 
 	if ((config->isMappedTo(BUTTON_BACK, input) || config->isMappedTo("start", input)) && input.value != 0)
 	{
-		auto pthis = this;
-		if (pthis)
-			delete pthis;
-		return true;
+		if (!mWaitingLoad)
+		{
+			auto pthis = this;
+			if (pthis)
+				delete pthis;
+			return true;
+		}
 	}
 
 	return false;

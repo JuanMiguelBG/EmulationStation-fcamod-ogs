@@ -218,7 +218,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		if(okCallback)
 			okCallback();
 
-		Scripting::fireEvent("control-mapped", std::to_string(mTargetConfig->getDeviceId()), mTargetConfig->getDeviceName(),
+		Scripting::fireAsyncEvent("control-mapped", std::to_string(mTargetConfig->getDeviceId()), mTargetConfig->getDeviceName(),
 							 mTargetConfig->getDeviceGUIDString(), Utils::String::boolToString(mTargetConfig->isDefaultInput()));
 		delete this;
 	};

@@ -45,7 +45,12 @@ std::vector<const char*> settings_dont_save {
 	{ "BrightnessBackup" },
 	{ "VolumeBackup" },
 	{ "suspend.device.mode" },
-	{ "hdmi.mode" }
+	{ "hdmi.mode" },
+	{ "sound.card" },
+	{ "sound.cards" },
+	{ "sound.audio.device" },
+	{ "sound.output.device" },
+	{ "sound.output.devices" }
 };
 
 Settings::Settings()
@@ -189,9 +194,15 @@ void Settings::setDefaults()
 	// Audio out device for volume control
 	mStringMap["AudioDevice"] = "Master";
 	mStringMap["AudioCard"] = "default";
+	mStringMap["sound.card"] = "DEFAULT";
+	mStringMap["sound.cards"] = "DEFAULT";
+	mStringMap["sound.audio.device"] = "RK817-CODEC";
+	mStringMap["sound.output.device"] = "SPK";
+	mStringMap["sound.output.devices"] = "SPK";
 	mBoolMap["bluetooth.enabled"] = false;
 	mBoolMap["bluetooth.audio.connected"] = false;
 	mStringMap["bluetooth.audio.device"] = "";
+	mBoolMap["bluetooth.xbox_one.compatible"] = false;
 
 	mStringMap["UIMode"] = "Full";
 	mStringMap["UIMode_passkey"] = "uuddlrlrba";

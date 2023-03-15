@@ -48,9 +48,17 @@ public:
 	// only executed on back button
 	inline void onFinalize(const std::function<void()>& func) { mOnFinalizeFunc = func; };
 
-	bool getVariable(const std::string name)
+	bool containsVariable(const std::string name)
 	{
 		if (mVariableMap.find(name) == mVariableMap.cend())
+			return false;
+
+		return true;
+	}
+	void setVariable(const std::string name, bool value) { mVariableMap[name] = value; }
+	bool getVariable(const std::string name)
+	{
+		if (!containsVariable(name))
 			return false;
 
 		return mVariableMap[name];
@@ -64,8 +72,6 @@ public:
 
 	// always executed on both back and close buttons
 	void onClose(const std::function<void()>& func) { mCloseButtonFunc = func; }
-
-	void setVariable(const std::string name, bool value) { mVariableMap[name] = value; }
 
 	void setTitle(const std::string title) { mMenu.setTitle(title); }
 	void setSubTitle(const std::string text) { mMenu.setSubTitle(text); }

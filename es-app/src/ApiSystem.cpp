@@ -194,6 +194,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case CALIBRATE_TV:
 				executables.push_back("CalibrateTv.sh");
 				break;
+		case GAMELIST:
+				executables.push_back("es-gamelist");
+				break;
 	}
 
 	for (auto executable : executables)
@@ -520,6 +523,37 @@ int ApiSystem::getFrequencyGpu()
 	return queryFrequencyGpu();
 }
 
+bool ApiSystem::loadSystemWifiInfoToSystemConf(const std::string& wifiInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemWifiInfoToSystemConf()";
+
+	if (Utils::String::startsWith(wifiInfo, "<wifi_info "))
+	{
+		SystemConf::getInstance()->setBool("wifi.enabled", Utils::String::toBool(Utils::String::extractString(wifiInfo, "enabled=\"", "\"", false)));
+		std::string ssid = Utils::String::extractString(wifiInfo, "ssid=\"", "\"", false);
+		if (SystemConf::getInstance()->get("wifi.ssid").empty() || (ssid != SystemConf::getInstance()->get("wifi.ssid")))
+			SystemConf::getInstance()->set("wifi.ssid", ssid);
+
+		if (!SystemConf::getInstance()->get("wifi.ssid").empty())
+			SystemConf::getInstance()->set("wifi.key", Utils::String::extractString(wifiInfo, "key=\"", "\"", false));
+
+		SystemConf::getInstance()->set("system.hostname", Utils::String::extractString(wifiInfo, "hostname=\"", "\"", false));
+		SystemConf::getInstance()->set("wifi.dns1", Utils::String::extractString(wifiInfo, "dns1=\"", "\"", false));
+		SystemConf::getInstance()->set("wifi.dns2", Utils::String::extractString(wifiInfo, "dns2=\"", "\"", false));
+		SystemConf::getInstance()->set("already.connection.exist.flag", Utils::String::extractString(wifiInfo, "flag=\"", "\"", false));
+		return true;
+	}
+
+	return false;
+}
+
+bool ApiSystem::loadSystemWifiInfo()
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemWifiInfo()";
+
+	return loadSystemWifiInfoToSystemConf( getShOutput(R"(es-wifi get_wifi_info)") );
+}
+
 bool ApiSystem::isNetworkConnected()
 {
 	LOG(LogInfo) << "ApiSystem::isNetworkConnected()";
@@ -690,34 +724,6 @@ bool ApiSystem::isHdmiMode()
 	LOG(LogInfo) << "ApiSystem::isHdmiMode()";
 
 	return queryHdmiMode();
-}
-
-int ApiSystem::getVolume()
-{
-	LOG(LogInfo) << "ApiSystem::getVolume()";
-
-	return VolumeControl::getInstance()->getVolume();
-}
-
-void ApiSystem::setVolume(int volumeLevel)
-{
-	LOG(LogInfo) << "ApiSystem::setVolume()";
-
-	VolumeControl::getInstance()->setVolume(volumeLevel);
-}
-
-void ApiSystem::backupVolume()
-{
-	LOG(LogInfo) << "ApiSystem::backupVolume()";
-
-	Settings::getInstance()->setInt("VolumeBackup", ApiSystem::getInstance()->getVolume());
-}
-
-void ApiSystem::restoreVolume()
-{
-	LOG(LogInfo) << "ApiSystem::restoreVolume()";
-
-	ApiSystem::getInstance()->setVolume(Settings::getInstance()->getInt("VolumeBackup"));
 }
 
 int ApiSystem::getBatteryLevel()
@@ -1016,18 +1022,10 @@ bool ApiSystem::setDisplayAutoDimValues(bool stay_awake_charging_state, bool tim
 	return executeSystemScript("es-display set_auto_dim_all_values " + stateToString(stay_awake_charging_state) + " " + stateToString(time_state) + " " + std::to_string(timeout) + " " + std::to_string(brightness_level) + " &");
 }
 
-bool ApiSystem::ping()
-{
-	if (!executeSystemScript("timeout 1 ping -c 1 -t 255 8.8.8.8")) // ping Google DNS
-		return executeSystemScript("timeout 2 ping -c 1 -t 255 8.8.4.4"); // ping Google secondary DNS & give 2 seconds
-
-	return true;
-}
-
 bool ApiSystem::getInternetStatus()
 {
 	LOG(LogInfo) << "ApiSystem::getInternetStatus()";
-	if (ping())
+	if (doPing())
 		return true;
 
 	return executeSystemBoolScript("es-wifi internet_status");
@@ -1107,34 +1105,6 @@ std::string ApiSystem::getWifiSsid()
 	LOG(LogInfo) << "ApiSystem::getWifiSsid()";
 
 	return queryWifiSsid();
-}
-
-std::string ApiSystem::getWifiPsk(const std::string ssid)
-{
-	LOG(LogInfo) << "ApiSystem::getWifiPsk() - SSID: '" << ssid << "'";
-
-	return queryWifiPsk(ssid);
-}
-
-std::string ApiSystem::getDnsOne()
-{
-	LOG(LogInfo) << "ApiSystem::getDnsOne()";
-
-	return queryDnsOne();
-}
-
-std::string ApiSystem::getDnsTwo()
-{
-	LOG(LogInfo) << "ApiSystem::getDnsTwo()";
-
-	return queryDnsTwo();
-}
-
-std::string ApiSystem::getWifiNetworkExistFlag()
-{
-	LOG(LogInfo) << "ApiSystem::getDnsTwo()";
-
-	return queryWifiNetworkExistFlag();
 }
 
 bool ApiSystem::isWifiPowerSafeEnabled()
@@ -1466,7 +1436,7 @@ std::string ApiSystem::getCRC32(std::string fileName, bool fromZipContents)
 		LOG(LogDebug) << "ApiSystem::getCRC32() is using 7z";
 
 		std::string fn = Utils::FileSystem::getFileName(fileName);
-		auto cmd = getSevenZipCommand() + " l -slt \"" + fileName + "\"";
+		auto cmd = getSevenZipCommand() + " l -slt \"" + fileName + '"';
 		auto lines = executeEnumerationScript(cmd);
 		for (std::string all : lines)
 		{
@@ -1547,12 +1517,11 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 
 	LOG(LogDebug) << "ApiSystem::unzipFile() is using 7z";
 
-	std::string cmd = getSevenZipCommand() + " x \"" + Utils::FileSystem::getPreferredPath(fileName) + "\" -y -o\"" + Utils::FileSystem::getPreferredPath(destFolder) + "\"";
+	std::string cmd = getSevenZipCommand() + " x \"" + Utils::FileSystem::getPreferredPath(fileName) + "\" -y -o\"" + Utils::FileSystem::getPreferredPath(destFolder) + '"';
 	bool ret = executeSystemScript(cmd);
 	LOG(LogDebug) << "ApiSystem::unzipFile() <<";
 	return ret;
 }
-
 
 void ApiSystem::preloadVLC()
 {
@@ -1560,39 +1529,111 @@ void ApiSystem::preloadVLC()
 	executeSystemScript("/usr/local/bin/es-preload_vlc &");
 }
 
-std::vector<std::string> ApiSystem::getAudioCards()
+int ApiSystem::getVolume()
 {
-	LOG(LogInfo) << "ApiSystem::getAudioCards()";
+	LOG(LogInfo) << "ApiSystem::getVolume()";
 
-	return executeSystemEnumerationScript(R"(es-sound get audio_cards)");
+	return VolumeControl::getInstance()->getVolume();
 }
 
-std::vector<std::string> ApiSystem::getAudioDevices()
+void ApiSystem::setVolume(int volumeLevel)
 {
-	LOG(LogInfo) << "ApiSystem::getAudioDevices()";
+	LOG(LogInfo) << "ApiSystem::setVolume()";
 
-	return executeSystemEnumerationScript(R"(es-sound get audio_devices)");
+	VolumeControl::getInstance()->setVolume(volumeLevel);
 }
 
-std::vector<std::string> ApiSystem::getOutputDevices()
+void ApiSystem::backupVolume()
 {
-	LOG(LogInfo) << "ApiSystem::getOutputDevices()";
+	LOG(LogInfo) << "ApiSystem::backupVolume()";
 
-	return executeSystemEnumerationScript(R"(es-sound get output_devices)");
+	Settings::getInstance()->setInt("VolumeBackup", ApiSystem::getInstance()->getVolume());
 }
 
-std::string ApiSystem::getOutputDevice()
+void ApiSystem::restoreVolume()
 {
-	LOG(LogInfo) << "ApiSystem::getOutputDevice()";
+	LOG(LogInfo) << "ApiSystem::restoreVolume()";
 
-	return getShOutput(R"(es-sound get output_device)");
+	ApiSystem::getInstance()->setVolume(Settings::getInstance()->getInt("VolumeBackup"));
 }
 
-bool ApiSystem::setOutputDevice(const std::string device)
+bool ApiSystem::configSystemAudio()
 {
-	LOG(LogInfo) << "ApiSystem::setOutputDevice()";
+	return executeSystemScript(R"(es-sound config_sound_card &)");
+}
+
+bool ApiSystem::loadSystemAudioInfoToSystemConf(const std::string& audioInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemAudioInfoToSystemConf()";
+
+	if (Utils::String::startsWith(audioInfo, "<audio_info "))
+	{
+		SystemConf::getInstance()->set("sound.card", Utils::String::extractString(audioInfo, "card=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.cards", Utils::String::extractString(audioInfo, "cards=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.audio.device", Utils::String::extractString(audioInfo, "device=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.output.device", Utils::String::extractString(audioInfo, "output=\"", "\"", false));
+		SystemConf::getInstance()->set("sound.output.devices", Utils::String::extractString(audioInfo, "outputs=\"", "\"", false));
+		return true;
+	}
+
+	return false;
+}
+
+bool ApiSystem::loadSystemAudioInfo()
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemAudioInfo()";
+
+	return loadSystemAudioInfoToSystemConf( getShOutput(R"(es-sound get audio_info)") );
+}
+
+bool ApiSystem::setAudioCard(const std::string& audio_card)
+{
+	LOG(LogInfo) << "ApiSystem::setAudioCard() - " << audio_card;
+
+	return executeSystemScript("es-sound set audio_card \"" + audio_card + '"');
+}
+
+bool ApiSystem::setOutputDevice(const std::string& device)
+{
+	LOG(LogInfo) << "ApiSystem::setOutputDevice() - " << device;
 
 	return executeSystemScript("es-sound set output_device \"" + device + '"');
+}
+
+std::map<RemoteServicesId, RemoteServiceInformation> ApiSystem::toRemoteServicesStatusVector(std::vector<std::string> remoteServices)
+{
+	LOG(LogInfo) << "ApiSystem::toRemoteServicesStatusVector()";
+
+	std::map<RemoteServicesId, RemoteServiceInformation> result;
+	for (auto remoteService : remoteServices)
+	{
+		RemoteServiceInformation remote_service;
+
+		if (Utils::String::startsWith(remoteService, "<service "))
+		{
+			remote_service.platformName = Utils::String::extractString(remoteService, "name=\"", "\"", false);
+			remote_service.name = getRemoteServiceNameFromPlatformName(remote_service.platformName);
+			remote_service.id = getRemoteServiceIdFromPlatformName(remote_service.platformName);
+			remote_service.isActive = Utils::String::toBool( Utils::String::extractString(remoteService, "active=\"", "\"", false) );
+			remote_service.isStartOnBoot = Utils::String::toBool( Utils::String::extractString(remoteService, "boot=\"", "\"", false) );
+		}
+		else
+		{
+			remote_service.platformName = remoteService;
+			remote_service.name = getRemoteServiceNameFromPlatformName(remoteService);
+			remote_service.id = getRemoteServiceIdFromPlatformName(remoteService);
+		}
+
+		result[remote_service.id] = remote_service;
+	}
+	return result;
+}
+
+std::map<RemoteServicesId, RemoteServiceInformation> ApiSystem::getAllRemoteServiceStatus()
+{
+	LOG(LogInfo) << "ApiSystem::getAllRemoteServiceStatus()";
+
+	return toRemoteServicesStatusVector( executeEnumerationScript("es-remote_services get_all_status") );
 }
 
 RemoteServiceInformation ApiSystem::getRemoteServiceStatus(RemoteServicesId id)
@@ -1717,6 +1758,34 @@ bool ApiSystem::launchCalibrateTv(Window *window)
 	return exitCode == 0;
 }
 
+bool ApiSystem::loadSystemBluetoothInfoToSystemConf(const std::string& btInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemBluetoothInfoToSystemConf()";
+
+	if (Utils::String::startsWith(btInfo, "<bt_info "))
+	{
+		bool btEnabled = Utils::String::toBool(Utils::String::extractString(btInfo, "enabled=\"", "\"", false));
+		SystemConf::getInstance()->setBool("bluetooth.enabled", btEnabled);
+		std::string btAudioDevice = "";
+		if (btEnabled)
+			btAudioDevice = Utils::String::extractString(btInfo, "audio=\"", "\"", false);
+
+		SystemConf::getInstance()->set("bluetooth.audio.device", btAudioDevice);
+		SystemConf::getInstance()->setBool("bluetooth.audio.connected", !btAudioDevice.empty());
+		SystemConf::getInstance()->setBool("bluetooth.xbox_one.compatible", Utils::String::toBool(Utils::String::extractString(btInfo, "xbox_one_compatible=\"", "\"", false)));
+		return true;
+	}
+
+	return false;
+}
+
+bool ApiSystem::loadSystemBluetoothInfo()
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemBluetoothInfo()";
+
+	return loadSystemBluetoothInfoToSystemConf( getShOutput(R"(es-bluetooth get_bt_info)") );
+}
+
 bool ApiSystem::isBluetoothActive()
 {
 	LOG(LogInfo) << "ApiSystem::isBluetoothActive()";
@@ -1749,7 +1818,7 @@ bool ApiSystem::isBluetoothAudioDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::isBluetoothAudioDevice() - ID: " << id;
 
-	return executeSystemBoolScript("es-bluetooth is_bluetooth_audio_device \"" + id + "\"" );
+	return executeSystemBoolScript("es-bluetooth is_bluetooth_audio_device \"" + id + '"' );
 }
 
 bool ApiSystem::isBluetoothAudioDeviceConnected()
@@ -1813,14 +1882,14 @@ bool ApiSystem::pairBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::pairBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth pair_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth pair_device \"" + id + '"' );
 }
 
 BluetoothDevice ApiSystem::getBluetoothDeviceInfo(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::getBluetoothDeviceInfo() - ID: " << id;
 
-	std::string device_info = getShOutput("es-bluetooth info_device \"" + id + "\"" );
+	std::string device_info = getShOutput("es-bluetooth info_device \"" + id + '"' );
 
 	BluetoothDevice bt_device;
 
@@ -1846,14 +1915,14 @@ bool ApiSystem::connectBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::connectBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth connect_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth connect_device \"" + id + '"' );
 }
 
 bool ApiSystem::disconnectBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::disconnectBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth disconnect_device \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth disconnect_device \"" + id + '"' );
 }
 
 bool ApiSystem::disconnectAllBluetoothDevices()
@@ -1867,7 +1936,7 @@ bool ApiSystem::deleteBluetoothDevice(const std::string id)
 {
 	LOG(LogInfo) << "ApiSystem::deleteBluetoothDevice() - ID: " << id;
 
-	return executeSystemScript("es-bluetooth delete_device_connection \"" + id + "\"" );
+	return executeSystemScript("es-bluetooth delete_device_connection \"" + id + '"' );
 }
 
 bool ApiSystem::deleteAllBluetoothDevices()
@@ -1916,8 +1985,23 @@ bool ApiSystem::setBluetoothDeviceAlias(const std::string id, const std::string 
 {
 	LOG(LogInfo) << "ApiSystem::setBluetoothDeviceAlias() - id: " << id << ", alias: " << alias;
 
-	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + "\"" );
+	return executeSystemScript("es-bluetooth set_device_alias \"" + id + "\" \"" + alias + '"' );
 }
+
+bool ApiSystem::setBluetoothXboxOneCompatible(bool compatible)
+{
+	LOG(LogInfo) << "ApiSystem::setBluetoothXboxOneCompatible() - compatible: " << Utils::String::boolToString(compatible);
+
+	std::string command = "es-bluetooth ";
+	if (compatible)
+		command.append("active_xbox_one_pad_compatibility");
+	else
+		command.append("inactive_xbox_one_pad_compatibility");
+
+	command.append(" &");
+	return executeSystemScript(command);
+}
+
 
 void ApiSystem::backupAfterGameValues()
 {
@@ -1939,4 +2023,15 @@ void ApiSystem::restoreAfterGameValues()
 
 	if (Settings::getInstance()->getBool("RestoreVolumeAfterGame"))
 		ApiSystem::restoreVolume();
+}
+
+bool ApiSystem::clearLastPlayedData(const std::string system)
+{
+	LOG(LogInfo) << "ApiSystem::clearLastPlayedData() - system: " << system;
+
+	if (system.empty())
+		return executeSystemScript("es-gamelist clear_all_last_played_data" );
+	else
+		return executeSystemScript("es-gamelist clear_last_played_data \"" + system + '"' );
+
 }

@@ -28,6 +28,10 @@ do_help() {
     echo "$0 auto_connect_audio_device_on" >&2
     echo "$0 auto_connect_audio_device_off" >&2
     echo "$0 test_bluetooth" >&2
+    echo "$0 active_xbox_one_pad_compatibility" >&2
+    echo "$0 inactive_xbox_one_pad_compatibility" >&2
+    echo "$0 is_active_xbox_one_pad_compatibility" >&2
+    echo "$0 get_bt_info" >&2
 }
 
 update_controller_id()
@@ -309,6 +313,7 @@ get_new_devices_list()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - device is empty, skipped"
         continue
       fi
 
@@ -322,6 +327,7 @@ get_new_devices_list()
       #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - is new device: '$is_new_device'"
       # skip knowed devices
       if [ -z "$is_new_device" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_new_devices_list()' - device '$ITEM' is knowed, skipped"
         continue
       fi
 
@@ -339,7 +345,7 @@ get_new_devices_list()
       local ALIAS=`echo "$device_data" | grep "Alias:" | cut -d\  -f2- | awk 1 ORS=' '`
       ALIAS=$(trim "$ALIAS")
 
-      result="$result\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"false\" connected=\"false\" />"
+      result+="\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"false\" connected=\"false\" />"
     done <<< "$bt_devices"
     if [ -z "$result" ]; then
       echo ""
@@ -448,7 +454,7 @@ get_paired_devices_offline()
       local ALIAS=`echo "$device_data" | grep "Alias=" | cut -d\= -f2- | awk 1 ORS=' '`
       ALIAS=$(trim "$ALIAS")
 
-      result="$result\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"true\" connected=\"false\" />"
+      result+="\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"true\" connected=\"false\" />"
     done
     if [ -z "$result" ]; then
       echo ""
@@ -477,6 +483,7 @@ get_paired_devices_online()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices_online()' - device is empty, skipped"
         continue
       fi
 
@@ -486,6 +493,7 @@ get_paired_devices_online()
 
       local fail=`echo "$device_data" | grep "not available"`
       if [ ! -z "$fail" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_paired_devices_online()' - device '$ID' not available, skipped"
         continue
       fi
 
@@ -512,7 +520,7 @@ get_paired_devices_online()
       local ALIAS=`echo "$device_data" | grep "Alias:" | cut -d\  -f2- | awk 1 ORS=' '`
       ALIAS=$(trim "$ALIAS")
 
-      result="$result\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"true\" connected=\"$CONNECTED\" />"
+      result+="\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"true\" connected=\"$CONNECTED\" />"
     done <<< "$paired_devices"
     if [ -z "$result" ]; then
       echo ""
@@ -557,6 +565,7 @@ get_connected_devices()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device is empty, skipped"
         continue
       fi
 
@@ -566,6 +575,7 @@ get_connected_devices()
 
       local fail=`echo "$device_data" | grep "not available"`
       if [ ! -z "$fail" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device '$ID' not available, skipped"
         continue
       fi
 
@@ -573,6 +583,7 @@ get_connected_devices()
       #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device '$ID' is connected: '$is_connected'"
       # skip NOT connected
       if [ -z "$is_connected" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'get_connected_devices()' - device '$ID' not connected, skipped"
         continue
       fi
 
@@ -591,7 +602,7 @@ get_connected_devices()
       local ALIAS=`echo "$device_data" | grep "Alias:" | cut -d\  -f2- | awk 1 ORS=' '`
       ALIAS=$(trim "$ALIAS")
 
-      result="$result\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"true\" connected=\"true\" />"
+      result+="\n<device id=\"$ID\" name=\"$NAME\" alias=\"$ALIAS\" type=\"$ICON\" paired=\"true\" connected=\"true\" />"
     done <<< "$connected_devices"
     if [ -z "$result" ]; then
       echo ""
@@ -642,6 +653,7 @@ do_disconnect_all_devices()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device is empty, skipped"
         continue
       fi
 
@@ -653,6 +665,7 @@ do_disconnect_all_devices()
       #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device '$ID' is connected: '$is_connected'"
       # skip NOT connected
       if [ -z "$is_connected" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device '$ID' not connected, skipped"
         continue
       fi
 
@@ -1001,6 +1014,7 @@ do_delete_all_device_connections()
 
       # skip empty values
       if [ -z "$ITEM" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_disconnect_all_devices()' - device is empty, skipped"
         continue
       fi
 
@@ -1014,10 +1028,12 @@ do_delete_all_device_connections()
     #print_log $LOG_FILE "DEBUG" "Executing 'do_delete_all_device_connections()' - error: $error"
     if [ "$error" == "false" ]; then
       # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_delete_all_device_connections()' - succesfully deleted all connections"
       return 0
     fi
 
     # fail
+    #print_log $LOG_FILE "INFO" "Executing 'do_delete_all_device_connections()' - fail to delete all connections, cause: $error"
     return 1
 }
 
@@ -1087,12 +1103,130 @@ do_auto_connect_audio_device_off()
     #print_log $LOG_FILE "INFO" "Executing 'do_auto_connect_audio_device_off()' - removing lock file '$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE'"
     sudo rm -f "$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE" > /dev/null &
 }
+
+do_check_conf_file_exist()
+{
+    if [ -f "$BT_MODULE_CONF_FILE" ]; then
+      # exist
+      return 0
+    fi
+
+    # NOT exist
+    return 1
+}
+
+do_create_conf_file()
+{
+    echo "# Bluetooth Module Configuration File" | sudo tee "$BT_MODULE_CONF_FILE" > /dev/null
+}
+
+do_set_parameter()
+{
+    local key=$1
+    local value=$2
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_set_parameter()' - parameter key '$key', value '$value'"
+
+    do_check_conf_file_exist
+    if [ $? -eq 1 ]; then
+      #print_log $LOG_FILE "DEBUG" "Exit 'do_set_parameter()' - creating config file '$BT_MODULE_CONF_FILE'"
+      do_create_conf_file
+      sudo sed -i '1 a options bluetooth '"$key"'='"$value"'' "$BT_MODULE_CONF_FILE"
+      echo "$value" | sudo tee "$DISABLE_ERTM_PARAMETER_FILE" > /dev/null
+      return
+    fi
+
+    sudo sed -i 's/'"$key"'=.*/'"$key"'='"$value"'/g' "$BT_MODULE_CONF_FILE"
+    echo "$value" | sudo tee "$DISABLE_ERTM_PARAMETER_FILE" > /dev/null
+    #print_log $LOG_FILE "DEBUG" "Exit 'do_set_parameter()' - parameter key '$key', value '$value'"
+}
+
+do_get_parameter()
+{
+    local key=$1
+    local value=""
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_parameter()' - parameter key '$key'"
+
+    do_check_conf_file_exist
+    if [ $? -eq 1 ]; then
+      #print_log $LOG_FILE "DEBUG" "Exit 'do_get_parameter()' - config file '$BT_MODULE_CONF_FILE' doesn't exist, skip"
+      echo "$PARAMETERS_DEFAULT_VALUE"
+      return 0
+    fi
+
+    value="$(cat "$BT_MODULE_CONF_FILE" | grep "$key" | grep -oP '=\K[^\n]+')"
+    #print_log $LOG_FILE "DEBUG" "Exit 'do_get_parameter()' - parameter key '$key', value '$value'"
+    echo "$value"
+}
+
+do_active_xbox_one_pad_compatibility()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_active_xbox_one_pad_compatibility()'"
+
+    is_active_xbox_one_pad_compatibility
+    if [ $? -eq 0 ]; then
+      #print_log $LOG_FILE "INFO" "Executing 'do_active_xbox_one_pad_compatibility()' - already actived, skip"
+      return 0
+    fi
+    do_set_parameter "disable_ertm" "Y"
+}
+
+do_inactive_xbox_one_pad_compatibility()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_inactive_xbox_one_pad_compatibility()'"
+
+    is_active_xbox_one_pad_compatibility
+    if [ $? -eq 1 ]; then
+      #print_log $LOG_FILE "INFO" "Executing 'do_inactive_xbox_one_pad_compatibility()' - not actived, skip"
+      return
+    fi
+    do_set_parameter "disable_ertm" "N"
+}
+
+is_active_xbox_one_pad_compatibility()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'is_active_xbox_one_pad_compatibility()'"
+    local is_active="$(cat $DISABLE_ERTM_PARAMETER_FILE)"
+    if [ ! -z "$(cat $DISABLE_ERTM_PARAMETER_FILE | grep Y)" ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'is_active_xbox_one_pad_compatibility()' - is active"
+      return 0
+    fi
+
+    #print_log $LOG_FILE "INFO" "Executing 'is_active_xbox_one_pad_compatibility()' - is NOT active"
+    return 1
+}
+
+do_get_bt_info()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_bt_info()'"
+    local enabled="false"
+    local audio=""
+    local xbox_one_compatible="false"
+
+    is_enabled
+    if [ $? -eq 0 ]; then
+      enabled="true"
+      audio="$(get_bluetooth_audio_device_connected)"
+    fi
+    is_active_xbox_one_pad_compatibility
+    if [ $? -eq 0 ]; then
+      xbox_one_compatible="true"
+    fi
+
+    local result="<bt_info enabled=\"$enabled\" audio=\"$audio\" xbox_one_compatible=\"$xbox_one_compatible\" />"
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_bt_info()' - result: $result"
+    echo "$result"
+}
+
 # ******************************************************************************************
 
 # Configure ES commons variables
 . es-log_scripts
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-bluetooth.log"
+BT_MODULE_CONF_FILE="/etc/modprobe.d/bluetooth.conf"
+DISABLE_ERTM_PARAMETER_FILE="/sys/module/bluetooth/parameters/disable_ertm"
+DISABLE_ESCO_PARAMETER_FILE="/sys/module/bluetooth/parameters/disable_esco"
+PARAMETERS_DEFAULT_VALUE="N"
 
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
@@ -1195,6 +1329,18 @@ case "${ACTION}" in
     ;;
     "test_bluetooth")
         test_bluetooth || exit_execution 1
+    ;;
+    "active_xbox_one_pad_compatibility")
+        do_active_xbox_one_pad_compatibility || exit_execution 1
+    ;;
+    "inactive_xbox_one_pad_compatibility")
+        do_inactive_xbox_one_pad_compatibility || exit_execution 1
+    ;;
+    "is_active_xbox_one_pad_compatibility")
+        is_active_xbox_one_pad_compatibility || exit_execution 1
+    ;;
+    "get_bt_info")
+        do_get_bt_info || exit_execution 1
     ;;
     *)
         do_help
