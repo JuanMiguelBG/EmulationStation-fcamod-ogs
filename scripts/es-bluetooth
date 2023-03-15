@@ -1104,38 +1104,18 @@ do_auto_connect_audio_device_off()
     sudo rm -f "$ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE" > /dev/null &
 }
 
-do_check_conf_file_exist()
-{
-    if [ -f "$BT_MODULE_CONF_FILE" ]; then
-      # exist
-      return 0
-    fi
-
-    # NOT exist
-    return 1
-}
-
-do_create_conf_file()
-{
-    echo "# Bluetooth Module Configuration File" | sudo tee "$BT_MODULE_CONF_FILE" > /dev/null
-}
-
 do_set_parameter()
 {
     local key=$1
     local value=$2
     #print_log $LOG_FILE "DEBUG" "Executing 'do_set_parameter()' - parameter key '$key', value '$value'"
 
-    do_check_conf_file_exist
-    if [ $? -eq 1 ]; then
-      #print_log $LOG_FILE "DEBUG" "Exit 'do_set_parameter()' - creating config file '$BT_MODULE_CONF_FILE'"
-      do_create_conf_file
-      sudo sed -i '1 a options bluetooth '"$key"'='"$value"'' "$BT_MODULE_CONF_FILE"
-      echo "$value" | sudo tee "$DISABLE_ERTM_PARAMETER_FILE" > /dev/null
-      return
+    local valPresent=`cat "$BT_MODULE_CONF_FILE" | grep -iw "bluetooth.disable_ertm"`
+    if [ -z "$valPresent" ]; then
+       sudo sed -i -e 's/#\?consoleblank=0/consoleblank=0 bluetooth.'"$key"'='"$value"'/g' "$BT_MODULE_CONF_FILE" > /dev/null
+    else
+       sudo sed -i -e 's/'"$key"'=./'"$key"'='"$value"'/g' "$BT_MODULE_CONF_FILE" > /dev/null
     fi
-
-    sudo sed -i 's/'"$key"'=.*/'"$key"'='"$value"'/g' "$BT_MODULE_CONF_FILE"
     echo "$value" | sudo tee "$DISABLE_ERTM_PARAMETER_FILE" > /dev/null
     #print_log $LOG_FILE "DEBUG" "Exit 'do_set_parameter()' - parameter key '$key', value '$value'"
 }
@@ -1146,14 +1126,7 @@ do_get_parameter()
     local value=""
     #print_log $LOG_FILE "INFO" "Executing 'do_get_parameter()' - parameter key '$key'"
 
-    do_check_conf_file_exist
-    if [ $? -eq 1 ]; then
-      #print_log $LOG_FILE "DEBUG" "Exit 'do_get_parameter()' - config file '$BT_MODULE_CONF_FILE' doesn't exist, skip"
-      echo "$PARAMETERS_DEFAULT_VALUE"
-      return 0
-    fi
-
-    value="$(cat "$BT_MODULE_CONF_FILE" | grep "$key" | grep -oP '=\K[^\n]+')"
+    value="$(cat $DISABLE_ERTM_PARAMETER_FILE)"
     #print_log $LOG_FILE "DEBUG" "Exit 'do_get_parameter()' - parameter key '$key', value '$value'"
     echo "$value"
 }
@@ -1223,7 +1196,7 @@ do_get_bt_info()
 . es-log_scripts
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-bluetooth.log"
-BT_MODULE_CONF_FILE="/etc/modprobe.d/bluetooth.conf"
+BT_MODULE_CONF_FILE="/boot/extlinux/extlinux.conf"
 DISABLE_ERTM_PARAMETER_FILE="/sys/module/bluetooth/parameters/disable_ertm"
 DISABLE_ESCO_PARAMETER_FILE="/sys/module/bluetooth/parameters/disable_esco"
 PARAMETERS_DEFAULT_VALUE="N"
