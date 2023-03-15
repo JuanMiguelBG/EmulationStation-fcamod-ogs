@@ -933,7 +933,7 @@ ViewController::ViewMode ViewController::getViewMode()
 	return mState.viewing;
 }
 
-void ViewController::reloadAllGames(Window* window, bool deleteCurrentGui)
+void ViewController::reloadAllGames(Window* window, bool deleteCurrentGui, const std::string& actionTitle, const std::function<void()>& action)
 {
 	if (sInstance == nullptr)
 		return;
@@ -943,7 +943,13 @@ void ViewController::reloadAllGames(Window* window, bool deleteCurrentGui)
 	auto viewMode = ViewController::get()->getViewMode();
 	auto systemName = ViewController::get()->getSelectedSystem()->getName();
 	window->endRenderLoadingScreen();
-	window->renderLoadingScreen(_("Loading..."));
+	
+	std::string loadingTitle = "Loading...",
+				title = loadingTitle;
+	if (!actionTitle.empty())
+		title = actionTitle;
+	
+	window->renderLoadingScreen(_(title));
 
 	if (!deleteCurrentGui)
 	{
@@ -962,6 +968,12 @@ void ViewController::reloadAllGames(Window* window, bool deleteCurrentGui)
 	}
 
 	ViewController::deinit();
+
+	if (action)
+		action();
+
+	if (!actionTitle.empty())
+		window->renderLoadingScreen(_(loadingTitle));
 
 	ViewController::init(window);
 	CollectionSystemManager::init(window);

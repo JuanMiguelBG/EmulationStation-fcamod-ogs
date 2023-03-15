@@ -189,13 +189,29 @@ const std::string FileData::getVideoPath()
 	std::string video = getMetadata(MetaDataId::Video);
 	
 	// no video, try to use local video
-	if(video.empty() && Settings::getInstance()->getBool("LocalArt"))
+	if (video.empty() && Settings::getInstance()->getBool("LocalArt"))
 	{
-		std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-video.mp4";
-		if (Utils::FileSystem::exists(path))
+		const char* directories[2] = { "images", "videos" };
+		for (int i = 0; i < 2; i++)
 		{
-			setMetadata(MetaDataId::Video, path);
-			video = path;
+			if (video.empty())
+			{
+				std::string path = getSystemEnvData()->mStartPath + "/" + directories[i] + "/" + getDisplayName() + "-video.mp4";
+				if (Utils::FileSystem::exists(path))
+				{
+					setMetadata(MetaDataId::Video, path);
+					video = path;
+				}
+				else
+				{
+					path = getSystemEnvData()->mStartPath + "/" + directories[i] + "/" + getDisplayName() + ".mp4";
+					if (Utils::FileSystem::exists(path))
+					{
+						setMetadata(MetaDataId::Video, path);
+						video = path;
+					}
+				}
+			}
 		}
 	}
 	
@@ -210,12 +226,12 @@ const std::string FileData::getMarqueePath()
 	if (marquee.empty() && Settings::getInstance()->getBool("LocalArt"))
 	{
 		const char* extList[2] = { ".png", ".jpg" };
-		for(int i = 0; i < 2; i++)
+		for (int i = 0; i < 2; i++)
 		{
-			if(marquee.empty())
+			if (marquee.empty())
 			{
 				std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-marquee" + extList[i];
-				if(Utils::FileSystem::exists(path))
+				if (Utils::FileSystem::exists(path))
 				{
 					setMetadata(MetaDataId::Marquee, path);
 					marquee = path;
@@ -232,22 +248,28 @@ const std::string FileData::getImagePath()
 	std::string image = getMetadata(MetaDataId::Image);
 
 	// no image, try to use local image
-	if(image.empty())
+	if (image.empty())
 	{
 		auto romExt = Utils::String::toLower(Utils::FileSystem::getExtension(getPath()));
 		if (romExt == ".png" || (mSystem->hasPlatformId(PlatformIds::PICO8) && romExt == ".p8"))
 			return getPath();
 
 		const char* extList[2] = { ".png", ".jpg" };
-		for(int i = 0; i < 2; i++)
+		for (int i = 0; i < 2; i++)
 		{
-			if(image.empty())
+			if (image.empty())
 			{
 				std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + "-image" + extList[i];
-				if(Utils::FileSystem::exists(path))
+				if (Utils::FileSystem::exists(path))
 				{
-						setMetadata(MetaDataId::Image, path);
-						image = path;
+					setMetadata(MetaDataId::Image, path);
+					image = path;
+				}
+				path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + extList[i];
+				if (Utils::FileSystem::exists(path))
+				{
+					setMetadata(MetaDataId::Image, path);
+					image = path;
 				}
 			}
 		}
@@ -420,7 +442,7 @@ void FileData::launchGame(Window* window)
 	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
 	const std::string basename = Utils::FileSystem::getStem(getPath());
 
-	Scripting::fireEvent("game-start", rom, basename, getName());
+	Scripting::fireEvent("game-start", rom, basename, getName(), system->getName());
 
 	if (command.empty())
 	{
@@ -437,7 +459,7 @@ void FileData::launchGame(Window* window)
 		if (exitCode != 0)
 			LOG(LogWarning) << "FileData::launchGame() - ...launch terminated with nonzero exit code " << exitCode << "!";
 	}
-	Scripting::fireEvent("game-end");
+	Scripting::fireEvent("game-end", rom, basename, getName(), system->getName());
 
     // Restore Brightness and Volume
 	ApiSystem::getInstance()->restoreAfterGameValues();
@@ -494,7 +516,7 @@ std::string CollectionFileData::getSystemName() const
 CollectionFileData::~CollectionFileData()
 {
 	// need to remove collection file data at the collection object destructor
-	if(mParent)
+	if (mParent)
 		mParent->removeChild(this);
 	mParent = NULL;
 }
@@ -516,7 +538,8 @@ void CollectionFileData::refreshMetadata()
 
 const std::string CollectionFileData::getName()
 {
-	if (mDirty) {
+	if (mDirty)
+	{
 		mCollectionFileName = Utils::String::removeParenthesis(mSourceFileData->getMetadata(MetaDataId::Name));
 		mCollectionFileName += " [" + Utils::String::toUpper(mSourceFileData->getSystem()->getName()) + "]";
 		mDirty = false;
@@ -563,20 +586,20 @@ const std::vector<FileData*> FolderData::getChildrenListToDisplay()
 
 	bool refactorUniqueGameFolders = (showFoldersMode == "having multiple games");
 
-	for (auto it = items->cbegin(); it != items->cend(); it++)
+	for (auto item : *items)
 	{
-		if (idx != nullptr && !idx->showFile((*it)))
+		if (idx != nullptr && !idx->showFile(item))
 			continue;
 
-		if (!showHiddenFiles && (*it)->getHidden())
+		if (!showHiddenFiles && item->getHidden())
 			continue;
 
-		if (filterKidGame && !(*it)->getKidGame())
+		if (filterKidGame && !item->getKidGame())
 			continue;
 
-		if ((*it)->getType() == FOLDER && refactorUniqueGameFolders)
+		if (item->getType() == FOLDER && refactorUniqueGameFolders)
 		{
-			FolderData* pFolder = (FolderData*)(*it);
+			FolderData* pFolder = (FolderData*)item;
 			auto fd = pFolder->findUniqueGameForFolder();
 			if (fd != nullptr)
 			{
@@ -595,7 +618,7 @@ const std::vector<FileData*> FolderData::getChildrenListToDisplay()
 			}
 		}
 
-		ret.push_back(*it);
+		ret.push_back(item);
 	}
 
 	unsigned int currentSortId = sys->getSortId();
@@ -648,18 +671,18 @@ std::vector<FileData*> FolderData::getFilesRecursive(unsigned int typeMask, bool
 
 	FileFilterIndex* idx = (system != nullptr ? system : mSystem)->getIndex(false);
 
-	for (auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+	for (auto children : mChildren)
 	{
-		if ((*it)->getType() & typeMask)
+		if (children->getType() & typeMask)
 		{
-			if (!displayedOnly || idx == nullptr || !idx->isFiltered() || idx->showFile(*it))
-				out.push_back(*it);
+			if (!displayedOnly || idx == nullptr || !idx->isFiltered() || idx->showFile(children))
+				out.push_back(children);
 		}
 
-		if ((*it)->getType() != FOLDER)
+		if (children->getType() != FOLDER)
 			continue;
 
-		FolderData* folder = (FolderData*)(*it);
+		FolderData* folder = (FolderData*)children;
 		if (folder->getChildren().size() > 0)
 		{
 			std::vector<FileData*> subchildren = folder->getFilesRecursive(typeMask, displayedOnly, system);
@@ -672,7 +695,9 @@ std::vector<FileData*> FolderData::getFilesRecursive(unsigned int typeMask, bool
 
 void FolderData::addChild(FileData* file, bool assignParent)
 {
+#if _DEBUG
 	assert(file->getParent() == nullptr || !assignParent);
+#endif
 
 	mChildren.push_back(file);
 
@@ -682,37 +707,42 @@ void FolderData::addChild(FileData* file, bool assignParent)
 
 void FolderData::removeChild(FileData* file)
 {
+#if _DEBUG
 	assert(mType == FOLDER);
 	assert(file->getParent() == this);
+#endif
 
-	for (auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+	auto pos = mChildren.begin();
+	for (auto fileData : mChildren)
 	{
-		if (*it == file)
+		if (fileData == file)
 		{
 			file->setParent(NULL);
-			mChildren.erase(it);
+			mChildren.erase(pos);
 			return;
 		}
+		++pos;
 	}
 
+#if _DEBUG
 	// File somehow wasn't in our children.
 	assert(false);
-
+#endif
 }
 
 FileData* FolderData::FindByPath(const std::string& path)
 {
 	std::vector<FileData*> children = getChildren();
 
-	for (std::vector<FileData*>::const_iterator it = children.cbegin(); it != children.cend(); ++it)
+	for (auto children : children)
 	{
-		if ((*it)->getPath() == path)
-			return (*it);
+		if (children->getPath() == path)
+			return children;
 
-		if ((*it)->getType() != FOLDER)
+		if (children->getType() != FOLDER)
 			continue;
 		
-		auto item = ((FolderData*)(*it))->FindByPath(path);
+		auto item = ((FolderData*)children)->FindByPath(path);
 		if (item != nullptr)
 			return item;
 	}
@@ -722,14 +752,12 @@ FileData* FolderData::FindByPath(const std::string& path)
 
 void FolderData::createChildrenByFilenameMap(std::unordered_map<std::string, FileData*>& map)
 {
-	std::vector<FileData*> children = getChildren();
-
-	for (std::vector<FileData*>::const_iterator it = children.cbegin(); it != children.cend(); ++it)
+	for (auto children : getChildren())
 	{
-		if ((*it)->getType() == FOLDER)
-			((FolderData*)(*it))->createChildrenByFilenameMap(map);			
+		if (children->getType() == FOLDER)
+			((FolderData*)children)->createChildrenByFilenameMap(map);			
 		else 
-			map[(*it)->getKey()] = (*it);
+			map[children->getKey()] = children;
 	}	
 }
 

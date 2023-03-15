@@ -23,6 +23,7 @@ public:
 	static void openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shared_ptr<OptionListComponent<std::string>> theme_set, const std::string systemTheme = "");
 
 	static void updateGameLists(Window* window, bool confirm = true);
+	static void clearLastPlayedData(Window* window, const std::string system = "", bool confirm = true);
 
 private:
 	void addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName = "");
@@ -77,6 +78,7 @@ private:
 
 	MenuComponent mMenu;
 	TextComponent mVersion;
+	bool mWaitingLoad;
 };
 
 #endif // ES_APP_GUIS_GUI_MENU_H

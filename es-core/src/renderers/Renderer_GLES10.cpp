@@ -11,28 +11,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-//#include <go2/display.h>
-//#include <go2/input.h>
 #include <go2/audio.h>
 #include <drm/drm_fourcc.h>
-//#include "BatteryIcons.h"
-//#include "VolumeIcons.h"
-//#include "WifiIcons.h"
-//#include "BrightnessIcon.h"
-//#include "PowerIcon.h"
-//#include "BlankIcon.h"
-//#include "ArkOS.h"
-
-//static go2_input_t* input = nullptr;
-//static go2_surface_t* titlebarSurface = nullptr;
-//static unsigned int frame = 0;
 
 namespace Renderer
 {
 	static SDL_GLContext sdlContext = nullptr;
-
-	//static go2_context_t* context = nullptr;
-	//static go2_presenter_t* presenter = nullptr;
 
 	static GLenum convertBlendFactor(const Blend::Factor _blendFactor)
 	{
@@ -84,7 +68,6 @@ namespace Renderer
 
 	void setupWindow()
 	{
-//#if 0
 		SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     8);
 		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   8);
 		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,    8);
@@ -93,7 +76,6 @@ namespace Renderer
 
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 0);
-//#endif
 	} // setupWindow
 
 	std::vector<std::pair<std::string, std::string>> getDriverInformation()
@@ -121,28 +103,6 @@ namespace Renderer
 	{
 		sdlContext = SDL_GL_CreateContext(getSDLWindow());
 		SDL_GL_MakeCurrent(getSDLWindow(), sdlContext);
-		/*input = go2_input_create();
-
-		go2_context_attributes_t attr;
-		attr.major = 1;
-		attr.minor = 0;
-		attr.red_bits = 8;
-		attr.green_bits = 8;
-		attr.blue_bits = 8;
-		attr.alpha_bits = 8;
-		attr.depth_bits = 24;
-		attr.stencil_bits = 0;
-
-		go2_display_t* display = getDisplay();
-		int w = go2_display_height_get(display);
-		int h = go2_display_width_get(display);
-
-		//titlebarSurface = go2_surface_create(display, w, 16, DRM_FORMAT_RGB565);
-
-		context = go2_context_create(display, w, h, &attr);
-		go2_context_make_current(context);
-
-		presenter = go2_presenter_create(display, DRM_FORMAT_RGB565, 0xff080808);*/
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -165,17 +125,6 @@ namespace Renderer
 	{
 		SDL_GL_DeleteContext(sdlContext);
 		sdlContext = nullptr;
-		/*go2_context_destroy(context);
-		context = nullptr;
-
-		go2_presenter_destroy(presenter);
-		presenter = nullptr;
-
-		//go2_surface_destroy(titlebarSurface);
-		//titlebarSurface = nullptr;
-
-		go2_input_destroy(input);
-		input = nullptr;*/
 	} // destroyContext
 
 	unsigned int createTexture(const Texture::Type _type, const bool _linear, const bool _repeat, const unsigned int _width, const unsigned int _height, void* _data)
@@ -318,7 +267,6 @@ namespace Renderer
 
 	void setSwapInterval()
 	{
-//#if 0
 		// vsync
 		if(Settings::getInstance()->getBool("VSync"))
 		{
@@ -333,7 +281,6 @@ namespace Renderer
 		}
 		else
 			SDL_GL_SetSwapInterval(0);
-//#endif
 	} // setSwapInterval
 
 	void swapBuffers()

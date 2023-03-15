@@ -45,8 +45,14 @@ static std::map<std::string, std::string> defaults =
 	{ "bluetooth.audio.connected", "0" },
 	{ "bluetooth.audio.device", "" },
 	{ "bluetooth.audio.device.autoconnect", "0" },
+	{ "bluetooth.xbox_one.compatible", "0" },
 	{ "suspend.device.mode", "LIGHT" },
-	{ "hdmi.mode", "0" }
+	{ "hdmi.mode", "0" },
+	{ "sound.card", "DEFAULT" },
+	{ "sound.cards", "DEFAULT" },
+	{ "sound.audio.device", "RK817-CODEC" },
+	{ "sound.output.device", "SPK" },
+	{ "sound.output.devices", "SPK"}
 };
 
 std::string systemConfFile = "~/.emulationstation.conf";

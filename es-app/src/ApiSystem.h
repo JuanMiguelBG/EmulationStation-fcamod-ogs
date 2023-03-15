@@ -28,6 +28,10 @@ class ApiSystem
 {
 private:
 	std::vector<BluetoothDevice> toBluetoothDevicesVector(std::vector<std::string> btDevices);
+	std::map<RemoteServicesId, RemoteServiceInformation> toRemoteServicesStatusVector(std::vector<std::string> remoteServices);
+	bool loadSystemAudioInfoToSystemConf(const std::string& audioInfo);
+	bool loadSystemWifiInfoToSystemConf(const std::string& wifiInfo);
+	bool loadSystemBluetoothInfoToSystemConf(const std::string& btInfo);
 
 protected:
 	ApiSystem();
@@ -59,9 +63,12 @@ public:
 		PRELOAD_VLC = 11,
 		SOUND = 12,
 		BLUETOOTH = 13,
-		KODI = 14,
-		REMOTE_SERVICES = 15,
-		LOG_SCRIPTS = 16
+		REMOTE_SERVICES = 14,
+		LOG_SCRIPTS = 15,
+		GAMELIST = 16,
+		KODI = 17,
+		TEST_INPUT = 18,
+		CALIBRATE_TV = 19
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -153,11 +160,6 @@ public:
 	void resetDisplayPanelSettings();
 	bool isHdmiMode();
 
-	int getVolume();
-	void setVolume(int volumeLevel);
-	void backupVolume();
-	void restoreVolume();
-
 	std::string getTimezones();
 	std::string getCurrentTimezone();
 	bool setTimezone(std::string timezone);
@@ -189,7 +191,7 @@ public:
 	int getDisplayAutoDimBrightness();
 	bool setDisplayAutoDimValues(bool stay_awake_charging_state, bool time_state, int timeout, int brightness_level);
 
-	virtual bool ping();
+	bool loadSystemWifiInfo();
 	bool getInternetStatus();
 	std::vector<std::string> getWifiNetworks(bool scan = false);
 	bool connectWifi(const std::string ssid, const std::string pwd);
@@ -201,10 +203,6 @@ public:
 	bool enableManualWifiDns(const std::string ssid, const std::string dnsOne, const std::string dnsTwo);
 	bool disableManualWifiDns(const std::string ssid);
 	std::string getWifiSsid();
-	std::string getWifiPsk(const std::string ssid);
-	std::string getDnsOne();
-	std::string getDnsTwo();
-	std::string getWifiNetworkExistFlag();
 	bool isWifiPowerSafeEnabled();
 	void setWifiPowerSafe(bool state);
 	std::vector<std::string> getKnowedWifiNetworks();
@@ -261,18 +259,24 @@ public:
 
 	void preloadVLC();
 
-	std::vector<std::string> getAudioCards();
-	std::vector<std::string> getAudioDevices();
-	std::vector<std::string> getOutputDevices();
-	std::string getOutputDevice();
-	bool setOutputDevice(const std::string device);
+	int getVolume();
+	void setVolume(int volumeLevel);
+	void backupVolume();
+	void restoreVolume();
+	bool configSystemAudio();
+	bool loadSystemAudioInfo();
+	bool setAudioCard(const std::string& audio_card);
+	bool setOutputDevice(const std::string& device);
 
+	std::map<RemoteServicesId, RemoteServiceInformation> getAllRemoteServiceStatus();
 	RemoteServiceInformation getRemoteServiceStatus(RemoteServicesId id);
 	bool configRemoteService(RemoteServiceInformation service);
 
 	virtual bool launchKodi(Window *window);
-	virtual bool launchBluetoothConfigurator(Window *window);
+	virtual bool launchTestControls(Window *window);
+	virtual bool launchCalibrateTv(Window *window);
 
+	bool loadSystemBluetoothInfo();
 	bool isBluetoothActive();
 	bool isBluetoothEnabled();
 	bool enableBluetooth();
@@ -295,9 +299,12 @@ public:
 	bool startAutoConnectBluetoothAudioDevice();
 	bool stopAutoConnectBluetoothAudioDevice();
 	bool setBluetoothDeviceAlias(const std::string id, const std::string alias);
+	bool setBluetoothXboxOneCompatible(bool compatible);
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();
+
+	bool clearLastPlayedData(const std::string system = "");
 };
 
 #endif

@@ -18,8 +18,12 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, std::
 	screensaver_time->setValue((float)(Settings::getInstance()->getInt("ScreenSaverTime") / (1000 * 60)));
 	addWithLabel(_("SCREENSAVER AFTER"), screensaver_time);
 	addSaveFunc([screensaver_time] {
-			Settings::getInstance()->setInt("ScreenSaverTime", (int)Math::round(screensaver_time->getValue()) * (1000 * 60));
+		int new_value = (int)Math::round(screensaver_time->getValue()) * (1000 * 60);
+		if (Settings::getInstance()->getInt("ScreenSaverTime") != new_value)
+		{
+			Settings::getInstance()->setInt("ScreenSaverTime", new_value);
 			PowerSaver::updateTimeouts();
+		}
 	});
 
 	// screensaver behavior
@@ -53,17 +57,20 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, std::
 
 	addWithLabel(_("SCREENSAVER BEHAVIOR"), screensaver_behavior);
 	addSaveFunc([this, screensaver_behavior] {
-		if (Settings::getInstance()->getString("ScreenSaverBehavior") != "random video"
-			&& screensaver_behavior->getSelected() == "random video")
+		if (Settings::getInstance()->getString("ScreenSaverBehavior") != screensaver_behavior->getSelected())
 		{
-			// if before it wasn't risky but now there's a risk of problems, show warning
-			mWindow->pushGui(new GuiMsgBox(mWindow,
-				_("THE \"RANDOM VIDEO\" SCREENSAVER SHOWS VIDEOS FROM YOUR GAMELIST.\nIF YOU DON'T HAVE VIDEOS, OR IF NONE OF THEM CAN BE PLAYED AFTER A FEW ATTEMPTS, IT WILL DEFAULT TO \"BLACK\".\nMORE OPTIONS IN THE \"UI SETTINGS\" -> \"RANDOM VIDEO SCREENSAVER SETTINGS\" MENU."),
-				_("OK"), [] { return; }));
-		}
+			if (Settings::getInstance()->getString("ScreenSaverBehavior") != "random video"
+				&& screensaver_behavior->getSelected() == "random video")
+			{
+				// if before it wasn't risky but now there's a risk of problems, show warning
+				mWindow->pushGui(new GuiMsgBox(mWindow,
+					_("THE \"RANDOM VIDEO\" SCREENSAVER SHOWS VIDEOS FROM YOUR GAMELIST.\nIF YOU DON'T HAVE VIDEOS, OR IF NONE OF THEM CAN BE PLAYED AFTER A FEW ATTEMPTS, IT WILL DEFAULT TO \"BLACK\".\nMORE OPTIONS IN THE \"UI SETTINGS\" -> \"RANDOM VIDEO SCREENSAVER SETTINGS\" MENU."),
+					_("OK"), [] { return; }));
+			}
 
-		Settings::getInstance()->setString("ScreenSaverBehavior", screensaver_behavior->getSelected());
-		PowerSaver::updateTimeouts();
+			Settings::getInstance()->setString("ScreenSaverBehavior", screensaver_behavior->getSelected());
+			PowerSaver::updateTimeouts();
+		}
 	});
 
 	// Screensaver stops music

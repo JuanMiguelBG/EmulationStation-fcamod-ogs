@@ -24,8 +24,7 @@ void GuiQuitOptions::initializeMenu()
 	addWithLabel(_("VIEW MENU"), fullExitMenu);
 	addSaveFunc([this, fullExitMenu]
 		{
-			bool old_value = !Settings::getInstance()->getBool("ShowOnlyExit");
-			if (old_value != fullExitMenu->getState())
+			if (Settings::getInstance()->getBool("ShowOnlyExit") != !fullExitMenu->getState())
 			{
 				Settings::getInstance()->setBool("ShowOnlyExit", !fullExitMenu->getState());
 				setVariable("reloadGuiMenu", true);
@@ -37,8 +36,7 @@ void GuiQuitOptions::initializeMenu()
 	addWithLabel(_("CONFIRM TO \"QUIT\""), confirmToExit);
 	addSaveFunc([this, confirmToExit]
 		{
-			bool old_value = Settings::getInstance()->getBool("ConfirmToExit");
-			if (old_value != confirmToExit->getState())
+			if (Settings::getInstance()->getBool("ConfirmToExit") != confirmToExit->getState())
 			{
 				Settings::getInstance()->setBool("ConfirmToExit", confirmToExit->getState());
 				setVariable("reloadGuiMenu", true);
@@ -58,8 +56,7 @@ void GuiQuitOptions::initializeMenu()
 	addWithLabel(_("SHOW FAST QUIT ACTIONS"), showFastActions);
 	addSaveFunc([this, showFastActions]
 		{
-			bool old_value = Settings::getInstance()->getBool("ShowFastQuitActions");
-			if (old_value != showFastActions->getState())
+			if (Settings::getInstance()->getBool("ShowFastQuitActions") != showFastActions->getState())
 			{
 				Settings::getInstance()->setBool("ShowFastQuitActions", showFastActions->getState());
 				setVariable("reloadGuiMenu", true);
@@ -92,8 +89,11 @@ void GuiQuitOptions::initializeMenu()
 	addWithLabel(_("ACTION TO EXECUTE"), only_exit_action_list);
 	addSaveFunc([this, only_exit_action_list]
 		{
-			if (Settings::getInstance()->setString("OnlyExitAction", only_exit_action_list->getSelected()))
+			if (Settings::getInstance()->getString("OnlyExitAction") != only_exit_action_list->getSelected())
+			{
+				Settings::getInstance()->setString("OnlyExitAction", only_exit_action_list->getSelected());
 				setVariable("reloadGuiMenu", true);
+			}
 		});
 
 	// confirm to exit
@@ -101,8 +101,11 @@ void GuiQuitOptions::initializeMenu()
 	addWithLabel(_("SHOW ACTION NAME AS MENU OPTION"), show_action_menu);
 	addSaveFunc([this, show_action_menu]
 		{
-			if (Settings::getInstance()->setBool("ShowOnlyExitActionAsMenu", show_action_menu->getState()))
+			if (Settings::getInstance()->getBool("ShowOnlyExitActionAsMenu") != show_action_menu->getState())
+			{
+				Settings::getInstance()->setBool("ShowOnlyExitActionAsMenu", show_action_menu->getState());
 				setVariable("reloadGuiMenu", true);
+			}
 		});
 
 	// hide "quit emulationstation"
@@ -110,8 +113,9 @@ void GuiQuitOptions::initializeMenu()
 	addWithLabel(_("HIDE \"QUIT EMULATIONSTATION\" OPTION"), hide_quit_es);
 	addSaveFunc([this, hide_quit_es]
 		{
-			if (Settings::getInstance()->setBool("HideQuitEsOption", hide_quit_es->getState()))
-			{		
+			if (Settings::getInstance()->getBool("HideQuitEsOption") != hide_quit_es->getState())
+			{
+				Settings::getInstance()->setBool("HideQuitEsOption", hide_quit_es->getState());
 				if (Settings::getInstance()->getBool("ShowOnlyExit")
 					&& hide_quit_es->getState() && (Settings::getInstance()->getString("OnlyExitAction") == "exit_es"))
 				{

@@ -2,13 +2,13 @@
 #include "Log.h"
 #include "platform.h"
 #include "utils/FileSystemUtil.h"
+#include "utils/AsyncUtil.h"
 
 namespace Scripting
 {
 	int fireEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4)
 	{
-		LOG(LogDebug) << "Scripting::fireEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
-
+		LOG(LogInfo) << "Scripting::fireEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
 		std::list<std::string> scriptDirList;
 		std::string test;
 
@@ -36,13 +36,13 @@ namespace Scripting
 
 				std::string script = *it;
 
-                for (auto arg : { arg1, arg2, arg3, arg4 })
-                {
-                    if (arg.empty())
-                        break;
+				for (auto arg : { arg1, arg2, arg3, arg4 })
+				{
+					if (arg.empty())
+						break;
 
-                    script += " \"" + arg + "\"";
-                }
+					script += " \"" + arg + "\"";
+				}
 
 				LOG(LogDebug) << "Scripting::fireEvent() - executing: " << script;
 				ret = runSystemCommand(script, "", NULL);
@@ -51,6 +51,15 @@ namespace Scripting
 			}
 		}
 		return ret;
+	}
+
+	void fireAsyncEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4)
+	{
+		LOG(LogInfo) << "Scripting::fireAsyncEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
+		Utils::Async::run([eventName, arg1, arg2, arg3, arg4] (void)
+		{
+			return fireEvent(eventName, arg1, arg2, arg3, arg4);
+		});
 	}
 
 } // Scripting::

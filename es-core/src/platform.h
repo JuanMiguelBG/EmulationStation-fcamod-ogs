@@ -133,6 +133,7 @@ struct NetworkInformation
 };
 
 NetworkInformation queryNetworkInformation(bool summary);
+bool doPing();
 std::string queryIPAddress();
 bool queryWifiEnabled();
 std::string queryWifiSsid();
@@ -301,8 +302,8 @@ struct RemoteServiceInformation
 	RemoteServiceInformation()
 	{
 		id = RemoteServicesId::UNKNOWN;
-		name = "N/A";
-		platformName = "N/A";
+		name = "unknown";
+		platformName = "unknown";
 		isActive = false;
 		isStartOnBoot = false;
 	}
@@ -314,6 +315,9 @@ struct RemoteServiceInformation
 	bool isStartOnBoot;
 };
 
+RemoteServicesId getRemoteServiceId(const std::string &name = "unknown");
+RemoteServicesId getRemoteServiceIdFromPlatformName(const std::string &platform = "unknown");
+std::string getRemoteServiceNameFromPlatformName(const std::string &platform = "unknown");
 std::string getRemoteServiceName(RemoteServicesId id = RemoteServicesId::UNKNOWN);
 std::string getRemoteServicePlatformName(RemoteServicesId id = RemoteServicesId::UNKNOWN);
 RemoteServiceInformation queryRemoteServiceStatus(RemoteServicesId id = RemoteServicesId::UNKNOWN);

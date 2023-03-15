@@ -5,29 +5,49 @@ do_help()
 	echo "Usage:" >&2
 	echo "" >&2
 	echo "$0 set [key] [value]" >&2
-	echo "Valid keys: output_device, volume_level" >&2
+	echo "Valid keys: audio_card, output_device, volume_level" >&2
 	echo "" >&2
 	echo "or" >&2
 	echo "" >&2
 	echo "$0 get [key]" >&2
-	echo "Valid keys: audio_cards, audio_devices, output_devices, volume_level" >&2
+	echo "Valid keys: audio_info, audio_cards, audio_device, output_devices, audio_card, output_device, volume_control, volume_level, hw_audio_card_name_by_index <CARD_INDEX>, hw_audio_card_name_by_name <NAME>, hw_audio_card_index_by_name <NAME>" >&2
 	echo "" >&2
 	echo "or" >&2
 	echo "" >&2
 	echo "$0 toggle (between Speaker or Headphone)" >&2
+	echo "$0 is_usb_audio_connected" >&2
+	echo "$0 is_usb_audio_default_card" >&2
+	echo "$0 config_sound_card" >&2
 }
 
-is_bluetooth_audio_device_connected()
+is_usb_audio_connected()
 {
-	#print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_device_connected()'"
+	#print_log $LOG_FILE "INFO" "Executing 'is_usb_audio_connected()'"
 
-	if [[ $(amixer scontrols | grep -c " A2DP'") -gt 0 ]]; then
-		# BT audio devices connected
-		#print_log $LOG_FILE "INFO" "is_enabled() - A total of $BT_AUDIO_DEVICES_CONNECTED Bluetooth Audio Devices connected"
+	if [[ $(aplay -l | grep -c 'USB Audio') -gt 0 ]]; then
+		# USB audio devices connected
+		#print_log $LOG_FILE "INFO" "is_usb_audio_connected() - One USB Audio Device connected"
 		return 0
 	fi
-	#print_log $LOG_FILE "INFO" "is_enabled() - No Bluetooth Audio Devices connected"
-	# NO BT audio devices connected
+	#print_log $LOG_FILE "INFO" "is_usb_audio_connected() - No USB Audio Device connected"
+	# NO USB audio devices connected
+	return 1
+}
+
+is_usb_audio_default_card()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_usb_audio_default_card()'"
+
+	is_usb_audio_connected
+	if [ $? -eq 0 ]; then
+		# USB audio card is the default
+		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic usb) -gt 0 ]]; then
+			#print_log $LOG_FILE "INFO" "is_usb_audio_default_card() - The USB Audio card, is the default audio card"
+			return 0
+		fi
+	fi
+	#print_log $LOG_FILE "INFO" "is_usb_audio_default_card() - The USB Audio card, is NOT the default audio card"
+	# NO USB audio devices connected
 	return 1
 }
 
@@ -35,154 +55,457 @@ get_output_device()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'get_output_device()'"
 
-	local output_device=""
-
-	is_bluetooth_audio_device_connected
+	es-bluetooth is_bluetooth_audio_device_connected
 	if [ $? -eq 0 ]; then
 		# bluetooth audio device
-		output_device=$(awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'"))
-		#print_log $LOG_FILE "DEBUG" "get_output_device() - Getting Bluetooth output device: '$output_device'"
-	else
-		output_device=`awk -F'[=]' '/values=/ { print $2 }' <(amixer cget name='Playback Path' | grep ": values=")`
-		output_device=`awk -F"['\'']" '{ print $2 }' <(amixer cget name='Playback Path' | grep "#$output_device")`
-		#print_log $LOG_FILE "DEBUG" "get_output_device() - Getting output device: '$output_device'"
+		local output_device=`es-bluetooth audio_device_connected`
+		#print_log $LOG_FILE "DEBUG" "Executing 'get_output_device()' - Getting Bluetooth output device: '$output_device'"
+		echo "${output_device^^}"
+		return
+	fi
+
+	es-display is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_output_device()' - 'HDMI'"
+		echo "HDMI"
+		return
+	fi
+
+	is_usb_audio_default_card
+	if [ $? -eq 0 ]; then
+		# usb audio card
+		local output_device=`awk -F'[][]' '{ print $2 }' <(aplay -l | grep -i usb)`
+		#print_log $LOG_FILE "DEBUG" "Executing 'get_output_device()' - Getting USB Audio output device: '$output_device'"
+		echo "${output_device^^}"
+		return
+	fi
+
+	local output_device=`awk -F'[=]' '/values=/ { print $2 }' <(amixer cget name='Playback Path' 2> /dev/null | grep ": values=")`
+	if [ ! -z "$output_device" ]; then
+		output_device=`awk -F"['\'']" '{ print $2 }' <(amixer cget name='Playback Path' 2> /dev/null | grep "#$output_device")`
+		#print_log $LOG_FILE "DEBUG" "Executing 'get_output_device()' - Getting output device: '$output_device'"
 	fi
 
 	if [ -z "$output_device" ]; then
-		#print_log $LOG_FILE "DEBUG" "get_output_device() - Output device is empty, setting default value 'SPK'"
+		#print_log $LOG_FILE "DEBUG" "Executing 'get_output_device()' - Output device is empty, setting default value 'SPK'"
 		output_device="SPK"
 	fi
 
-	#print_log $LOG_FILE "INFO" "get_output_device() - device: '$output_device'"
+	#print_log $LOG_FILE "INFO" "Executing 'get_output_device()' - device: '$output_device'"
 	echo "$output_device"
 }
 
-get_volume_level()
+do_get_volume_level()
 {
-	#print_log $LOG_FILE "INFO" "Executing 'get_volume_level()'"
-	local audio_device="Master"
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_volume_level()'"
 
-	is_bluetooth_audio_device_connected
-	if [ $? -eq 0 ]; then
-		# bluetooth audio device, skip
-		#print_log $LOG_FILE "DEBUG" "get_volume_level() - bluetooth audio device"
-		audio_device=$(awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'"))
-	fi
+	local volume_control="$(get_volume_control)"
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_get_volume_level()' - volume control: '$volume_control'"
 
-	local volume=`awk -F'[][%]' '/Left:/ { print $2 }' <(amixer sget "$audio_device")`
-	#print_log $LOG_FILE "DEBUG" "get_volume_level() - volume: $volume%"
+	local volume=`awk -F'[][%]' '/Left:/ { print $2 }' <(amixer sget "$volume_control" 2> /dev/null)`
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_get_volume_level()' - volume: $volume%"
 	echo "$volume"
 }
 
-set_volume_level()
+do_set_volume_level()
 {
 	local value=$1
-	local audio_device="Master"
-	#print_log $LOG_FILE "INFO" "Executing 'set_volume_level()' - volume: $value%"
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_volume_level()' - volume: $value%"
 
-	is_bluetooth_audio_device_connected
-	if [ $? -eq 0 ]; then
-		# bluetooth audio device, skip
-		#print_log $LOG_FILE "DEBUG" "config_set_value() - bluetooth audio device"
-		audio_device=$(awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'"))
-	fi
+	local volume_control="$(get_volume_control)"
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_volume_level()' - volume control: '$volume_control', volume: $value%"
 
-	#print_log $LOG_FILE "DEBUG" "set_volume_level() - audio device: '$audio_device', volume: $value%"
-
-	amixer sset "$audio_device" "$value%" > /dev/null
+	amixer sset "$volume_control" "$value%" 2>&1 > /dev/null
 }
 
-config_set_value ()
+do_set_output_device()
+{
+	local value=$1
+
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_output_device()', value: '$value'"
+
+	es-bluetooth is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device, skip
+		#print_log $LOG_FILE "DEBUG" "do_set_output_device() - Bluetooth audio device, skip"
+		return;
+	fi
+
+	es-display is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "DEBUG" "Executing 'do_set_output_device()' - HDMI audio card, skip"
+		return
+	fi
+
+	is_usb_audio_default_card
+	if [ $? -eq 0 ]; then
+		# USB audio device, skip
+		#print_log $LOG_FILE "DEBUG" "do_set_output_device() - USB audio card, skip"
+		return;
+	fi
+
+	local output_device=$(get_output_device)
+	if [[ "$output_device" = *"HP" ]]; then
+		if [ "$value" = "SPK" ]; then
+			amixer cset name='Playback Path' "OFF" > /dev/null
+			local volume=$(do_get_volume_level)
+			local step=10
+			if [ $volume -lt 50 ]; then
+				step=5
+			fi
+			volume=$(($volume+$step))
+			do_set_volume_level $volume
+			#print_log $LOG_FILE "DEBUG" "do_set_output_device() - Switching from '$output_device' to 'SPK', volume: $volume%"
+		fi
+	elif [ "$output_device" = "SPK" ]; then
+		if [[ "$value" = *"HP" ]]; then
+			amixer cset name='Playback Path' "OFF" > /dev/null
+			local volume=$(do_get_volume_level)
+			local step=10
+			if [ $volume -lt 50 ]; then
+				step=5
+			fi
+			volume=$(($volume-$step))
+			do_set_volume_level $volume
+			#print_log $LOG_FILE "DEBUG" "do_set_output_device() - Switching from '$output_device' to 'HP', volume: $volume%"
+		fi
+	fi
+	amixer cset name='Playback Path' $value > /dev/null
+}
+
+do_set_audio_card()
+{
+	local audio_card=${1^^}
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - audio card: '$audio_card'"
+
+	if [[ "$audio_card" == *"BLUETOOTH"* ]]; then
+		#print_log $LOG_FILE "WARNING" "Executing 'do_set_audio_card()' - Setting the Bluetooth audio card"
+		cp -f "$ALSA_BT_CFG_FILE" "$ALSA_CFG_FILE"
+		return 0
+	fi
+
+	if [[ "$audio_card" == *"USB"* ]]; then
+		local index=$(get_hw_audio_card_index_by_name usb)
+		#print_log $LOG_FILE "DEBUG" "Executing 'do_set_audio_card()' - USB AUDIO card at index '$index'"
+		if [ ! -z "$index" ]; then
+			cp -f "$ALSA_USB_CFG_FILE" "$ALSA_CFG_FILE"
+			sed -i 's/_AUDIO_CARD_INDEX_/'"$index"'/g' "$ALSA_CFG_FILE"
+
+			if [[ $(cat "$ALSA_CFG_FILE" | grep -c "hw:$index,0") -gt 0 ]]; then
+				# USB audio card succesfully configured
+				#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' successfully"
+				amixer sset Speaker 100% 2>&1 > /dev/null
+				amixer sset Master 40% 2>&1 > /dev/null
+				return 0
+			fi
+			#print_log $LOG_FILE "ERROR" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' failed"
+		fi
+	fi
+
+	# set default sound card
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - configuring DEFAULT/HDMI sound card"
+	cp -f "$ALSA_DEFAULT_CFG_FILE" "$ALSA_CFG_FILE"
+	return 0
+}
+
+config_set_value()
 {
 	local key=$1
 	local value=$2
 
-	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()', key: '$key', value: '$value'"
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()' - key: '$key', value: '$value'"
 
-	if [ "$key" = "output_device" ]; then
+	case "${key}" in
+			"audio_card")
+				do_set_audio_card "$value" || return 1
+			;;
+			"output_device")
+				do_set_output_device "$value" || return 1
+			;;
+			"volume_level")
+				do_set_volume_level "$value" || return 1
+			;;
+			*)
+				do_help
+				>&2 echo "error: invalid get command ${key}"
+				#print_log $LOG_FILE "ERROR" "Executing 'config_set_value()' - ##### Invalid get command ${key} #####"
+				exit 1
+	esac
+}
 
-		is_bluetooth_audio_device_connected
-		if [ $? -eq 0 ]; then
-			# bluetooth audio device, skip
-			#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', bluetooth audio device, skip"
-			return;
-		fi
-
-		local output_device=$(get_output_device)
-		if [[ "$output_device" = *"HP" ]]; then
-			if [ "$value" = "SPK" ]; then
-				amixer cset name='Playback Path' "OFF" > /dev/null
-				local volume=$(get_volume_level)
-				local step=10
-				if [ $volume -lt 50 ]; then
-					step=5
-				fi
-				volume=$(($volume+$step))
-				set_volume_level $volume
-				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'SPK', volume: $volume%"
-			fi
-		elif [ "$output_device" = "SPK" ]; then
-			if [[ "$value" = *"HP" ]]; then
-				amixer cset name='Playback Path' "OFF" > /dev/null
-				local volume=$(get_volume_level)
-				local step=10
-				if [ $volume -lt 50 ]; then
-					step=5
-				fi
-				volume=$(($volume-$step))
-				set_volume_level $volume
-				#print_log $LOG_FILE "DEBUG" "config_set_value() - key: 'output_device', switching from '$output_device' to 'HP', volume: $volume%"
-			fi
-		fi
-		amixer cset name='Playback Path' $value > /dev/null
-	elif [ "$key" = "volume_level" ]; then
-		set_volume_level $value
+get_audio_cards()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()'"
+	es-bluetooth is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - BLUETOOTH audio card"
+		echo "BLUETOOTH AUDIO"
+		return
 	fi
+
+	es-display is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - HDMI audio card"
+		echo "HDMI"
+		return
+	fi
+
+	is_usb_audio_connected
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - 'default' and 'USB AUDIO'"
+		echo -e "DEFAULT\nUSB AUDIO"
+		return
+	fi
+
+	echo "DEFAULT"
+}
+
+get_audio_device()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_audio_device()'"
+	es-bluetooth is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device
+		local bt_value=`es-bluetooth audio_device_connected`
+		#print_log $LOG_FILE "DEBUG" "get_audio_device() - bluetooth audio device, value: '$bt_value'"
+		echo "$bt_value"
+		return
+	fi
+
+	es-display is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_device()' - HDMI audio device"
+		echo "HDMI"
+		return
+	fi
+
+	is_usb_audio_default_card
+	if [ $? -eq 0 ]; then
+		# usb audio card
+		audio_device=`awk -F'[][]' '{ print $2 }' <(aplay -l | grep -i usb)`
+		#print_log $LOG_FILE "DEBUG" "Executing get_audio_device() - Getting USB AUDIO output device: '$audio_device'"
+		echo "${audio_device^^}"
+		return
+	fi
+
+	local audio_device=`awk -F'[],]' '{ print $2 }' <(aplay -l | grep -i rk817)`
+	echo "${audio_device^^}"
+	#print_log $LOG_FILE "DEBUG" "get_audio_device() - audio device, value: '$audio_device'"
+}
+
+get_volume_control()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_volume_control()'"
+	es-bluetooth is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device
+		local bt_value=`es-bluetooth audio_device_connected`
+		#print_log $LOG_FILE "DEBUG" "get_volume_control() - bluetooth volume control, value: '$bt_value'"
+		echo "$bt_value"
+		return
+	fi
+
+	#print_log $LOG_FILE "DEBUG" "get_volume_control() - volume control, value: 'Master'"
+	echo "Master"
+}
+
+get_output_devices()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_output_devices()'"
+
+	es-bluetooth is_bluetooth_audio_device_connected || es-display is_hdmi_mode || is_usb_audio_default_card
+	if [ $? -eq 0 ]; then
+		# USB audio device, skip
+		local output_device="$(get_output_device)"
+		#print_log $LOG_FILE "INFO" "get_output_devices() - output devices: '$output_device'"
+		echo -e "${output_device^^}"
+		return;
+	fi
+
+	local output_devices=""
+	local od_data=`amixer cget name='Playback Path' 2> /dev/null | grep -wi 'item'`
+	[[ ! -z $(echo "$od_data" | grep -iw 'OFF') ]] && output_devices+="OFF\n"
+	[[ ! -z $(echo "$od_data" | grep -iw 'SPK') ]] && output_devices+="SPK\n"
+	[[ ! -z $(echo "$od_data" | grep -iw 'HP') ]] && output_devices+="HP\n"
+	[[ ! -z $(echo "$od_data" | grep -iw 'SPK_HP') ]] && output_devices+="SPK_HP"
+
+	echo -e "$output_devices"
+	#print_log $LOG_FILE "INFO" "Executing 'get_output_devices()' - output devices: '$output_devices'"
+}
+
+get_audio_card()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_audio_card()'"
+
+	es-bluetooth is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device
+		local bt_value=`es-bluetooth audio_device_connected`
+		#print_log $LOG_FILE "DEBUG" "get_actual_audio_card() - value: 'BLUETOOTH AUDIO'"
+		echo "BLUETOOTH AUDIO"
+		return
+	fi
+
+	es-display is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_card()' - value: 'HDMI'"
+		echo "HDMI"
+		return
+	fi
+
+	is_usb_audio_default_card
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_card()' - value: 'USB AUDIO'"
+		echo "USB AUDIO"
+		return
+	fi
+
+	echo "DEFAULT"
+}
+
+get_hw_audio_card_names()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_names()'"
+
+	local result=""
+
+	while IFS= read -r AUDIO_CARD; do
+		#print_log $LOG_FILE "DEBUG" "Executing 'get_hw_audio_card_names()' - audio card: '$AUDIO_CARD'"
+		if [ -z "$AUDIO_CARD" ]; then
+			#print_log $LOG_FILE "DEBUG" "Executing 'get_hw_audio_card_names()' - empty audio card, skipping ..."
+			continue
+		fi
+
+		if [[ "${AUDIO_CARD,,}" == *"hdmi"* ]]; then
+			#print_log $LOG_FILE "DEBUG" "Executing 'get_hw_audio_card_names()' - HDMI audio card, skipping ..."
+			continue
+		fi
+
+		result+="\n$(trim "$AUDIO_CARD")"
+	done <<< "$(awk -F"[:\[]" '{ print $2 }' <(aplay -l | grep "card "))"
+
+	if [ -z "$result" ]; then
+		echo ""
+	else
+		echo -e "${result:2:${#result}}"
+	fi
+	#print_log $LOG_FILE "DEBUG" "Executing 'get_hw_audio_card_names()' - result: '$result'"
+}
+
+get_hw_audio_card_name_by_index()
+{
+	local card_id=$1
+
+	if [ -z "$card_id" ] || ! [[ $card_id =~ ^-?[0-9]+$ ]] || [[ $(aplay --list-devices | grep -c "card ") -le $card_id ]] || [[ $card_id -le 0 ]]; then
+		# default card
+		card_id="0"
+	fi
+
+	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_name()' - card index: '$card_id'"
+	awk '{ print $3 }' <(aplay -l | grep "card $card_id")
+}
+
+get_hw_audio_card_name_by_name()
+{
+	local card_name=$1
+
+	if [ -z "$card_name" ] || [[ ${#card_name} -lt 3 ]] || [[ "${card_name,,}" == "roc"* ]]; then
+		# default card
+		card_name="rk817"
+	fi
+
+	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_name_by_name()' - card like name: '$card_name'"
+	awk '{ print $3 }' <(aplay -l | grep "card " | grep -i "$card_name")
+}
+
+get_hw_audio_card_index_by_name()
+{
+	local card_name=$1
+
+	if [ -z "$card_name" ] || [[ ${#card_name} -lt 3 ]] || [[ "${card_name,,}" == "roc"* ]]; then
+		# default card
+		card_name="rk817"
+	fi
+
+	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_name_by_name()' - card like name: '$card_name'"
+	local index=$(awk '{ print $2 }' <(aplay -l | grep "card " | grep -i "$card_name"))
+	index="${index/:/}"
+	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_name_by_name()' - card like name '$card_name' at index ' $index'"
+	echo "$index"
+}
+
+get_audio_info()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_audio_info()'"
+
+	local audio_card="$(get_audio_card)"
+	local audio_cards="$(get_audio_cards)"
+	local audio_device="$(get_audio_device)"
+	local output_device="$(get_output_device)"
+	local output_devices="$(get_output_devices)"
+
+	local result="<audio_info card=\"$audio_card\" cards=\"${audio_cards//$'\n'/,}\" device=\"$audio_device\" output=\"$output_device\" outputs=\"${output_devices//$'\n'/,}\"/>"
+	#print_log $LOG_FILE "INFO" "Executing 'get_audio_info()' - result: $result"
+	echo "$result"
 }
 
 config_get_value ()
 {
 	local key=$1
+	local parameter=$2
 
-	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()', key: '$key"
+	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()' - key: '$key', parameter: '$parameter'"
 
-	if [ "$key" = "audio_cards" ]; then
-		echo "default"
-	elif [ "$key" = "audio_devices" ]; then
-		is_bluetooth_audio_device_connected
-		if [ $? -eq 0 ]; then
-			# bluetooth audio device
-			#print_log $LOG_FILE "DEBUG" "config_get_value() - bluetooth audio device, value: 'Bluetooth Audio'"
-			echo "Bluetooth Audio"
-		else
-			#print_log $LOG_FILE "DEBUG" "config_get_value() - audio device, value: 'Master'"
-			echo "Master"
-		fi
-	elif [ "$key" = "output_devices" ]; then
-		is_bluetooth_audio_device_connected
-		if [ $? -eq 0 ]; then
-			# bluetooth audio device
-			local bt_value=`awk -F"['\'']" '{ print $2 }' <(amixer scontrols | grep " A2DP'")`
-			#print_log $LOG_FILE "DEBUG" "config_get_value() - bluetooth output devices, value: '$bt_value'"
-			echo "$bt_value"
-		else
-			#print_log $LOG_FILE "DEBUG" "config_get_value() - output devices, value: 'OFF\nSPK\nHP\nSPK_HP'"
-			echo -e "OFF\nSPK\nHP\nSPK_HP"
-		fi
-	elif [ "$key" = "output_device" ]; then
-		#print_log $LOG_FILE "DEBUG" "config_get_value() - calling 'get_output_device()'"
-		get_output_device
-	elif [ "$key" = "volume_level" ]; then
-		#print_log $LOG_FILE "DEBUG" "config_get_value() - calling 'get_volume_level()'"
-		get_volume_level
-	fi
+	case "${key}" in
+			"audio_info")
+				get_audio_info
+			;;
+			"audio_cards")
+				get_audio_cards
+			;;
+			"audio_device")
+				get_audio_device
+			;;
+			"output_device")
+				get_output_device
+			;;
+			"output_devices")
+				get_output_devices
+			;;
+			"volume_level")
+				do_get_volume_level
+			;;
+			"volume_control")
+				get_volume_control
+			;;
+			"audio_card")
+				get_audio_card
+			;;
+			"hw_audio_card_names")
+				get_hw_audio_card_names
+			;;
+			"hw_audio_card_name_by_index")
+				get_hw_audio_card_name_by_index "$parameter"
+			;;
+			"hw_audio_card_name_by_name")
+				get_hw_audio_card_name_by_name "$parameter"
+			;;
+			"hw_audio_card_index_by_name")
+				get_hw_audio_card_index_by_name "$parameter"
+			;;
+			*)
+				do_help
+				>&2 echo "error: invalid get command ${key}"
+				#print_log $LOG_FILE "Executing 'config_get_value()' - ERROR" "##### Invalid get command ${key} #####"
+				exit 1
+	esac
 }
 
 do_toggle_output()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'do_toggle_output()"
 
-	is_bluetooth_audio_device_connected
+	es-bluetooth is_bluetooth_audio_device_connected
 	if [ $? -eq 0 ]; then
 		# bluetooth audio device, skip
 		#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Is bluetooth audio device, skip"
@@ -202,12 +525,51 @@ do_toggle_output()
 	return 0
 }
 
+do_config_sound_card()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_config_sound_card()"
+
+	es-bluetooth is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# bluetooth audio device
+		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic BLUETOOTH) -gt 0 ]]; then
+			#print_log $LOG_FILE "INFO" "do_config_sound_card() - The Bluetooth Audio card, is the default audio card, skip"
+			return 0
+		fi
+
+		do_set_audio_card BLUETOOTH && return 0 || return 1
+	fi
+
+	is_usb_audio_connected
+	if [ $? -eq 0 ]; then
+		# usb audio card
+		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic USB) -gt 0 ]]; then
+			#print_log $LOG_FILE "INFO" "do_config_sound_card() - The USB Audio card, is the default audio card, skip"
+			return 0
+		fi
+
+		do_set_audio_card USB && return 0 || return 1
+	fi
+
+
+	if [[ $(cat "$ALSA_CFG_FILE" | grep -ic "hw:0,0") -gt 0 ]]; then
+		#print_log $LOG_FILE "INFO" "do_config_sound_card() - The DEFAULT/HDMI Audio card, is the default audio card, skip"
+		return 0
+	fi
+
+	do_set_audio_card DEFAULT && return 0 || return 1
+}
+
 # ******************************************************************************************
 
 # Configure ES commons variables
 . es-log_scripts
 
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-sound.log"
+ALSA_CFG_FILE="$USER_HOME_PATH/.asoundrc"
+ALSA_DEFAULT_CFG_FILE="$USER_HOME_PATH/.asoundrcbak"
+ALSA_BT_CFG_FILE="$USER_HOME_PATH/.asoundrcbt"
+ALSA_USB_CFG_FILE="$USER_HOME_PATH/.asoundrc-usb-template"
 
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
@@ -237,10 +599,19 @@ case "${ACTION}" in
         config_set_value "$1" "$2" || exit_execution 1 "$1" "$2"
     ;;
     "get")
-        config_get_value "$1"
+        config_get_value "$1" "$2"
     ;;
     "toggle")
         do_toggle_output || exit_execution 1
+    ;;
+    "is_usb_audio_connected")
+        is_usb_audio_connected || exit_execution 1
+    ;;
+    "is_usb_audio_default_card")
+        is_usb_audio_default_card || exit_execution 1
+    ;;
+    "config_sound_card")
+        do_config_sound_card || exit_execution 1
     ;;
     *)
         do_help

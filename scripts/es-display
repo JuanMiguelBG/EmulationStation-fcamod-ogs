@@ -179,8 +179,8 @@ is_hdmi_mode()
 			fi
 		fi
 
-		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
 		# HDMI mode NOT connected
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
 		return 1
 	fi
 
@@ -190,8 +190,8 @@ is_hdmi_mode()
 		return 0
 	fi
 
-	#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
 	# HDMI mode NOT connected
+	#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
 	return 1
 }
 

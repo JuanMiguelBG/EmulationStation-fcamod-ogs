@@ -318,7 +318,7 @@ bool queryBatteryCharging()
 {
 	std::string batteryStatusPath = queryBatteryRootPath() + "/status";
 	if ( Utils::FileSystem::exists(batteryStatusPath) )
-		return Utils::String::equalsIgnoreCase( Utils::String::replace(Utils::FileSystem::readAllText(batteryStatusPath), "\n", ""), "charging" );
+		return Utils::String::compareIgnoreCase( Utils::String::replace(Utils::FileSystem::readAllText(batteryStatusPath), "\n", ""), "discharging" );
 
 	return false;
 }
@@ -552,6 +552,14 @@ NetworkInformation queryNetworkInformation(bool summary)
 std::string queryIPAddress()
 {
 	return queryNetworkInformation(true).ip_address;
+}
+
+bool doPing()
+{
+	if (!executeSystemScript("sudo timeout 1 ping -c 1 -t 255 8.8.8.8")) // ping Google DNS
+		return executeSystemScript("sudo timeout 2 ping -c 1 -t 255 8.8.4.4"); // ping Google secondary DNS & give 2 seconds
+
+	return true;
 }
 
 bool queryNetworkConnected()
@@ -966,6 +974,60 @@ bool setCurrentTimezone(std::string timezone)
 		return executeSystemScript("/usr/bin/sudo timedatectl set-timezone \"" + timezone + "\" &");
 
 	return executeSystemScript("sudo ln -sf \"/usr/share/zoneinfo/" + timezone +"\" /etc/localtime &");
+}
+
+RemoteServicesId getRemoteServiceId(const std::string &name)
+{
+	if (name == "NTP")
+		return NTP;
+	else if (name == "SAMBA")
+		return SAMBA;
+	else if (name == "NETBIOS")
+		return NETBIOS;
+	else if (name == "SSH")
+		return SSH;
+	else if (name == "FILE-BROWSER")
+		return FILE_BROWSER;
+	else if (name == "NETWORK-MANAGER-WAIT-ONLINE")
+		return NETWORK_MANAGER_WAIT_ONLINE;
+
+	return UNKNOWN;
+}
+
+RemoteServicesId getRemoteServiceIdFromPlatformName(const std::string &platform)
+{
+	if (platform == "ntp")
+		return NTP;
+	else if (platform == "smbd.service")
+		return SAMBA;
+	else if (platform == "nmbd.service")
+		return NETBIOS;
+	else if (platform == "ssh.service")
+		return SSH;
+	else if (platform == "filebrowser")
+		return FILE_BROWSER;
+	else if (platform == "NetworkManager-wait-online")
+		return NETWORK_MANAGER_WAIT_ONLINE;
+
+	return UNKNOWN;
+}
+
+std::string getRemoteServiceNameFromPlatformName(const std::string &platform)
+{
+	if (platform == "ntp")
+		return "NTP";
+	else if (platform == "smbd.service")
+		return "SAMBA";
+	else if (platform == "nmbd.service")
+		return "NETBIOS";
+	else if (platform == "ssh.service")
+		return "SSH";
+	else if (platform == "filebrowser")
+		return "FILE-BROWSER";
+	else if (platform == "NetworkManager-wait-online")
+		return "NETWORK-MANAGER-WAIT-ONLINE";
+
+	return "N/A";
 }
 
 std::string getRemoteServiceName(RemoteServicesId id)
