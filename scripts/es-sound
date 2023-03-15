@@ -95,27 +95,27 @@ get_output_device()
 	echo "$output_device"
 }
 
-get_volume_level()
+do_get_volume_level()
 {
-	#print_log $LOG_FILE "INFO" "Executing 'get_volume_level()'"
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_volume_level()'"
 
 	local volume_control="$(get_volume_control)"
-	#print_log $LOG_FILE "DEBUG" "get_volume_level() - volume control: '$volume_control'"
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_get_volume_level()' - volume control: '$volume_control'"
 
 	local volume=`awk -F'[][%]' '/Left:/ { print $2 }' <(amixer sget "$volume_control" 2> /dev/null)`
-	#print_log $LOG_FILE "DEBUG" "get_volume_level() - volume: $volume%"
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_get_volume_level()' - volume: $volume%"
 	echo "$volume"
 }
 
-set_volume_level()
+do_set_volume_level()
 {
 	local value=$1
-	#print_log $LOG_FILE "INFO" "Executing 'set_volume_level()' - volume: $value%"
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_volume_level()' - volume: $value%"
 
 	local volume_control="$(get_volume_control)"
-	#print_log $LOG_FILE "DEBUG" "set_volume_level() - volume control: '$volume_control', volume: $value%"
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_volume_level()' - volume control: '$volume_control', volume: $value%"
 
-	amixer sset "$volume_control" "$value%" > /dev/null
+	amixer sset "$volume_control" "$value%" 2>&1 > /dev/null
 }
 
 do_set_output_device()
@@ -148,25 +148,25 @@ do_set_output_device()
 	if [[ "$output_device" = *"HP" ]]; then
 		if [ "$value" = "SPK" ]; then
 			amixer cset name='Playback Path' "OFF" > /dev/null
-			local volume=$(get_volume_level)
+			local volume=$(do_get_volume_level)
 			local step=10
 			if [ $volume -lt 50 ]; then
 				step=5
 			fi
 			volume=$(($volume+$step))
-			set_volume_level $volume
+			do_set_volume_level $volume
 			#print_log $LOG_FILE "DEBUG" "do_set_output_device() - Switching from '$output_device' to 'SPK', volume: $volume%"
 		fi
 	elif [ "$output_device" = "SPK" ]; then
 		if [[ "$value" = *"HP" ]]; then
 			amixer cset name='Playback Path' "OFF" > /dev/null
-			local volume=$(get_volume_level)
+			local volume=$(do_get_volume_level)
 			local step=10
 			if [ $volume -lt 50 ]; then
 				step=5
 			fi
 			volume=$(($volume-$step))
-			set_volume_level $volume
+			do_set_volume_level $volume
 			#print_log $LOG_FILE "DEBUG" "do_set_output_device() - Switching from '$output_device' to 'HP', volume: $volume%"
 		fi
 	fi
@@ -194,6 +194,8 @@ do_set_audio_card()
 			if [[ $(cat "$ALSA_CFG_FILE" | grep -c "hw:$index,0") -gt 0 ]]; then
 				# USB audio card succesfully configured
 				#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' successfully"
+				amixer sset Speaker 100% 2>&1 > /dev/null
+				amixer sset Master 40% 2>&1 > /dev/null
 				return 0
 			fi
 			#print_log $LOG_FILE "ERROR" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' failed"
@@ -221,7 +223,7 @@ config_set_value()
 				do_set_output_device "$value" || return 1
 			;;
 			"volume_level")
-				set_volume_level "$value" || return 1
+				do_set_volume_level "$value" || return 1
 			;;
 			*)
 				do_help
@@ -471,7 +473,7 @@ config_get_value ()
 				get_output_devices
 			;;
 			"volume_level")
-				get_volume_level
+				do_get_volume_level
 			;;
 			"volume_control")
 				get_volume_control
