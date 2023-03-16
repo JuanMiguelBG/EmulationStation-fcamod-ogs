@@ -219,7 +219,7 @@ void GuiMenu::openDisplaySettings()
 	}
 	else if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))
 	{	// HDMI
-		addEntry(_("CALIBRATE TV").c_str(), false, [this]
+		s->addEntry(_("CALIBRATE TV").c_str(), false, [this]
 			{
 				Window *window = mWindow;
 				delete this;
@@ -3175,24 +3175,27 @@ void GuiMenu::addStatusBarInfo(Window* window)
 
 	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
 
-	// Brightness Information
-	level = ApiSystem::getInstance()->getBrightnessLevel();
-	iconPath = getIconBrightness(level);
-	text.clear();
-	if (!iconPath.empty())
+	if (!SystemConf::getInstance()->getBool("hdmi.mode"))
 	{
-		// icon
-		auto icon = std::make_shared<ImageComponent>(window);
-		icon->setImage(iconPath);
-		icon->setColorShift(theme->Text.color);
-		icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
-		row.addElement(icon, false, false);
-		row.addElement(spacer, false);
-	}
-	else
-		text.append("BRT: ");
+		// Brightness Information
+		level = ApiSystem::getInstance()->getBrightnessLevel();
+		iconPath = getIconBrightness(level);
+		text.clear();
+		if (!iconPath.empty())
+		{
+			// icon
+			auto icon = std::make_shared<ImageComponent>(window);
+			icon->setImage(iconPath);
+			icon->setColorShift(theme->Text.color);
+			icon->setResize(0, theme->Text.font->getLetterHeight() * 1.50f);
+			row.addElement(icon, false, false);
+			row.addElement(spacer, false);
+		}
+		else
+			text.append("BRT: ");
 
-	row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
+		row.addElement(std::make_shared<TextComponent>(window, text.append(std::to_string( level )).append("%  | "), font, color), false);
+	}
 
 	// Bluetooth Information
 	bool status = ApiSystem::getInstance()->isBluetoothEnabled();
