@@ -45,6 +45,20 @@ do_clear_last_played_data() {
         done <<< "$(find $system_dir -name gamelist.xml)"
       fi
     done
+
+    # erase temporal info of games played
+    if [ -d "$ES_HOME_PATH/recovery/$system" ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_last_played_data()' - roms_dir: '$roms_dir'"
+      while IFS= read -r GAMEINFO; do
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_last_played_data()' - file: '$GAMEINFO'"
+        if [ -z "$GAMEINFO" ]; then
+            #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_last_played_data()' - empty game info file, skipping ..."
+            continue
+        fi
+
+        clear_clear_last_played_data_on_file "$GAMEINFO"
+      done <<< "$(find $ES_HOME_PATH/recovery/$system -name *.xml)"
+    fi
 }
 
 do_clear_all_last_played_data() {
@@ -67,6 +81,24 @@ do_clear_all_last_played_data() {
         done <<< "$(find $roms_dir -name gamelist.xml)"
       fi
     done
+
+    # erase temporal info of games played
+    if [ -d "$ES_HOME_PATH/recovery" ]; then
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_all_last_played_data()' - roms_dir: '$roms_dir'"
+      while IFS= read -r GAMEINFO; do
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_all_last_played_data()' - file: '$GAMEINFO'"
+        if [ -z "$GAMEINFO" ]; then
+            #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_all_last_played_data()' - empty game info file, skipping ..."
+            continue
+        fi
+        if [[ "$GAMEINFO" = *"/retropie/"* ]]; then
+            #print_log $LOG_FILE "DEBUG" "Executing 'do_clear_all_last_played_data()' - file '$GAMEINFO' is a retropie elements, skipping ..."
+            continue
+        fi
+
+        clear_clear_last_played_data_on_file "$GAMEINFO"
+      done <<< "$(find $ES_HOME_PATH/recovery -name *.xml)"
+    fi
 }
 
 # ******************************************************************************************
