@@ -407,7 +407,7 @@ void CollectionSystemManager::updateSystemsList()
 		// Move RetroPie / Retrobat system to end
 		for (auto sysIt = SystemData::sSystemVector.cbegin(); sysIt != SystemData::sSystemVector.cend(); )
 		{
-			if ((*sysIt)->getName() == "retropie" || (*sysIt)->getName() == "retrobat")
+			if ((*sysIt)->getName() == "retropie")
 			{
 				SystemData* retroPieSystem = (*sysIt);
 				sysIt = SystemData::sSystemVector.erase(sysIt);
