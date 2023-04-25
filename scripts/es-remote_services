@@ -300,13 +300,13 @@ do_get_all_status()
       fi
 
       local boot="false"
-      is_actived "$service"
+      is_enabled "$service"
       if [ $? -eq 0 ]; then
         boot="true"
       fi
 
       local active="false"
-      is_enabled "$service"
+      is_actived "$service"
       if [ $? -eq 0 ]; then
         active="true"
       fi
