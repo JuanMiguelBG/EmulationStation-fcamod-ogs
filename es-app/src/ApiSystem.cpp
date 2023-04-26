@@ -1650,53 +1650,59 @@ bool ApiSystem::configRemoteService(RemoteServiceInformation service)
 	return setRemoteServiceStatus(service);
 }
 
-void ApiSystem::launchExternalWindow_before(Window *window, const std::string command)
+void ApiSystem::launchExternalWindow_before(Window *window, const std::string command, bool silent)
 {
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before";
 
-    // Backup Brightness and Volume
-	ApiSystem::backupAfterGameValues();
+	if (!silent)
+	{
+		// Backup Brightness and Volume
+		ApiSystem::backupAfterGameValues();
 
-	AudioManager::getInstance()->deinit();
-	VolumeControl::getInstance()->deinit();
-	InputManager::getInstance()->deinit();
-	DisplayPanelControl::getInstance()->deinit();
-	window->deinit();
+		AudioManager::getInstance()->deinit();
+		VolumeControl::getInstance()->deinit();
+		InputManager::getInstance()->deinit();
+		DisplayPanelControl::getInstance()->deinit();
+		window->deinit();
+	}
 
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_before OK";
 
 	Scripting::fireEvent("application-start", command);
 }
 
-void ApiSystem::launchExternalWindow_after(Window *window, const std::string command)
+void ApiSystem::launchExternalWindow_after(Window *window, const std::string command, bool silent)
 {
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_after";
 
 	Scripting::fireEvent("application-end", command);
 
-    // Restore Brightness and Volume
-	ApiSystem::restoreAfterGameValues();
+	if (!silent)
+	{
+		// Restore Brightness and Volume
+		ApiSystem::restoreAfterGameValues();
 
-	window->init();
-	DisplayPanelControl::getInstance()->init();
-	InputManager::getInstance()->init();
-	VolumeControl::getInstance()->init();
-	AudioManager::getInstance()->init();
-	window->normalizeNextUpdate();
-	window->reactivateGui();
+		window->init();
+		DisplayPanelControl::getInstance()->init();
+		InputManager::getInstance()->init();
+		VolumeControl::getInstance()->init();
+		AudioManager::getInstance()->init();
+		window->normalizeNextUpdate();
+		window->reactivateGui();
 
-	AudioManager::getInstance()->playRandomMusic();
+		AudioManager::getInstance()->playRandomMusic();
+	}
 
 	LOG(LogDebug) << "ApiSystem::launchExternalWindow_after OK";
 }
 
-bool ApiSystem::launchKodi(Window *window)
+bool ApiSystem::launchKodi(Window *window, bool silent)
 {
 	LOG(LogDebug) << "ApiSystem::launchKodi()";
 
 	std::string command = "Kodi.sh";
 
-	ApiSystem::launchExternalWindow_before(window, command);
+	ApiSystem::launchExternalWindow_before(window, command, silent);
 
 	int exitCode = system(command.c_str());
 
@@ -1705,7 +1711,7 @@ bool ApiSystem::launchKodi(Window *window)
 	if (WIFEXITED(exitCode))
 		exitCode = WEXITSTATUS(exitCode);
 
-	ApiSystem::launchExternalWindow_after(window, command);
+	ApiSystem::launchExternalWindow_after(window, command, silent);
 
 	// handle end of kodi
 	switch (exitCode)

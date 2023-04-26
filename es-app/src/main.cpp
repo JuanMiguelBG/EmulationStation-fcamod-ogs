@@ -680,21 +680,32 @@ int main(int argc, char* argv[])
 	//always close the log on exit
 	atexit(&onExit);
 
-	if (bootGame.enable_startup_game)
+	if (SystemConf::getInstance()->getBool("kodi.enabled") && SystemConf::getInstance()->getBool("kodi.atstartup"))
 	{
-		std::string gamePath = SystemConf::getInstance()->get("global.bootgame.path");
-		if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
-		{ // clean bootgame settings
-			SystemConf::getInstance()->set("global.bootgame.path", "");
-			SystemConf::getInstance()->set("global.bootgame.cmd", "");
-			SystemConf::getInstance()->set("global.bootgame.info", "");
-		}
-		else
+		// wait for BT devices
+		waitForBluetoothDevices();
+
+		if (!ApiSystem::getInstance()->launchKodi(nullptr, true))
+				LOG(LogWarning) << "MAIN::main() - Shutdown Kodi terminated with non-zero result!";
+	}
+	else
+	{
+		if (bootGame.enable_startup_game)
 		{
-			// wait for BT devices
-			waitForBluetoothDevices();
-			// Run boot game, before Window Create for linux
-			launchStartupGame(gamePath);
+			std::string gamePath = SystemConf::getInstance()->get("global.bootgame.path");
+			if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
+			{ // clean bootgame settings
+				SystemConf::getInstance()->set("global.bootgame.path", "");
+				SystemConf::getInstance()->set("global.bootgame.cmd", "");
+				SystemConf::getInstance()->set("global.bootgame.info", "");
+			}
+			else
+			{
+				// wait for BT devices
+				waitForBluetoothDevices();
+				// Run boot game, before Window Create for linux
+				launchStartupGame(gamePath);
+			}
 		}
 	}
 

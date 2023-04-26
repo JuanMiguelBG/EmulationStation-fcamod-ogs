@@ -255,6 +255,8 @@ void Settings::setDefaults()
 	mBoolMap["AutoscrollMenuEntries"] = true;
 	mBoolMap["CenterMenus"] = false;
 	mBoolMap["AutoMenuWidth"] = false;
+	mBoolMap["kodi.enabled"] = true;
+	mBoolMap["kodi.atstartup"] = false;
 
 	mStringMap["suspend.device.mode"] = "LIGHT";
 	mBoolMap["hdmi.mode"] = false;

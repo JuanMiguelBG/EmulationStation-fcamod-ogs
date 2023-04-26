@@ -61,7 +61,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
 
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
+	if (SystemConf::getInstance()->getBool("kodi.enabled") && ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
 	{
 		addEntry(_("KODI MEDIA CENTER").c_str(), false, [this]
 			{

@@ -4,6 +4,7 @@
 #include "guis/GuiMsgBox.h"
 #include "Window.h"
 #include "ApiSystem.h"
+#include "SystemConf.h"
 
 
 GuiMenusOptions::GuiMenusOptions(Window* window) : GuiSettings(window, _("MENUS SETTINGS").c_str())
@@ -50,7 +51,7 @@ void GuiMenusOptions::initializeMenu(Window* window)
 	addWithLabel(_("OPEN MAIN MENU WITH ANIMATION"), animated_main_menu);
 	addSaveFunc([animated_main_menu]
 		{
-			Settings::getInstance()->setBool("AnimatedMainMenu", animated_main_menu->getState());				
+			Settings::getInstance()->setBool("AnimatedMainMenu", animated_main_menu->getState());
 		});
 
 	// Autoscroll text of the menu options
@@ -63,6 +64,27 @@ void GuiMenusOptions::initializeMenu(Window* window)
 				Settings::getInstance()->setBool("AutoscrollMenuEntries", autoscroll_menu_entry->getState());
 				setVariable("reloadGuiMenu", true);
 			}
+		});
+
+	// Kodi
+	addGroup(_("KODI SETTINGS"));
+
+	auto kodi_enabled = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("kodi.enabled"));
+	addWithLabel(_("ENABLE KODI"), kodi_enabled);
+	addSaveFunc([this, kodi_enabled]
+		{
+			if (SystemConf::getInstance()->getBool("kodi.enabled") != kodi_enabled->getState())
+			{
+				SystemConf::getInstance()->setBool("kodi.enabled", kodi_enabled->getState());
+				setVariable("reloadGuiMenu", true);
+			}
+		});
+
+	auto kodi_boot = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("kodi.atstartup"));
+	addWithLabel(_("LAUNCH KODI AT BOOT"), kodi_boot);
+	addSaveFunc([kodi_boot]
+		{
+			SystemConf::getInstance()->setBool("kodi.atstartup", kodi_boot->getState());
 		});
 
 }

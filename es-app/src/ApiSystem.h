@@ -43,8 +43,8 @@ protected:
 
 	static ApiSystem* instance;
 
-	void launchExternalWindow_before(Window *window, const std::string command);
-	void launchExternalWindow_after(Window *window, const std::string command);
+	void launchExternalWindow_before(Window *window, const std::string command, bool silent = false);
+	void launchExternalWindow_after(Window *window, const std::string command, bool silent = false);
 
 public:
 	enum ScriptId : unsigned int
@@ -272,7 +272,7 @@ public:
 	RemoteServiceInformation getRemoteServiceStatus(RemoteServicesId id);
 	bool configRemoteService(RemoteServiceInformation service);
 
-	virtual bool launchKodi(Window *window);
+	virtual bool launchKodi(Window *window, bool silent = false);
 	virtual bool launchTestControls(Window *window);
 	virtual bool launchCalibrateTv(Window *window);
 
