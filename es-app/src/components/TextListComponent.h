@@ -30,6 +30,7 @@ protected:
 	using IList<TextListData, T>::getTransform;
 	using IList<TextListData, T>::mSize;
 	using IList<TextListData, T>::mCursor;
+	using IList<TextListData, T>::mViewportTop;
 	using IList<TextListData, T>::Entry;
 
 public:
@@ -92,7 +93,7 @@ private:
 	Alignment mAlignment;
 	float mHorizontalMargin;
 
-	int getFirstVisibleEntry();
+	int viewportTop();
 	std::function<void(CursorState state)> mCursorChangedCallback;
 
 	std::shared_ptr<Font> mFont;
@@ -107,10 +108,8 @@ private:
 	std::string mScrollSound;
 	static const unsigned int COLOR_ID_COUNT = 2;
 	unsigned int mColors[COLOR_ID_COUNT];
-	unsigned int mScreenCount;
-	int mStartEntry = 0;
-	unsigned int mCursorPrev = -1;
-	bool mOneEntryUpDn = true;
+	int mViewportHeight;
+	int mCursorPrev = -1;
 
 	ImageComponent mSelectorImage;
 };
@@ -146,7 +145,7 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 	
 	std::shared_ptr<Font>& font = mFont;
 
-	if(size() == 0)
+	if (size() == 0)
 		return;
 
 	Vector2f clipPos(trans.translation().x(), trans.translation().y());
@@ -160,35 +159,39 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 		Renderer::setMatrix(parentTrans);
 	}
 
-
 	const float entrySize = Math::max(font->getHeight(1.0), (float)font->getSize()) * mLineSpacing;
 
-	//number of entries that can fit on the screen simultaniously
-	mScreenCount = Math::round(mSize.y() / entrySize); // (int)(mSize.y() / entrySize); //  + 0.5f -> avoid partial items
-	
-	if(mCursor != mCursorPrev)
+	// number of listentries that can fit on the screen
+	mViewportHeight = Math::round(mSize.y() / entrySize);
+
+	if (mViewportTop == -1)
 	{
-		mStartEntry = (size() > mScreenCount) ? getFirstVisibleEntry() : 0;
+		// returning from screen saver activated game launch
+		mViewportTop = mCursor - mViewportHeight/2;
+	}
+	
+	if (mCursor != mCursorPrev)
+	{
+		mViewportTop = (size() > mViewportHeight) ? viewportTop() : 0;
 		mCursorPrev = mCursor;
 	}
 
-	unsigned int listCutoff = mStartEntry + mScreenCount;
-	if(listCutoff > size())
+	unsigned int listCutoff = mViewportTop + mViewportHeight;
+	if (listCutoff > size())
 		listCutoff = size();
 
-	float y = (mSize.y() - (mScreenCount * entrySize)) * 0.5f;
+	float y = (mSize.y() - (mViewportHeight * entrySize)) * 0.5f;
 
-	// draw selector bar
-	if(mStartEntry < listCutoff)
+	if (mSelectorImage.hasImage())
 	{
-		if (mSelectorImage.hasImage()) {
-			mSelectorImage.setPosition(0.f, y + (mCursor - mStartEntry)*entrySize + mSelectorOffsetY, 0.f);
-			mSelectorImage.render(trans);
-		} else {
-			Renderer::setMatrix(trans);
-			Renderer::drawRect(0.0f, y + (mCursor - mStartEntry)*entrySize + mSelectorOffsetY, mSize.x(),
-					mSelectorHeight, mSelectorColor, mSelectorColorEnd, mSelectorColorGradientHorizontal);
-		}
+		mSelectorImage.setPosition(0.f, y + (mCursor - mViewportTop)*entrySize + mSelectorOffsetY, 0.f);
+		mSelectorImage.render(trans);
+	}
+	else
+	{
+		Renderer::setMatrix(trans);
+		Renderer::drawRect(0.0f, y + (mCursor - mViewportTop)*entrySize + mSelectorOffsetY, mSize.x(),
+			mSelectorHeight, mSelectorColor, mSelectorColorEnd, mSelectorColorGradientHorizontal);
 	}
 
 	// clip to inside margins
@@ -197,17 +200,17 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 	Renderer::pushClipRect(Vector2i((int)(trans.translation().x() + mHorizontalMargin), (int)trans.translation().y()), 
 		Vector2i((int)(dim.x() - mHorizontalMargin*2), (int)dim.y()));
 
-	for(int i = mStartEntry; i < listCutoff; i++)
+	for (int i = mViewportTop; i < listCutoff; i++)
 	{
 		typename IList<TextListData, T>::Entry& entry = mEntries.at((unsigned int)i);
 
 		unsigned int color;
-		if(mCursor == i && mSelectedColor)
+		if (mCursor == i && mSelectedColor)
 			color = mSelectedColor;
 		else
 			color = mColors[entry.data.colorId];
 
-		if(!entry.data.textCache)
+		if (!entry.data.textCache)
 			entry.data.textCache = std::unique_ptr<TextCache>(font->buildTextCache(mUppercase ? Utils::String::toUpper(entry.name) : entry.name, 0, 0, 0x000000FF));
 
 		entry.data.textCache->setColor(color);
@@ -216,27 +219,27 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 
 		switch(mAlignment)
 		{
-		case ALIGN_LEFT:
-			offset[0] = mHorizontalMargin;
-			break;
-		case ALIGN_CENTER:
-			offset[0] = (int)((mSize.x() - entry.data.textCache->metrics.size.x()) / 2);
-			if(offset[0] < mHorizontalMargin)
+			case ALIGN_LEFT:
 				offset[0] = mHorizontalMargin;
-			break;
-		case ALIGN_RIGHT:
-			offset[0] = (mSize.x() - entry.data.textCache->metrics.size.x());
-			offset[0] -= mHorizontalMargin;
-			if(offset[0] < mHorizontalMargin)
-				offset[0] = mHorizontalMargin;
-			break;
+				break;
+			case ALIGN_CENTER:
+				offset[0] = (int)((mSize.x() - entry.data.textCache->metrics.size.x()) / 2);
+				if (offset[0] < mHorizontalMargin)
+					offset[0] = mHorizontalMargin;
+				break;
+			case ALIGN_RIGHT:
+				offset[0] = (mSize.x() - entry.data.textCache->metrics.size.x());
+				offset[0] -= mHorizontalMargin;
+				if (offset[0] < mHorizontalMargin)
+					offset[0] = mHorizontalMargin;
+				break;
 		}
 
 		// render text
 		Transform4x4f drawTrans = trans;
 
 		// currently selected item text might be scrolling
-		if((mCursor == i) && (mMarqueeOffset > 0))
+		if ((mCursor == i) && (mMarqueeOffset > 0))
 			drawTrans.translate(offset - Vector3f((float)mMarqueeOffset, 0, 0));
 		else
 			drawTrans.translate(offset);
@@ -246,7 +249,7 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 
 		// render currently selected item text again if
 		// marquee is scrolled far enough for it to repeat
-		if((mCursor == i) && (mMarqueeOffset2 < 0))
+		if ((mCursor == i) && (mMarqueeOffset2 < 0))
 		{
 			drawTrans = trans;
 			drawTrans.translate(offset - Vector3f((float)mMarqueeOffset2, 0, 0));
@@ -266,91 +269,67 @@ void TextListComponent<T>::render(const Transform4x4f& parentTrans)
 
 
 template <typename T>
-int TextListComponent<T>::getFirstVisibleEntry()
+int TextListComponent<T>::viewportTop()
 {
-	if (mCursorPrev == -1)
-	{
-		// init or returned from emulator
-		mCursorPrev = mCursor;
-		int quot = div(mCursor, mScreenCount).quot;
-		mStartEntry = quot * mScreenCount;
-	}
-	int screenRelCursor = mCursorPrev - mStartEntry;
-	bool cursorCentered = screenRelCursor == mScreenCount/2;
-	int visibleEntryMax = size() - mScreenCount;
-	int firstVisibleEntry = 0;
+	int viewportTopMax = size() - mViewportHeight;
+	int topNew = mViewportTop;
 
-	if(Settings::getInstance()->getBool("UseFullscreenPaging") && !cursorCentered)
+	if (mCursorPrev == -1)
+		mCursorPrev = mCursor;
+
+	int delta = mCursor - mCursorPrev;
+
+	if (Settings::getInstance()->getBool("UseFullscreenPaging"))
 	{
-		// keep visible cursor constant but move visible list (default)
-		firstVisibleEntry = mCursor - screenRelCursor;
-		if(mOneEntryUpDn)
+		// delta may be greater/less than +/-mViewportHeight on re-sorting of list
+		if (delta <= -mViewportHeight || delta >= mViewportHeight
+			// keep cursor sticky at position unless the user navigates
+			// to the middle of the viewport
+			|| delta < 0 && mCursor - mViewportTop < mViewportHeight/2
+			|| delta > 0 && mCursor - mViewportTop > mViewportHeight/2)
 		{
-			int delta = mCursor - mCursorPrev;
-			// detect rollover (== delta is more than one item)
-			if(delta < -3)
-				firstVisibleEntry = 0;
-			else if(delta > 3)
-				firstVisibleEntry = visibleEntryMax;
-			else if(screenRelCursor < mScreenCount/2 && delta > 0 /*down pressed*/
-				|| screenRelCursor > mScreenCount/2 && delta < 0 /*up pressed*/)
-				// cases for list begin / list end
-				// move visible cursor and keep visible list section constant
-				firstVisibleEntry = firstVisibleEntry - delta;
+			topNew += delta;
 		}
-	} else {
-		// cursor always in middle of visible list
-		firstVisibleEntry = mCursor - mScreenCount/2;
+		// no match above will place the cursor more towards the middle
 	}
-	// bounds check
-	if(firstVisibleEntry < 0)
-		firstVisibleEntry = 0;
-	else if(firstVisibleEntry > visibleEntryMax)
-		firstVisibleEntry = visibleEntryMax;
-	return firstVisibleEntry;
+	else
+		// put cursor in middle of visible list
+		topNew = mCursor - mViewportHeight/2;
+
+	if (mCursor <= mViewportHeight/2)
+		topNew = 0;
+	else if (mCursor >= viewportTopMax + mViewportHeight/2)
+		topNew = viewportTopMax;
+
+	return topNew;
 }
 
 template <typename T>
 bool TextListComponent<T>::input(InputConfig* config, Input input)
 {
-	if(size() > 0)
+	bool isSingleStep = config->isMappedLike("down", input) || config->isMappedLike("up", input);
+	bool isPageStep = config->isMappedLike(BUTTON_PD, input) || config->isMappedLike(BUTTON_PU, input);
+
+	if (size() > 0 && (isSingleStep || isPageStep))
 	{
-		if(input.value != 0)
+		if (input.value != 0)
 		{
-			if(config->isMappedLike("down", input))
+			int delta;
+			mCursorPrev = mCursor;
+			if (isSingleStep)
+				delta = config->isMappedLike("down", input) ? 1 : -1;
+			else
 			{
-				listInput(1);
-				mOneEntryUpDn = true;
-				return true;
+				delta = Settings::getInstance()->getBool("UseFullscreenPaging") ? mViewportHeight : 10;
+				if (config->isMappedLike(BUTTON_PU, input))
+					delta = -delta;
 			}
-
-			if(config->isMappedLike("up", input))
-			{
-				listInput(-1);
-				mOneEntryUpDn = true;
-				return true;
-			}
-			if(config->isMappedLike(BUTTON_PD, input))
-			{
-				int delta = Settings::getInstance()->getBool("UseFullscreenPaging") ? mScreenCount : 10;
-				listInput(delta);
-				mOneEntryUpDn = false;
-				return true;
-			}
-
-			if(config->isMappedLike(BUTTON_PU, input))
-			{
-				int delta = Settings::getInstance()->getBool("UseFullscreenPaging") ? mScreenCount : 10;
-				listInput(-delta);
-				mOneEntryUpDn = false;
-				return true;
-			}
-		}else{
-			if(config->isMappedLike("down", input) || config->isMappedLike("up", input) || 
-				config->isMappedLike(BUTTON_PD, input) || config->isMappedLike(BUTTON_PU, input))
-			{
-				stopScrolling();
-			}
+			listInput(delta);
+			return true;
+		}
+		else
+		{
+			stopScrolling();
 		}
 	}
 

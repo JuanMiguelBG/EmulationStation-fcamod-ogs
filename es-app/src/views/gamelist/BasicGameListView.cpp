@@ -174,6 +174,17 @@ void BasicGameListView::setCursor(FileData* cursor)
 	}
 }
 
+void BasicGameListView::setViewportTop(int index)
+{
+	mList.setViewportTop(index);
+}
+
+
+int BasicGameListView::getViewportTop()
+{
+	return mList.getViewportTop();
+}
+
 void BasicGameListView::addPlaceholder()
 {
 	// empty list - add a placeholder

@@ -60,6 +60,7 @@ public:
 
 protected:
 	int mCursor;
+	int mViewportTop;
 
 	int mScrollTier;
 	int mScrollVelocity;
@@ -178,6 +179,16 @@ public:
 		}
 
 		return false;
+	}
+
+	void setViewportTop(int index)
+	{
+		mViewportTop = index;
+	}
+
+	int getViewportTop()
+	{
+		return mViewportTop;
 	}
 
 	// entry management
