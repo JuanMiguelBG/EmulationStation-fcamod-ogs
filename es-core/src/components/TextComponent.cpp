@@ -317,7 +317,7 @@ void TextComponent::onTextChanged()
 	std::string text = mUppercase ? Utils::String::toUpper(mText) : mText;
 
 	std::shared_ptr<Font> f = mFont;
-	const bool isMultiline = !mAutoScroll && (mSize.y() == 0 || sy > f->getHeight()*1.95f);
+	const bool isMultiline = !mAutoScroll && (mSize.y() == 0 || mSize.y() > f->getHeight(mLineSpacing));
 
 	bool addAbbrev = false;
 	if (!isMultiline)
