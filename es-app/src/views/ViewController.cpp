@@ -235,11 +235,11 @@ void ViewController::goToGameList(SystemData* system, bool forceImmediate)
 void ViewController::playViewTransition(bool forceImmediate)
 {
 	Vector3f target(Vector3f::Zero());
-	if(mCurrentView)
+	if (mCurrentView)
 		target = mCurrentView->getPosition();
 
 	// no need to animate, we're not going anywhere (probably goToNextGamelist() or goToPrevGamelist() when there's only 1 system)
-	if(target == -mCamera.translation() && !isAnimationPlaying(0))
+	if (target == -mCamera.translation() && !isAnimationPlaying(0))
 		return;
 
 	std::string transition_style = Settings::getInstance()->getString("TransitionStyle");
@@ -275,7 +275,42 @@ void ViewController::playViewTransition(bool forceImmediate)
 	else if (!forceImmediate && (transition_style == "slide" || transition_style == "auto"))
 	{
 		// slide or simple slide
-		setAnimation(new MoveCameraAnimation(mCamera, target));
+		bool inGamelistNav = -mCamera.translation().y() == target.y() // not in/out gamelist nav
+			&& -mCamera.translation().x() - target.x(); // left/right movement
+		cancelAnimation(0);
+		Vector3f tgt = Vector3f(target);
+		Vector3f positionOrig;
+		if (inGamelistNav) {
+			const float screenWidth = (float)Renderer::getScreenWidth();
+			if (-mCamera.translation().x() - tgt.x() >= 2 * screenWidth)
+			{
+				// right rollover
+				mLockInput = true;
+				tgt.x() = screenWidth * mGameListViews.size();
+			}
+			else if (-mCamera.translation().x() - tgt.x() <= 2 * -screenWidth)
+			{
+				// left rollover
+				mLockInput = true;
+				tgt.x() = -screenWidth;
+			}
+			// deny any further input on rollover as mCurrentView would be
+			// different on subsequent animations, resulting in restoring
+			// a unrelated mCurrentView/mCamera with the original position
+			if (mLockInput)
+			{
+				positionOrig = Vector3f(mCurrentView->getPosition());
+				mCurrentView->setPosition(tgt.x(), tgt.y());
+			}
+		}
+
+		setAnimation(new MoveCameraAnimation(mCamera, tgt), 0, [this, positionOrig] {
+			if (mLockInput) {
+				mCurrentView->setPosition(positionOrig);
+				mCamera.translation() = -positionOrig;
+			}
+			mLockInput = false;
+		});
 		updateHelpPrompts(); // update help prompts immediately
 	} 
 	else 
