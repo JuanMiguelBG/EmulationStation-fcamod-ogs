@@ -1526,6 +1526,14 @@ msgstr "SCRAPEO FALLIDO"
 msgid "SCRAPING FINISHED. REFRESH UPDATE GAMES LISTS TO APPLY CHANGES."
 msgstr "SCRAPEO TERMINADO. ACTUALIZE LA LISTAS DE JUEGOS PARA APLICAR CAMBIOS."
 
+#, c-format
+msgid "%s connected"
+msgstr "%s conectado"
+
+#, c-format
+msgid "%s disconnected"
+msgstr "%s desconectado"
+
 #:
 msgid "QUIT"
 msgstr "SALIR"

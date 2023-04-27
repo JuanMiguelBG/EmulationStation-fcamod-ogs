@@ -1690,7 +1690,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 							s->setWaitingLoad(false);
 							if (success)
 							{
-								window->displayNotificationMessage(_U("\uF25B  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
+								window->displayNotificationMessage(_U("\uF1EB  ") + ssid + " - " + _("WIFI ENABLED"), 10000);
 								s->setVariable("reloadGuiMenu", true);
 							}
 							else
@@ -1758,7 +1758,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 						{
 							s->setWaitingLoad(false);
 							if (success)
-								window->displayNotificationMessage(_U("\uF25B  ") + _("DNS CONFIGURATION SUCCESFULLY"), 10000);
+								window->displayNotificationMessage(_U("\uF1EB  ") + _("DNS CONFIGURATION SUCCESFULLY"), 10000);
 							else
 								window->displayNotificationMessage(_U("\uF071  ") + _("DNS CONFIGURATION ERROR"), 10000);
 

@@ -12,6 +12,7 @@
 #include <iostream>
 #include <assert.h>
 #include "Scripting.h"
+#include "Window.h"
 
 #define KEYBOARD_GUID_STRING          "-1"
 #define CEC_GUID_STRING               "-2"
@@ -78,7 +79,7 @@ void InputManager::init()
 	loadInputConfig(mCECInputConfig);
 }
 
-void InputManager::addJoystickByDeviceIndex(int id)
+void InputManager::addJoystickByDeviceIndex(int id, Window* window)
 {
 	assert(id > -1);
 	assert(id < SDL_NumJoysticks());
@@ -95,18 +96,29 @@ void InputManager::addJoystickByDeviceIndex(int id)
 	SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joy), guid, 65);
 
 	// create the InputConfig
-	mInputConfigs[joyId] = new InputConfig(joyId, SDL_JoystickName(joy), guid);
+	std::string addedDeviceName = SDL_JoystickName(joy);
+	mInputConfigs[joyId] = new InputConfig(joyId, addedDeviceName, guid);
+	std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
 	if (!loadInputConfig(mInputConfigs[joyId]))
 	{
-		std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick '" << SDL_JoystickName(joy) << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
-		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id), is_defalut_config);
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added unconfigured joystick '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
+		Scripting::fireEvent("input-controller-added", addedDeviceName, guid, std::to_string(id), is_defalut_config);
 	}
 	else
 	{
-		std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
-		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick '" << SDL_JoystickName(joy) << "' (instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
-		Scripting::fireEvent("input-controller-added", SDL_JoystickName(joy), guid, std::to_string(id), is_defalut_config);
+		LOG(LogInfo) << "InputManager::addJoystickByDeviceIndex() - Added known joystick '" << addedDeviceName << "' (instance ID: " << joyId << ", device index: " << id << ", default input: " << is_defalut_config << ").";
+		Scripting::fireEvent("input-controller-added", addedDeviceName, guid, std::to_string(id), is_defalut_config);
+	}
+
+	if (!addedDeviceName.empty() && window && !mInputConfigs[joyId]->isDefaultInput())
+	{
+		if (Settings::getInstance()->getBool("bluetooth.use.alias"))
+		{
+			std::string alias = Settings::getInstance()->getString(addedDeviceName + ".bluetooth.input_gaming.alias");
+			if (!alias.empty())
+				addedDeviceName = alias;
+		}
+		window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 	}
 
 	// set up the prevAxisValues
@@ -115,7 +127,7 @@ void InputManager::addJoystickByDeviceIndex(int id)
 	std::fill(mPrevAxisValues[joyId], mPrevAxisValues[joyId] + numAxes, 0); //initialize array to 0
 }
 
-void InputManager::removeJoystickByJoystickID(SDL_JoystickID joyId)
+void InputManager::removeJoystickByJoystickID(SDL_JoystickID joyId, Window* window)
 {
 	assert(joyId != -1);
 
@@ -126,6 +138,7 @@ void InputManager::removeJoystickByJoystickID(SDL_JoystickID joyId)
 
 	// delete old InputConfig
 	auto it = mInputConfigs.find(joyId);
+	bool isDefaultInput = it->second->isDefaultInput();
 	delete it->second;
 	mInputConfigs.erase(it);
 
@@ -133,13 +146,25 @@ void InputManager::removeJoystickByJoystickID(SDL_JoystickID joyId)
 	auto joyIt = mJoysticks.find(joyId);
 	if (joyIt != mJoysticks.cend())
 	{
-		LOG(LogInfo) << "InputManager::removeJoystickByJoystickID() - Removed joystick '" << SDL_JoystickName(joyIt->second) << "' (instance ID: " << joyId << ")";
+		std::string removedDeviceName = SDL_JoystickName(joyIt->second);
+		LOG(LogInfo) << "InputManager::removeJoystickByJoystickID() - Removed joystick '" << removedDeviceName << "' (instance ID: " << joyId << ")";
 		char guid[65];
 		SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joyIt->second), guid, 65);
-		Scripting::fireEvent("input-controller-removed", SDL_JoystickName(joyIt->second), guid);
+		Scripting::fireEvent("input-controller-removed", removedDeviceName, guid);
 
 		SDL_JoystickClose(joyIt->second);
 		mJoysticks.erase(joyIt);
+
+		if (!removedDeviceName.empty() && window && !isDefaultInput)
+		{
+			if (Settings::getInstance()->getBool("bluetooth.use.alias"))
+			{
+				std::string alias = Settings::getInstance()->getString(removedDeviceName + ".bluetooth.input_gaming.alias");
+				if (!alias.empty())
+					removedDeviceName = alias;
+			}
+			window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s disconnected").c_str(), Utils::String::trim(removedDeviceName).c_str()));
+		}
 	}
 	else
 	{
@@ -282,11 +307,11 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 		break;
 
 	case SDL_JOYDEVICEADDED:
-		addJoystickByDeviceIndex(ev.jdevice.which); // ev.jdevice.which is a device index
+		addJoystickByDeviceIndex(ev.jdevice.which, window); // ev.jdevice.which is a device index
 		return true;
 
 	case SDL_JOYDEVICEREMOVED:
-		removeJoystickByJoystickID(ev.jdevice.which); // ev.jdevice.which is an SDL_JoystickID (instance ID)
+		removeJoystickByJoystickID(ev.jdevice.which, window); // ev.jdevice.which is an SDL_JoystickID (instance ID)
 		return false;
 	}
 

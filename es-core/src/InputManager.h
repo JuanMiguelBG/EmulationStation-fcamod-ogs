@@ -32,8 +32,8 @@ private:
 
 	bool initialized() const;
 
-	void addJoystickByDeviceIndex(int id);
-	void removeJoystickByJoystickID(SDL_JoystickID id);
+	void addJoystickByDeviceIndex(int id, Window* window = nullptr);
+	void removeJoystickByJoystickID(SDL_JoystickID id, Window* window = nullptr);
 	bool loadInputConfig(InputConfig* config); // returns true if successfully loaded, false if not (or didn't exist)
 
 	void propagateInputEvent(InputConfig* config, Input input, Window* window);
