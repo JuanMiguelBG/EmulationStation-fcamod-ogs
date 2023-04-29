@@ -229,26 +229,26 @@ void processQuitMode()
 {
 	switch (quitMode)
 	{
-	case QuitMode::RESTART:
-		LOG(LogInfo) << "Platform::processQuitMode() - Restarting EmulationStation";
-		touch("/tmp/es-restart");
-		break;
-	case QuitMode::REBOOT:
-	case QuitMode::FAST_REBOOT:
-		LOG(LogInfo) << "Platform::processQuitMode() - Rebooting system";
-		touch("/tmp/es-sysrestart");
-		runRestartCommand();
-		break;
-	case QuitMode::SHUTDOWN:
-	case QuitMode::FAST_SHUTDOWN:
-		LOG(LogInfo) << "Platform::processQuitMode() - Shutting system down";
-		touch("/tmp/es-shutdown");
-		runShutdownCommand();
-		break;
-	case QuitMode::SUSPEND:
-		LOG(LogInfo) << "Platform::processQuitMode() - Suspend system";
-		runSuspendCommand();
-		break;
+		case QuitMode::RESTART:
+			LOG(LogInfo) << "Platform::processQuitMode() - Restarting EmulationStation";
+			touch("/tmp/es-restart");
+			break;
+		case QuitMode::REBOOT:
+		case QuitMode::FAST_REBOOT:
+			LOG(LogInfo) << "Platform::processQuitMode() - Rebooting system";
+			touch("/tmp/es-sysrestart");
+			runRestartCommand();
+			break;
+		case QuitMode::SHUTDOWN:
+		case QuitMode::FAST_SHUTDOWN:
+			LOG(LogInfo) << "Platform::processQuitMode() - Shutting system down";
+			touch("/tmp/es-shutdown");
+			runShutdownCommand();
+			break;
+		case QuitMode::SUSPEND:
+			LOG(LogInfo) << "Platform::processQuitMode() - Suspend system";
+			runSuspendCommand();
+			break;
 	}
 }
 

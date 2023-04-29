@@ -680,6 +680,8 @@ int main(int argc, char* argv[])
 	//always close the log on exit
 	atexit(&onExit);
 
+	Scripting::fireEvent("start");
+
 	if (SystemConf::getInstance()->getBool("kodi.enabled") && SystemConf::getInstance()->getBool("kodi.atstartup"))
 	{
 		// wait for BT devices
