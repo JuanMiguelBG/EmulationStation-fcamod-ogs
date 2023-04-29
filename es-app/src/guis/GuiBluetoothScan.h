@@ -13,6 +13,7 @@ class GuiBluetoothScan : public GuiComponent
 {
 public:
 	GuiBluetoothScan(Window* window, const std::string title, const std::string subtitle = "");
+	~GuiBluetoothScan();
 
 	bool input(InputConfig* config, Input input) override;
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;

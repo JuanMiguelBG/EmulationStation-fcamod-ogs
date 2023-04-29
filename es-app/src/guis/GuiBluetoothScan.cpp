@@ -15,6 +15,8 @@
 GuiBluetoothScan::GuiBluetoothScan(Window* window, const std::string title, const std::string subtitle)
 	: GuiComponent(window), mMenu(window, title.c_str(), true)
 {
+	ApiSystem::getInstance()->startBluetoothLiveScan();
+
 	mTitle = title;
 	mWaitingLoad = false;
 	hasDevices = false;
@@ -28,6 +30,11 @@ GuiBluetoothScan::GuiBluetoothScan(Window* window, const std::string title, cons
 
 	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onScan(); });
 	mMenu.addButton(_("BACK"), _("BACK"), [&] { onClose(); });
+}
+
+GuiBluetoothScan::~GuiBluetoothScan()
+{
+	ApiSystem::getInstance()->stopBluetoothLiveScan();
 }
 
 void GuiBluetoothScan::load(std::vector<BluetoothDevice> btDevices)

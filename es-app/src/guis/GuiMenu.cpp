@@ -1833,9 +1833,6 @@ void GuiMenu::openBluetoothSettings()
 	const bool baseBtAudioConnected = SystemConf::getInstance()->getBool("bluetooth.audio.connected");
 	const std::string baseBtAudioDevice = SystemConf::getInstance()->get("bluetooth.audio.device");
 
-	if (baseBtEnabled)
-		ApiSystem::getInstance()->startBluetoothLiveScan();
-
 	// stop sound to prevent problems
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
@@ -1861,10 +1858,8 @@ void GuiMenu::openBluetoothSettings()
 						bool result = ApiSystem::getInstance()->enableBluetooth();
 						SystemConf::getInstance()->setBool("bluetooth.enabled", result);
 						if (result)
-						{
-							ApiSystem::getInstance()->startBluetoothLiveScan();
 							Settings::getInstance()->saveFile();
-						}
+
 						return result;
 					},
 					[this, window, s](bool result)
