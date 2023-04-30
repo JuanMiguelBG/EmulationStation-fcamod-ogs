@@ -66,25 +66,4 @@ void GuiMenusOptions::initializeMenu(Window* window)
 			}
 		});
 
-	// Kodi
-	addGroup(_("KODI SETTINGS"));
-
-	auto kodi_enabled = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("kodi.enabled"));
-	addWithLabel(_("ENABLE KODI"), kodi_enabled);
-	addSaveFunc([this, kodi_enabled]
-		{
-			if (SystemConf::getInstance()->getBool("kodi.enabled") != kodi_enabled->getState())
-			{
-				SystemConf::getInstance()->setBool("kodi.enabled", kodi_enabled->getState());
-				setVariable("reloadGuiMenu", true);
-			}
-		});
-
-	auto kodi_boot = std::make_shared<SwitchComponent>(window, SystemConf::getInstance()->getBool("kodi.atstartup"));
-	addWithLabel(_("LAUNCH KODI AT BOOT"), kodi_boot);
-	addSaveFunc([kodi_boot]
-		{
-			SystemConf::getInstance()->setBool("kodi.atstartup", kodi_boot->getState());
-		});
-
 }

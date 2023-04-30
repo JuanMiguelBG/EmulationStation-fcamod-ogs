@@ -2302,6 +2302,27 @@ void GuiMenu::openAdvancedSettings()
 
 	}
 
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::KODI))
+	{
+		s->addEntry(_("KODI SETTINGS"), true, [this, window] 
+		{
+			GuiSettings* kodiGui = new GuiSettings(window, _("KODI SETTINGS").c_str());
+			kodiGui->addSwitch(_("ENABLE KODI"), "kodi.enabled", false, [kodiGui] { kodiGui->setVariable("reloadGuiMenu", true); });
+			kodiGui->addSwitch(_("LAUNCH KODI AT BOOT"), "kodi.atstartup", false);
+			kodiGui->onFinalize([kodiGui, window]
+			{
+				if (kodiGui->getVariable("reloadGuiMenu"))
+				{
+					if (kodiGui)
+						delete kodiGui;
+					window->pushGui(new GuiMenu(window, false));
+				}
+			});
+
+			mWindow->pushGui(kodiGui);
+		});
+	}
+
 	s->addGroup(_("GAME LIST"));
 
 	// gamelists

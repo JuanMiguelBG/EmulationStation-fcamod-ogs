@@ -1564,7 +1564,7 @@ msgstr "CENTRO MULTIMEDIA KODI"
 
 #:
 msgid "KODI SETTINGS"
-msgstr "AJUSTES DE KODI"
+msgstr "CONFIGURACIÓN DE KODI"
 
 #:
 msgid "ENABLE KODI"
