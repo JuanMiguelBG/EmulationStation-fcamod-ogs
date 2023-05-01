@@ -81,6 +81,7 @@ void Settings::setDefaults()
 	mBoolMap["ParseGamelistOnly"] = false;
 	mBoolMap["ShowHiddenFiles"] = false;
 	mBoolMap["IgnoreLeadingArticles"] = false;
+	mStringMap["LeadingArticles"] = "A,AN,THE";
 	mBoolMap["DrawFramerate"] = false;
 	mBoolMap["ShowExit"] = true;
 

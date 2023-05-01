@@ -83,7 +83,7 @@ namespace FileSorts
 		const bool ignoreArticles = Settings::getInstance()->getBool("IgnoreLeadingArticles");
 		if (ignoreArticles)
 		{
-			const auto articles = Utils::String::commaStringToVector(_("A,AN,THE"));
+			const auto articles = Utils::String::commaStringToVector(Settings::getInstance()->getString("LeadingArticles"));
 			name1 = stripLeadingArticle(name1, articles);
 			name2 = stripLeadingArticle(name2, articles);
 		}

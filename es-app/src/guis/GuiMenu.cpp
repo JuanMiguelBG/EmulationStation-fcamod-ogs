@@ -1246,9 +1246,17 @@ void GuiMenu::openUISettings()
 		{
 			Settings::getInstance()->setBool("IgnoreLeadingArticles", ignoreArticles->getState());
 			s->setVariable("reloadAll", true);
-			s->setVariable("reloadGuiMenu", true);
 		}
 	});
+
+	// leading articles
+	auto leading_articles = addEditableTextComponent(_("LEADING ARTICLES"), Settings::getInstance()->getString("LeadingArticles"));
+	addSaveFunc([s, leading_articles] { 
+		if (Settings::getInstance()->getString("LeadingArticles") != leading_articles->getText())
+		{
+			Settings::getInstance()->setString("LeadingArticles", leading_articles->getText()); });
+			s->setVariable("reloadAll", true);
+		}
 
 	s->onFinalize([s, pthis, window]
 	{
