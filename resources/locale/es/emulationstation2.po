@@ -3605,6 +3605,10 @@ msgid "ITALIAN"
 msgstr "ITALIANO"
 
 #:
+msgid "GREEK"
+msgstr "GRIEGO"
+
+#:
 msgid "ADD STAR"
 msgstr "+1 ESTRELLA"
 

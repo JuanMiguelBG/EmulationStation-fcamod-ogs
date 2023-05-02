@@ -2223,20 +2223,22 @@ void GuiMenu::openAdvancedSettings()
 					language_label = "PORTUGUESE BRAZIL";
 				else if (*it == "de")
 					language_label = "DEUTSCHE";
-				else if (*it == "es")
-					language_label = "SPANISH";
 				else if (*it == "en")
 					language_label = "ENGLISH";
+				else if (*it == "es")
+					language_label = "SPANISH";
 				else if (*it == "fr")
 					language_label = "FRENCH";
+				else if (*it == "gr")
+					language_label = "GREEK";
+				else if (*it == "it")
+					language_label = "ITALIAN";
 				else if (*it == "ko")
 					language_label = "KOREAN";
 				else if (*it == "pt")
 					language_label = "PORTUGUESE PORTUGAL";
 				else if (*it == "zh-CN")
 					language_label = "SIMPLIFIED CHINESE";
-				else if (*it == "it")
-					language_label = "ITALIAN";
 				else
 					language_label = *it;
 
