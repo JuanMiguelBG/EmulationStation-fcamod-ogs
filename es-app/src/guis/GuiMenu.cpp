@@ -1250,13 +1250,13 @@ void GuiMenu::openUISettings()
 	});
 
 	// leading articles
-	auto leading_articles = addEditableTextComponent(_("LEADING ARTICLES"), Settings::getInstance()->getString("LeadingArticles"));
-	addSaveFunc([s, leading_articles] { 
-		if (Settings::getInstance()->getString("LeadingArticles") != leading_articles->getText())
-		{
-			Settings::getInstance()->setString("LeadingArticles", leading_articles->getText()); });
+	std::string leading_articles_value = Settings::getInstance()->getString("LeadingArticles");
+	s->addInputTextRow(_("LEADING ARTICLES"), "LeadingArticles", false, true);
+	s->addSaveFunc([s, leading_articles_value]
+	{
+		if (Settings::getInstance()->getString("LeadingArticles") != leading_articles_value)
 			s->setVariable("reloadAll", true);
-		}
+	});
 
 	s->onFinalize([s, pthis, window]
 	{
