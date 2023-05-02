@@ -53,7 +53,7 @@
 #include "guis/GuiLoading.h"
 
 
-GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
+GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
 {
 	mWaitingLoad = false;
 
@@ -61,7 +61,16 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
 
-	if (SystemConf::getInstance()->getBool("kodi.enabled") && ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI))
+	bool kodi_actived = SystemConf::getInstance()->getBool("kodi.enabled") && ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI);
+	CursortId real_cursor = cursor;
+	if (cursor == CursortId::FIRST_ELEMENT)
+	{
+		real_cursor = CursortId::DISPLAY_SETTINGS;
+		if (kodi_actived)
+			real_cursor = CursortId::KODI;
+	}
+
+	if (kodi_actived)
 	{
 		addEntry(_("KODI MEDIA CENTER").c_str(), false, [this]
 			{
@@ -70,24 +79,24 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 				if (!ApiSystem::getInstance()->launchKodi(window))
 					LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Kodi terminated with non-zero result!";
 
-			}, "iconKodi");
+			}, "iconKodi", real_cursor == CursortId::KODI);
 	}
 
 	if (!SystemConf::getInstance()->getBool("hdmi.mode") 
 		|| ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))
-		addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay");
+		addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay", real_cursor == CursortId::DISPLAY_SETTINGS);
 
 	if (isFullUI)
 	{
-		addEntry(_("UI SETTINGS"), true, [this] { openUISettings(); }, "iconUI");
-		addEntry(_("CONTROLLERS SETTINGS").c_str(), true, [this] { openControllersSettings(); }, "iconControllers");
+		addEntry(_("UI SETTINGS"), true, [this] { openUISettings(); }, "iconUI", real_cursor == CursortId::UI_SETTINGS);
+		addEntry(_("CONTROLLERS SETTINGS").c_str(), true, [this] { openControllersSettings(); }, "iconControllers", real_cursor == CursortId::CONTROLLER_SETTINGS);
 	}
 
-	addEntry(_("SOUND SETTINGS"), true, [this] { openSoundSettings(); }, "iconSound");
+	addEntry(_("SOUND SETTINGS"), true, [this] { openSoundSettings(); }, "iconSound", real_cursor == CursortId::SOUND_SETTINGS);
 
 	if (isFullUI)
 	{
-		addEntry(_("GAME COLLECTION SETTINGS"), true, [this] { openCollectionSystemSettings(); }, "iconGames");
+		addEntry(_("GAME COLLECTION SETTINGS"), true, [this] { openCollectionSystemSettings(); }, "iconGames", real_cursor == CursortId::GAME_COLL_SETTINGS);
 
 		// Emulator settings 
 		for (auto system : SystemData::sSystemVector)
@@ -95,21 +104,21 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
 			if (system->isCollection() || system->getSystemEnvData()->mEmulators.size() == 0 || (system->getSystemEnvData()->mEmulators.size() == 1 && system->getSystemEnvData()->mEmulators[0].mCores.size() <= 1))
 				continue;
 
-			addEntry(_("EMULATOR SETTINGS"), true, [this] { openEmulatorSettings(); }, "iconSystem");
+			addEntry(_("EMULATOR SETTINGS"), true, [this] { openEmulatorSettings(); }, "iconSystem", real_cursor == CursortId::EMULATOR_SETTINGS);
 			break;
 		}
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-			addEntry(_("NETWORK SETTINGS").c_str(), true, [this]  { openNetworkSettings(); }, "iconNetwork");
+			addEntry(_("NETWORK SETTINGS").c_str(), true, [this]  { openNetworkSettings(); }, "iconNetwork", real_cursor == CursortId::NET_SETTINGS);
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
-			addEntry(_("BLUETOOTH SETTINGS").c_str(), true, [this] { openBluetoothSettings(); }, "iconBluetooth");
+			addEntry(_("BLUETOOTH SETTINGS").c_str(), true, [this] { openBluetoothSettings(); }, "iconBluetooth", real_cursor == CursortId::BT_SETTINGS);
 
-		addEntry(_("SCRAPER"), true, [this] { openScraperSettings(); }, "iconScraper");
+		addEntry(_("SCRAPER"), true, [this] { openScraperSettings(); }, "iconScraper", real_cursor == CursortId::SCRAPPER_SETTINGS);
 
-		addEntry(_("ADVANCED SETTINGS"), true, [this] { openAdvancedSettings(); }, "iconAdvanced");
+		addEntry(_("ADVANCED SETTINGS"), true, [this] { openAdvancedSettings(); }, "iconAdvanced", real_cursor == CursortId::ADVANCED_SETTINGS);
 
-		addEntry(_("SYSTEM INFORMATION"), true, [this] { openSystemInformation(); }, "iconInformation");
+		addEntry(_("SYSTEM INFORMATION"), true, [this] { openSystemInformation(); }, "iconInformation", real_cursor == CursortId::SYSTEM_INFORMATION);
 	}
 
 	std::string quit_menu_label = "QUIT";
@@ -213,7 +222,7 @@ void GuiMenu::openDisplaySettings()
 			{
 				if (pthis)
 					delete pthis;
-				window->pushGui(new GuiMenu(window, false));
+				window->pushGui(new GuiMenu(window, false, CursortId::DISPLAY_SETTINGS));
 			}
 		});
 	}
@@ -619,7 +628,7 @@ void GuiMenu::openSoundSettings()
 		{
 			if (pthis)
 				delete pthis;
-			window->pushGui(new GuiMenu(window, false));
+			window->pushGui(new GuiMenu(window, false, CursortId::SOUND_SETTINGS));
 		}
 	});
 
@@ -1276,7 +1285,7 @@ void GuiMenu::openUISettings()
 		{
 			if (pthis)
 				delete pthis;
-			window->pushGui(new GuiMenu(window, false));
+			window->pushGui(new GuiMenu(window, false, CursortId::UI_SETTINGS));
 		}
 
 	});
@@ -1814,7 +1823,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectManualWifiDn
 		{
 			if (pthis)
 				delete pthis;
-			window->pushGui(new GuiMenu(window, false));
+			window->pushGui(new GuiMenu(window, false, CursortId::NET_SETTINGS));
 		}
 	});
 
@@ -2007,7 +2016,7 @@ void GuiMenu::openBluetoothSettings()
 		{
 			if (pthis)
 				delete pthis;
-			window->pushGui(new GuiMenu(window, false));
+			window->pushGui(new GuiMenu(window, false, CursortId::BT_SETTINGS));
 		}
 
 	});
@@ -2574,7 +2583,7 @@ void GuiMenu::openAdvancedSettings()
 		{
 			if (pthis)
 				delete pthis;
-			window->pushGui(new GuiMenu(window, false));
+			window->pushGui(new GuiMenu(window, false, CursortId::ADVANCED_SETTINGS));
 		}
 	});
 
@@ -2982,7 +2991,7 @@ void GuiMenu::onSizeChanged()
 	mVersion.setVisible(true);
 }
 
-void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName)
+void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName, bool setCursorHere)
 {
 	Window *window = mWindow;
 	auto theme = ThemeData::getMenuTheme();
@@ -3022,7 +3031,7 @@ void GuiMenu::addEntry(std::string name, bool add_arrow, const std::function<voi
 	}
 
 	row.makeAcceptInputHandler(func);
-	mMenu.addRow(row);
+	mMenu.addRow(row, setCursorHere);
 }
 
 bool GuiMenu::input(InputConfig* config, Input input)

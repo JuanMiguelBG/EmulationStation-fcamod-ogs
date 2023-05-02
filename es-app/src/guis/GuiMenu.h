@@ -12,7 +12,24 @@ class SystemData;
 class GuiMenu : public GuiComponent
 {
 public:
-	GuiMenu(Window* window, bool animate = true);
+	enum CursortId : unsigned int
+	{
+		FIRST_ELEMENT = 0,
+		KODI = 1,
+		DISPLAY_SETTINGS = 2,
+		UI_SETTINGS = 3,
+		CONTROLLER_SETTINGS = 4,
+		SOUND_SETTINGS = 5,
+		GAME_COLL_SETTINGS = 6,
+		EMULATOR_SETTINGS = 7,
+		NET_SETTINGS = 8,
+		BT_SETTINGS = 9,
+		SCRAPPER_SETTINGS = 10,
+		ADVANCED_SETTINGS = 11,
+		SYSTEM_INFORMATION = 12,
+	};
+
+	GuiMenu(Window* window, bool animate = true, CursortId cursor = CursortId::FIRST_ELEMENT);
 
 	bool input(InputConfig* config, Input input) override;
 	void onSizeChanged() override;
@@ -26,7 +43,7 @@ public:
 	static void clearLastPlayedData(Window* window, const std::string system = "", bool confirm = true);
 
 private:
-	void addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName = "");
+	void addEntry(std::string name, bool add_arrow, const std::function<void()>& func, const std::string iconName = "", bool setCursorHere = false);
 
 	void addVersionInfo();
 	void openCollectionSystemSettings(bool cursor = false);
