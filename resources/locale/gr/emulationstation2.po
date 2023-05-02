@@ -171,6 +171,10 @@ msgid "disabled"
 msgstr "ανενεργό"
 
 #:
+msgid "DISABLED"
+msgstr "ΑΔΡΑΝΗΣ"
+
+#:
 msgid "default"
 msgstr "προκαθορισμένο"
 
@@ -479,6 +483,18 @@ msgid "POWER SAVER MODES"
 msgstr "ΛΕΙΤΟΥΡΓΙΕΣ ΕΞΟΙΚΟΝΟΜΗΣΗΣ ΕΝΕΡΓΕΙΑΣ"
 
 #:
+msgid "SUSPEND MODES"
+msgstr "ΤΡΟΠΟΙ ΑΝΑΣΤΟΛΗΣ"
+
+#:
+msgid "DEEP"
+msgstr "ΒΑΘΥΣ / ΣΤΗ ΜΝΗΜΗ"
+
+#:
+msgid "LIGHT"
+msgstr "ΦΩΣ / ΠΑΓΩΜΑ"
+
+#:
 msgid "GAME LIST"
 msgstr "ΛΙΣΤΑ ΠΑΙΧΝΙΔΙΩΝ"
 
@@ -527,32 +543,8 @@ msgid "AUTO SIZE WIDTH BASED ON FONT SIZE"
 msgstr "ΑΥΤΟΜΑΤΟ ΜΕΓΕΘΟΣ ΠΛΑΤΟΥΣ ΒΑΣΙΣΜΕΝΟ ΣΤΗ ΓΡΑΜΜΑΤΟΣΕΙΡΑ"
 
 #:
-msgid "FILLS THE ALL WIDTH"
-msgstr "ΚΑΤΑΛΑΜΒΑΝΕΙ ΟΛΟ ΤΟ ΠΛΑΤΟΣ"
-
-#:
-msgid "FILLS THE ALL HEIGHT"
-msgstr "ΚΑΤΑΛΑΜΒΑΝΕΙ ΟΛΟ ΤΟ ΥΨΟΣ"
-
-#:
 msgid "OPEN MAIN MENU WITH ANIMATION
 msgstr "ΑΝΟΙΞΤΕ ΚΥΡΙΟ ΜΕΝΟΥ ΜΕ ΕΦΕ"
-
-#:
-msgid "YOU SELECTED TO SHOW ON THE TOP OF THE DISPLAY, THE MENU \"FILLS THE ALL HEIGHT\" OPTION IS DISABLED."
-msgstr "ΕΠΕΛΕΞΕΣ ΠΡΟΒΟΛΗ ΜΕΝΟΥ ΣΤΗ ΚΟΡΥΦΗ ΤΗΣ ΟΘΟΝΗΣ, Η ΕΠΙΛΟΓΗ ΜΕΝΟΥ \"ΚΑΤΑΛΑΜΒΑΝΕΙ ΟΛΟ ΤΟ ΥΨΟΣ\"Η ΕΠΙΛΟΓΗ ΑΠΕΝΕΡΓΟΠΟΙΗΘΗΚΕ."
-
-#:
-msgid "YOU SELECTED TO AUTO SIZE WIDTH, THE MENU \"FILLS THE ALL WIDTH\" OPTION IS DISABLED."
-msgstr "ΕΠΕΛΕΞΕΣ ΑΥΤΟΜΑΤΟ ΜΕΓΕΘΟΣ ΠΛΑΤΟΥΣ, ΤΟ ΜΕΝΟΥ \"ΚΑΤΑΛΑΜΒΑΝΕΙ ΟΛΟ ΤΟ ΠΛΑΤΟΣ\"Η ΕΠΙΛΟΓΗ ΑΠΕΝΕΡΓΟΠΟΙΗΘΗΚΕ."
-
-#:
-msgid "YOU SELECTED TO FILLS THE ALL HEIGHT, THE MENU \"ON THE TOP OF THE DISPLAY\" OPTION IS DISABLED."
-msgstr "ΕΠΕΛΕΞΕΣ ΝΑ ΚΑΤΑΛΑΒΕΙ ΟΛΟ ΤΟ ΥΨΟΣ, ΤΟ ΜΕΝΟΥ \"ΣΤΗ ΚΟΡΥΦΗ ΤΗΣ ΟΘΟΝΗΣ\"Η ΕΠΙΛΟΓΗ ΑΠΕΝΕΡΓΟΠΟΙΗΘΗΚΕ."
-
-#:
-msgid "YOU SELECTED TO FILLS THE ALL WIDTH, THE MENU \"AUTO SIZE WIDTH BASED ON FONT SIZE\" OPTION IS DISABLED."
-msgstr "ΕΠΙΛΕΞΕΣ ΝΑ ΓΕΜΙΣΕΙ ΠΛΗΡΕΣ ΤΟ ΠΛΑΤΟΣ, ΤΟ ΜΕΝΟΥ \"ΑΥΤΟΜΑΤΟ ΠΛΑΤΟΣ ΒΑΣΕΙ ΣΤΟ ΜΕΓΕΘΟΣ ΓΡΑΜΑΤΟΣΕΙΡΑΣ\"Η ΕΠΙΛΟΓΗ ΑΠΕΝΕΡΓΟΠΟΙΗΘΗΚΕ."
 
 #:
 msgid "SHOW DETAILED SYSTEM INFO"
@@ -740,6 +732,10 @@ msgid "CLOSE"
 msgstr "ΚΛΕΙΣΙΜΟ"
 
 #:
+msgid "LAUNCH"
+msgstr "ΕΚΤΟΞΕΥΣΗ"
+
+#:
 msgid "PARENT FOLDER"
 msgstr "ΚΥΡΙΟΣ ΦΑΚΕΛΟΣ"
 
@@ -827,6 +823,14 @@ msgstr "ΔΕΝ ΣΥΝΙΣΤΑΤΑΙ ΝΑ ΕΝΕΡΓΟΠΟΙΗΣΕΤΕ ΑΥΤΗ �
 #:
 msgid "THE SYSTEM WILL NOW REBOOT"
 msgstr "ΤΟ ΣΥΣΤΗΜΑ ΘΑ ΕΠΑΝΕΚΚΙΝΗΘΕΙ ΤΩΡΑ"
+
+#:
+msgid "THE AUDIO INTERFACE HAS CHANGED."
+msgstr "Η ΕΠΕΞΕΡΓΑΣΙΑ ΗΧΟΥ ΕΧΕΙ ΑΛΛΑΞΕΙ."
+
+#:
+msgid "THE EMULATIONSTATION WILL NOW RESTART."
+msgstr "EMULATIONSTATION ΘΑ ΞΕΚΙΝΗΣΕΙ ΤΩΡΑ."
 
 #:
 msgid "OVERCLOCK CONFIGURATION ERROR"
@@ -961,6 +965,18 @@ msgid "UPDATE GAMES LISTS"
 msgstr "ΕΝΗΜΕΡΩΣΗ ΛΙΣΤΑΣ ΠΑΙΧΝΙΔΙΩΝ"
 
 #:
+msgid "CLEAR \"LAST PLAYED\" DATA"
+msgstr "ΔΙΑΓΡΑΦΗ ΔΕΔΟΜΕΝΩΝ \"ΤΕΛΕΥΤΑΙΑ ΠΑΙΞΕ\""
+
+#:
+msgid "CLEARING \"LAST PLAYED\" DATA..."
+msgstr "ΕΚΚΑΘΑΡΙΣΗ ΔΕΔΟΜΕΝΩΝ \"ΤΕΛΕΥΤΑΙΑ ΠΑΙΞΕ\"..."
+
+#:
+msgid "ARE YOU SURE YOU WANT TO CLEAR \"LAST PLAYED\" DATA?"
+msgstr "¿ΕΙΣΤΕ ΣΙΓΟΥΡΟΣ ΟΤΙ ΘΕΛΕΤΕ ΝΑ ΔΙΑΓΡΑΨΕΤΕ ΤΑ ΔΕΔΟΜΕΝΑ \"ΤΕΛΕΥΤΑΙΑ ΠΑΙΞΕ\"?"
+
+#:
 msgid "CONTROLLERS SETTINGS"
 msgstr "ΡΥΘΜΙΣΕΙΣ ΤΗΛΕΧΕΙΡΙΣΤΗΡΙΟΥ"
 
@@ -993,6 +1009,10 @@ msgid "SHOW OVERLAY WHEN BRIGHTNESS CHANGES"
 msgstr "ΕΠΙΚΑΛΥΨΗ ΚΑΤΑ ΤΗΝ ΑΛΛΑΓΗ ΦΩΤΕΙΝΟΤΗΤΑΣ"
 
 #:
+msgid "RESTORE BRIGHTNESS AFTER GAME"
+msgstr "ΑΠΟΚΑΤΑΣΤΑΣΗ ΦΩΤΕΙΝΟΤΗΤΑΣ ΜΕΤΑ ΤΟ ΠΑΙΧΝΙΔΙ"
+
+#:
 msgid "BLINK WITH LOW BATTERY"
 msgstr "ΦΛΑΣ ΜΕ ΧΑΜΗΛΗ ΜΠΑΤΑΡΙΑ"
 
@@ -1009,20 +1029,28 @@ msgid "DIM AFTER"
 msgstr "DIM ΜΕΤΑ"
 
 #:
-msgid "SYSTEM BRIGHTNESS"
-msgstr "ΦΩΤΕΙΝΟΤΗΤΑ ΣΥΣΤΗΜΑΤΟΣ"
+msgid "HDMI MODE"
+msgstr "ΛΕΙΤΟΥΡΓΙΑ HDMI"
 
 #:
-msgid "MAX SYSTEM BRIGHTNESS"
-msgstr "ΜΕΓΙΣΤΗ ΦΩΤΕΙΝΟΤΗΤΑ ΣΥΣΤΗΜΑΤΟΣ"
+msgid "PANEL SETTINGS"
+msgstr "ΡΥΘΜΙΣΕΙΣ ΠΙΝΑΚΑΣ ΟΘΟΝΗΣ"
 
 #:
-msgid "FULL SCREEN MODE"
-msgstr "ΛΕΙΤΟΥΡΓΙΑ ΠΛΗΡΟΥΣ ΟΘΟΝΗΣ"
+msgid "CONTRAST"
+msgstr "ΑΝΤΙΘΕΣΗ"
 
 #:
-msgid "REALLY WANT TO CHANGE THE SCREEN MODE ?"
-msgstr "ΠΡΑΓΜΑΤΙΚΑ ΑΛΛΑΓΗ ΤΗΣ ΛΕΙΤΟΥΡΓΙΑΣ ΟΘΟΝΗΣ;"
+msgid "SATURATION"
+msgstr "ΚΟΡΕΣΜΟΣ"
+
+#:
+msgid "HUE"
+msgstr "ΑΠΟΧΡΩΣΗ"
+
+#:
+msgid "DEFAULT VALUES"
+msgstr "ΠΡΟΕΚΛΟΓΙΚΕΣ ΤΙΜΕΣ"
 
 #:
 msgid "UI SETTINGS"
@@ -1151,6 +1179,10 @@ msgid "AUDIO CARD"
 msgstr "ΚΑΡΤΑ ΗΧΟΥ"
 
 #:
+msgid "BLUETOOTH AUDIO"
+msgstr "ΗΧΟΣ BLUETOOTH"
+
+#:
 msgid "AUDIO DEVICE"
 msgstr "ΣΥΣΚΕΥΗ ΗΧΟΥ"
 
@@ -1177,6 +1209,10 @@ msgstr "ΜΟΥΣΙΚΗ ΥΠΟΚΡΟΥΣΗ"
 #:
 msgid "SHOW OVERLAY WHEN VOLUME CHANGES"
 msgstr "ΕΜΦΑΝΙΣΤΕ ΤΗΝ ΕΠΙΚΑΛΥΨΗ ΚΑΤΑ ΤΗΝ ΑΛΛΑΓΗ ΤΗΣ ΕΝΤΑΣΗΣ"
+
+#:
+msgid "RESTORE VOLUME AFTER GAME"
+msgstr "ΕΝΤΑΣΗ ΑΠΟΚΑΤΑΣΤΑΣΗ ΜΕΤΑ ΤΟ ΠΑΙΧΝΙΔΙ"
 
 #:
 msgid "ONLY PLAY SYSTEM-SPECIFIC MUSIC FOLDER"
@@ -1213,6 +1249,10 @@ msgstr "ΑΚΟΥΣΤΙΚΑ"
 #:
 msgid "SPEAKER AND HEADPHONES"
 msgstr "ΗΧΕΙΑ ΚΑΙ ΑΚΟΥΣΤΙΚΑ"
+
+#:
+msgid "USB AUDIO"
+msgstr "ΗΧΟΣ USB"
 
 #:
 msgid "JACK"
@@ -1391,8 +1431,60 @@ msgid "NO WIFI NETWORKS FOUND"
 msgstr "ΔΕΝ ΒΡΕΘΗΚΑΝ ΔΙΚΤΥΑ"
 
 #:
-msgid "SEARCHING WIFI NETWORKS"
-msgstr "ΑΝΑΖΗΤΗΣΗ ΔΙΚΤΥΩΝ"
+msgid "SEARCHING WIFI NETWORKS..."
+msgstr "ΑΝΑΖΗΤΗΣΗ ΔΙΚΤΥΩΝ WIFI..."
+
+#:
+msgid "MANAGE KNOWED WIFI NETWORKS"
+msgstr "ΔΙΑΧΕΙΡΙΣΗ ΓΝΩΣΤΩΝ ΔΙΚΤΥΩΝ WIFI"
+
+#:
+msgid "SEARCHING KNOWED WIFI NETWORKS..."
+msgstr "ΑΝΑΖΗΤΗΣΗ ΓΝΩΣΤΩΝ ΔΙΚΤΥΩΝ WIFI..."
+
+#:
+msgid "ARE YOU SURE YOU WANT TO FORGET THE WIFI NETWORK?"
+msgstr "¿ΘΕΛΕΤΕ ΝΑ ΞΕΧΑΣΕΤΕ ΤΟ ΑΣΥΡΜΑΤΟ ΔΙΚΤΥΟ"
+
+#:
+msgid "FORGETING WIFI NETWORK"
+msgstr "ΞΕΧΝΑΜΕ ΑΣΥΡΜΑΤΟ ΔΙΚΤΥΟ"
+
+#:
+msgid "WIFI NETWORK SUCCESSFULLY FORGOTTEN"
+msgstr "ΤΟ ΔΙΚΤΥΟ WIFI ΞΕΧΑΣΤΗΚΕ ΕΠΙΤΥΧΙΑ"
+
+#:
+msgid "WIFI NETWORK FAILED TO FORGOTTEN"
+msgstr "ΑΠΟΤΥΧΕΙ Η ΞΕΧΑΣΗ ΤΟΥ ΔΙΚΤΥΟΥ WIFI"
+
+#:
+msgid "ARE YOU SURE YOU WANT TO FORGET ALL WIFI NETWORKS?"
+msgstr "¿ΕΙΣΤΕ ΣΙΓΟΥΡΟΣ ΟΤΙ ΘΕΛΕΤΕ ΝΑ ΞΕΧΑΣΕΤΕ ΟΛΑ ΤΑ ΔΙΚΤΥΑ WIFI?"
+
+#:
+msgid "ALL WIFI NETWORKS HAVE BEEN FORGOTTEN."
+msgstr "ΟΛΑ ΤΑ ΔΙΚΤΥΑ WIFI ΕΧΟΥΝ ΞΕΧΑΣΕΙ."
+
+#:
+msgid "NOT ALL WIFI NETWORKS HAVE BEEN FORGOTTEN."
+msgstr "ΔΕΝ ΕΧΟΥΝ ΞΕΧΑΣΘΕΙ ΟΛΑ ΤΑ ΔΙΚΤΥΑ WIFI."
+
+#:
+msgid "\"(**)\" CONNECTED WIFI NETWORK"
+msgstr "\"(**)\" ΣΥΝΔΕΔΕΜΕΝΟ ΔΙΚΤΥΟ WIFI"
+
+#:
+msgid "FORGET ALL"
+msgstr "ΞΕΧΑΣΤΕ ΟΛΑ"
+
+#:
+msgid "DISCONNECT & FORGET"
+msgstr "ΑΠΟΣΥΝΔΕΩ ΚΑΙ ΞΕΧΑΣΕ"
+
+#:
+msgid "FORGET"
+msgstr "ΞΕΧΝΑΜΕ"
 
 #:
 msgid "REFRESH"
@@ -1434,6 +1526,14 @@ msgstr "ΑΠΟΤΥΧΙΑ ΣΑΡΩΣΗΣ"
 msgid "SCRAPING FINISHED. REFRESH UPDATE GAMES LISTS TO APPLY CHANGES."
 msgstr "ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΣΑΡΩΣΗ. ΠΑΡΑΚΑΛΩ ΕΝΗΜΕΡΩΣΤΕ ΤΙΣ ΛΙΣΤΕΣ ΠΑΙΧΝΙΔΙΩΝ ΓΙΑ ΕΦΑΡΜΟΓΗ ΤΩΝ ΑΛΛΑΓΩΝ."
 
+#, c-format
+msgid "%s connected"
+msgstr "%s συνδεδεμένος"
+
+#, c-format
+msgid "%s disconnected"
+msgstr "%s ασύνδετος"
+
 #:
 msgid "QUIT"
 msgstr "ΕΞΟΔΟΣ"
@@ -1455,6 +1555,26 @@ msgid "GAME METADATA EDIT - \"SELECT\" CLOSE MENU"
 msgstr "ΕΠΕΞΕΡΓΑΣΙΑ METADATA - \"ΕΠΙΛΟΓΗ\" ΚΛΕΙΣΙΜΟ ΤΟ ΜΕΝΟΥ"
 
 #:
+msgid "AUTOSCROLL MENU ENTRIES"
+msgstr "ΑΥΤΟΜΑΤΗ ΚΥΛΙΣΗ ΣΤΑ ΕΙΔΗ ΜΕΝΟΥ"
+
+#:
+msgid "KODI MEDIA CENTER"
+msgstr "ΚΕΝΤΡΟ ΜΕΣΩΝ KODI"
+
+#:
+msgid "KODI SETTINGS"
+msgstr "ΡΥΘΜΙΣΕΙΣ KODI"
+
+#:
+msgid "ENABLE KODI"
+msgstr "ΕΝΕΡΓΟΠΟΙΗΣΤΕ TO KODI"
+
+#:
+msgid "LAUNCH KODI AT BOOT"
+msgstr "ΕΚΚΙΝΗΣΗ KODI ΣΤΟ BOOTUP"
+
+#:
 msgid "OTHERS"
 msgstr "ΥΠΟΛΟΙΠΑ"
 
@@ -1465,10 +1585,6 @@ msgstr "ΡΥΘΜΙΣΗ \"EXIT\""
 #:
 msgid "QUIT MENU"
 msgstr " ΕΞΟΔΟΣ ΑΠΟ ΤΟ ΜΕΝΟΥ"
-
-#:
-msgid "POWERKEY BUTTON SETTINGS"
-msgstr "ΡΥΘΜΙΣΕΙΣ ΚΟΥΜΠΙΟΥ POWERKEY"
 
 #:
 msgid "SYSTEM HOTKEY EVENTS SETTINGS"
@@ -1553,18 +1669,6 @@ msgstr "Τερματίστε το σύστημα χωρίς αποθήκευση
 #:
 msgid "REALLY SHUTDOWN WITHOUT SAVING METADATA?"
 msgstr "ΣΙΓΟΥΡΑ ΚΛΕΙΣΙΜΟ ΧΩΡΙΣ ΑΠΟΘΗΚΕΥΣΗ METADATA;"
-
-#:
-msgid "POWERKEY BUTTON"
-msgstr "ΚΟΥΜΠΙ ΑΠΕΝΕΡΓΟΠΟΙΗΣΗΣ"
-
-#:
-msgid "PUSH TWO TIMES TO EXECUTE ACTION"
-msgstr "ΠΑΤΗΣΤΕ ΔΥΟ ΦΟΡΕΣ ΓΙΑ ΟΛΟΚΛΗΡΩΣΗ ΤΗΣ ΕΝΕΡΓΕΙΑΣ"
-
-#:
-msgid "TIME INTERVAL"
-msgstr "ΧΡΟΝΙΚΟ ΔΙΑΣΤΗΜΑ"
 
 #:
 msgid "DEVICE AUTO SUSPEND SETTINGS"
@@ -1707,6 +1811,10 @@ msgid "DELETE GAME"
 msgstr "ΔΙΑΓΡΑΦΗ ΠΑΙΧΝΙΔΙΟΥ"
 
 #:
+msgid "LAUNCH THIS GAME AT STARTUP"
+msgstr "ΕΚΚΙΝΗΣΤΕ ΑΥΤΟ ΤΟ ΠΑΙΧΝΙΔΙ ΣΤΗΝ ΕΚΚΙΝΗΣΗ"
+
+#:
 msgid "THIS WILL DELETE THE ACTUAL GAME FILE(S)!\nARE YOU SURE?"
 msgstr "ΑΥΤΟ ΘΑ ΔΙΑΓΡΑΦΕΙ ΤΑ ΑΡΧΕΙΑ ΤΟΥ ΠΑΙΧΝΙΔΙΟΥ ΣΑΣ!\nΕΙΣΤΕ ΣΙΓΟΥΡΟΣ;"
 
@@ -1766,6 +1874,186 @@ msgstr "εκκίνηση"
 #:
 msgid "NO GAMES FIT THAT CRITERIA."
 msgstr "ΔΕΝ ΥΠΑΡΧΟΥΝ ΠΑΙΧΝΙΔΙΑ ΜΕ ΑΥΤΑ ΤΑ ΚΡΙΤΗΡΙΑ."
+
+#:
+msgid "BLUETOOTH SETTINGS"
+msgstr "ΡΥΘΜΙΣΕΙΣ BLUETOOTH"
+
+#:
+msgid "ENABLE BLUETOOTH"
+msgstr "ΕΝΕΡΓΟΠΟΙΗΣΗ BLUETOOTH"
+
+#:
+msgid "ENABLING BLUETOOTH ..."
+msgstr "ΕΝΕΡΓΟΠΟΙΗΣΗ BLUETOOTH ..."
+
+#:
+msgid "DISABLING BLUETOOTH ..."
+msgstr "ΑΠΕΝΕΡΓΟΠΟΙΗΣΗ BLUETOOTH ..."
+
+#:
+msgid "BLUETOOTH CONFIGURATOR"
+msgstr "ΔΙΑΜΟΡΦΩΣΗ BLUETOOTH"
+
+#:
+msgid "UNPAIR ALL"
+msgstr "ΑΠΟΖΕΥΞΗ ΟΛΩΝ"
+d
+#:
+msgid "AUTO CONNECT AUDIO DEVICES ON BOOT"
+msgstr "ΑΥΤΟΜΑΤΗ ΣΥΝΔΕΣΗ ΣΥΣΚΕΥΩΝ ΗΧΟΥ ΣΤΟ BOOT"
+
+#:
+msgid "WAIT BEFORE BOOT GAME LAUNCH"
+msgstr "ΠΕΡΙΜΕΝΕΤΕ ΠΡΙΝ ΤΗΝ ΕΚΚΙΝΗΣΗ ΤΟΥ ΠΑΙΧΝΙΔΙΟΥ ΕΝΑΡΞΗΣ"
+
+#:
+msgid "XBOX ONE CONTROLLER COMPATIBLE"
+msgstr "ΣΥΜΒΑΤΟΣ ΕΛΕΓΚΤΗΣ XBOX ONE"
+
+#:
+msgid "RESET BLUETOOTH CONFIG TO CHANGES TAKE EFFECT"
+msgstr "ΕΠΑΝΑΦΟΡΑ ΔΙΑΜΟΡΦΩΣΗΣ BLUETOOTH ΣΤΙΣ ΑΛΛΑΓΕΣ ΙΣΧΥΟΥΝ"
+
+#:
+msgid "TIMEOUT BEFORE LAUNCH THE BOOT GAME"
+msgstr "ΛΕΙΤΟΥΡΓΙΑ ΠΡΙΝ ΕΚΚΙΝΗΣΕΤΕ ΤΟ BOOT GAME"
+
+#:
+msgid "ARE YOU SURE YOU WANT TO DISCONNECT THE DEVICE?"
+msgstr "¿ΕΙΣΤΕ ΣΙΓΟΥΡΟΣ ΟΤΙ ΘΕΛΕΤΕ ΝΑ ΑΠΟΣΥΝΔΕΣΕΤΕ ΤΗ ΣΥΣΚΕΥΗ?"
+
+#:
+msgid "ARE YOU SURE YOU WANT TO REMOVE ALL DEVICES?"
+msgstr "¿ΕΙΣΤΕ ΣΙΓΟΥΡΟΣ ΟΤΙ ΘΕΛΕΤΕ ΝΑ ΑΦΑΙΡΕΣΕΤΕ ΟΛΕΣ ΤΙΣ ΣΥΣΚΕΥΕΣ?"
+
+#:
+msgid "DISCONNECT ALL"
+msgstr "ΑΠΟΣΥΝΔΕΣΗ ΟΛΩΝ"
+
+#:
+msgid "ADD ALIAS"
+msgstr "ΠΡΟΣΘΗΚΗ ALIAS"
+
+#:
+msgid "EDIT ALIAS"
+msgstr "ΕΠΙΜΕΛΕΙΑ ALIAS"
+
+#:
+msgid "ARE YOU SURE YOU WANT TO DISCONNECT ALL DEVICES?"
+msgstr "¿ΕΙΣΤΕ ΣΙΓΟΥΡΟΣ ΟΤΙ ΘΕΛΕΤΕ ΝΑ ΑΠΟΣΥΝΔΕΣΕΤΕ ΟΛΕΣ ΤΙΣ ΣΥΣΚΕΥΕΣ?"
+
+#:
+msgid "NO BLUETOOTH DEVICES FOUND"
+msgstr "ΔΕΝ ΒΡΕΘΗΚΑΝ ΣΥΣΚΕΥΕΣ BLUETOOTH"
+
+#:
+msgid "CONNECTING BLUETOOTH DEVICE"
+msgstr "ΣΥΝΔΕΣΗ ΣΥΣΚΕΥΗΣ BLUETOOTH"
+
+#:
+msgid "DISCONNECTING BLUETOOTH DEVICE"
+msgstr "ΑΠΟΣΥΝΔΕΣΗ ΣΥΣΚΕΥΗΣ BLUETOOTH"
+
+#:
+msgid "DEVICE SUCCESSFULLY DISCONNECTED"
+msgstr "I SYSKEVI APOSYNDETHIKE EPITYCHIA"
+
+#:
+msgid "DEVICE SUCCESSFULLY UNPAIRED"
+msgstr "I SYSKEVI APOSYNDESTIKE EPITYCHIA"
+
+#:
+msgid "DEVICE SUCCESSFULLY PAIRED AND CONNECTED"
+msgstr "Η ΣΥΣΚΕΥΗ ΣΥΖΕΥΞΕ ΚΑΙ ΣΥΝΔΕΘΗΚΕ ΕΠΙΤΥΧΙΑ"
+
+#:
+msgid "DEVICE SUCCESSFULLY CONNECTED"
+msgstr "Η ΣΥΣΚΕΥΗ ΣΥΝΔΕΘΗΚΕ ΕΠΙΤΥΧΙΑ"
+
+#:
+msgid "DEVICE FAILED TO UNPAIR"
+msgstr "Η ΣΥΣΚΕΥΗ ΑΠΟΤΥΧΕ ΑΠΟΖΕΥΓΩΣΗ"
+
+#:
+msgid "DEVICE FAILED TO PAIR AND CONNECT"
+msgstr "Η ΣΥΣΚΕΥΗ ΑΠΟΤΥΧΕ ΣΥΝΔΕΣΗ ΚΑΙ ΣΥΝΔΕΣΗ"
+
+#:
+msgid "DEVICE FAILED TO CONNECT"
+msgstr "Η ΣΥΣΚΕΥΗ ΑΠΟΤΥΧΕ ΣΥΝΔΕΣΗ"
+
+#:
+msgid "CONNECT"
+msgstr "SYNDEO"
+
+#:
+msgid "DISCONNECT"
+msgstr "ΑΠΟΣΥΝΔΕΩ"
+
+#:
+msgid "CONNECT/DISCONNECT"
+msgstr "SYNDEO/ΑΠΟΣΥΝΔΕΩ"
+
+#:
+msgid "PLEASE WAIT..."
+msgstr "ΠΑΡΑΚΑΛΩ ΠΕΡΙΜΕΝΕΤΕ..."
+
+#:
+msgid "ALL BLUETOOTH DEVICES HAVE BEEN UNPAIRED."
+msgstr "ΟΛΕΣ ΟΙ ΣΥΣΚΕΥΕΣ BLUETOOTH ΕΧΟΥΝ ΑΠΟΖΕΥΞΕ."
+
+#:
+msgid "ALL BLUETOOTH DEVICES HAVE BEEN DISCONNECTED."
+msgstr "ΟΛΕΣ ΟΙ ΣΥΣΚΕΥΕΣ BLUETOOTH ΕΧΟΥΝ ΑΠΟΖΕΥΞΕ."
+
+#:
+msgid "NOT ALL BLUETOOTH DEVICES HAVE BEEN UNPAIRED."
+msgstr "ΔΕΝ ΕΧΟΥΝ ΑΠΟΖΕΥΞΕΙ ΟΛΕΣ ΟΙ ΣΥΣΚΕΥΕΣ BLUETOOTH."
+
+#:
+msgid "NOT ALL BLUETOOTH DEVICES HAVE BEEN DISCONNECTED."
+msgstr "ΔΕΝ ΕΧΟΥΝ ΑΠΟΣΥΝΔΕΣΕΙ ΟΛΕΣ ΟΙ ΣΥΣΚΕΥΕΣ BLUETOOTH."
+
+#:
+msgid "SEARCHING BLUETOOTH CONNECTED DEVICES..."
+msgstr "ΑΝΑΖΗΤΗΣΗ ΣΥΝΔΕΔΕΜΕΝΩΝ ΣΥΣΚΕΥΩΝ BLUETOOTH..."
+
+#:
+msgid "SEARCHING BLUETOOTH PAIRED DEVICES..."
+msgstr "ΑΝΑΖΗΤΗΣΗ ΣΥΣΚΕΥΑΣΙΩΝ ΣΥΣΚΕΥΑΣΜΕΝΩΝ BLUETOOTH..."
+
+#:
+msgid "SEARCHING BLUETOOTH DEVICES..."
+msgstr "ΑΝΑΖΗΤΗΣΗ ΣΥΣΚΕΥΩΝ BLUETOOTH..."
+
+#:
+msgid "\"(**)\" ALREADY CONNECTED"
+msgstr "\"(**)\" ΗΔΗ ΣΥΝΔΕΔΕΜΕΝΟΣ"
+
+#:
+msgid "MANAGE BLUETOOTH DEVICES ALIAS"
+msgstr "ΔΙΑΧΕΙΡΙΣΗ ΨΕΥΔΩΝΟΥ ΣΥΣΚΕΥΩΝ BLUETOOTH"
+
+#:
+msgid "SEARCH NEW BLUETOOTH DEVICES"
+msgstr "ΑΝΑΖΗΤΗΣΗ ΝΕΩΝ ΣΥΣΚΕΥΩΝ BLUETOOTH"
+
+#:
+msgid "PAIRED BLUETOOTH DEVICES"
+msgstr "ΣΥΣΚΕΥΕΣ BLUETOOTH ΣΥΣΚΕΥΑΣΜΕΝΕΣ"
+
+#:
+msgid "CONNECTED BLUETOOTH DEVICES"
+msgstr "ΣΥΝΔΕΔΕΜΕΝΕΣ ΣΥΣΚΕΥΕΣ BLUETOOTH"
+
+#:
+msgid "USE ALIAS AS DEVICE NAME"
+msgstr "ΧΡΗΣΙΜΟΠΟΙΗΣΤΕ ΤΟ ΨΕΥΔΩΝΟ ΩΣ ΟΝΟΜΑ ΣΥΣΚΕΥΗΣ"
+
+#:
+msgid "ARE YOU SURE YOU WANT TO DELETE THIS CONNECTION?"
+msgstr "¿ΕΙΣΤΕ ΣΙΓΟΥΡΟΣ ΟΤΙ ΘΕΛΕΤΕ ΝΑ ΔΙΑΓΡΑΨΕΤΕ ΑΥΤΗ ΤΗ ΣΥΝΔΕΣΗ?"
 
 #:
 msgid "REALLY UPDATE?"
@@ -2200,10 +2488,6 @@ msgid "RELEASE YEAR, SYSTEM, DESCENDING"
 msgstr "ΕΤΟΣ ΚΥΚΛΟΦΟΡΙΑΣ, ΣΥΣΤΗΜΑ, ΦΘΙΝΟΥΣΑ"
 
 #:
-msgid "A,AN,THE"
-msgstr "ΕΝΑ,ΕΝΑ,ΤΟ"
-
-#:
 msgid "WORKING..."
 msgstr "ΣΕ ΕΞΕΛΙΞΗ..."
 
@@ -2260,44 +2544,68 @@ msgid "SELECT NONE"
 msgstr "ΕΠΙΛΟΓΗ ΚΑΜΙΑ"
 
 #:
-msgid "UP"
-msgstr "ΕΠΑΝΩ"
+msgid "D-PAD UP"
+msgstr "D-PAD ΕΠΑΝΩ"
 
 #:
-msgid "DOWN"
-msgstr "ΚΑΤΩ"
+msgid "D-PAD DOWN"
+msgstr "D-PAD ΚΑΤΩ"
 
 #:
-msgid "LEFT"
-msgstr "ΑΡΙΣΤΕΡΑ"
+msgid "D-PAD LEFT"
+msgstr "D-PAD ΑΡΙΣΤΕΡΑ"
 
 #:
-msgid "RIGHT"
-msgstr "ΔΕΞΙΑ"
+msgid "D-PAD RIGHT"
+msgstr "D-PAD ΔΕΞΙΑ"
 
 #:
-msgid "JOYSTICK 1 UP"
-msgstr "JOYSTICK 1 ΠΑΝΩ"
+msgid "BUTTON X / NORTH"
+msgstr "BOTÓN X / ΒΟΡΕΙΟΣ"
 
 #:
-msgid "JOYSTICK 1 LEFT"
-msgstr "JOYSTICK 1 ΑΡΙΣΤΕΡΑ"
+msgid "BUTTON B / SOUTH"
+msgstr "BOTÓN B / ΝΟΤΟΣ"
 
 #:
-msgid "JOYSTICK 2 UP"
-msgstr "JOYSTICK 2 ΕΠΑΝΩ"
+msgid "BUTTON Y / WEST"
+msgstr "BOTÓN Y / ΔΥΤΙΚΑ"
 
 #:
-msgid "JOYSTICK 2 LEFT"
-msgstr "JOYSTICK 2 ΑΡΙΣΤΕΡΑ"
+msgid "BUTTON A / EAST"
+msgstr "BOTÓN A / ΑΝΑΤΟΛΗ"
 
 #:
-msgid "PAGE UP"
-msgstr "L1 (ΕΠΑΝΩ ΣΕΛΙΔΑ)"
+msgid "LEFT ANALOG UP"
+msgstr "ΑΡΙΣΤΕΡΟ ΑΝΑΛΟΓΙΚΟ; ΕΠΑΝΩ"
 
 #:
-msgid "PAGE DOWN"
-msgstr "R1 (ΚΑΤΩ ΣΕΛΙΔΑ)"
+msgid "LEFT ANALOG DOWN"
+msgstr "ΑΡΙΣΤΕΡΟ ΑΝΑΛΟΓΙΚΟ; ΚΑΤΩ"
+
+#:
+msgid "LEFT ANALOG LEFT"
+msgstr "ΑΡΙΣΤΕΡΟ ΑΝΑΛΟΓΙΚΟ; ΑΡΙΣΤΕΡΑ"
+
+#:
+msgid "LEFT ANALOG RIGHT"
+msgstr "ΑΡΙΣΤΕΡΟ ΑΝΑΛΟΓΙΚΟ; ΔΕΞΙΑ"
+
+#:
+msgid "RIGHT ANALOG UP"
+msgstr "ΔΕΞΙΑ ΑΝΑΛΟΓΙΚΟ; ΕΠΑΝΩ"
+
+#:
+msgid "RIGHT ANALOG DOWN"
+msgstr "ΔΕΞΙΑ ΑΝΑΛΟΓΙΚΟ; ΚΑΤΩ"
+
+#:
+msgid "RIGHT ANALOG LEFT"
+msgstr "ΔΕΞΙΑ ΑΝΑΛΟΓΙΚΟ; ΑΡΙΣΤΕΡΑ"
+
+#:
+msgid "RIGHT ANALOG RIGHT"
+msgstr "ΔΕΞΙΑ ΑΝΑΛΟΓΙΚΟ; ΔΕΞΙΑ"
 
 #:
 msgid "HOTKEY"
@@ -2343,6 +2651,14 @@ msgstr "ΚΑΛΩΣ ΗΡΘΑΤΕ"
 #:
 msgid "CONFIGURE INPUT"
 msgstr "ΔΙΑΜΟΡΦΩΣΗ ΕΛΕΓΧΟΥ"
+
+#:
+msgid "TEST INPUT"
+msgstr "ΕΛΕΓΧΟΣ ΕΙΣΟΔΟΥ"
+
+#:
+msgid "CALIBRATE TV"
+msgstr "ΜΕΤΡΩ ΤΗΝ ΔΙΑΜΕΤΡΟ TV"
 
 #, c-format
 msgid "%i GAMEPAD DETECTED"
@@ -2459,7 +2775,7 @@ msgid "GENRE"
 msgstr "ΓΕΝΟΣ"
 
 #:
-msgid "No entries found"
+msgid "No Entries Found"
 msgstr "Δεν βρέθηκαν καταχωρήσεις"
 
 #:
@@ -2617,6 +2933,10 @@ msgid "ROMS DISK USAGE"
 msgstr "ΧΡΗΣΗ ΔΙΣΚΟΥ ROMS"
 
 #:
+msgid "ROMS2 DISK USAGE"
+msgstr "ΧΡΗΣΗ ΔΙΣΚΟΥ ROMS2"
+
+#:
 msgid "USB DISK USAGE"
 msgstr "ΧΡΗΣΗ ΔΙΣΚΟΥ USB"
 
@@ -2741,6 +3061,10 @@ msgid "START ON GAMELIST"
 msgstr "ΕΚΚΙΝΗΣΗ ΣΤΗΝ ΛΙΣΤΑ ΠΑΙΧΝΙΔΙΩΝ"
 
 #:
+msgid "STOP LAUNCHING THIS GAME AT STARTUP"
+msgstr "ΣΤΑΜΑΤΗΣΤΕ ΝΑ ΕΚΚΙΝΗΣΕΤΕ ΑΥΤΟ ΤΟ ΠΑΙΧΝΙΔΙ ΣΤΗΝ ΕΚΚΙΝΗΣΗ"
+
+#:
 msgid "HIDE SYSTEM VIEW"
 msgstr "ΑΠΟΚΡΥΨΗ ΠΡΟΒΟΛΗΣ ΣΥΣΤΗΜΑΤΟΣ"
 
@@ -2791,6 +3115,10 @@ msgstr "ΕΝΕΡΓΟΠΟΙΗΣΗ ΦΙΛΤΡΩΝ"
 #:
 msgid "IGNORE LEADING ARTICLES WHEN SORTING"
 msgstr "ΑΓΝΟΗΣΗ ΤΩΝ ΚΟΡΥΦΑΙΩΝ ΑΡΘΡΩΝ ΚΑΤΑ ΤΗΝ ΤΑΞΙΝΟΜΗΣΗ"
+
+#:
+msgid "LEADING ARTICLES"
+msgstr "ΚΟΡΥΦΑΙΑ ΑΡΘΡΑ"
 
 #:
 msgid "THEME CONFIGURATION"
@@ -3006,6 +3334,10 @@ msgid "SHOW ACTION NAME AS MENU OPTION"
 msgstr "ΕΜΦΑΝΙΣΗ ΟΝΟΜΑΤΟΣ ΕΝΕΡΓΕΙΑΣ ΩΣ ΕΠΙΛΟΓΗ ΜΕΝΟΥ"
 
 #:
+msgid "HIDE \"QUIT EMULATIONSTATION\" OPTION"
+msgstr "ΑΠΟΚΡΥΨΗ ΕΠΙΛΟΓΗΣ \"ΕΞΟΔΟΣ ΑΠΟ ΤΟ EMULATIONSTATION\""
+
+#:
 msgid "The selected UI mode has nothing to show,\n returning to UI mode: FULL"
 msgstr "Η επιλεγμένη λειτουργία UI δεν δείχνει τίποτα, \n επιστρέφει στη λειτουργία UI: FULL"
 
@@ -3128,6 +3460,14 @@ msgid "collections"
 msgstr "συλλογές"
 
 #:
+msgid "options"
+msgstr "επιλογές"
+
+#:
+msgid "Options"
+msgstr "Επιλογές"
+
+#:
 msgid "Collections"
 msgstr "Συλλογές"
 
@@ -3205,17 +3545,18 @@ msgid_plural "This collection contains %i games, including :%s"
 msgstr[0] "Αυτή η συλλογή περιέχει %i παιχνίδι, συμπεριλαμβανομένων :%s"
 msgstr[1] "Αυτή η συλλογή περιέχει %i παιχνίδια, συμπεριλαμβανομένων :%s"
 
-#:
-msgid "YOU DIDN'T CHOOSE A HOTKEY ENABLE BUTTON. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER."
-msgstr "NO HAS ELEGIDO EL BOTÓN \"HOTKEY\", ESTE BOTÓN ES NECESARIO PARA SALIR DE LOS JUEGOS CON UN MANDO.ΔΕΝ ΕΠΙΛΕΞΑΤΕ ΤΟ ΚΟΥΜΠΙ \"HOTKEY\" ΕΝΕΡΓΟΠΟΙΗΣΗΣ, ΑΥΤΟ ΤΟ ΚΟΥΜΠΙ ΑΠΑΙΤΕΙΤΑΙ ΓΙΑ ΤΗΝ ΕΞΟΔΟ ΑΠΟ ΤΑ ΠΑΙΧΝΙΔΙΑ ΜΕ ΤΗΛΕΧΕΙΡΙΣΤΗΡΙΟ."
+msgid ""
+"NO HOTKEY BUTTON HAS BEEN ASSIGNED. THIS IS REQUIRED FOR EXITING GAMES WITH "
+"A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON AS YOUR HOTKEY?"
+msgstr ""
+"ΚΑΝΕΝΑ ΚΟΥΜΠΙ HOTKEY ΑΝΤΙΣΤΟΙΧΗΣ. ΑΥΤΟ ΑΠΑΙΤΕΙΤΑΙ ΓΙΑ ΕΞΟΔΟΣ ΑΠΟ ΠΑΙΧΝΙΔΙΑ "
+"ΜΕ ΕΛΕΓΚΤΗ. ¿ΘΕΛΕΤΕ ΝΑ ΧΡΗΣΙΜΟΠΟΙΗΣΕΤΕ ΤΟ ΚΟΥΜΠΙ SELECT ΣΑΝ ΤΟ ΚΛΕΙΔΙ ΣΥΝΤΟΜΗΣΗΣ ΣΑΣ?"
 
-#:
-msgid "DO YOU WANT TO USE THE SELECT BUTTON DEFAULT ?"
-msgstr "ΘΕΛΕΤΕ ΝΑ ΧΡΗΣΙΜΟΠΟΙΗΣΕΤΕ ΤΟ ΚΟΥΜΠΙ \"ΕΠΙΛΟΓΗ\" ΠΡΟΕΠΙΛΟΓΗ;"
+msgid "SET SELECT AS HOTKEY"
+msgstr "ΑΝΑΘΕΤΩ SELECT ΟΠΩΣ ΚΑΙ HOTKEY"
 
-#:
-msgid "PLEASE ANSWER YES TO USE SELECT OR NO TO NOT SET A HOTKEY ENABLE BUTTON."
-msgstr "ΠΑΡΑΚΑΛΩ ΑΠΑΝΤΗΣΤΕ ΝΑΙ ΓΙΑ ΧΡΗΣΙΜΟΠΟΙΗΣΗ \"ΕΠΙΛΟΓΗ\", Ή ΟΧΙ ΓΙΑ ΝΑ ΜΗΝ ΤΕΘΕΙ ΚΟΥΜΠΙ ΕΝΕΡΓΟΠΟΙΗΣΗΣ \"HOTKEY\"."
+msgid "DO NOT ASSIGN HOTKEY"
+msgstr "ΟΧΙ ΑΝΑΘΕΤΩ HOTKEY"
 
 #, c-format
 msgid "HOLD FOR %iS TO SKIP"
@@ -3256,12 +3597,12 @@ msgid "SIMPLIFIED CHINESE"
 msgstr "ΑΠΛΟΠΟΙΗΜΕΝΑ ΚΙΝΕΖΙΚΑ"
 
 #:
-msgid "ITALIAN"
-msgstr "ΙΤΑΛΙΚΟΣ"
-
-#:
 msgid "ENGLISH"
 msgstr "ΑΓΓΛΙΚΑ"
+
+#:
+msgid "ITALIAN"
+msgstr "ΙΤΑΛΙΚΟΣ"
 
 #:
 msgid "GREEK"
@@ -3290,3 +3631,7 @@ msgstr "SHIFT ΓΙΑ ΑΝΩ, ΚΑΤΩ ΚΑΙ ΕΙΔΙΚΟΥΣ ΧΑΡΑΚΤΗΡΕ
 #, c-format
 msgid "THE VALUE '%s' ISN'T VALID."
 msgstr "Η ΤΙΜΗ '%s' ΔΕΝ ΕΙΝΑΙ  ΕΓΚΥΡΗ."
+
+#:
+msgid "BUILT"
+msgstr "ΧΤΙΣΜΕΝΟ"
