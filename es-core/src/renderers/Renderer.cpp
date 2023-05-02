@@ -10,8 +10,6 @@
 #include <SDL.h>
 #include <stack>
 
-//#include <go2/display.h>
-
 namespace Renderer
 {
 	static std::stack<Rect> clipStack;
@@ -26,13 +24,11 @@ namespace Renderer
 	static int              screenOffsetY      = 0;
 	static int              screenRotate       = 0;
 	static bool             initialCursorState = 1;
-	//static go2_display_t*   display            = nullptr;
 
 	static Vector2i			sdlWindowPosition  = Vector2i(SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED);
 
 	static void setIcon()
 	{
-//#if 0
 		size_t                     width   = 0;
 		size_t                     height  = 0;
 		ResourceData               resData = ResourceManager::getInstance()->getFileData(":/window_icon_256.png");
@@ -62,7 +58,6 @@ namespace Renderer
 				SDL_FreeSurface(logoSurface);
 			}
 		}
-//#endif
 	} // setIcon
 
 	static bool createWindow()
@@ -75,7 +70,6 @@ namespace Renderer
 			return false;
 		}
 
-//#if 0
 		static SDL_DisplayMode dispMode;
 
 		if (windowWidth == 0)
@@ -150,19 +144,6 @@ namespace Renderer
 		createContext();
 		setIcon();
 		setSwapInterval();
-//#endif
-
-		/*display = go2_display_create();
-		windowWidth = go2_display_height_get(display);
-		windowHeight = go2_display_width_get(display);
-		screenWidth = windowWidth;
-		screenHeight = windowHeight;
-		screenOffsetX = 0;
-		screenOffsetY = 0;
-		screenRotate = 0;
-
-		setupWindow();
-		createContext();*/
 
 		return true;
 
@@ -178,15 +159,10 @@ namespace Renderer
 		}
 
 		destroyContext();
-//#if 0
 		SDL_DestroyWindow(sdlWindow);
 		sdlWindow = nullptr;
 
 		SDL_ShowCursor(initialCursorState);
-//#endif
-		/*go2_display_destroy(display);
-		display = nullptr;*/
-
 		SDL_Quit();
 	} // destroyWindow
 
@@ -402,8 +378,6 @@ namespace Renderer
 	int         getScreenOffsetX() { return screenOffsetX; }
 	int         getScreenOffsetY() { return screenOffsetY; }
 	int         getScreenRotate()  { return screenRotate; }
-
-	//go2_display_t* getDisplay()    { return display; }
 
 	bool isSmallScreen() { return screenWidth < 1024 || screenHeight < 768; };
 

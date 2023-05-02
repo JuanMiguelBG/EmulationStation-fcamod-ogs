@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <go2/audio.h>
 #include <drm/drm_fourcc.h>
 
 namespace Renderer

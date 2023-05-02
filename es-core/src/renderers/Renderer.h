@@ -8,7 +8,6 @@
 class  Transform4x4f;
 class  Vector2i;
 struct SDL_Window;
-//typedef struct go2_display go2_display_t;
 
 namespace Renderer
 {
@@ -80,7 +79,6 @@ namespace Renderer
 	int         getScreenOffsetX();
 	int         getScreenOffsetY();
 	int         getScreenRotate ();
-	//go2_display_t* getDisplay();
 
 	// API specific
 	unsigned int convertColor      (const unsigned int _color);
