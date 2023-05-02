@@ -2607,7 +2607,7 @@ void GuiMenu::openQuitSettings(GuiSettings *parentGui)
 			if (pthis)
 				delete pthis;
 			
-			auto main_menu = new GuiMenu(window, false);
+			auto main_menu = new GuiMenu(window, false, CursortId::ADVANCED_SETTINGS);
 			window->pushGui(main_menu);
 			main_menu->openAdvancedSettings();
 		}
@@ -2649,7 +2649,7 @@ void GuiMenu::openMenusSettings(GuiSettings *parentGui)
 			if (pthis)
 				delete pthis;
 			
-			auto main_menu = new GuiMenu(window, false);
+			auto main_menu = new GuiMenu(window, false, CursortId::UI_SETTINGS);
 			window->pushGui(main_menu);
 			main_menu->openUISettings();
 		}
