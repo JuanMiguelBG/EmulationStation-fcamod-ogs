@@ -82,6 +82,7 @@ private:
 	void openDisplayAutoDimSettings();
 	void openRemoteServicesSettings();
 
+	void stopSoundComponentsAndMusic();
 	void reinitSoundComponentsAndMusic();
 
 	void addStatusBarInfo(Window* window);

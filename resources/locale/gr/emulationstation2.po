@@ -733,7 +733,7 @@ msgstr "ΚΛΕΙΣΙΜΟ"
 
 #:
 msgid "LAUNCH"
-msgstr "ΕΚΤΟΞΕΥΣΗ"
+msgstr "ΕΚΚΙΝΗΣΗ"
 
 #:
 msgid "PARENT FOLDER"

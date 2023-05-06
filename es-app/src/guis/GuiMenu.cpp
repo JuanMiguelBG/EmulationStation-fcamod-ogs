@@ -565,12 +565,17 @@ void GuiMenu::openSoundSettings()
 				out_dev_cmp->add(_(out_dev_label), output_dev, out_dev_value == output_dev);
 			}
 			s->addWithLabel(_("OUTPUT DEVICE"), out_dev_cmp);
-			out_dev_cmp->setSelectedChangedCallback([s, out_dev_value, window](const std::string &newVal)
+			out_dev_cmp->setSelectedChangedCallback([this, s, out_dev_value, window, volume](const std::string &newVal)
 				{
 					SystemConf::getInstance()->set("sound.output.device", newVal);
 
 					if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
+					{
 						ApiSystem::getInstance()->setOutputDevice(newVal);
+						volume->setValue( (float)ApiSystem::getInstance()->getVolume() );
+						stopSoundComponentsAndMusic();
+						reinitSoundComponentsAndMusic();
+					}
 				});
 		}
 	}
@@ -1850,9 +1855,8 @@ void GuiMenu::openBluetoothSettings()
 	const bool baseBtAudioConnected = SystemConf::getInstance()->getBool("bluetooth.audio.connected");
 	const std::string baseBtAudioDevice = SystemConf::getInstance()->get("bluetooth.audio.device");
 
-	// stop sound to prevent problems
-	AudioManager::getInstance()->deinit();
-	VolumeControl::getInstance()->deinit();
+	// stop sound to prevent 
+	stopSoundComponentsAndMusic();
 
 	Window *window = mWindow;
 	auto s = new GuiSettings(window, _("BLUETOOTH SETTINGS").c_str());
@@ -2022,6 +2026,14 @@ void GuiMenu::openBluetoothSettings()
 	});
 
 	window->pushGui(s);
+}
+
+void GuiMenu::stopSoundComponentsAndMusic()
+{
+	AudioManager::getInstance()->stopMusic();
+
+	AudioManager::getInstance()->deinit();
+	VolumeControl::getInstance()->deinit();
 }
 
 void GuiMenu::reinitSoundComponentsAndMusic()
