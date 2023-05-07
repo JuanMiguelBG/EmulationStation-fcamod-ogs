@@ -261,6 +261,8 @@ void Settings::setDefaults()
 
 	mStringMap["suspend.device.mode"] = "LIGHT";
 	mBoolMap["hdmi.mode"] = false;
+	mStringMap["hdmi.sound.card"] = "HDMI";
+	mStringMap["hdmi.sound.output.device"] = "HDMI";
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

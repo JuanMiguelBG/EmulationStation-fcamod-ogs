@@ -84,4 +84,34 @@ lowercase()
   local string="$1"
   echo "${string,,}"
 }
+
+get_es_settings_property()
+{
+  local property="$1"
+  local type="$3"
+
+  [ -z "$property" ] && return
+  [ -z "$type" ] && type="string"
+
+  cat "$ES_CONFIG_FILE" | grep "<$type" | grep "name=\"$property\"" | grep -o -P -w 'value="\K[^"]+'
+}
+
+set_es_settings_property()
+{
+  local property="$1"
+  local value="$2"
+  local type="$3"
+
+  [ -z "$property" ] && return
+  [ -z "$type" ] && type="string"
+
+  if [[ $(cat "$ES_CONFIG_FILE" | grep "<$type" | grep -c "name=\"$property\"") -gt 0 ]]; then
+    # property exist, replace
+    sed -i "s/^<$type\s\+name=\"$property\".*/<${type} name=\"${property}\" value=\"${value}\" \/>/" "$ES_CONFIG_FILE"
+    return
+  fi
+
+  # property not exist, create
+  echo "<$type name=\"$property\" value=\"$value\" />" >> "$ES_CONFIG_FILE"
+}
 #******************* END - ES Scripts String functions ********************

@@ -49,9 +49,11 @@ static std::map<std::string, std::string> defaults =
 	{ "suspend.device.mode", "LIGHT" },
 	{ "hdmi.mode", "0" },
 	{ "sound.card", "DEFAULT" },
+	{ "hdmi.sound.card", "HDMI" },
 	{ "sound.cards", "DEFAULT" },
 	{ "sound.audio.device", "RK817-CODEC" },
 	{ "sound.output.device", "SPK" },
+	{ "hdmi.sound.output.device", "HDMI" },
 	{ "sound.output.devices", "SPK"},
 	{ "kodi.enabled", "1"},
 	{ "kodi.atstartup", "0"}

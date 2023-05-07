@@ -17,6 +17,11 @@ do_help()
 	echo "$0 toggle (between Speaker or Headphone)" >&2
 	echo "$0 is_usb_audio_connected" >&2
 	echo "$0 is_usb_audio_default_card" >&2
+	echo "$0 is_hdmi_audio_connected" >&2
+	echo "$0 is_hdmi_default_card" >&2
+	echo "$0 is_bluetooth_audio_connected" >&2
+	echo "$0 is_bluetooth_default_card" >&2
+	echo "$0 is_rk817_default_card" >&2
 	echo "$0 config_sound_card" >&2
 }
 
@@ -40,14 +45,112 @@ is_usb_audio_default_card()
 
 	is_usb_audio_connected
 	if [ $? -eq 0 ]; then
-		# USB audio card is the default
-		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic usb) -gt 0 ]]; then
+		local index=$(get_hw_audio_card_index_by_name usb)
+		index="${index/:/}"
+		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic "hw:${index},") -gt 0 ]]; then
+			# USB audio card is the default
 			#print_log $LOG_FILE "INFO" "is_usb_audio_default_card() - The USB Audio card, is the default audio card"
 			return 0
 		fi
 	fi
-	#print_log $LOG_FILE "INFO" "is_usb_audio_default_card() - The USB Audio card, is NOT the default audio card"
 	# NO USB audio devices connected
+	#print_log $LOG_FILE "INFO" "is_usb_audio_default_card() - The USB Audio card, is NOT the default audio card"
+	return 1
+}
+
+is_hdmi_audio_connected()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_hdmi_audio_connected()'"
+
+	es-display is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		# HDMI audio device connected
+		#print_log $LOG_FILE "INFO" "is_hdmi_audio_connected() - The HDMI audio device connected"
+		return 0
+	fi
+	# NO HDMI audio device connected
+	#print_log $LOG_FILE "INFO" "is_hdmi_audio_connected() - NO HDMI audio device connected"
+	return 1
+}
+
+is_hdmi_default_card()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_hdmi_default_card()'"
+
+	is_hdmi_audio_connected
+	if [ $? -eq 0 ]; then
+		# HDMI mode
+		local index=$(get_hw_audio_card_index_by_name hdmi)
+		index="${index/:/}"
+		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic "hw:${index},") -gt 0 ]]; then
+			# HDMI audio card is the default
+			#print_log $LOG_FILE "INFO" "is_hdmi_default_card() - The HDMI Audio card, is the default audio card"
+			return 0
+		fi
+	fi
+	# NO HDMI audio card is the default
+	#print_log $LOG_FILE "INFO" "is_hdmi_default_card() - The HDMI Audio card, is NOT the default audio card"
+	return 1
+}
+
+is_bluetooth_audio_connected()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_audio_connected()'"
+
+	es-bluetooth is_bluetooth_audio_device_connected
+	if [ $? -eq 0 ]; then
+		# BT audio device connected
+		#print_log $LOG_FILE "INFO" "is_bluetooth_audio_connected() - Bluetooth audio device connected"
+		return 0
+	fi
+	#print_log $LOG_FILE "INFO" "is_bluetooth_audio_connected() - Bluetooth audio device not connected"
+	# NOBT audio device connected
+	return 1
+}
+
+is_bluetooth_default_card()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_bluetooth_default_card()'"
+
+	is_bluetooth_audio_connected
+	if [ $? -eq 0 ] && [[ $(cat "$ALSA_CFG_FILE" | grep -ic bluetooth) -gt 0 ]]; then
+		# BT audio card is the default
+		#print_log $LOG_FILE "INFO" "is_bluetooth_default_card() - The Bluetooth Audio card, is the default audio card"
+		return 0
+	fi
+	# NO BT audio card is the default
+	#print_log $LOG_FILE "INFO" "is_bluetooth_default_card() - The Bluetooth Audio card, is NOT the default audio card"
+	return 1
+}
+
+is_rk817_default_card()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_rk817_default_card()'"
+
+	local index=$(get_hw_audio_card_index_by_name rk817)
+	index="${index/:/}"
+	if [[ $(cat "$ALSA_CFG_FILE" | grep -ic "hw:${index},") -gt 0 ]]; then
+		# rk817 audio card is the default
+		#print_log $LOG_FILE "INFO" "is_rk817_default_card() - The RK817 Audio card, is the default audio card"
+		return 0
+	fi
+	# NO rk817 audio card is the default
+	#print_log $LOG_FILE "INFO" "is_rk817_default_card() - The RK817 Audio card, is NOT the default audio card"
+	return 1
+}
+
+is_headphone_connected()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'is_headphone_connected()'"
+
+	# TODO
+	if [[ $(cat /sys/class/extcon/rk-headset/state | grep -c "1") -gt 0 ]]; then
+		# Headphone/Headset connected
+		#print_log $LOG_FILE "INFO" "is_headphone_connected() - Headphone/Headset connected"
+		return 0
+	fi
+	# NO headphone connected
+	#print_log $LOG_FILE "INFO" "is_headphone_connected() - NO headphone connected"
 	return 1
 }
 
@@ -55,25 +158,26 @@ get_output_device()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'get_output_device()'"
 
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_bluetooth_default_card
 	if [ $? -eq 0 ]; then
-		# bluetooth audio device
+		# BT audio device
 		local output_device=`es-bluetooth audio_device_connected`
 		#print_log $LOG_FILE "DEBUG" "Executing 'get_output_device()' - Getting Bluetooth output device: '$output_device'"
 		echo "${output_device^^}"
 		return
 	fi
 
-	es-display is_hdmi_mode
+	is_hdmi_default_card
 	if [ $? -eq 0 ]; then
-		#print_log $LOG_FILE "INFO" "Executing 'get_output_device()' - 'HDMI'"
+		# HDMI audio device
+		#print_log $LOG_FILE "INFO" "Executing 'get_output_device()' - Getting Bluetooth output device: 'HDMI'"
 		echo "HDMI"
 		return
 	fi
 
 	is_usb_audio_default_card
 	if [ $? -eq 0 ]; then
-		# usb audio card
+		# USB audio device
 		local output_device=`awk -F'[][]' '{ print $2 }' <(aplay -l | grep -i usb)`
 		#print_log $LOG_FILE "DEBUG" "Executing 'get_output_device()' - Getting USB Audio output device: '$output_device'"
 		echo "${output_device^^}"
@@ -124,15 +228,16 @@ do_set_output_device()
 
 	#print_log $LOG_FILE "INFO" "Executing 'do_set_output_device()', value: '$value'"
 
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_bluetooth_default_card
 	if [ $? -eq 0 ]; then
-		# bluetooth audio device, skip
-		#print_log $LOG_FILE "DEBUG" "do_set_output_device() - Bluetooth audio device, skip"
-		return;
+		# bluetooth audio card, skip
+		#print_log $LOG_FILE "DEBUG" "do_set_output_device() - Bluetooth audio card, skip"
+		return
 	fi
 
-	es-display is_hdmi_mode
+	is_hdmi_default_card
 	if [ $? -eq 0 ]; then
+		# HDMI audio card, skip
 		#print_log $LOG_FILE "DEBUG" "Executing 'do_set_output_device()' - HDMI audio card, skip"
 		return
 	fi
@@ -141,7 +246,7 @@ do_set_output_device()
 	if [ $? -eq 0 ]; then
 		# USB audio device, skip
 		#print_log $LOG_FILE "DEBUG" "do_set_output_device() - USB audio card, skip"
-		return;
+		return
 	fi
 
 	local output_device=$(get_output_device)
@@ -176,33 +281,108 @@ do_set_output_device()
 do_set_audio_card()
 {
 	local audio_card=${1^^}
+
+	if [ -z "$audio_card" ]; then
+		audio_card="DEFAULT"
+	fi
 	#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - audio card: '$audio_card'"
 
 	if [[ "$audio_card" == *"BLUETOOTH"* ]]; then
-		#print_log $LOG_FILE "WARNING" "Executing 'do_set_audio_card()' - Setting the Bluetooth audio card"
-		cp -f "$ALSA_BT_CFG_FILE" "$ALSA_CFG_FILE"
-		return 0
-	fi
+		is_bluetooth_default_card
+		if [ $? -eq 0 ]; then
+			# BT is default card, skip
+			#print_log $LOG_FILE "DEBUG" "do_set_audio_card() - Bluetooth audio card already setted, skip"
+			return 0
+		fi
 
-	if [[ "$audio_card" == *"USB"* ]]; then
-		local index=$(get_hw_audio_card_index_by_name usb)
-		#print_log $LOG_FILE "DEBUG" "Executing 'do_set_audio_card()' - USB AUDIO card at index '$index'"
-		if [ ! -z "$index" ]; then
-			cp -f "$ALSA_USB_CFG_FILE" "$ALSA_CFG_FILE"
-			sed -i 's/_AUDIO_CARD_INDEX_/'"$index"'/g' "$ALSA_CFG_FILE"
-
-			if [[ $(cat "$ALSA_CFG_FILE" | grep -c "hw:$index,0") -gt 0 ]]; then
-				# USB audio card succesfully configured
-				#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' successfully"
-				amixer sset Speaker 100% 2>&1 > /dev/null
-				amixer sset Master 40% 2>&1 > /dev/null
-				return 0
-			fi
-			#print_log $LOG_FILE "ERROR" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' failed"
+		is_bluetooth_audio_connected
+		if [ $? -eq 0 ]; then
+			# BT audio device connected
+			#print_log $LOG_FILE "WARNING" "Executing 'do_set_audio_card()' - Setting the Bluetooth audio card"
+			cp -f "$ALSA_BT_CFG_FILE" "$ALSA_CFG_FILE"
+			return 0
 		fi
 	fi
 
-	# set default sound card
+	if [[ "$audio_card" == *"HDMI"* ]]; then
+		is_hdmi_default_card
+		if [ $? -eq 0 ]; then
+			# HDMI is default card, skip
+			#print_log $LOG_FILE "DEBUG" "do_set_audio_card() - HDMI audio card already setted, skip"
+			return 0
+		fi
+
+		is_hdmi_audio_connected
+		if [ $? -eq 0 ]; then
+			#print_log $LOG_FILE "DEBUG" "Executing 'do_set_audio_card()' - Setting the HDMI audio card"
+			local index=$(get_hw_audio_card_index_by_name hdmi)
+			index="${index/:/}"
+			cp -f "$ALSA_TEMPLATE_CFG_FILE" "$ALSA_CFG_FILE"
+			sed -i 's/_AUDIO_CARD_NAME_/HDMI AUDIO/g; s/_AUDIO_CARD_INDEX_/'"$index"'/g' "$ALSA_CFG_FILE"
+
+			if [[ $(cat "$ALSA_CFG_FILE" | grep -c "hw:${index},0") -gt 0 ]]; then
+				# USB audio card succesfully configured
+				#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - HDMI card configured at index '$index' successfully"
+				return 0
+			fi
+		fi
+	fi
+
+	if [[ "$audio_card" == *"USB"* ]]; then
+		is_usb_audio_default_card
+		if [ $? -eq 0 ]; then
+			# USB Audio is default card, skip
+			#print_log $LOG_FILE "DEBUG" "do_set_audio_card() - USB audio card already setted, skip"
+			return 0
+		fi
+
+		is_usb_audio_connected
+		if [ $? -eq 0 ]; then
+			# USB Audio device connected
+			local index=$(get_hw_audio_card_index_by_name usb)
+			index="${index/:/}"
+			#print_log $LOG_FILE "DEBUG" "Executing 'do_set_audio_card()' - USB AUDIO card at index '$index'"
+			if [ ! -z "$index" ]; then
+				cp -f "$ALSA_TEMPLATE_CFG_FILE" "$ALSA_CFG_FILE"
+				sed -i 's/_AUDIO_CARD_NAME_/USB AUDIO/g; s/_AUDIO_CARD_INDEX_/'"$index"'/g' "$ALSA_CFG_FILE"
+
+				if [[ $(cat "$ALSA_CFG_FILE" | grep -c "hw:${index},0") -gt 0 ]]; then
+					# USB audio card succesfully configured
+					#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' successfully"
+					amixer sset Speaker 100% 2>&1 > /dev/null
+					amixer sset Master 40% 2>&1 > /dev/null
+					return 0
+				fi
+				#print_log $LOG_FILE "ERROR" "Executing 'do_set_audio_card()' - USB AUDIO card configured at index '$index' failed"
+			fi
+		fi
+	fi
+
+	if [[ "$audio_card" == *"DEFAULT"* ]]; then
+		is_rk817_default_card
+		if [ $? -eq 0 ]; then
+			# rk817 is default card, skip
+			#print_log $LOG_FILE "DEBUG" "do_set_audio_card() - RK817 audio card already setted, skip"
+			return 0
+		fi
+
+		local index=$(get_hw_audio_card_index_by_name rk817)
+		index="${index/:/}"
+		#print_log $LOG_FILE "DEBUG" "Executing 'do_set_audio_card()' - RK817 audio card at index '$index'"
+		if [ ! -z "$index" ]; then
+			cp -f "$ALSA_TEMPLATE_CFG_FILE" "$ALSA_CFG_FILE"
+			sed -i 's/_AUDIO_CARD_NAME_/DEFAULT AUDIO/g; s/_AUDIO_CARD_INDEX_/'"$index"'/g' "$ALSA_CFG_FILE"
+
+			if [[ $(cat "$ALSA_CFG_FILE" | grep -c "hw:${index},0") -gt 0 ]]; then
+				# rk817 audio card succesfully configured
+				#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - RK817 audio card configured at index '$index' successfully"
+				return 0
+			fi
+			#print_log $LOG_FILE "ERROR" "Executing 'do_set_audio_card()' - RK817 audio card configured at index '$index' failed"
+		fi
+
+	fi
+
 	#print_log $LOG_FILE "INFO" "Executing 'do_set_audio_card()' - configuring DEFAULT/HDMI sound card"
 	cp -f "$ALSA_DEFAULT_CFG_FILE" "$ALSA_CFG_FILE"
 	return 0
@@ -236,34 +416,41 @@ config_set_value()
 get_audio_cards()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()'"
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_bluetooth_default_card
 	if [ $? -eq 0 ]; then
 		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - BLUETOOTH audio card"
 		echo "BLUETOOTH AUDIO"
 		return
 	fi
 
-	es-display is_hdmi_mode
+	local audio_cards="DEFAULT"
+
+	is_bluetooth_audio_connected
 	if [ $? -eq 0 ]; then
-		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - HDMI audio card"
-		echo "HDMI"
-		return
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - Bluetooth audio device connected, added Bluetooth audio card"
+		audio_cards+="\BLUETOOTH AUDIO"
+	fi
+
+	is_hdmi_audio_connected
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - HDMI audio device connected, added HDMI audio card"
+		audio_cards+="\nHDMI"
 	fi
 
 	is_usb_audio_connected
 	if [ $? -eq 0 ]; then
-		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - 'default' and 'USB AUDIO'"
-		echo -e "DEFAULT\nUSB AUDIO"
-		return
+		#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - USB audio device connected, added USB Audio card"
+		audio_cards+="\nUSB AUDIO"
 	fi
 
-	echo "DEFAULT"
+	#print_log $LOG_FILE "INFO" "Executing 'get_audio_cards()' - Audio cards: '$audio_cards'"
+	echo -e "$audio_cards"
 }
 
 get_audio_device()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'get_audio_device()'"
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_bluetooth_default_card
 	if [ $? -eq 0 ]; then
 		# bluetooth audio device
 		local bt_value=`es-bluetooth audio_device_connected`
@@ -272,7 +459,7 @@ get_audio_device()
 		return
 	fi
 
-	es-display is_hdmi_mode
+	is_hdmi_default_card
 	if [ $? -eq 0 ]; then
 		#print_log $LOG_FILE "INFO" "Executing 'get_audio_device()' - HDMI audio device"
 		echo "HDMI"
@@ -296,7 +483,7 @@ get_audio_device()
 get_volume_control()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'get_volume_control()'"
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_bluetooth_default_card
 	if [ $? -eq 0 ]; then
 		# bluetooth audio device
 		local bt_value=`es-bluetooth audio_device_connected`
@@ -313,13 +500,13 @@ get_output_devices()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'get_output_devices()'"
 
-	es-bluetooth is_bluetooth_audio_device_connected || es-display is_hdmi_mode || is_usb_audio_default_card
+	is_bluetooth_default_card || is_hdmi_default_card || is_usb_audio_default_card
 	if [ $? -eq 0 ]; then
 		# USB audio device, skip
 		local output_device="$(get_output_device)"
 		#print_log $LOG_FILE "INFO" "get_output_devices() - output devices: '$output_device'"
 		echo -e "${output_device^^}"
-		return;
+		return
 	fi
 
 	local output_devices=""
@@ -337,7 +524,7 @@ get_audio_card()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'get_audio_card()'"
 
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_bluetooth_default_card
 	if [ $? -eq 0 ]; then
 		# bluetooth audio device
 		local bt_value=`es-bluetooth audio_device_connected`
@@ -346,7 +533,7 @@ get_audio_card()
 		return
 	fi
 
-	es-display is_hdmi_mode
+	is_hdmi_default_card
 	if [ $? -eq 0 ]; then
 		#print_log $LOG_FILE "INFO" "Executing 'get_audio_card()' - value: 'HDMI'"
 		echo "HDMI"
@@ -430,7 +617,7 @@ get_hw_audio_card_index_by_name()
 	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_name_by_name()' - card like name: '$card_name'"
 	local index=$(awk '{ print $2 }' <(aplay -l | grep "card " | grep -i "$card_name"))
 	index="${index/:/}"
-	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_name_by_name()' - card like name '$card_name' at index ' $index'"
+	#print_log $LOG_FILE "INFO" "Executing 'get_hw_audio_card_name_by_name()' - card like name '$card_name' at index '$index'"
 	echo "$index"
 }
 
@@ -505,12 +692,13 @@ do_toggle_output()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'do_toggle_output()"
 
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_bluetooth_default_card || is_hdmi_default_card || is_usb_audio_default_card
 	if [ $? -eq 0 ]; then
-		# bluetooth audio device, skip
-		#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Is bluetooth audio device, skip"
+		# Bluetooth audio device or HDMI or USB audio, skip
+		#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Is Bluetooth audio device or HDMI or USB audio, skip"
 		return 0
 	fi
+
 	local output_device=$(get_output_device)
 	#print_log $LOG_FILE "DEBUG" "do_toggle_output() - Output device: '$output_device'"
 
@@ -529,32 +717,56 @@ do_config_sound_card()
 {
 	#print_log $LOG_FILE "INFO" "Executing 'do_config_sound_card()"
 
-	es-bluetooth is_bluetooth_audio_device_connected
+	is_hdmi_audio_connected
 	if [ $? -eq 0 ]; then
-		# bluetooth audio device
-		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic BLUETOOTH) -gt 0 ]]; then
-			#print_log $LOG_FILE "INFO" "do_config_sound_card() - The Bluetooth Audio card, is the default audio card, skip"
-			return 0
-		fi
+		# HDMI audio device connected, the default the audio card at 0 index
 
+		local scard="$(get_es_settings_property 'hdmi.sound.card')"
+		if [ ! -z "$scard" ]; then
+			#print_log $LOG_FILE "INFO" "do_config_sound_card() - The HDMI mode actived. ES 'hdmi.sound.card' value '$scard'."
+			do_set_audio_card "$scard"
+			if [ $? -eq 0 ]; then
+				[[ "$scard" != *"DEFAULT"* ]] && return 0
+				local sodevice="$(get_es_settings_property 'hdmi.sound.output.device')"
+				[ -z "$sodevice" ] && return 0
+
+				#print_log $LOG_FILE "INFO" "do_config_sound_card() - The HDMI mode actived. ES 'hdmi.sound.output.device' value '$sodevice'."
+				do_set_output_device "$sodevice" && return 0
+			fi
+		fi
+	fi
+
+	is_bluetooth_audio_connected
+	if [ $? -eq 0 ]; then
+		# BT audio device connected
 		do_set_audio_card BLUETOOTH && return 0 || return 1
+	fi
+
+	is_headphone_connected
+	if [ $? -eq 0 ]; then
+		#print_log $LOG_FILE "INFO" "do_config_sound_card() - Headphone connected, switching to default audio card (RK817)."
+		do_set_audio_card DEFAULT
+		if [ $? -eq 0 ]; then
+			#print_log $LOG_FILE "INFO" "do_config_sound_card() - switching to headphones."
+			do_set_output_device "HP"
+			if [ $? -eq 0 ]; then
+				#print_log $LOG_FILE "INFO" "do_config_sound_card() - setting headphones volume to 60%."
+				do_set_volume_level 60
+				return 0
+			fi
+		fi
 	fi
 
 	is_usb_audio_connected
 	if [ $? -eq 0 ]; then
-		# usb audio card
-		if [[ $(cat "$ALSA_CFG_FILE" | grep -ic USB) -gt 0 ]]; then
-			#print_log $LOG_FILE "INFO" "do_config_sound_card() - The USB Audio card, is the default audio card, skip"
-			return 0
-		fi
-
+		# usb audio device connected
 		do_set_audio_card USB && return 0 || return 1
 	fi
 
-
-	if [[ $(cat "$ALSA_CFG_FILE" | grep -ic "hw:0,0") -gt 0 ]]; then
-		#print_log $LOG_FILE "INFO" "do_config_sound_card() - The DEFAULT/HDMI Audio card, is the default audio card, skip"
-		return 0
+	is_hdmi_audio_connected
+	if [ $? -eq 0 ]; then
+		# HDMI audio device connected, the default the audio card at 0 index
+		do_set_audio_card HDMI && return 0 || return 1
 	fi
 
 	do_set_audio_card DEFAULT && return 0 || return 1
@@ -569,7 +781,7 @@ LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-sound.log"
 ALSA_CFG_FILE="$USER_HOME_PATH/.asoundrc"
 ALSA_DEFAULT_CFG_FILE="$USER_HOME_PATH/.asoundrcbak"
 ALSA_BT_CFG_FILE="$USER_HOME_PATH/.asoundrcbt"
-ALSA_USB_CFG_FILE="$USER_HOME_PATH/.asoundrc-usb-template"
+ALSA_TEMPLATE_CFG_FILE="$USER_HOME_PATH/.asoundrc-template"
 
 #if [ -f "$LOG_FILE" ]; then
 #  mv "$LOG_FILE" "$LOG_FILE.bak"
@@ -609,6 +821,21 @@ case "${ACTION}" in
     ;;
     "is_usb_audio_default_card")
         is_usb_audio_default_card || exit_execution 1
+    ;;
+    "is_hdmi_audio_connected")
+        is_hdmi_audio_connected || exit_execution 1
+    ;;
+    "is_hdmi_default_card")
+        is_hdmi_default_card || exit_execution 1
+    ;;
+    "is_bluetooth_audio_connected")
+        is_bluetooth_audio_connected || exit_execution 1
+    ;;
+    "is_bluetooth_default_card")
+        is_bluetooth_default_card || exit_execution 1
+    ;;
+    "is_rk817_default_card")
+        is_rk817_default_card || exit_execution 1
     ;;
     "config_sound_card")
         do_config_sound_card || exit_execution 1

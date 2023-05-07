@@ -522,6 +522,9 @@ void GuiMenu::openSoundSettings()
 					if (aud_card_value != aud_card_cmp->getSelected())
 					{
 						SystemConf::getInstance()->set("sound.card", aud_card_cmp->getSelected());
+						if (SystemConf::getInstance()->getBool("hdmi.mode"))
+							SystemConf::getInstance()->set("hdmi.sound.card", aud_card_cmp->getSelected());
+
 						if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
 						{
 							ApiSystem::getInstance()->setAudioCard(aud_card_cmp->getSelected());
@@ -531,10 +534,12 @@ void GuiMenu::openSoundSettings()
 								_("OK"),
 									[]
 									{
+										Settings::getInstance()->saveFile();
 										if (quitES(QuitMode::RESTART) != 0)
 											LOG(LogWarning) << "GuiMenu::openSoundSettings()() - Restart terminated with non-zero result!";
 									}));
 						}
+						
 					}
 				});
 
@@ -568,6 +573,8 @@ void GuiMenu::openSoundSettings()
 			out_dev_cmp->setSelectedChangedCallback([this, s, out_dev_value, window, volume](const std::string &newVal)
 				{
 					SystemConf::getInstance()->set("sound.output.device", newVal);
+					if (SystemConf::getInstance()->getBool("hdmi.mode"))
+						SystemConf::getInstance()->set("hdmi.sound.output.device", newVal);
 
 					if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SOUND))
 					{
