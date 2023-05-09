@@ -138,25 +138,10 @@ GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(
 	addVersionInfo();
 
 	// resize & position
-	float width = mSize.x(),
-		  height = mSize.y();
-
-//	setSize(mMenu.getSize());
-	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
-	{
-		width = Renderer::getScreenWidth();
-		height = Renderer::getScreenHeight();
-	}
-	setSize(width, height);
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 
 	float x_end = 0.f,
 		  y_end = 0.f;
-
-	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
-	{
-		x_end = (Renderer::getScreenWidth() - mSize.x()) / 2;  // center
-		y_end = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
-	}
 
 	if (animate)
 	{

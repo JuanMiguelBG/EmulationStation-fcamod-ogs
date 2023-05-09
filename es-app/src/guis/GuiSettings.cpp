@@ -22,20 +22,15 @@ GuiSettings::GuiSettings(Window* window, const std::string title, bool animate) 
 
 	setSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
 
-	float x_end = (mSize.x() - mMenu.getSize().x()) / 2,
-		  y_end = Renderer::isSmallScreen() ? 0.f : Renderer::getScreenHeight() * 0.15f;
-
 	if (animate)
 	{
 		float x_start = (Renderer::getScreenWidth() - mMenu.getSize().x()) / 2,
 			  y_start = Renderer::getScreenHeight() * 0.5f;
 		
-		x_end = Renderer::isSmallScreen() ? 0.f : (Renderer::getScreenWidth() - mMenu.getSize().x()) / 2;
-
-		animateTo(Vector2f(x_start, y_start), Vector2f(x_end, y_end));
+		animateTo(Vector2f(x_start, y_start), Vector2f(0.f, 0.f));
 	}
 	else
-		mMenu.setPosition(x_end, y_end);
+		mMenu.setPosition(0.f, 0.f);
 }
 
 GuiSettings::GuiSettings(Window* window, const std::string title, bool animate, const std::string closeButton, const std::function<void()>& closeButtonFunc) : 

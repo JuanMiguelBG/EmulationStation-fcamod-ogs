@@ -270,58 +270,7 @@ void MenuComponent::setPosition(float x, float y, float z)
 */
 void MenuComponent::updateSize()
 {
-	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
-	{
-//		LOG(LogDebug) << "MenuComponent::updateSize() - is small screen or not center menus.";
-//		Log::flush();
-		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
-		return;
-	}
-
-//	LOG(LogDebug) << "MenuComponent::updateSize() - is big screen and center menus.";
-//	Log::flush();
-
-	// !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
-	float width, height;
-	const float maxHeight = mMaxHeight <= 0 ? Renderer::getScreenHeight() * 0.75f : mMaxHeight;
-
-	height = TITLE_HEIGHT + mList->getTotalRowHeight() + getButtonGridHeight() + 2;
-	if (height > maxHeight)
-	{
-		height = TITLE_HEIGHT + getButtonGridHeight();
-		int i = 0;
-		while(i < mList->size())
-		{
-			float rowHeight = mList->getRowHeight(i);
-			if(height + rowHeight < maxHeight)
-				height += rowHeight;
-			else
-				break;
-			i++;
-		}
-	}
-
-	width = Renderer::getScreenWidth() * 0.90f;
-	if (Settings::getInstance()->getBool("AutoMenuWidth"))
-	{
-		float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
-			  ratio = 1.2f;
-
-		width = (float)Math::min((int)width, Renderer::getScreenWidth());
-
-		if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
-			ratio = 1.4f;
-		else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
-			ratio = 1.7f;
-		else if ((font_size >= FONT_SIZE_LARGE))
-			ratio = 2.0f;
-
-		width = width * ratio;
-	}
-
-	height = (float)Math::min((int)height, Renderer::getScreenHeight());
-	width = (float)Math::min((int)width, Renderer::getScreenWidth());
-	setSize(width, height);
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
 }
 
 void MenuComponent::onSizeChanged()

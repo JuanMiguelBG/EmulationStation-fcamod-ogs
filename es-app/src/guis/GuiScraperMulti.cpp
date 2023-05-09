@@ -73,26 +73,8 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 	mGrid.setEntry(mButtonGrid, Vector2i(0, 4), true, false);
 
 	// resize & position
-	float width_ratio = 0.95f,
-		  height_ratio = 0.85f,
-		  width = Renderer::getScreenWidth(),
-		  height = Renderer::getScreenHeight(),
-		  new_x = 0.f,
-		  new_y = 0.f;
-
-	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
-	{
-		width_ratio = 1.0f;
-		height_ratio = 1.0f;
-	}
-	setSize(width * width_ratio, height * height_ratio);
-
-	if (!Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus"))
-	{
-		new_x = (Renderer::getScreenWidth() - mSize.x()) / 2;  // center
-		new_y = (Renderer::getScreenHeight() - mSize.y()) / 2; // center
-	}
-	setPosition(new_x, new_y);
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
+	setPosition(0.f, 0.f);
 
 	doNextSearch();
 }

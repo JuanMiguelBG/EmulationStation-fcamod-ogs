@@ -271,44 +271,9 @@ GuiTextEditPopupKeyboard::GuiTextEditPopupKeyboard(Window* window, const std::st
 		return false;
 	});
 
-
-	// If multiline, set all diminsions back to default, else draw size for keyboard.
-	float new_x = 0.f,
-		  new_y = 0.f,
-		  width = OSK_WIDTH,
-		  height = !mMultiLine ? OSK_HEIGHT : mTitle->getFont()->getHeight() + textHeight + mKeyboardGrid->getSize().y() + 40,
-		  width_ratio = 1.0f;
-
-	if (Renderer::isSmallScreen() || !Settings::getInstance()->getBool("CenterMenus"))
-		setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
-	else
-	{  // !Renderer::isSmallScreen() && Settings::getInstance()->getBool("CenterMenus")
-		if (Settings::getInstance()->getBool("AutoMenuWidth"))
-	{
-			float font_size = ThemeData::getMenuTheme()->Text.font->getSize(),
-
-			width_ratio = 1.2f;
-			if ((font_size >= FONT_SIZE_SMALL) && (font_size < FONT_SIZE_MEDIUM))
-				width_ratio = 1.4f;
-			else if ((font_size >= FONT_SIZE_MEDIUM) && (font_size < FONT_SIZE_LARGE))
-				width_ratio = 1.7f;
-			else if ((font_size >= FONT_SIZE_LARGE))
-				width_ratio = 2.0f;
-		}
-
-		width = (float)Math::min((int)(width * width_ratio), Renderer::getScreenWidth());
-
-		setSize(width, height);
-
-		new_x = (Renderer::getScreenWidth() - mSize.x()) / 2,
-					new_y = (Renderer::getScreenHeight() - mSize.y()) / 2;
-	}
-	setPosition(new_x, new_y);
-
-	if (!mMultiLine)
-		animateTo(Vector2f(new_x, new_y));
-	}
-
+	setSize(Renderer::getScreenWidth(), Renderer::getScreenHeight());
+	setPosition(0.f, 0.f);
+}
 
 void GuiTextEditPopupKeyboard::onSizeChanged()
 {

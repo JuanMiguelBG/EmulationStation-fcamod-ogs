@@ -129,7 +129,6 @@ void Settings::setDefaults()
 	mBoolMap["OptimizeVRAM"] = true;
 	mBoolMap["ThreadedLoading"] = true;
 	mBoolMap["OptimizeSystem"] = false;
-	mBoolMap["AutoMenuWidth"] = false;
 
 	mBoolMap["Debug"] = false;
 	mBoolMap["DebugGrid"] = false;
@@ -257,8 +256,6 @@ void Settings::setDefaults()
 
 	// Menus settings
 	mBoolMap["AutoscrollMenuEntries"] = true;
-	mBoolMap["CenterMenus"] = false;
-	mBoolMap["AutoMenuWidth"] = false;
 	mBoolMap["kodi.enabled"] = true;
 	mBoolMap["kodi.atstartup"] = false;
 
