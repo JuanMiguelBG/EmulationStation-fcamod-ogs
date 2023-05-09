@@ -29,6 +29,7 @@ class ApiSystem
 private:
 	std::vector<BluetoothDevice> toBluetoothDevicesVector(std::vector<std::string> btDevices);
 	std::map<RemoteServicesId, RemoteServiceInformation> toRemoteServicesStatusVector(std::vector<std::string> remoteServices);
+	bool loadSystemHdmiInfoToSystemConf(const std::string& hdmiInfo);
 	bool loadSystemAudioInfoToSystemConf(const std::string& audioInfo);
 	bool loadSystemWifiInfoToSystemConf(const std::string& wifiInfo);
 	bool loadSystemBluetoothInfoToSystemConf(const std::string& btInfo);
@@ -158,7 +159,8 @@ public:
 	void setHueLevel(int hueLevel);
 	int getHueLevel();
 	void resetDisplayPanelSettings();
-	bool isHdmiMode();
+	bool loadSystemHdmiInfo();
+	bool setHdmiResolution(const std::string resolution);
 
 	std::string getTimezones();
 	std::string getCurrentTimezone();

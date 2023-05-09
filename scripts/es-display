@@ -13,13 +13,21 @@ do_help() {
 	echo "        Valid keys: gamma, contrast, saturation, hue" >&2
 	echo "" >&2
 	echo "$0 is_hdmi_mode" >&2
+	echo "$0 get_hdmi_info" >&2
+	echo "$0 set_hdmi_resolution" >&2
+	echo "$0 get_resolution" >&2
+	echo "$0 get_resolutions" >&2
 	echo "$0 test_hdmi_mode" >&2
 }
 
 AUTO_DIM_CONFIG_FILE="/usr/local/etc/auto_dim.conf"
 BLINK_LOW_BATTERY_RULES="/etc/udev/rules.d/99-lowbat.rules"
 PANEL_DRM_TOOL="/usr/local/bin/panel_drm_tool"
+DRM_TOOL="/usr/local/bin/drm_tool"
 DEFAULT_DISPLAY_CARD="/dev/dri/card0"
+BOOT_CONFIG_FILE="/boot/extlinux/extlinux.conf"
+DEFAULT_DISPLAY_RESOLUTION="960x544 60Hz"
+DEFAULT_HDMI_RESOLUTION="1280x720 60Hz"
 
 deactive_udev_rule () {
 	#print_log $LOG_FILE "INFO" "Executing 'deactive_udev_rule()'"
@@ -184,15 +192,119 @@ is_hdmi_mode()
 		return 1
 	fi
 
-	local hdmi_file_path="/var/run/drmConn"
-	if [ -f "$hdmi_file_path" ]; then
-		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - file '$hdmi_file_path' exist, HMDI node connected"
+	local no_hdmi_file_path="/var/run/drmConn"
+	if [ ! -f "$no_hdmi_file_path" ]; then
+		#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - file '$no_hdmi_file_path' NOT exist, HMDI mode connected"
 		return 0
 	fi
 
 	# HDMI mode NOT connected
 	#print_log $LOG_FILE "DEBUG" "Executing 'is_hdmi_mode()' - HDMI mode not connected"
 	return 1
+}
+
+do_get_resolution()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_resolution()'"
+
+	local resolution="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=-)')"
+	resolution="${resolution//p/}"
+	resolution="$(sudo $DRM_TOOL list | grep ${resolution} | head -1 | cut -d : -f 2 | cut -d ' ' -f 2,3)"
+
+	if [ -z "$resolution" ]; then
+		resolution="$DEFAULT_DISPLAY_RESOLUTION"
+
+		is_hdmi_mode
+		if [ $? -eq 0 ]; then
+			resolution="$DEFAULT_HDMI_RESOLUTION"
+		fi
+	fi
+
+	echo "$resolution"
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_resolution()' - resolution: '$resolution'"
+}
+
+do_get_resolutions()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_resolutions()'"
+
+	local result=""
+	local last_value=""
+	while IFS= read -r line
+	do
+		local value="${line## }"
+		if [ -z "$value" ] || [[ "$value" == *"i "* ]]; then
+			continue
+		fi
+		if [ "$value" != "$last_value" ]; then
+			last_value="$value"
+			result+="\n${last_value}"
+		fi
+	done <<< "$(sudo "$DRM_TOOL" list | grep -v '/dev\|unused' | cut -d : -f 2 | cut -d ' ' -f 2,3)"
+
+	if [ -z "$result" ]; then
+		result="\n${DEFAULT_DISPLAY_RESOLUTION}"
+
+		is_hdmi_mode
+		if [ $? -eq 0 ]; then
+			result="\n${DEFAULT_HDMI_RESOLUTION}"
+		fi
+	fi
+
+	result="${result:2:${#result}}"
+	echo -e "${result}"
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_resolutions()' - resolutions: '$result'"
+}
+
+do_get_hdmi_resolution()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_hdmi_resolution()'"
+	local resolution=`sed -rn "s/^.*video=HDMI-A-1:([^\n]+)$/\1/p" "$BOOT_CONFIG_FILE"`
+	resolution="$(trim $resolution)"
+	resolution=${resolution//@/ }
+	resolution+="Hz"
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_get_hdmi_resolution()' - HDMI resolution: '$resolution'"
+	echo "$resolution"
+}
+
+do_get_hdmi_info()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_hdmi_info()'"
+
+	local active=""
+	local resolution=""
+	local resolutions=""
+
+	is_hdmi_mode
+	if [ $? -eq 0 ]; then
+		active="true"
+		resolution="$(do_get_resolution)"
+		resolutions="$(do_get_resolutions)"
+	else
+		active="false"
+		resolution="$(do_get_hdmi_resolution)"
+		[ "$resolution" != "$DEFAULT_HDMI_RESOLUTION" ] && resolutions="${resolution},${DEFAULT_HDMI_RESOLUTION}";
+	fi
+
+	local result="<hdmi_info active=\"$active\" resolution=\"$resolution\" resolutions=\"${resolutions//$'\n'/,}\" default=\"${DEFAULT_HDMI_RESOLUTION}\" />"
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_hdmi_info()' - result: $result"
+	echo "$result"
+}
+
+do_set_hdmi_resolution()
+{
+	local resolution="$1"
+
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_hdmi_resolution()' HDMI resolution: '$resolution'"
+
+	[ -z "$resolution" ] && resolution="$DEFAULT_HDMI_RESOLUTION"
+	resolution=${resolution// /@}
+	resolution=${resolution//Hz/}
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_hdmi_resolution()' - HDMI resolution to apply '$resolution'"
+	local BOOT_CONFIG_FILE="/boot/extlinux/extlinux.conf"
+	sudo sed -i -e 's/video=HDMI-A-1:.*[ ]\+/video=HDMI-A-1:'"${resolution}"' /' "$BOOT_CONFIG_FILE"
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_hdmi_resolution()' - HDMI resolution configured to '$resolution'"
 }
 
 test_hdmi_mode()
@@ -259,6 +371,18 @@ case "${ACTION}" in
     ;;
     "is_hdmi_mode")
         is_hdmi_mode || exit_execution 1
+    ;;
+    "get_hdmi_info")
+        do_get_hdmi_info || exit_execution 1
+    ;;
+    "set_hdmi_resolution")
+        do_set_hdmi_resolution "$1" || exit_execution 1 "$1"
+    ;;
+    "get_resolutions")
+        do_get_resolutions || exit_execution 1
+    ;;
+    "get_resolution")
+        do_get_resolution || exit_execution 1
     ;;
     "test_hdmi_mode")
         test_hdmi_mode

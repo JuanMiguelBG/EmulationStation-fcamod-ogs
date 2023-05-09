@@ -46,6 +46,9 @@ std::vector<const char*> settings_dont_save {
 	{ "VolumeBackup" },
 	{ "suspend.device.mode" },
 	{ "hdmi.mode" },
+	{ "hdmi.resolution" },
+	{ "hdmi.resolutions" },
+	{ "hdmi.default.resolution" },
 	{ "sound.card" },
 	{ "sound.cards" },
 	{ "sound.audio.device" },
@@ -261,6 +264,8 @@ void Settings::setDefaults()
 
 	mStringMap["suspend.device.mode"] = "LIGHT";
 	mBoolMap["hdmi.mode"] = false;
+	mStringMap["hdmi.resolution"] = "1280x720@60";
+	mStringMap["hdmi.default.resolution"] = "1280x720@60";
 	mStringMap["hdmi.sound.card"] = "HDMI";
 	mStringMap["hdmi.sound.output.device"] = "HDMI";
 

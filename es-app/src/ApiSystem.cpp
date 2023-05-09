@@ -719,11 +719,34 @@ void ApiSystem::resetDisplayPanelSettings()
 	return DisplayPanelControl::getInstance()->resetDisplayPanelSettings();
 }
 
-bool ApiSystem::isHdmiMode()
+bool ApiSystem::loadSystemHdmiInfoToSystemConf(const std::string& hdmiInfo)
 {
-	LOG(LogInfo) << "ApiSystem::isHdmiMode()";
+	LOG(LogInfo) << "ApiSystem::loadSystemHdmiInfoToSystemConf()";
 
-	return queryHdmiMode();
+	if (Utils::String::startsWith(hdmiInfo, "<hdmi_info "))
+	{
+		SystemConf::getInstance()->setBool("hdmi.mode", Utils::String::toBool(Utils::String::extractString(hdmiInfo, "active=\"", "\"", false)));
+		SystemConf::getInstance()->set("hdmi.resolution", Utils::String::extractString(hdmiInfo, "resolution=\"", "\"", false));
+		SystemConf::getInstance()->set("hdmi.resolutions", Utils::String::extractString(hdmiInfo, "resolutions=\"", "\"", false));
+		SystemConf::getInstance()->set("hdmi.default.resolution", Utils::String::extractString(hdmiInfo, "default=\"", "\"", false));
+		return true;
+	}
+
+	return false;
+}
+
+bool ApiSystem::loadSystemHdmiInfo()
+{
+	LOG(LogInfo) << "ApiSystem::loadSystemHdmiInfo()";
+
+	return loadSystemHdmiInfoToSystemConf(getShOutput(R"(es-display get_hdmi_info)"));
+}
+
+bool ApiSystem::setHdmiResolution(const std::string resolution)
+{
+	LOG(LogInfo) << "ApiSystem::setHdmiResolution() - " << resolution;
+
+	return executeSystemScript("es-display set_hdmi_resolution \"" + resolution + "\" &");
 }
 
 int ApiSystem::getBatteryLevel()

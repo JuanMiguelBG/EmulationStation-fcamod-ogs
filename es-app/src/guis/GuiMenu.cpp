@@ -83,7 +83,8 @@ GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(
 	}
 
 	if (!SystemConf::getInstance()->getBool("hdmi.mode") 
-		|| ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))
+		|| (UIModeController::getInstance()->isUIModeFull() && (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY)
+		|| ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))))
 		addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); }, "iconDisplay", real_cursor == CursortId::DISPLAY_SETTINGS);
 
 	if (isFullUI)
@@ -214,6 +215,35 @@ void GuiMenu::openDisplaySettings()
 
 				s->addEntry(_("PANEL SETTINGS"), true, [this] { openDisplayPanelOptions(); });		
 			}
+
+			std::string hdmi_resolution_value = SystemConf::getInstance()->get("hdmi.resolution"),
+						hdmi_default_resolution = SystemConf::getInstance()->get("hdmi.default.resolution");
+
+			if (hdmi_resolution_value != hdmi_default_resolution)
+			{
+				s->addGroup(_("HDMI"));
+				std::vector<std::string> hdmi_resolutionss = Utils::String::split(SystemConf::getInstance()->get("hdmi.resolutions"), ',', true);
+				auto hdmi_resolution_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("HDMI RESOLUTION"), false);
+
+				for (auto dmi_res : hdmi_resolutionss)
+				{
+					if (hdmi_default_resolution == dmi_res)
+						hdmi_resolution_cmp->addEx(dmi_res, _("DEFAULT"), dmi_res, hdmi_resolution_value == dmi_res);
+					else
+						hdmi_resolution_cmp->add(dmi_res, dmi_res, hdmi_resolution_value == dmi_res);
+				}
+
+				s->addWithLabel(_("HDMI RESOLUTION"), hdmi_resolution_cmp);
+				s->addSaveFunc(
+					[this, window, hdmi_resolution_cmp, hdmi_resolution_value]
+					{
+						if (hdmi_resolution_value != hdmi_resolution_cmp->getSelected())
+						{
+							SystemConf::getInstance()->set("hdmi.resolution", hdmi_resolution_cmp->getSelected());
+							ApiSystem::getInstance()->setHdmiResolution(hdmi_resolution_cmp->getSelected());
+						}
+					});
+			}
 		}
 
 		s->onFinalize([s, pthis, window]
@@ -226,15 +256,54 @@ void GuiMenu::openDisplaySettings()
 			}
 		});
 	}
-	else if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))
+	else if (UIModeController::getInstance()->isUIModeFull())
 	{	// HDMI
-		s->addEntry(_("CALIBRATE TV").c_str(), false, [this]
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
+		{
+			// resolutions
+			std::string hdmi_resolution_value = SystemConf::getInstance()->get("hdmi.resolution"),
+						hdmi_default_resolution = SystemConf::getInstance()->get("hdmi.default.resolution");
+			std::vector<std::string> hdmi_resolutionss = Utils::String::split(SystemConf::getInstance()->get("hdmi.resolutions"), ',', true);
+			auto hdmi_resolution_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("HDMI RESOLUTION"), false);
+
+			for (auto dmi_res : hdmi_resolutionss)
 			{
-				Window *window = mWindow;
-				delete this;
-				if (!ApiSystem::getInstance()->launchCalibrateTv(window))
-					LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Calibrate TV terminated with non-zero result!";
-			});
+				if (hdmi_default_resolution == dmi_res)
+					hdmi_resolution_cmp->addEx(dmi_res, _("DEFAULT"), dmi_res, hdmi_resolution_value == dmi_res);
+				else
+					hdmi_resolution_cmp->add(dmi_res, dmi_res, hdmi_resolution_value == dmi_res);
+			}
+
+			s->addWithLabel(_("HDMI RESOLUTION"), hdmi_resolution_cmp);
+			s->addSaveFunc(
+				[this, window, hdmi_resolution_cmp, hdmi_resolution_value]
+				{
+					if (hdmi_resolution_value != hdmi_resolution_cmp->getSelected())
+					{
+						SystemConf::getInstance()->set("hdmi.resolution", hdmi_resolution_cmp->getSelected());
+						ApiSystem::getInstance()->setHdmiResolution(hdmi_resolution_cmp->getSelected());
+
+						window->pushGui(new GuiMsgBox(window, _("THE SYSTEM WILL NOW REBOOT"),
+							_("OK"),
+								[]
+								{
+									if (quitES(QuitMode::REBOOT) != 0)
+										LOG(LogWarning) << "GuiMenu::openDisplaySettings() - Restart terminated with non-zero result!";
+								}));
+					}
+				});
+		}
+
+		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CALIBRATE_TV))
+		{
+			s->addEntry(_("CALIBRATE TV").c_str(), false, [this]
+				{
+					Window *window = mWindow;
+					delete this;
+					if (!ApiSystem::getInstance()->launchCalibrateTv(window))
+						LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Calibrate TV terminated with non-zero result!";
+				});
+		}
 	}
 
 	window->pushGui(s);

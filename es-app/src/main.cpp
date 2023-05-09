@@ -357,9 +357,9 @@ void loadOtherSettings()
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
 				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
 			
-			SystemConf::getInstance()->setBool("hdmi.mode", ApiSystem::getInstance()->isHdmiMode());
+			ApiSystem::getInstance()->loadSystemHdmiInfo();
 		});
-		LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
+	LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
 
 bool verifyHomeFolderExists()

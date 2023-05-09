@@ -1033,6 +1033,10 @@ msgid "HDMI MODE"
 msgstr "ΛΕΙΤΟΥΡΓΙΑ HDMI"
 
 #:
+msgid "HDMI RESOLUTION"
+msgstr "ΑΝΑΛΥΣΗ HDMI"
+
+#:
 msgid "PANEL SETTINGS"
 msgstr "ΡΥΘΜΙΣΕΙΣ ΠΙΝΑΚΑΣ ΟΘΟΝΗΣ"
 

@@ -1033,6 +1033,10 @@ msgid "HDMI MODE"
 msgstr "MODO HDMI"
 
 #:
+msgid "HDMI RESOLUTION"
+msgstr "RESOLUCION HDMI"
+
+#:
 msgid "PANEL SETTINGS"
 msgstr "CONFIGURACIÓN DEL PANEL"
 
