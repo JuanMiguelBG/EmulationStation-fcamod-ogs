@@ -24,6 +24,8 @@ extern char* BUTTON_R1;
 extern char* BUTTON_R2;
 extern char* BUTTON_PU;
 extern char* BUTTON_PD;
+extern char* BUTTON_LTH;
+extern char* BUTTON_RTH;
 
 enum InputType
 {

@@ -11,8 +11,8 @@ static char L1BUTTON[4] = "l1";
 static char L2BUTTON[4] = "l2";
 static char R1BUTTON[4] = "r1";
 static char R2BUTTON[4] = "r2";
-static char PUBUTTON[12] = "pageup";
-static char PDBUTTON[16] = "pagedown";
+static char L3BUTTON[4] = "l3";
+static char R3BUTTON[4] = "r3";
 
 //some util functions
 std::string inputTypeToString(InputType type)
@@ -127,23 +127,25 @@ bool InputConfig::isMappedTo(const std::string& name, Input input, bool reversed
 bool InputConfig::isMappedLike(const std::string& name, Input input)
 {
 	if (name == "left")
-		return isMappedTo("left", input) || isMappedTo("leftanalogleft", input) || isMappedTo("rightanalogleft", input) || isMappedTo("joystick1left", input);
+		return isMappedTo("left", input)
+				|| isMappedTo("leftanalogleft", input) || isMappedTo("rightanalogleft", input)
+				|| isMappedTo("joystick1left", input) || isMappedTo("joystick2left", input);
 
 	if (name == "right")
-		return isMappedTo("right", input) || isMappedTo("leftanalogright", input) || isMappedTo("rightanalogright", input) || isMappedTo("joystick1left", input, true);
+		return isMappedTo("right", input)
+				|| isMappedTo("leftanalogright", input) || isMappedTo("rightanalogright", input)
+				|| isMappedTo("joystick1left", input, true) || isMappedTo("joystick2left", input, true);
 
 	if (name == "up")
-		return isMappedTo("up", input) || isMappedTo("leftanalogup", input) || isMappedTo("rightanalogup", input) || isMappedTo("joystick1up", input);
+		return isMappedTo("up", input)
+				|| isMappedTo("leftanalogup", input) || isMappedTo("rightanalogup", input)
+				|| isMappedTo("joystick1up", input) || isMappedTo("joystick2up", input);;
 
 	if (name == "down")
-		return isMappedTo("down", input) || isMappedTo("leftanalogdown", input) || isMappedTo("rightanalogdown", input) || isMappedTo("joystick1up", input, true);
+		return isMappedTo("down", input)
+				|| isMappedTo("leftanalogdown", input) || isMappedTo("rightanalogdown", input)
+				|| isMappedTo("joystick1up", input, true) || isMappedTo("joystick2up", input, true);
 
-	if (name == "leftthumb")
-		return isMappedTo("leftthumb", input) || isMappedTo("l3", input);
-
-	if (name == "rightthumb")
-		return isMappedTo("rightthumb", input) || isMappedTo("r3", input);
-	
 	return isMappedTo(name, input);
 }
 
@@ -194,13 +196,21 @@ void InputConfig::loadFromXML(pugi::xml_node& node)
 		if (typeEnum == TYPE_BUTTON)
 		{
 			if (name == "leftshoulder")
-				name = L1BUTTON ;
-			else if(name == "rightshoulder")
+				name = L1BUTTON;
+			else if (name == "rightshoulder")
 				name = R1BUTTON;
-			else if(name == "lefttrigger")
+			else if (name == "lefttrigger")
 				name = L2BUTTON;
-			else if(name == "righttrigger")
+			else if (name == "righttrigger")
 				name = R2BUTTON;
+			else if (name == "pageup")
+				name = BUTTON_PU;
+			else if (name == "pagedown")
+				name = BUTTON_PD;
+			else if (name == "leftthumb")
+				name = BUTTON_LTH;
+			else if (name == "rightthumb")
+				name = BUTTON_RTH;
 		}
 
 		if (typeEnum == TYPE_COUNT)
@@ -262,8 +272,10 @@ char* BUTTON_L1 = L1BUTTON;
 char* BUTTON_L2 = L2BUTTON;
 char* BUTTON_R1 = R1BUTTON;
 char* BUTTON_R2 = R2BUTTON;
-char* BUTTON_PU = PUBUTTON;
-char* BUTTON_PD = PDBUTTON;
+char* BUTTON_PU = L2BUTTON;
+char* BUTTON_PD = R2BUTTON;
+char* BUTTON_LTH = L3BUTTON;
+char* BUTTON_RTH = R3BUTTON;
 
 void InputConfig::AssignActionButtons()
 {
@@ -272,8 +284,8 @@ void InputConfig::AssignActionButtons()
 	BUTTON_BACK = invertButtonsAB ? ABUTTON : BBUTTON;
 
 	bool InvertButtonsPU = Settings::getInstance()->getBool("InvertButtonsPU");
-	BUTTON_PU = InvertButtonsPU ? L1BUTTON : PUBUTTON;
+	BUTTON_PU = InvertButtonsPU ? L1BUTTON : L2BUTTON;
 
 	bool InvertButtonsPD = Settings::getInstance()->getBool("InvertButtonsPD");
-	BUTTON_PD = InvertButtonsPD ? R1BUTTON : PDBUTTON;
+	BUTTON_PD = InvertButtonsPD ? R1BUTTON : R2BUTTON;
 }

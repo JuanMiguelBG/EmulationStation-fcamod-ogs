@@ -495,7 +495,7 @@ bool SystemView::input(InputConfig* config, Input input)
 				listInput(1);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PD, input))
+			if (config->isMappedLike(BUTTON_PD, input))
 			{
 				int cursor = moveCursorFast(true);
 				auto sd = mEntries.at(cursor).object;
@@ -503,7 +503,7 @@ bool SystemView::input(InputConfig* config, Input input)
 				//listInput(cursor - mCursor);
 				return true;
 			}
-			if (config->isMappedTo(BUTTON_PU, input))
+			if (config->isMappedLike(BUTTON_PU, input))
 			{
 				int cursor = moveCursorFast(false);
 				auto sd = mEntries.at(cursor).object;

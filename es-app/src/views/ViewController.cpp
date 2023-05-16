@@ -626,7 +626,7 @@ bool ViewController::input(InputConfig* config, Input input)
 			mWindow->pushGui(new GuiMenu(mWindow, Settings::getInstance()->getBool("AnimatedMainMenu")));
 			return true;
 		}
-		if (config->isMappedLike("leftthumb", input) || config->isMappedLike("rightthumb", input))
+		if (config->isMappedLike(BUTTON_LTH, input) || config->isMappedLike(BUTTON_RTH, input))
 		{
 			// next song
 			AudioManager::getInstance()->playRandomMusic(false);
