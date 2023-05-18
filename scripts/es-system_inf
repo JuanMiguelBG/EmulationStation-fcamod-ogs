@@ -96,7 +96,11 @@ get_device_name() {
     echo "RG353V"
     return
   elif [ "$DEVICE" = "RG353M" ]; then
-    echo "RG353M / RG353P"
+    if [ "$TOTAL_RAM" -gt "1000000" ]; then
+      echo "RG353PS"
+    else
+      echo "RG353M / RG353P"
+    fi
     return
   fi
   echo "RG353VS"
