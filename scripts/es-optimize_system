@@ -204,6 +204,18 @@ do_active_optimize_system() {
    fi
 }
 
+do_config_light_suspend_mode()
+{
+   sudo sed -i "/SuspendState\=/c\SuspendState\=freeze" /etc/systemd/sleep.conf
+   sudo dd if=/usr/local/bin/uboot.img.jelos of=/dev/mmcblk1 conv=notrunc bs=512 seek=16384
+}
+
+do_config_deep_suspend_mode()
+{
+   sudo sed -i "/SuspendState\=/c\SuspendState\=mem" /etc/systemd/sleep.conf
+   sudo dd if=/usr/local/bin/uboot.img.anbernic of=/dev/mmcblk1 conv=notrunc bs=512 seek=16384
+}
+
 set_sleep_mode()
 {
    local sleep_mode=$1
@@ -217,10 +229,11 @@ set_sleep_mode()
       else
          #print_log $LOG_FILE "INFO" "set_sleep_mode() - Enabling sleep/suspend mode, unmasking services..."
          sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target --quiet &
+         local 
          if [ $sleep_mode = "DEEP" ]; then
-            sudo sed -i "/SuspendState\=/c\SuspendState\=mem" /etc/systemd/sleep.conf
+            do_config_deep_suspend_mode
          else # LIGHT
-            sudo sed -i "/SuspendState\=/c\SuspendState\=freeze" /etc/systemd/sleep.conf
+            do_config_light_suspend_mode
          fi
       fi
       sudo systemctl daemon-reload --quiet &
