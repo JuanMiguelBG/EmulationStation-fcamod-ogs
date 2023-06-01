@@ -69,7 +69,8 @@ public:
 		GAMELIST = 16,
 		KODI = 17,
 		TEST_INPUT = 18,
-		CALIBRATE_TV = 19
+		CALIBRATE_TV = 19,
+		CONTROLLERS = 20
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -307,6 +308,8 @@ public:
 	void restoreAfterGameValues();
 
 	bool clearLastPlayedData(const std::string system = "");
+
+	bool configureTurboHotkeyButton(const std::string button);
 };
 
 #endif

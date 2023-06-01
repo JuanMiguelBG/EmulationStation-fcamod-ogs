@@ -4,6 +4,47 @@ do_help() {
     echo "$0 <DEVICE_ID> <DEVICE_NAME> <DEVICE_GUID>" >&2
 }
 
+get_ra_turbo_button_property()
+{
+    local es_turbo_btn="$(get_es_settings_property 'TurboHotkeyButton')"
+    #print_log $LOG_FILE "DEBUG" "Exit 'get_ra_turbo_button_property()' - ES turbo button value: '$es_turbo_btn'"
+
+    case "${es_turbo_btn}" in
+        "LeftShoulder")
+            echo "input_l_btn"
+        ;;
+        "RightShoulder")
+            echo "input_r_btn"
+        ;;
+        "LeftTrigger")
+            echo "input_l2_btn"
+        ;;
+        "RightTrigger")
+            echo "input_r2_btn"
+        ;;
+        "LeftThumb")
+            echo "input_l3_btn"
+        ;;
+        "RightThumb")
+            echo "input_r3_btn"
+        ;;
+        "A")
+            echo "input_a_btn"
+        ;;
+        "B")
+            echo "input_b_btn"
+        ;;
+        "X")
+            echo "input_x_btn"
+        ;;
+        "Y")
+            echo "input_y_btn"
+        ;;
+        *)
+            echo ""
+    esac
+}
+
 update_device_name_mapping()
 {
     local device_id=$1
@@ -11,8 +52,8 @@ update_device_name_mapping()
     local device_guid=$3
     #print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
 
-    local es_input_file_location="/etc/emulationstation/es_input.cfg"
-    local ra_config_paths=( "/home/ark/.config/retroarch" "/home/ark/.config/retroarch32" )
+    local es_input_file_location="$ES_ETC_PATH/es_input.cfg"
+    local ra_config_paths=( "$RA_CONFIG_FOLDER" "$RA32_CONFIG_FOLDER" )
 
     #print_log $LOG_FILE "INFO" "Executing 'update_device_name_mapping()' - Adding retroarch device_name configuration for '$device_name'"
 
@@ -25,45 +66,48 @@ update_device_name_mapping()
       fi
     done
 
-    button_list=( left \
-                  right \
-                  up \
-                  down \
-                  a \
-                  b \
-                  x \
-                  y \
-                  leftshoulder \
-                  pageup \
-                  rightshoulder \
-                  pagedown \
-                  lefttrigger \
-                  l2 \
-                  righttrigger \
-                  r2 \
-                  leftthumb \
-                  l3 \
-                  rightthumb \
-                  r3 \
-                  select \
-                  start \
-                  leftanalogdown \
-                  leftanalogup \
-                  joystick1up \
-                  leftanalogleft \
-                  joystick1left \
-                  leftanalogright \
-                  rightanalogdown \
-                  rightanalogup \
-                  joystick2up \
-                  rightanalogleft \
-                  joystick2left \
-                  rightanalogright )
+    #local is_default_controller="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "deviceDefault=\"true\"")"
+
+    local button_list=( left \
+                        right \
+                        up \
+                        down \
+                        a \
+                        b \
+                        x \
+                        y \
+                        leftshoulder \
+                        pageup \
+                        rightshoulder \
+                        pagedown \
+                        lefttrigger \
+                        l2 \
+                        righttrigger \
+                        r2 \
+                        leftthumb \
+                        l3 \
+                        rightthumb \
+                        r3 \
+                        select \
+                        start \
+                        leftanalogdown \
+                        leftanalogup \
+                        joystick1up \
+                        leftanalogleft \
+                        joystick1left \
+                        leftanalogright \
+                        rightanalogdown \
+                        rightanalogup \
+                        joystick2up \
+                        rightanalogleft \
+                        joystick2left \
+                        rightanalogright )
 
 
     for button in "${button_list[@]}"
     do
-        isitahatoranalog="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w "type=.{0,6}" | cut -c5- | cut -d '"' -f2)"
+        local controler_info="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac)"
+        local isitahatoranalog="$(echo "${controler_info}" | grep "name=\"${button}\"" | grep -o -P -w "type=.{0,6}" | cut -c5- | cut -d '"' -f2)"
 
         unset value
         unset axis
@@ -72,7 +116,7 @@ update_device_name_mapping()
         if [[ "$isitahatoranalog" == "hat" ]]; then
           value="hat found"
         elif [[ "$isitahatoranalog" == "axis" ]]; then
-          axis="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w "value=.{0,5}" | cut -c5- | cut -d '"' -f2)"
+          axis="$(echo "${controler_info}" | grep "name=\"${button}\"" | grep -o -P -w "value=.{0,5}" | cut -c5- | cut -d '"' -f2)"
           if [[ "${axis}" == *"-"* ]]; then
             axis="-"
             reverse_axis="+"
@@ -82,7 +126,7 @@ update_device_name_mapping()
           fi
         fi
 
-        get_button="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac  | grep "name=\"${button}\"" | grep -o -P -w 'id="\K[^"]+')"
+        get_button="$(echo "${controler_info}" | grep "name=\"${button}\"" | grep -o -P -w 'id="\K[^"]+')"
 
         if test -z "$get_button"; then
           #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - Skip '${button}', empty value"
@@ -131,47 +175,55 @@ update_device_name_mapping()
     let i=0
     for raconfigcreate in "${ra_config_paths[@]}"
     do
-        echo "# ArkOS" > "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
-        echo "input_driver = \"udev\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
-        echo "input_device = \"${device_name}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
-        echo "input_vendor_id = \"${vendor}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
-        echo "input_product_id = \"${product}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
+        local ra_config_device_file="${raconfigcreate}/autoconfig/udev/${device_name}".cfg
+        echo "# ArkOS" > ${ra_config_device_file}
+        echo "input_driver = \"udev\"" >> ${ra_config_device_file}
+        echo "input_device = \"${device_name}\"" >> ${ra_config_device_file}
+        echo "input_vendor_id = \"${vendor}\"" >> ${ra_config_device_file}
+        echo "input_product_id = \"${product}\"" >> ${ra_config_device_file}
     done
+
+    local ra_turbo_button_property="$(get_ra_turbo_button_property)"
+    #print_log $LOG_FILE "DEBUG" "Exit 'update_device_name_mapping()' - turbo button RA porperty: '$ra_turbo_button_property'"
 
     for retroA in "${retropad[@]}"
     do
-        retropad_list=( input_left_btn \
-                        input_right_btn \
-                        input_up_btn \
-                        input_down_btn \
-                        input_a_btn \
-                        input_b_btn \
-                        input_x_btn \
-                        input_y_btn \
-                        input_l_btn \
-                        input_r_btn \
-                        input_l2_btn \
-                        input_r2_btn \
-                        input_l3_btn \
-                        input_r3_btn \
-                        input_select_btn \
-                        input_start_btn \
-                        input_l_y_plus_axis \
-                        input_l_y_minus_axis \
-                        input_l_x_minus_axis \
-                        input_l_x_plus_axis \
-                        input_r_y_plus_axis \
-                        input_r_y_minus_axis \
-                        input_r_x_minus_axis \
-                        input_r_x_plus_axis )
+        local retropad_list=( input_left_btn \
+                              input_right_btn \
+                              input_up_btn \
+                              input_down_btn \
+                              input_a_btn \
+                              input_b_btn \
+                              input_x_btn \
+                              input_y_btn \
+                              input_l_btn \
+                              input_r_btn \
+                              input_l2_btn \
+                              input_r2_btn \
+                              input_l3_btn \
+                              input_r3_btn \
+                              input_select_btn \
+                              input_start_btn \
+                              input_l_y_plus_axis \
+                              input_l_y_minus_axis \
+                              input_l_x_minus_axis \
+                              input_l_x_plus_axis \
+                              input_r_y_plus_axis \
+                              input_r_y_minus_axis \
+                              input_r_x_minus_axis \
+                              input_r_x_plus_axis )
 
         for raconfig in "${ra_config_paths[@]}"
         do
-            [ ! -z "${retroA}" ] && echo "${retropad_list[$i]} = \"${retroA}\"" >> "${raconfig}/autoconfig/udev/${device_name}.cfg"
+            if [ ! -z "${retroA}" ]; then
+                echo "${retropad_list[$i]} = \"${retroA}\"" >> "${raconfig}/autoconfig/udev/${device_name}.cfg"
+                if [ ! -z "${ra_turbo_button_property}" ] && [ "${retropad_list[$i]}" = "${ra_turbo_button_property}" ]; then
+                    echo "input_turbo_btn = \"${retroA}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
+                fi
+            fi
         done
         let i++
     done
-
 
     #print_log $LOG_FILE "INFO" "Exit 'update_device_name_mapping()' - ID: '$device_id', name: '$device_name', GUID: '$device_guid'"
 }

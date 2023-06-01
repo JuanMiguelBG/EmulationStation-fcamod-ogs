@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! "$1" ];then
 	printf "usage : es-language [set value/get]\n"
@@ -45,36 +45,18 @@ esConfigFile="$ES_CONFIG_FILE"
 #   RETRO_LANGUAGE_LAST,
 #}
 
-raConfigFile="$RA_CONFIG_FOLDER/retroarch.cfg"
-ra32ConfigFile="$RA32_CONFIG_FOLDER/retroarch.cfg"
-
-setRetroarchLanguage ()
-{
-	value=$1
-	configFile=$2
-
-	cat "$configFile" | grep -iw "user_language" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
-		echo "user_language = \"$value\"" | sudo tee -a "$configFile" > /dev/null
-	else
-		sudo sed -i "s/#\?user_language =.*/user_language = \"$value\"/g" "$configFile" > /dev/null
-	fi
-}
-
-setRetroarchLanguageValue ()
+setRetroarchLanguageValue()
 {
 #property -->  user_language = "0"
 
 	getRetroarchLanguageValue $pvalue
-	value=$?
+	local value=$?
 
-	setRetroarchLanguage $value $raConfigFile
-	setRetroarchLanguage $value $ra32ConfigFile
+	set_ra_property "$RA_CONFIG_FILE" "user_language" "$value"
+	set_ra_property "$RA32_CONFIG_FILE" "user_language" "$value"
 }
 
-getRetroarchLanguageValue ()
+getRetroarchLanguageValue()
 {
 #echo "language: $1"
   case $1 in
@@ -143,27 +125,27 @@ pspSdlRomsConfigFile="$ROMS_DIR/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl"
 pspGoRomsConfigFile="$ROMS_DIR/ppsspp/PSP/SYSTEM/ppsspp.ini.go"
 
 
-setPpssppLanguage ()
+setPpssppLanguage()
 {
-	valuestr=$1
-	valuenum=$2
-	configFile=$3
+	local valuestr=$1
+	local valuenum=$2
+	local configFile=$3
 
 	sudo sed -i -E "s/^Language = [a-z]{2}_[A-Z]{2}$/Language = $valuestr/g" "$configFile" > /dev/null
 	sudo sed -i -E "s/^Language = [0-9]?$/Language = $valuenum/g" "$configFile" > /dev/null
 }
 
-setPpssppLanguageValue ()
+setPpssppLanguageValue()
 {
 #property --> Language = en_US
 #property --> Language = 1
 
 	# language string
-	valuestr=$(getPpssppLanguageString $pvalue)
+	local valuestr=$(getPpssppLanguageString $pvalue)
 
 	# language number
 	getPpssppLanguageNumber $pvalue
-	valuenum=$?
+	local valuenum=$?
 
 	setPpssppLanguage $valuestr $valuenum $pspHomeRomsConfigFile
 	setPpssppLanguage $valuestr $valuenum $pspRomsConfigFile
@@ -175,7 +157,7 @@ setPpssppLanguageValue ()
 	setPpssppLanguage $valuestr $valuenum $pspGoRomsConfigFile
 }
 
-getPpssppLanguageString ()
+getPpssppLanguageString()
 {
   case $1 in
     br)
@@ -269,14 +251,14 @@ getPpssppLanguageNumber ()
 
 scummvmConfigFile="$USER_HOME_PATH/.config/scummvm/scummvm.ini"
 
-setScummvmLanguageValue ()
+setScummvmLanguageValue()
 {
 #property --> gui_language=en
 
-	value=$(getScummvmLanguageValue $pvalue)
+	local value=$(getScummvmLanguageValue $pvalue)
 
 	cat "$scummvmConfigFile" | grep -iw "gui_language" > /dev/null
-	valPresent=$?
+	local valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
 		sudo sed -i "/\[scummvm\]/a gui_language=$value" "$scummvmConfigFile"
@@ -285,7 +267,7 @@ setScummvmLanguageValue ()
 	fi
 }
 
-getScummvmLanguageValue ()
+getScummvmLanguageValue()
 {
   case $1 in
     br)
@@ -340,14 +322,14 @@ getScummvmLanguageValue ()
 
 lzdoomConfigFile="$USER_HOME_PATH/.config/lzdoom/lzdoom.ini"
 
-setLzdoomLanguageValue ()
+setLzdoomLanguageValue()
 {
 #property --> language=auto
 
-	value=$(getLzdoomLanguageValue $pvalue)
+	local value=$(getLzdoomLanguageValue $pvalue)
 
 	cat "$lzdoomConfigFile" | grep -iw "language" > /dev/null
-	valPresent=$?
+	local valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
 		sudo sed -i "/\[GlobalSettings\]/a language=$value" "$lzdoomConfigFile"
@@ -357,7 +339,7 @@ setLzdoomLanguageValue ()
 
 }
 
-getLzdoomLanguageValue ()
+getLzdoomLanguageValue()
 {
   case $1 in
     br)
@@ -412,14 +394,14 @@ getLzdoomLanguageValue ()
 
 gzdoomConfigFile="$USER_HOME_PATH/.config/gzdoom/gzdoom.ini"
 
-setGzdoomLanguageValue ()
+setGzdoomLanguageValue()
 {
 #property --> language=auto
 
-	value=$(getGzdoomLanguageValue $pvalue)
+	local value=$(getGzdoomLanguageValue $pvalue)
 
 	cat "$gzdoomConfigFile" | grep -iw "language" > /dev/null
-	valPresent=$?
+	local valPresent=$?
 
 	if [ "$valPresent" != "0" ]; then
 		sudo sed -i "/\[GlobalSettings\]/a language=$value" "$gzdoomConfigFile"
@@ -429,7 +411,7 @@ setGzdoomLanguageValue ()
 
 }
 
-getGzdoomLanguageValue ()
+getGzdoomLanguageValue()
 {
   case $1 in
     br)
@@ -465,11 +447,11 @@ getGzdoomLanguageValue ()
   esac
 }
 
-
-
-get_es_language_value () {
+get_es_language_value()
+{
 #<string name="Language" value="es" />
-	sed -n "s/.*name=\"Language\".*value=\"\([^\"]*\).*/\1/p" "$esConfigFile"
+  
+  get_es_settings_property "Language" "string"
 }
 
 

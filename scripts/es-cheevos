@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! "$1" ];then
 	printf "usage : es-cheevos set key value|get key]\n"
@@ -11,38 +11,18 @@ fi
 # Configure ES commons variables
 . es-commons
 
-raConfigFolder="$RA_CONFIG_FOLDER"
-raConfigFile="$raConfigFolder/retroarch.cfg"
-ra32ConfigFolder="$RA32_CONFIG_FOLDER"
-ra32ConfigFile="$ra32ConfigFolder/retroarch.cfg"
-unlock_sound_file="$raConfigFolder/assets/sounds/unlock.ogg"
-unlock_sound_file_save="$unlock_sound_file.save"
-
-
-set_ra_value () {
-	configFile=$1
-	key=$2
-	value=$3
-
-	[ -z "$value" ] && value=0
-	cat "$configFile" | grep -iw "$key" > /dev/null
-	valPresent=$?
-
-	if [ "$valPresent" != "0" ]; then
-		echo "$key = \"$value\"" | sudo tee -a "$configFile" > /dev/null
-	else
-		sudo sed -i "s/#\?$key =.*/$key = \"$value\"/g" "$configFile" > /dev/null
-	fi
-}
+UNLOCK_SOUND_FOLDER="$RA_CONFIG_FOLDER/assets/sounds"
+UNLOCK_SOUND_FILE="$UNLOCK_SOUND_FOLDER/unlock.ogg"
+UNLOCK_SOUND_FILE_SAVE="$UNLOCK_SOUND_FILE.save"
 
 restore_unlock_sound () {
 	sleep 1
-	set_ra_value $raConfigFile "cheevos_unlock_sound_enable" "false"
-	set_ra_value $ra32ConfigFile "cheevos_unlock_sound_enable" "false"
+	set_ra_property $RA_CONFIG_FILE "cheevos_unlock_sound_enable" "false"
+	set_ra_property $RA32_CONFIG_FILE "cheevos_unlock_sound_enable" "false"
 
-	if [ -f "$unlock_sound_file_save" ]; then
-		rm -f "$unlock_sound_file"
-		mv -f "$unlock_sound_file_save" "$unlock_sound_file"
+	if [ -f "$UNLOCK_SOUND_FILE_SAVE" ]; then
+		rm -f "$UNLOCK_SOUND_FILE"
+		mv -f "$UNLOCK_SOUND_FILE_SAVE" "$UNLOCK_SOUND_FILE"
 	fi
 
 }
@@ -54,32 +34,32 @@ config_unlock_sound () {
 			restore_unlock_sound
 			return 0
 		else
-			set_ra_value $raConfigFile "cheevos_unlock_sound_enable" "true"
-			set_ra_value $ra32ConfigFile "cheevos_unlock_sound_enable" "true"
+			set_ra_property $RA_CONFIG_FILE "cheevos_unlock_sound_enable" "true"
+			set_ra_property $RA32_CONFIG_FILE "cheevos_unlock_sound_enable" "true"
 
 			if [ "$value_file" = "unlock" ]; then
-				if [ -f "$unlock_sound_file_save" ]; then
-					rm -f "$unlock_sound_file"
-					mv -f "$unlock_sound_file_save" "$unlock_sound_file"
+				if [ -f "$UNLOCK_SOUND_FILE_SAVE" ]; then
+					rm -f "$UNLOCK_SOUND_FILE"
+					mv -f "$UNLOCK_SOUND_FILE_SAVE" "$UNLOCK_SOUND_FILE"
 				fi
 			else
-				sound_file=$(find "$raConfigFolder/assets/sounds" -type f -name "$value_file.ogg")
+				sound_file=$(find "$UNLOCK_SOUND_FOLDER" -type f -name "$value_file.ogg")
 				if [ ! -f "$sound_file" ]; then
 					sound_file=$(find "$HOME/sounds/retroachievements" -type f -name "$value_file.ogg")
 				fi
 
 				if [ -f "$sound_file" ]; then
-					if [ ! -f "$unlock_sound_file_save" ]; then
-						mv -f "$unlock_sound_file" "$unlock_sound_file_save"
+					if [ ! -f "$UNLOCK_SOUND_FILE_SAVE" ]; then
+						mv -f "$UNLOCK_SOUND_FILE" "$UNLOCK_SOUND_FILE_SAVE"
 					fi
-					cp -f "$sound_file" "$unlock_sound_file"
+					cp -f "$sound_file" "$UNLOCK_SOUND_FILE"
 				fi
 			fi
 		fi
 }
 
 get_unlock_sound_folders () {
-	echo "$raConfigFolder/assets/sounds\n$HOME/sounds/retroachievements"
+	echo "$UNLOCK_SOUND_FOLDER\n$HOME/sounds/retroachievements"
 }
 
 config_set_value () {
@@ -89,8 +69,8 @@ config_set_value () {
 	if [ "$key" = "cheevos_unlock_sound" ]; then
 		config_unlock_sound $value
 	else
-		set_ra_value $raConfigFile $key $value
-		set_ra_value $ra32ConfigFile $key $value
+		set_ra_property $RA_CONFIG_FILE $key $value
+		set_ra_property $RA32_CONFIG_FILE $key $value
 	fi
 }
 
@@ -100,7 +80,7 @@ config_get_value () {
 	if [ "$key" = "cheevos_sound_folders" ]; then
 		get_unlock_sound_folders
 	else
-		sed -rn "s/^$key = \"([^\n]+)\"$/\1/p" "$raConfigFile"
+		get_ra_property "$RA_CONFIG_FILE" "$key"
 	fi
 }
 

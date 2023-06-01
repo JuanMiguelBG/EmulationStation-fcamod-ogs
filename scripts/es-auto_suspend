@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! "$1" ];then
 	printf "usage : es-auto_suspend [set key value|get key]\n"

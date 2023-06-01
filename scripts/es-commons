@@ -10,7 +10,9 @@ export ES_SKIP_AUDIO_BT_ONBOOT_LOCK_FILE="$ES_HOME_PATH/skip_auto_connect_bt_aud
 export ES_PRELOAD_VLC_LOCK_FILE="$ES_HOME_PATH/preload_vlc.lock"
 export SYSTEM_CONFIG_PATH="$USER_HOME_PATH/.config"
 export RA_CONFIG_FOLDER="$SYSTEM_CONFIG_PATH/retroarch"
+export RA_CONFIG_FILE="$RA_CONFIG_FOLDER/retroarch.cfg"
 export RA32_CONFIG_FOLDER="$SYSTEM_CONFIG_PATH/retroarch32"
+export RA32_CONFIG_FILE="$RA32_CONFIG_FOLDER/retroarch.cfg"
 export ES_SCRIPTS_PATH="/usr/local/bin"
 export ES_EVENTS_SCRIPTS_PATH="$ES_EXE_PATH/scripts"
 export ES_USER_EVENTS_SCRIPTS_PATH="$ES_HOME_PATH/scripts"
@@ -85,15 +87,25 @@ lowercase()
   echo "${string,,}"
 }
 
+#******************* END - ES Scripts String functions ********************
+
+#******************* ES Scripts Properties functions ********************
 get_es_settings_property()
 {
   local property="$1"
-  local type="$3"
 
   [ -z "$property" ] && return
-  [ -z "$type" ] && type="string"
 
-  cat "$ES_CONFIG_FILE" | grep "<$type" | grep "name=\"$property\"" | grep -o -P -w 'value="\K[^"]+'
+  cat "$ES_CONFIG_FILE" | grep "name=\"$property\"" | grep -o -P -w 'value="\K[^"]+'
+}
+
+get_es_settings_property_type()
+{
+  local property="$1"
+
+  [ -z "$property" ] && return
+
+  cat "$ES_CONFIG_FILE" | grep "name=\"$property\"" | grep -o -P -w '<\K[^ ]+'
 }
 
 set_es_settings_property()
@@ -103,15 +115,74 @@ set_es_settings_property()
   local type="$3"
 
   [ -z "$property" ] && return
-  [ -z "$type" ] && type="string"
+  [ -z "$type" ] && return
 
-  if [[ $(cat "$ES_CONFIG_FILE" | grep "<$type" | grep -c "name=\"$property\"") -gt 0 ]]; then
+  if [[ $(cat "$ES_CONFIG_FILE" | grep -c "name=\"$property\"" | grep "<$type") -gt 0 ]]; then
     # property exist, replace
-    sed -i "s/^<$type\s\+name=\"$property\".*/<${type} name=\"${property}\" value=\"${value}\" \/>/" "$ES_CONFIG_FILE"
+    sudo sed -i "s/^<$type\s\+name=\"$property\".*/<${type} name=\"${property}\" value=\"${value}\" \/>/" "$ES_CONFIG_FILE"
     return
   fi
 
   # property not exist, create
-  echo "<$type name=\"$property\" value=\"$value\" />" >> "$ES_CONFIG_FILE"
+  echo "<$type name=\"$property\" value=\"$value\" />" | sudo tee -a "$ES_CONFIG_FILE" > /dev/null
 }
-#******************* END - ES Scripts String functions ********************
+
+remove_es_settings_property()
+{
+  local property="$1"
+
+  if [ -z "$property" ] || [[ $(cat "$ES_CONFIG_FILE" | grep -c "name=\"$property\"") -eq 0 ]]; then
+    # property not exist, exit
+    return
+  fi
+
+  sed -i "/$property/d" "$ES_CONFIG_FILE"
+}
+#******************* END - ES Scripts Properties functions ********************
+
+#******************* RA Scripts functions ********************
+set_ra_property()
+{
+	local config_file=$1
+	local property=$2
+	local value=$3
+
+  if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
+    return
+  fi
+  
+  if [[ $(cat "$config_file" | grep -ce "$property[ ]*=") -gt 0 ]]; then
+    # property exist, replace
+    sudo sed -i "s/#\?$property[ ]*=.*/$property = \"$value\"/g" "$config_file" > /dev/null
+    return
+  fi
+
+  # property not exist, create
+  echo "$property = \"$value\"" | sudo tee -a "$config_file" > /dev/null
+}
+
+get_ra_property()
+{
+  local config_file=$1
+  local property=$2
+
+  if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
+    return
+  fi
+
+  sed -rn "s/^$property[ ]*=[ ]*\"([^\n]+)\"$/\1/p" "$config_file"
+}
+
+remove_ra_property()
+{
+  local config_file=$1
+  local property=$2
+
+  if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ] || [[ $(cat "$config_file" | grep -ce "$property[ ]*=") -eq 0 ]]; then
+    # property not exist, exit
+    return
+  fi
+
+  sed -i "/$property/d" "$config_file"
+}
+#******************* END - RA Scripts functions ********************

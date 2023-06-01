@@ -266,6 +266,9 @@ void Settings::setDefaults()
 	mStringMap["hdmi.sound.card"] = "HDMI";
 	mStringMap["hdmi.sound.output.device"] = "HDMI";
 
+	mStringMap["TurboHotkeyButton"] = "LeftThumb";
+	mStringMap["TurboHotkeyButtonTate"] = "RightThumb";
+
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;
 	mDefaultFloatMap = mFloatMap;

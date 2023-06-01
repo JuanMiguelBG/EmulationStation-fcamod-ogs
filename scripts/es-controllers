@@ -1,0 +1,418 @@
+#!/bin/bash
+
+do_help()
+{
+	echo "Usage:" >&2
+	echo "" >&2
+	echo "$0 set [key] [value]" >&2
+	echo "Valid keys: turbo_button, ra_turbo_button" >&2
+	echo "" >&2
+	echo "or" >&2
+	echo "" >&2
+	echo "$0 get [key]" >&2
+	echo "Valid keys: turbo_button, turbo_button_tate" >&2
+	echo "" >&2
+	echo "or" >&2
+	echo "" >&2
+	echo "$0 get <CONTROLLER_CONFIG_FILE>" >&2
+	echo "Valid keys: ra_turbo_button" >&2	echo "" >&2
+	echo "or" >&2
+	echo "" >&2
+	echo "$0 set [ra_button_id] <CONTROLLER_CONFIG_FILE>" >&2
+	echo "Valid keys: ra_turbo_button" >&2
+	echo "" >&2
+}
+
+get_ra_button_property()
+{
+    local es_button="$1"
+
+    case "${es_button}" in
+        "Up")
+            echo "input_up_btn"
+        ;;
+        "Down")
+            echo "input_down_btn"
+        ;;
+        "Left")
+            echo "input_left_btn"
+        ;;
+        "Right")
+            echo "input_right_btn"
+        ;;
+        "Select")
+            echo "input_select_btn"
+        ;;
+        "Start")
+            echo "input_start_btn"
+        ;;
+        "A")
+            echo "input_a_btn"
+        ;;
+        "B")
+            echo "input_b_btn"
+        ;;
+        "X")
+            echo "input_x_btn"
+        ;;
+        "Y")
+            echo "input_y_btn"
+        ;;
+        "LeftShoulder")
+            echo "input_l_btn"
+        ;;
+        "RightShoulder")
+            echo "input_r_btn"
+        ;;
+        "LeftTrigger")
+            echo "input_l2_btn"
+        ;;
+        "RightTrigger")
+            echo "input_r2_btn"
+        ;;
+        "LeftThumb")
+            echo "input_l3_btn"
+        ;;
+        "RightThumb")
+            echo "input_r3_btn"
+        ;;
+        "LeftAnalogUp")
+            echo "input_l_y_minus_axis"
+        ;;
+        "LeftAnalogDown")
+            echo "input_l_y_plus_axis"
+        ;;
+        "LeftAnalogLeft")
+            echo "input_l_x_minus_axis"
+        ;;
+        "LeftAnalogRight")
+            echo "input_l_x_plus_axis"
+        ;;
+        "RightAnalogUp")
+            echo "input_r_y_minus_axis"
+        ;;
+        "RightAnalogDown")
+            echo "input_r_y_plus_axis"
+        ;;
+        "RightAnalogLeft")
+            echo "input_r_x_minus_axis"
+        ;;
+        "RightAnalogRight")
+            echo "input_r_x_plus_axis"
+        ;;
+        *)
+            echo ""
+    esac
+}
+
+do_set_turbo_button()
+{
+    local es_turbo_button=$1
+    [ -z "$es_turbo_button"] && #print_log $LOG_FILE "WARNING" "Executing 'do_set_turbo_button()' - ES turbo button property is empty"
+
+    local ra_button_property=$(get_ra_button_property $es_turbo_button)
+    local ra_config_paths=( "$RA_CONFIG_FOLDER" "$RA32_CONFIG_FOLDER" )
+
+    if [ -z "$ra_button_property" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_set_turbo_button()' - RA turbo button property is empty, remove turbo button configuraction"
+    fi
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_set_turbo_button()' - ES button '$es_turbo_button', RA button '$ra_button_property'"
+    for raconfigcreate in "${ra_config_paths[@]}"
+    do
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_set_turbo_button()' - updating '${raconfigcreate}/autoconfig/udev/' CFG files"
+      if [ -d "${raconfigcreate}/autoconfig/udev/" ]; then
+        for controller_file in ./*.cfg
+        do
+            if [ -z "$ra_button_property" ] && [[ $(cat "$controller_file" | grep -c "$DEFAULT_RA_TURBO_BUTTON_PROPERTY") -gt 0 ]]; then
+                #print_log $LOG_FILE "DEBUG" "Executing 'do_set_turbo_button()' - remove turbo button configuraction on file '$controller_file'"
+                remove_ra_property "$controller_file" "$DEFAULT_RA_TURBO_BUTTON_PROPERTY"
+            else
+                label turbo_button_value=$(get_ra_property "$controller_file" "$ra_button_property")
+                if [ -z "$turbo_button_value" ]; then
+                    #print_log $LOG_FILE "DEBUG" "Executing 'do_set_turbo_button()' - RA button property '$ra_button_property' value on file '$controller_file' is empty, skipping..."
+                    continue
+                fi
+                #print_log $LOG_FILE "DEBUG" "Executing 'do_set_turbo_button()' - updating file '$controller_file', turbo button '$ra_button_property' and value '$turbo_button_value'"
+                set_ra_property "$controller_file" "$DEFAULT_RA_TURBO_BUTTON_PROPERTY" "$turbo_button_value"
+            fi
+        done
+      fi
+    done
+}
+
+do_set_ra_turbo_button()
+{
+    local ra_turbo_button=$1
+    local controller_file=$2
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_set_ra_turbo_button()' - RA button '$ra_turbo_button', controller configuration file '$controller_file'"
+    if [ -z "$ra_turbo_button" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_set_ra_turbo_button()' - RA button is empty, skipping..."
+        return
+    fi
+    if [ -z "$controller_file" ] || [ ! -f "$controller_file" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_set_ra_turbo_button()' - controller configuration file parameter is empty or file doesn't exist: '$controller_file'"
+        return
+    fi
+    local turbo_button_value=$(get_ra_property "$controller_file" "$ra_turbo_button")
+    if [ -z "$turbo_button_value" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_set_ra_turbo_button()' - RA button property '$ra_turbo_button' value on file '$controller_file' is empty, skipping..."
+        return
+    fi
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_set_ra_turbo_button()' - updating file '$controller_file', turbo button '$ra_turbo_button' and value '$turbo_button_value'"
+    set_ra_property "$controller_file" "$DEFAULT_RA_TURBO_BUTTON_PROPERTY" "$turbo_button_value"
+}
+
+
+do_set_ra_turbo_button_value()
+{
+    local turbo_button_value=$1
+    local controller_file=$2
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_set_ra_turbo_button_value()' - RA turbo button value '$ra_turbo_button_value', controller configuration file '$controller_file'"
+
+    if [ -z "$turbo_button_value" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_set_ra_turbo_button_value()' -  RA turbo button value is empty, skipping..."
+        return
+    fi
+    if  [ -z "$controller_file" ] || [ ! -f "$controller_file" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_set_ra_turbo_button_value()' - controller configuration file parameter is empty or file doesn't exist: '$controller_file'"
+        echo ""
+        return
+    fi
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_set_ra_turbo_button_value()' - updating file '$controller_file', turbo button value '$turbo_button_value'"
+    set_ra_property "$controller_file" "$DEFAULT_RA_TURBO_BUTTON_PROPERTY" "$turbo_button_value"
+}
+
+config_set_value()
+{
+    local key=$1
+    local value=$2
+    local parameter=$3
+
+    #print_log $LOG_FILE "INFO" "Executing 'config_set_value()' - key: '$key', value: '$value', parameter: '$parameter'"
+
+    case "${key}" in
+        "turbo_button")
+            do_set_turbo_button "$value" || return 1
+        ;;
+        "ra_turbo_button")
+            # parameter is a controller configuration file
+            do_set_ra_turbo_button "$value" "$parameter"
+        ;;
+        "ra_turbo_button_value")
+            # parameter is a controller configuration file
+            do_set_ra_turbo_button_value "$value" "$parameter"
+        ;;
+        *)
+            do_help
+            >&2 echo "error: invalid set command ${key}"
+            #print_log $LOG_FILE "ERROR" "Executing 'config_set_value()' - ##### Invalid get command ${key} #####"
+            exit 1
+    esac
+}
+
+do_get_turbo_button()
+{
+    local turbo_button=$(get_es_settings_property "TurboHotkeyButton")
+    [ -z "$turbo_button" ] && turbo_button="LeftThumb"
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_turbo_button()' - ES button '$turbo_button'"
+    echo "$turbo_button"
+}
+
+do_get_turbo_button_tate()
+{
+    local turbo_button=$(get_es_settings_property "TurboHotkeyButtonTate")
+    [ -z "$turbo_button" ] && turbo_button="RightThumb"
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_turbo_button_tate()' - ES button '$turbo_button'"
+    echo "$turbo_button"
+}
+
+do_get_ra_turbo_button()
+{
+    local es_turbo_button="$(do_get_turbo_button)"
+    local ra_button_property=$(get_ra_button_property $es_turbo_button)
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_turbo_button()' - ES button '$es_turbo_button', Ra turbo button '$ra_button_property'"
+    echo "$ra_button_property"
+}
+
+do_get_ra_turbo_button_tate()
+{
+    local es_turbo_button="$(do_get_turbo_button_tate)"
+    local ra_button_property=$(get_ra_button_property $es_turbo_button)
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_ra_turbo_button_tate()' - ES button '$es_turbo_button', Ra turbo button '$ra_button_property'"
+    echo "$ra_button_property"
+}
+
+do_get_ra_turbo_button_value()
+{
+    local controller_file=$1
+    local es_turbo_button=$(do_get_turbo_button)
+
+    local ra_button_property=$(get_ra_button_property $es_turbo_button)
+    if [ -z "$ra_button_property" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_get_ra_turbo_button_value()' - ES turbo button '$es_turbo_button', RA button property is empty, skipping..."
+        echo ""
+        return
+    fi
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_ra_turbo_button_value()' - ES button '$es_turbo_button', controller configuration file '$controller_file'"
+    if  [ -z "$controller_file" ] || [ ! -f "$controller_file" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_get_ra_turbo_button_value()' - controller configuration file parameter is empty or file doesn't exist: '$controller_file'"
+        echo ""
+        return
+    fi
+    local ra_turbo_button_value=$(get_ra_property "$controller_file" "$ra_button_property")
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_ra_turbo_button_value()' - controller configuration file '$controller_file', RA button '$ra_button_property', value '$ra_turbo_button_value'"
+    echo "$ra_turbo_button_value"
+}
+
+do_get_ra_turbo_button_tate_value()
+{
+    local controller_file=$1
+    local es_turbo_button=$(do_get_turbo_button_tate)
+
+    local ra_button_property=$(get_ra_button_property $es_turbo_button)
+    if [ -z "$ra_button_property" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_get_ra_turbo_button_tate_value()' - ES turbo button '$es_turbo_button', RA button property is empty, skipping..."
+        echo ""
+        return
+    fi
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_ra_turbo_button_tate_value()' - ES button '$es_turbo_button', controller configuration file '$controller_file'"
+    if  [ -z "$controller_file" ] || [ ! -f "$controller_file" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_get_ra_turbo_button_tate_value()' - controller configuration file parameter is empty or file doesn't exist: '$controller_file'"
+        echo ""
+        return
+    fi
+    local ra_turbo_button_value=$(get_ra_property "$controller_file" "$ra_button_property")
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_ra_turbo_button_tate_value()' - controller configuration file '$controller_file', RA button '$ra_button_property', value '$ra_turbo_button_value'"
+    echo "$ra_turbo_button_value"
+}
+
+config_get_value()
+{
+    local key=$1
+    local parameter=$2
+
+    #print_log $LOG_FILE "INFO" "Executing 'config_get_value()' - key: '$key', parameter: '$parameter'"
+
+    case "${key}" in
+        "turbo_button")
+            do_get_turbo_button
+        ;;
+        "turbo_button_tate")
+            do_get_turbo_button_tate
+        ;;
+        "ra_turbo_button")
+            # parameter is a controller configuration file
+            do_get_ra_turbo_button
+        ;;
+        "ra_turbo_button_value")
+            # parameter is a controller configuration file
+            do_get_ra_turbo_button_value "$parameter"
+        ;;
+        "ra_turbo_button_tate")
+            # parameter is a controller configuration file
+            do_get_ra_turbo_button_tate
+        ;;
+        "ra_turbo_button_tate_value")
+            # parameter is a controller configuration file
+            do_get_ra_turbo_button_tate_value "$parameter"
+        ;;
+        *)
+            do_help
+            >&2 echo "error: invalid get command ${key}"
+            #print_log $LOG_FILE "Executing 'config_get_value()' - ERROR" "##### Invalid get command ${key} #####"
+            exit 1
+    esac
+}
+
+do_remove_ra_turbo_button()
+{
+    local controller_file=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_ra_turbo_button()' - RA button to remove: '$DEFAULT_RA_TURBO_BUTTON_PROPERTY' on controller config file '$controller_file'"
+
+    if  [ -z "$controller_file" ] || [ ! -f "$controller_file" ]; then
+        #print_log $LOG_FILE "WARNING" "Executing 'do_remove_ra_turbo_button()' - controller configuration file parameter is empty or file doesn't exist, skipping..."
+        return
+    fi
+
+    remove_ra_property "$controller_file" "$DEFAULT_RA_TURBO_BUTTON_PROPERTY"
+}
+
+config_remove_value()
+{
+    local key=$1
+    local parameter=$2
+
+    #print_log $LOG_FILE "INFO" "Executing 'config_remove_value()' - key: '$key', parameter: '$parameter'"
+
+    case "${key}" in
+        "ra_turbo_button")
+            # parameter is a controller configuration file
+            do_remove_ra_turbo_button "$parameter"
+        ;;
+        *)
+            do_help
+            >&2 echo "error: invalid remove command ${key}"
+            #print_log $LOG_FILE "Executing 'config_get_value()' - ERROR" "##### Invalid get command ${key} #####"
+            exit 1
+    esac
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-log_scripts
+
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-controllers.log"
+DEFAULT_RA_CONTROLLER_CONFIG_FILE="$RA_CONFIG_FOLDER/autoconfig/udev/retrogame_joypad.cfg"
+DEFAULT_RA_TURBO_BUTTON_PROPERTY="input_turbo_btn"
+
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    local param3=$4
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2 $param3 $param4', result: '$return' #####"
+    exit $return
+}
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+shift
+
+#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1 $2 $3' #####"
+
+case "${ACTION}" in
+    "set")
+        config_set_value "$1" "$2" "$3" || exit_execution 1 "$1" "$2" "$3"
+    ;;
+    "get")
+        config_get_value "$1" "$2"
+    ;;
+    "remove")
+        config_remove_value "$1" "$2"
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
+
+exit_execution 0 "$1" "$2" "$3"

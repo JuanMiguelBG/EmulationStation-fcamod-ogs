@@ -636,7 +636,7 @@ get_audio_info()
 	echo "$result"
 }
 
-config_get_value ()
+config_get_value()
 {
 	local key=$1
 	local parameter=$2
