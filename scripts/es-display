@@ -37,10 +37,13 @@ deactive_udev_rule () {
 
 active_udev_rule () {
 	#print_log $LOG_FILE "INFO" "Executing 'active_udev_rule()'"
-	echo "# the display blink three times at battery level 10" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
-	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"10", RUN+=\"/usr/local/bin/blink-screen 2\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
-	echo "# the display blink three times at battery level 5" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
-	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"5\", RUN+=\"/usr/local/bin/blink-screen 3\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "# Blink the display with low battery" | sudo tee "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "# the display blink one time at battery levels 29 and 25" | sudo tee "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"2[59]\", RUN+=\"/usr/local/bin/blink-screen 1\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "# the display blink two times at battery levels 19, 16 and 13" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"1[369]\", RUN+=\"/usr/local/bin/blink-screen 2\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "# the display blink three times at battery levels from 9 to 0" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
+	echo "ACTION==\"change\", SUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"[0-9]\", RUN+=\"/usr/local/bin/blink-screen 3\"" | sudo tee -a "$BLINK_LOW_BATTERY_RULES" > /dev/null
 }
 
 config_blink_low_battery() {
