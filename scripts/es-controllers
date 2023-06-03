@@ -122,13 +122,13 @@ do_set_turbo_button()
     do
       #print_log $LOG_FILE "DEBUG" "Executing 'do_set_turbo_button()' - updating '${raconfigcreate}/autoconfig/udev/' CFG files"
       if [ -d "${raconfigcreate}/autoconfig/udev/" ]; then
-        for controller_file in ./*.cfg
+        for controller_file in ${raconfigcreate}/autoconfig/udev/*.cfg
         do
             if [ -z "$ra_button_property" ] && [[ $(cat "$controller_file" | grep -c "$DEFAULT_RA_TURBO_BUTTON_PROPERTY") -gt 0 ]]; then
                 #print_log $LOG_FILE "DEBUG" "Executing 'do_set_turbo_button()' - remove turbo button configuraction on file '$controller_file'"
                 remove_ra_property "$controller_file" "$DEFAULT_RA_TURBO_BUTTON_PROPERTY"
             else
-                label turbo_button_value=$(get_ra_property "$controller_file" "$ra_button_property")
+                local turbo_button_value=$(get_ra_property "$controller_file" "$ra_button_property")
                 if [ -z "$turbo_button_value" ]; then
                     #print_log $LOG_FILE "DEBUG" "Executing 'do_set_turbo_button()' - RA button property '$ra_button_property' value on file '$controller_file' is empty, skipping..."
                     continue

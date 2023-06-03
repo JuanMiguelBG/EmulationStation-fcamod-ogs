@@ -94,7 +94,10 @@ get_es_settings_property()
 {
   local property="$1"
 
-  [ -z "$property" ] && return
+  if [ -z "$property" ]; then
+    echo ""
+    return
+  fi
 
   cat "$ES_CONFIG_FILE" | grep "name=\"$property\"" | grep -o -P -w 'value="\K[^"]+'
 }
@@ -167,6 +170,7 @@ get_ra_property()
   local property=$2
 
   if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
+    echo ""
     return
   fi
 
