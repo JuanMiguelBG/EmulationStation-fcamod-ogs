@@ -348,47 +348,50 @@ void GuiMenu::openControllersSettings()
 			}
 		});
 	
-	// Turbo hotkey button
-	std::vector<std::tuple<std::string, std::string, std::string>> turbo_list;
-	turbo_list.push_back(std::make_tuple(_("-NOT DEFINED-"), "", "")); // No button defined
-	turbo_list.push_back(std::make_tuple(_("L1"), "LeftShoulder", ":/help/button_l_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("R1"), "RightShoulder", ":/help/button_r_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("L2"), "LeftTrigger", ":/help/button_lt_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("R2"), "RightTrigger", ":/help/button_rt_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("L3"), "LeftThumb", ":/help/analog_thumb_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("R3"), "RightThumb", ":/help/analog_thumb_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("BUTTON X / NORTH"), "X", ":/help/buttons_north_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("BUTTON B / SOUTH"), "B", ":/help/buttons_south_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("BUTTON Y / WEST"), "Y", ":/help/buttons_west_gt.svg"));
-	turbo_list.push_back(std::make_tuple(_("BUTTON A / EAST"), "A", ":/help/buttons_east_gt.svg"));
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CONTROLLERS))
+	{
+		// Turbo hotkey button
+		std::vector<std::tuple<std::string, std::string, std::string>> turbo_list;
+		turbo_list.push_back(std::make_tuple(_("-NOT DEFINED-"), "", "")); // No button defined
+		turbo_list.push_back(std::make_tuple(_("L1"), "LeftShoulder", ":/help/button_l_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("R1"), "RightShoulder", ":/help/button_r_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("L2"), "LeftTrigger", ":/help/button_lt_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("R2"), "RightTrigger", ":/help/button_rt_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("L3"), "LeftThumb", ":/help/analog_thumb_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("R3"), "RightThumb", ":/help/analog_thumb_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("BUTTON X / NORTH"), "X", ":/help/buttons_north_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("BUTTON B / SOUTH"), "B", ":/help/buttons_south_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("BUTTON Y / WEST"), "Y", ":/help/buttons_west_gt.svg"));
+		turbo_list.push_back(std::make_tuple(_("BUTTON A / EAST"), "A", ":/help/buttons_east_gt.svg"));
 
-	std::string turbo_button = Settings::getInstance()->getString("TurboHotkeyButton");
-	auto turbo_button_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("TURBO FIRE HOTKEY BUTTON"), false);
+		std::string turbo_button = Settings::getInstance()->getString("TurboHotkeyButton");
+		auto turbo_button_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("TURBO FIRE HOTKEY BUTTON"), false, false, true);
 
-	turbo_button_cmp->addRange(turbo_list, turbo_button);
+		turbo_button_cmp->addRange(turbo_list, turbo_button);
 
-	s->addWithDescription(_("TURBO FIRE HOTKEY BUTTON"), _("ONLY ON RETROARCH"), turbo_button_cmp);
-	s->addSaveFunc([turbo_button_cmp, turbo_button]
-		{
-			if (turbo_button != turbo_button_cmp->getSelected())
+		s->addWithDescription(_("TURBO FIRE HOTKEY BUTTON"), _("ONLY ON RETROARCH"), turbo_button_cmp);
+		s->addSaveFunc([turbo_button_cmp, turbo_button]
 			{
-				Settings::getInstance()->setString("TurboHotkeyButton", turbo_button_cmp->getSelected());
-				ApiSystem::getInstance()->configureTurboHotkeyButton(turbo_button_cmp->getSelected());
-			}
-		});
-	
-	// Turbo hotkey button TATE
-	std::string turbo_button_tate = Settings::getInstance()->getString("TurboHotkeyButtonTate");
-	auto turbo_button_tate_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("TURBO FIRE HOTKEY BUTTON - TATE"), false);
+				if (turbo_button != turbo_button_cmp->getSelected())
+				{
+					Settings::getInstance()->setString("TurboHotkeyButton", turbo_button_cmp->getSelected());
+					ApiSystem::getInstance()->configureTurboHotkeyButton(turbo_button_cmp->getSelected());
+				}
+			});
+		
+		// Turbo hotkey button TATE
+		std::string turbo_button_tate = Settings::getInstance()->getString("TurboHotkeyButtonTate");
+		auto turbo_button_tate_cmp = std::make_shared< OptionListComponent<std::string> >(window, _("TURBO FIRE HOTKEY BUTTON - TATE"), false, false, true);
 
-	turbo_button_tate_cmp->addRange(turbo_list, turbo_button_tate);
+		turbo_button_tate_cmp->addRange(turbo_list, turbo_button_tate);
 
-	s->addWithDescription(_("TURBO FIRE HOTKEY BUTTON - TATE"), _("ONLY ON RETROARCH WITH CONSOLE CONTROLS"), turbo_button_tate_cmp);
-	s->addSaveFunc([turbo_button_tate_cmp, turbo_button_tate]
-		{
-			if (turbo_button_tate != turbo_button_tate_cmp->getSelected())
-				Settings::getInstance()->setString("TurboHotkeyButtonTate", turbo_button_tate_cmp->getSelected());
-		});
+		s->addWithDescription(_("TURBO FIRE HOTKEY BUTTON - TATE"), _("ONLY ON RETROARCH WITH CONSOLE CONTROLS"), turbo_button_tate_cmp);
+		s->addSaveFunc([turbo_button_tate_cmp, turbo_button_tate]
+			{
+				if (turbo_button_tate != turbo_button_tate_cmp->getSelected())
+					Settings::getInstance()->setString("TurboHotkeyButtonTate", turbo_button_tate_cmp->getSelected());
+			});
+	}
 
 	s->addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); } );
 
@@ -2337,7 +2340,7 @@ void GuiMenu::openAdvancedSettings()
 
 		if (languages.size() > 1)
 		{
-			auto language = std::make_shared< OptionListComponent<std::string> >(window, _("LANGUAGE"));
+			auto language = std::make_shared< OptionListComponent<std::string> >(window, _("LANGUAGE"), false, false, true, true);
 			std::string language_value = Settings::getInstance()->getString("Language");
 			for (auto it = languages.cbegin(); it != languages.cend(); it++)
 			{
@@ -2384,7 +2387,7 @@ void GuiMenu::openAdvancedSettings()
 
 
 	// power saver
-	auto power_saver = std::make_shared< OptionListComponent<std::string> >(window, _("POWER SAVER MODES"), false);
+	auto power_saver = std::make_shared< OptionListComponent<std::string> >(window, _("POWER SAVER MODES"));
 	std::vector<std::string> ps_modes;
 	ps_modes.push_back("disabled");
 	ps_modes.push_back("default");

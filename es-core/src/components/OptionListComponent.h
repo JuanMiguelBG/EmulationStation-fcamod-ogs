@@ -33,7 +33,7 @@ private:
 	{
 		std::string name;
 		std::string description;
-		std::string flag;
+		std::string image;
 
 		T object;
 		bool selected;
@@ -121,22 +121,22 @@ private:
 							text_comp->setAutoScroll(Settings::getInstance()->getBool("AutoscrollMenuEntries"));
 							row.addElement(text_comp, true);
 						}
-
-						if (parent->isShowFlags())
+						bool renderImage = parent->isShowImages() && (!it->image.empty() || (it->image.empty() && parent->isShowEmptyImages()));
+						if (renderImage)
 						{
 							auto spacer = std::make_shared<GuiComponent>(mWindow);
 							spacer->setSize(OLC_SPACER_SIZE, 0);
 							row.addElement(spacer, false);
-			
-							auto flag = std::make_shared<ImageComponent>(mWindow);
-							flag->setImage(it->flag);
-							flag->setResize(Vector2f(0, font->getLetterHeight()));
-							row.addElement(flag, false);
+
+							auto image = std::make_shared<ImageComponent>(mWindow);
+							image->setImage(it->image);
+							image->setResize(0, font->getLetterHeight() + 5.0f);
+							row.addElement(image, false);
 						}
 
 						if (mParent->isMultiSelect())
 						{
-							if (parent->isShowFlags())
+							if (renderImage)
 							{
 								auto spacer = std::make_shared<GuiComponent>(mWindow);
 								spacer->setSize(OLC_SPACER_SIZE, 0);
@@ -194,7 +194,8 @@ private:
 					});
 				}
 
-				mMenu.setPosition(Renderer::getScreenWidth(), Renderer::getScreenHeight());
+				mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2,
+								  (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
 				addChild(&mMenu);
 			}
 
@@ -237,27 +238,26 @@ private:
 	};
 
 public:
-	OptionListComponent(Window* window, const std::string& name, bool multiSelect = false, bool loading = false, bool showFlags = false) : GuiComponent(window), mMultiSelect(multiSelect), mName(name),
-		 mText(window), mLeftArrow(window), mRightArrow(window), mFlag(window)
+	OptionListComponent(Window* window, const std::string& name, bool multiSelect = false, bool loading = false, bool showImages = false, bool showEmptyImages = false) : GuiComponent(window), mMultiSelect(multiSelect), mName(name),
+		 mText(window), mLeftArrow(window), mRightArrow(window), mImage(window)
 	{
 		auto theme = ThemeData::getMenuTheme();
 		
 		mAddRowCallback = nullptr;
 		mLoading = loading;
 		mWaitingLoad = false;
-		mShowFlags = showFlags;
+		mShowImages = showImages;
+		mShowEmptyImages = showEmptyImages;
 
 		mText.setFont(theme->Text.font);
 		mText.setColor(theme->Text.color);
 		mText.setHorizontalAlignment(ALIGN_CENTER);
 		addChild(&mText);
 
-		if (mShowFlags)
-			mFlag.setResize(0, mText.getFont()->getLetterHeight());
-
 		mLeftArrow.setResize(0, mText.getFont()->getLetterHeight());
 		mRightArrow.setResize(0, mText.getFont()->getLetterHeight());
 
+		float image_x_size = .0f;
 		if (mMultiSelect)
 		{
 			mRightArrow.setImage(ThemeData::getMenuTheme()->Icons.arrow);// ":/arrow.svg");
@@ -274,18 +274,20 @@ public:
 			mRightArrow.setImage(ThemeData::getMenuTheme()->Icons.option_arrow); // ":/option_arrow.svg");
 			mRightArrow.setColorShift(theme->Text.color);
 			addChild(&mRightArrow);
+
+			bool renderImage = mShowImages && mShowEmptyImages;
+			mImage.setVisible(renderImage);
+			if (renderImage)
+			{
+				mImage.setResize(0, mText.getFont()->getLetterHeight() + 5.0f);
+				mImage.setImage(":/flags/no_flag.png");
+		
+				image_x_size = mImage.getSize().x() + (OLC_SPACER_SIZE * 3);
+			}
+			addChild(&mImage);
 		}
 
-		float flag_x_size = .0f;
-		if (mShowFlags)
-		{	
-			mFlag.setImage(":/flags/no_flag.png");
-			addChild(&mFlag);
-	
-			flag_x_size = mFlag.getSize().x() + (OLC_SPACER_SIZE * 2);
-		}
-
-		setSize(mLeftArrow.getSize().x() + mRightArrow.getSize().x() + flag_x_size, theme->Text.font->getHeight());
+		setSize(mLeftArrow.getSize().x() + mRightArrow.getSize().x() + image_x_size, theme->Text.font->getHeight());
 	}
 
 	virtual void setColor(unsigned int color)
@@ -301,17 +303,19 @@ public:
 		mLeftArrow.setResize(0, mText.getFont()->getLetterHeight());
 		mRightArrow.setResize(0, mText.getFont()->getLetterHeight());
 
-		float flag_x_size =  .0f,
+		float image_x_size =  .0f,
 			  text_size_feractor = .0f;
 
-		if (isShowFlags())
+		bool renderImage = isShowImages() && (!mImage.getImagePath().empty() || (mImage.getImagePath().empty() && isShowEmptyImages()));
+		mImage.setVisible(renderImage);
+		if (renderImage)
 		{
-			mFlag.setResize(0, mText.getFont()->getLetterHeight());
-			flag_x_size = mFlag.getSize().x();
-			text_size_feractor = mFlag.getSize().x() + (OLC_SPACER_SIZE * 2);
+			mImage.setResize(0, mText.getFont()->getLetterHeight() + 5.0f);
+			image_x_size = mImage.getSize().x();
+			text_size_feractor = mImage.getSize().x() + (OLC_SPACER_SIZE * 3);
 		}
 
-		if (mSize.x() < (mLeftArrow.getSize().x() + mRightArrow.getSize().x() + flag_x_size))
+		if (mSize.x() < (mLeftArrow.getSize().x() + mRightArrow.getSize().x() + image_x_size))
 			LOG(LogWarning) << "OptionListComponent::onSizeChanged() - too narrow!";
 
 		mText.setSize(mSize.x() - mLeftArrow.getSize().x() - mRightArrow.getSize().x() - text_size_feractor, mText.getFont()->getHeight());
@@ -319,8 +323,9 @@ public:
 		// position
 		mLeftArrow.setPosition(0, (mSize.y() - mLeftArrow.getSize().y()) / 2);
 		mText.setPosition(mLeftArrow.getPosition().x() + mLeftArrow.getSize().x(), (mSize.y() - mText.getSize().y()) / 2);
-		if (isShowFlags())
-			mFlag.setPosition(mText.getPosition().x() + mText.getSize().x() + OLC_SPACER_SIZE, (mSize.y() - mFlag.getSize().y()) / 2);
+		
+		if (renderImage)
+			mImage.setPosition(mText.getPosition().x() + mText.getSize().x() + OLC_SPACER_SIZE, (mSize.y() - mImage.getSize().y()) / 2);
 
 		mRightArrow.setPosition(mText.getPosition().x() + mText.getSize().x() + text_size_feractor, (mSize.y() - mRightArrow.getSize().y()) / 2);
 	}
@@ -408,7 +413,7 @@ public:
 		return "";
 	}
 
-	void addEx(const std::string name, const std::string description, const T& obj, bool selected, const std::string flag = "")
+	void addEx(const std::string name, const std::string description, const T& obj, bool selected, const std::string image = "")
 	{
 		for (auto sysIt = mEntries.cbegin(); sysIt != mEntries.cend(); sysIt++)
 			if (sysIt->name == name)
@@ -419,42 +424,28 @@ public:
 		e.description = description;
 		e.object = obj;
 		e.selected = selected;
-		e.flag = ":/flags/no_flag.png";
-		if (isShowFlags() && !flag.empty() && ResourceManager::getInstance()->fileExists(flag))
-			e.flag = flag;
+		e.image = "";
+		if (isShowImages())
+		{
+			if (!image.empty() && ResourceManager::getInstance()->fileExists(image))
+				e.image = image;
+			else if (isShowEmptyImages())
+				e.image = ":/flags/no_flag.png";
+		}
 
 		e.group = mGroup;
 		mGroup = "";
 
 		if (selected)
-			firstSelected = obj;
+			mFirstSelected = obj;
 
 		mEntries.push_back(e);
 		onSelectedChanged();
 	}
 
-	void add(const std::string& name, const T& obj, bool selected, const std::string flag = "")
+	void add(const std::string& name, const T& obj, bool selected, const std::string image = "")
 	{
-		for (auto sysIt = mEntries.cbegin(); sysIt != mEntries.cend(); sysIt++)
-			if (sysIt->name == name)
-				return;
-
-		OptionListData e;
-		e.name = name;
-		e.object = obj;
-		e.selected = selected;
-		e.flag = ":/flags/no_flag.png";
-		if (isShowFlags() && !flag.empty() && ResourceManager::getInstance()->fileExists(flag))
-			e.flag = flag;
-
-		e.group = mGroup;
-		mGroup = "";
-
-		if (selected)
-			firstSelected = obj;
-
-		mEntries.push_back(e);
-		onSelectedChanged();
+		addEx(name, "", obj, selected, image);
 	}
 
 	void addRange(const std::vector<std::string> values, const std::string selectedValue = "")
@@ -480,10 +471,10 @@ public:
 		for (auto const& value : values){
 			std::string name;
 			T objtValue;
-			std::string flag;
-			std::tie(name, objtValue, flag) = value;
+			std::string image;
+			std::tie(name, objtValue, image) = value;
 
-			add(name, objtValue, selectedValue == objtValue, flag);
+			add(name, objtValue, selectedValue == objtValue, image);
 		}
 
 		if (!hasSelection())
@@ -537,7 +528,7 @@ public:
 	  if (selected.size() != 1)
 	  	return false;
 
-	  return firstSelected != getSelected();
+	  return mFirstSelected != getSelected();
 	}
 
 	bool hasSelection()
@@ -590,9 +581,14 @@ public:
 		mAddRowCallback = callback;
 	}
 
-	bool isShowFlags()
+	bool isShowImages()
 	{
-		return mShowFlags;
+		return mShowImages;
+	}
+
+	bool isShowEmptyImages()
+	{
+		return mShowEmptyImages;
 	}
 
 private:
@@ -650,21 +646,24 @@ private:
 		else
 		{
 			// display currently selected + l/r cursors
-			for(auto it = mEntries.cbegin(); it != mEntries.cend(); it++)
+			for (auto it = mEntries.cbegin(); it != mEntries.cend(); it++)
 			{
 				if (it->selected)
 				{
 					mText.setText(Utils::String::toUpper(it->name));
 					mText.setSize(0, mText.getSize().y());
 
-					float flag_x_size = .0f;
-					if (isShowFlags())
+					float image_x_size = .0f;
+					bool renderImage = isShowImages() && ( !it->image.empty() || (it->image.empty() && isShowEmptyImages()));
+					mImage.setVisible(renderImage);
+					mImage.setImage("");
+					if (renderImage)
 					{
-						mFlag.setImage( it->flag );
-						flag_x_size = mFlag.getSize().x() + (OLC_SPACER_SIZE * 2 );
+						mImage.setImage( it->image );
+						image_x_size = mImage.getSize().x() + (OLC_SPACER_SIZE * 3 );
 					}
 
-					setSize(mText.getSize().x() + mLeftArrow.getSize().x() + mRightArrow.getSize().x() + 24 + flag_x_size, mText.getSize().y());
+					setSize(mText.getSize().x() + mLeftArrow.getSize().x() + mRightArrow.getSize().x() + 24 + image_x_size, mText.getSize().y());
 
 					if (mParent) // hack since theres no "on child size changed" callback atm...
 						mParent->onSizeChanged();
@@ -694,11 +693,13 @@ private:
 	std::string mName;
 	std::string mGroup;
 
-	T firstSelected;
+	T mFirstSelected;
 	TextComponent mText;
-	ImageComponent mFlag;	ImageComponent mLeftArrow;
+	ImageComponent mImage;
+	ImageComponent mLeftArrow;
 	ImageComponent mRightArrow;
-	bool mShowFlags;
+	bool mShowImages;
+	bool mShowEmptyImages;
 
 	std::vector<OptionListData> mEntries;
 	std::function<void(const T&)> mSelectedChangedCallback;
