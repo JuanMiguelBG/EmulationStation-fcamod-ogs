@@ -60,7 +60,8 @@ GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
 
-	bool kodi_actived = SystemConf::getInstance()->getBool("kodi.enabled") && ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI);
+	bool kodi_actived = SystemConf::getInstance()->getBool("kodi.enabled") && ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::KODI)
+		&& ( !SystemConf::getInstance()->getBool("kodi.only.hdmi.mode") || ( SystemConf::getInstance()->getBool("kodi.only.hdmi.mode") && SystemConf::getInstance()->getBool("hdmi.mode")));
 	CursortId real_cursor = cursor;
 	if (cursor == CursortId::FIRST_ELEMENT)
 	{
@@ -2445,6 +2446,7 @@ void GuiMenu::openAdvancedSettings()
 			GuiSettings* kodiGui = new GuiSettings(window, _("KODI SETTINGS").c_str());
 			kodiGui->addSwitch(_("ENABLE KODI"), "kodi.enabled", false, [s] { s->setVariable("reloadGuiMenu", true); });
 			kodiGui->addSwitch(_("LAUNCH KODI AT BOOT"), "kodi.atstartup", false);
+			kodiGui->addSwitch(_("KODI ONLY ON HDMI MODE"), "kodi.only.hdmi.mode", false);
 			mWindow->pushGui(kodiGui);
 		});
 	}

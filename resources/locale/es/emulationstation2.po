@@ -1587,6 +1587,10 @@ msgid "LAUNCH KODI AT BOOT"
 msgstr "INICIAR KODI AL ARRANCAR EL SISTEMA"
 
 #:
+msgid "KODI ONLY ON HDMI MODE"
+msgstr "KODI SÓLO EN MODO HDMI"
+
+#:
 msgid "OTHERS"
 msgstr "OTROS"
 

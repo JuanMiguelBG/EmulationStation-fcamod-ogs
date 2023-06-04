@@ -56,9 +56,10 @@ static std::map<std::string, std::string> defaults =
 	{ "sound.cards", "DEFAULT" },
 	{ "sound.audio.device", "RK817-CODEC" },
 	{ "sound.output.device", "SPK" },
-	{ "sound.output.devices", "SPK"},
-	{ "kodi.enabled", "1"},
-	{ "kodi.atstartup", "0"}
+	{ "sound.output.devices", "SPK" },
+	{ "kodi.enabled", "1" },
+	{ "kodi.atstartup", "0" },
+	{ "kodi.only.hdmi.mode", "0" }
 };
 
 std::string systemConfFile = "~/.emulationstation.conf";

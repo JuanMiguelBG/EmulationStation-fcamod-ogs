@@ -258,6 +258,7 @@ void Settings::setDefaults()
 	mBoolMap["AutoscrollMenuEntries"] = true;
 	mBoolMap["kodi.enabled"] = true;
 	mBoolMap["kodi.atstartup"] = false;
+	mBoolMap["kodi.only.hdmi.mode"] = false;
 
 	mStringMap["suspend.device.mode"] = "LIGHT";
 	mBoolMap["hdmi.mode"] = false;
