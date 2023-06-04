@@ -1378,6 +1378,25 @@ void GuiMenu::openUISettings()
 			s->setVariable("reloadAll", true);
 	});
 
+	// game splash screen
+	s->addGroup(_("GAME SPLASH SCREEN"));
+
+	auto splash_game_load = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("splash.game.load"));
+	s->addWithLabel(_("SHOW ON GAME LOADING"), splash_game_load);
+	s->addSaveFunc([splash_game_load]
+	{
+		if (Settings::getInstance()->getBool("splash.game.load") != splash_game_load->getState())
+			Settings::getInstance()->setBool("splash.game.load", splash_game_load->getState());
+	});
+
+	auto splash_game_exit = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("splash.game.exit"));
+	s->addWithLabel(_("SHOW ON GAME EXIT"), splash_game_exit);
+	s->addSaveFunc([splash_game_exit]
+	{
+		if (Settings::getInstance()->getBool("splash.game.exit") != splash_game_exit->getState())
+			Settings::getInstance()->setBool("splash.game.exit", splash_game_exit->getState());
+	});
+
 	s->onFinalize([s, pthis, window]
 	{
 		if (s->getVariable("reloadCollections"))

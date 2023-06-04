@@ -212,6 +212,8 @@ void Settings::setDefaults()
 	mBoolMap["ForceKiosk"] = false;
 	mBoolMap["ForceKid"] = false;
 	mBoolMap["ForceDisableFilters"] = false;
+	mBoolMap["splash.game.load"] = true;
+	mBoolMap["splash.game.exit"] = true;
 
 	mBoolMap["UseFullscreenPaging"] = false;
 
