@@ -3330,6 +3330,10 @@ msgid "GO TO DECADE"
 msgstr "IR A DÉCADA"
 
 #:
+msgid "NAVIGATION BAR"
+msgstr "PANEL NAVEGACIÓN"
+
+#:
 msgid "SYSTEM TOOL"
 msgstr "HERR. SISTEMA"
 

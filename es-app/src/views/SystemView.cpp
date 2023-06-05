@@ -1032,6 +1032,8 @@ std::vector<HelpPrompt> SystemView::getHelpPrompts()
 		if (!UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("ScreenSaverControls") && mWindow->isScreenSaverEnabled() )
 			prompts.push_back(HelpPrompt("select", _("LAUNCH SCREENSAVER")));
 	}
+	if (SystemData::isManufacturerSupported())
+		prompts.push_back(HelpPrompt(BUTTON_BACK, _("NAVIGATION BAR")));
 
 	return prompts;
 }
