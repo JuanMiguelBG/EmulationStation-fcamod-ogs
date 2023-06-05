@@ -92,19 +92,25 @@ lowercase()
 #******************* ES Scripts Properties functions ********************
 get_es_settings_property()
 {
-  local property="$1"
+  local property=$1
+  local default_value=$2
 
   if [ -z "$property" ]; then
     echo ""
     return
   fi
 
-  cat "$ES_CONFIG_FILE" | grep "name=\"$property\"" | grep -o -P -w 'value="\K[^"]+'
+  local value=$(cat "$ES_CONFIG_FILE" | grep "name=\"$property\"" | grep -o -P -w 'value="\K[^"]+')
+
+  if [ -z "$value" ]; then
+    value="$default_value"
+  fi
+  echo "$value"
 }
 
 get_es_settings_property_type()
 {
-  local property="$1"
+  local property=$1
 
   [ -z "$property" ] && return
 
@@ -113,9 +119,9 @@ get_es_settings_property_type()
 
 set_es_settings_property()
 {
-  local property="$1"
-  local value="$2"
-  local type="$3"
+  local property=$1
+  local value=$2
+  local type=$3
 
   [ -z "$property" ] && return
   [ -z "$type" ] && return
@@ -144,6 +150,25 @@ remove_es_settings_property()
 #******************* END - ES Scripts Properties functions ********************
 
 #******************* RA Scripts functions ********************
+get_ra_property()
+{
+  local config_file=$1
+  local property=$2
+  local default_value=$3
+
+  if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
+    echo ""
+    return
+  fi
+
+  local value=$(sed -rn "s/^$property[ ]*=[ ]*\"([^\n]+)\"$/\1/p" "$config_file")
+
+  if [ -z "$value" ]; then
+    value="$default_value"
+  fi
+  echo "$value"
+}
+
 set_ra_property()
 {
 	local config_file=$1
@@ -153,7 +178,7 @@ set_ra_property()
   if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
     return
   fi
-  
+
   if [[ $(cat "$config_file" | grep -ce "$property[ ]*=") -gt 0 ]]; then
     # property exist, replace
     sudo sed -i "s/#\?$property[ ]*=.*/$property = \"$value\"/g" "$config_file" > /dev/null
@@ -162,19 +187,6 @@ set_ra_property()
 
   # property not exist, create
   echo "$property = \"$value\"" | sudo tee -a "$config_file" > /dev/null
-}
-
-get_ra_property()
-{
-  local config_file=$1
-  local property=$2
-
-  if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
-    echo ""
-    return
-  fi
-
-  sed -rn "s/^$property[ ]*=[ ]*\"([^\n]+)\"$/\1/p" "$config_file"
 }
 
 remove_ra_property()
