@@ -245,3 +245,11 @@ std::shared_ptr<SwitchComponent> GuiSettings::addSwitch(const std::string& title
 
 	return comp;
 }
+
+void GuiSettings::update(int deltaTime)
+{
+	if (mUpdateSettingsFunc)
+		mUpdateSettingsFunc(deltaTime);
+
+	GuiComponent::update(deltaTime);
+}

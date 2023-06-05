@@ -23,6 +23,7 @@ public:
 	inline void addWithDescription(const std::string& label, const std::string& description, const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func, const std::string iconName = "", bool setCursorHere = false, bool invert_when_selected = true, bool multiLine = false) { mMenu.addWithDescription(label, description, comp, func, iconName, setCursorHere, invert_when_selected, multiLine); };
 	inline void addSaveFunc(const std::function<void()>& func) { mSaveFuncs.push_back(func); };
 	inline void addEntry(const std::string name, bool add_arrow = false, const std::function<void()>& func = nullptr, const std::string iconName = "", bool onButtonRelease = false, bool setCursorHere = false) { mMenu.addEntry(name, add_arrow, func, iconName, setCursorHere, true, onButtonRelease); };
+	inline void addComponent(const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func, const std::string iconName = "", bool setCursorHere = false) { mMenu.addComponent(comp, func, iconName, setCursorHere); };
 
 	inline void addGroup(const std::string& label) { mMenu.addGroup(label); };
 
@@ -70,6 +71,11 @@ public:
 		mCloseButtonFunc = func;
 	}
 
+	void setUpdateSettings(const std::function<void(int)>& func = nullptr)
+	{
+		mUpdateSettingsFunc = func;
+	}
+
 	// always executed on both back and close buttons
 	void onClose(const std::function<void()>& func) { mCloseButtonFunc = func; }
 
@@ -79,10 +85,14 @@ public:
 	bool isWaitingLoad() { return mWaitingLoad; };
 	void setWaitingLoad(bool waitingLoad) { mWaitingLoad = waitingLoad; };
 
+	void update(int deltaTime);
+
 protected:
 	MenuComponent mMenu;
 
 private:
+	std::function<void(int)> mUpdateSettingsFunc;
+
 	bool mDoSave = true; // batocera
 
 	std::vector< std::function<void()> > mSaveFuncs;

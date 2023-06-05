@@ -9,6 +9,21 @@
 MultiLineMenuEntry::MultiLineMenuEntry(Window* window, const std::string& text, const std::string& substring, bool multiLine) :
 	ComponentGrid(window, Vector2i(1, 2))
 {
+	auto theme = ThemeData::getMenuTheme();
+
+	mSubText = std::make_shared<TextComponent>(mWindow, substring.c_str(), theme->Text.font, theme->Text.color);
+	init(text, multiLine, true);	
+}
+
+MultiLineMenuEntry::MultiLineMenuEntry(Window* window, const std::string& text, const std::shared_ptr<TextComponent>& comp_substring, bool multiLine) :
+	ComponentGrid(window, Vector2i(1, 2))
+{
+	mSubText = comp_substring;
+	init(text, multiLine, false);
+}
+
+void MultiLineMenuEntry::init(const std::string& text, bool multiLine, bool updateSubText)
+{
 	mMultiLine = multiLine;
 	mSizeChanging = false;
 
@@ -19,21 +34,25 @@ MultiLineMenuEntry::MultiLineMenuEntry(Window* window, const std::string& text, 
 
 	mText->setVerticalAlignment(ALIGN_TOP);
 
-	mSubstring = std::make_shared<TextComponent>(mWindow, substring.c_str(), theme->TextSmall.font, theme->Text.color);		
-	mSubstring->setVerticalAlignment(ALIGN_TOP);
-	mSubstring->setOpacity(192);
+	if (updateSubText)
+	{
+		mSubText->setFont(theme->TextSmall.font);
+		mSubText->setColor(theme->Text.color);
+	}
+	mSubText->setVerticalAlignment(ALIGN_TOP);
+	mSubText->setOpacity(192);
 
 	if (Settings::getInstance()->getBool("AutoscrollMenuEntries"))
 	{
 		mText->setAutoScroll(true);
-		mSubstring->setAutoScroll(true);
+		mSubText->setAutoScroll(true);
 	}
 
 	setEntry(mText, Vector2i(0, 0), true, true);
-	setEntry(mSubstring, Vector2i(0, 1), false, true);
+	setEntry(mSubText, Vector2i(0, 1), false, true);
 
 	float th = mText->getSize().y();
-	float sh = mSubstring->getSize().y();
+	float sh = mSubText->getSize().y();
 	float h = th + sh;
 
 	setRowHeightPerc(0, (th * 0.9) / h);
@@ -45,22 +64,22 @@ MultiLineMenuEntry::MultiLineMenuEntry(Window* window, const std::string& text, 
 void MultiLineMenuEntry::setColor(unsigned int color)
 {
 	mText->setColor(color);
-	mSubstring->setColor(color);
+	mSubText->setColor(color);
 }
 
 void MultiLineMenuEntry::onSizeChanged()
 {		
 	ComponentGrid::onSizeChanged();
 
-	if (mMultiLine && mSubstring && mSize.x() > 0 && !mSizeChanging)
+	if (mMultiLine && mSubText && mSize.x() > 0 && !mSizeChanging)
 	{
 		mSizeChanging = true;
 
 		mText->setSize(mSize.x(), 0);
-		mSubstring->setSize(mSize.x(), 0);
+		mSubText->setSize(mSize.x(), 0);
 
 		float th = mText->getSize().y();
-		float sh = mSubstring->getSize().y();
+		float sh = mSubText->getSize().y();
 		float h = th + sh;
 
 		setRowHeightPerc(0, (th * 0.9) / h);

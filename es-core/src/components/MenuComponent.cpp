@@ -403,3 +403,36 @@ std::shared_ptr<ImageComponent> makeArrow(Window* window)
 	bracket->setResize(0, round(menuTheme->Text.font->getLetterHeight()));
 	return bracket;
 }
+
+void MenuComponent::addComponent(const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func, const std::string iconName, bool setCursorHere, bool invert_when_selected, bool onButtonRelease, const std::string userData, bool doUpdateSize)
+{
+	auto theme = ThemeData::getMenuTheme();
+	std::shared_ptr<Font> font = theme->Text.font;
+	unsigned int color = theme->Text.color;
+	
+	ComponentListRow row;
+
+	if (!iconName.empty())
+	{
+		std::string iconPath = theme->getMenuIcon(iconName);
+		if (!iconPath.empty())
+		{
+			// icon
+			auto icon = std::make_shared<ImageComponent>(mWindow);
+			icon->setImage(iconPath);
+			icon->setColorShift(color);
+			icon->setResize(0, font->getLetterHeight() * 1.25f);
+			row.addElement(icon, false);
+
+			// spacer between icon and text
+			auto spacer = std::make_shared<GuiComponent>(mWindow);
+			spacer->setSize(10, 0);
+			row.addElement(spacer, false);
+		}
+	}
+
+	row.addElement(comp, true, invert_when_selected);
+	row.makeAcceptInputHandler(func, onButtonRelease);
+
+	addRow(row, setCursorHere, doUpdateSize, userData);
+}

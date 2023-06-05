@@ -2902,16 +2902,29 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 		if (AudioManager::getInstance()->isSongPlaying())
 		{
 			auto sname = AudioManager::getInstance()->getSongName();
-			if (!sname.empty())
+			auto theme = ThemeData::getMenuTheme();
+
+			auto song_name_comp = std::make_shared<TextComponent>(window, Utils::String::toUpper(_("NOW PLAYING") + ": " + sname), theme->TextSmall.font, theme->Text.color);
+			auto description_comp = std::make_shared<MultiLineMenuEntry>(window, Utils::String::toUpper(_("SKIP TO THE NEXT SONG")), song_name_comp);
+			
+			s->addComponent(description_comp, [s, window]
+				{
+					Window* w = window;
+					AudioManager::getInstance()->playRandomMusic(false);
+					delete s;
+					openQuitMenu_static(w, true, false);
+				}, "iconSound");
+
+			s->setUpdateSettings([song_name_comp] (int deltaTime)
 			{
-				s->addWithDescription(_("SKIP TO THE NEXT SONG"), _("NOW PLAYING") + ": " + sname, nullptr, [s, window]
-					{
-						Window* w = window;
-						AudioManager::getInstance()->playRandomMusic(false);
-						delete s;
-						openQuitMenu_static(w, true, false);
-					}, "iconSound");
-			}
+				if (AudioManager::getInstance()->isSongPlaying())
+				{
+					std::string sname = AudioManager::getInstance()->getSongName();
+					std::string song_text = Utils::String::toUpper(_("NOW PLAYING") + ": " + sname);
+					if (song_name_comp->getText() != song_text)
+						song_name_comp->setText(song_text);
+				}
+			});
 		}
 
 		s->addEntry(_("LAUNCH SCREENSAVER"), false, [s, window]
