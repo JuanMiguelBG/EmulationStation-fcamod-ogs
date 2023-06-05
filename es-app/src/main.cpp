@@ -49,7 +49,6 @@
 const std::string INVALID_HOME_PATH = "Invalid home path supplied.";
 const std::string INVALID_CONFIG_PATH = "Invalid config path supplied.";
 const std::string INVALID_USERDATA_PATH = "Invalid userdata path supplied.";
-const std::string INVALID_SCREEN_ROTATE = "Invalid screenrotate supplied.";
 const std::string ERROR_CONFIG_DIRECTORY = "Config directory could not be created!";
 const std::string WINDOW_FAILED_INITIALIZE = "Window failed to initialize!";
 
@@ -209,19 +208,6 @@ bool parseArgs(int argc, char* argv[])
 			gPlayVideo = argv[i + 1];
 			i++; // skip the argument value
 		}
-		else if (strcmp(argv[i], "--screenrotate") == 0)
-		{
-			if (i >= argc - 1)
-			{
-				std::cerr << INVALID_SCREEN_ROTATE;
-				//LOG(LogError) << "MAIN::parseArgs() - " << INVALID_SCREEN_ROTATE;
-				return false;
-			}
-
-			int rotate = atoi(argv[i + 1]);
-			++i; // skip the argument value
-			Settings::getInstance()->setInt("ScreenRotate", rotate);
-		}
 		else if (strcmp(argv[i], "--gamelist-only") == 0)
 		{
 			Settings::getInstance()->setBool("ParseGamelistOnly", true);
@@ -308,30 +294,40 @@ bool parseArgs(int argc, char* argv[])
 				"Written by Alec \"Aloshi\" Lofquist.\n"
 				"Version " << PROGRAM_VERSION_STRING << ", built " << PROGRAM_BUILT_STRING << "\n\n"
 				"Command line arguments:\n"
-				"--gamelist-only			skip automatic game search, only read from gamelist.xml\n"
-				"--ignore-gamelist		ignore the gamelist (useful for troubleshooting)\n"
-				"--draw-framerate		display the framerate\n"
-				"--no-exit			don't show the exit option in the menu\n"
-				"--no-splash			don't show the splash screen\n"
-				"--debug				more logging, show console on Windows\n"
-				"--scrape			scrape using command line interface\n"
-				"--vsync [1/on or 0/off]		turn vsync on or off (default is on)\n"
-				"--max-vram [size]		Max VRAM to use in Mb before swapping. 0 for unlimited\n"
-				"--force-kid		Force the UI mode to be Kid\n"
-				"--force-kiosk		Force the UI mode to be Kiosk\n"
-				"--force-disable-filters		Force the UI to ignore applied filters in gamelist\n"
-				"--video		path to the video spalsh\n"
-				"--videoduration		the video spalsh durarion in milliseconds\n"
-				"--fullscreen		use fullscreen  mode\n"
-				"--config-path		set config directory path\n"
-				"--userdata-path		set userdata directory path, default '/roms'\n"
-				"--help, -h			summon a sentient, angry tuba\n\n"
+				"--gamelist-only           skip automatic game search, only read from gamelist.xml\n"
+				"--ignore-gamelist         ignore the gamelist (useful for troubleshooting)\n"
+				"--draw-framerate          display the framerate\n"
+				"--no-exit                 don't show the exit option in the menu\n"
+				"--no-splash               don't show the splash screen\n"
+				"--debug                   more logging, show console on Windows\n"
+				"--scrape                  scrape using command line interface\n"
+				"--vsync [1/on or 0/off]   turn vsync on or off (default is on)\n"
+				"--max-vram [size]         Max VRAM to use in Mb before swapping. 0 for unlimited\n"
+				"--force-kid               Force the UI mode to be Kid\n"
+				"--force-kiosk             Force the UI mode to be Kiosk\n"
+				"--force-disable-filters   Force the UI to ignore applied filters in gamelist\n"
+				"--video                   path to the video spalsh\n"
+				"--videoduration           the video spalsh durarion in milliseconds\n"
+				"--config-path             set config directory path\n"
+				"--userdata-path           set userdata directory path, default '/roms'\n"
+				"--help, -h	               summon a sentient, angry tuba\n\n"
 				"More information available in README.md.\n";
 			return false; //exit after printing help
 		}
 	}
 
 	return true;
+}
+
+void loadBasicSettings(std::string &log)
+{
+	log.append("MAIN::loadBasicSettings() - Enter function\n");
+	Utils::Async::run( [] (void)
+		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
+				ApiSystem::getInstance()->loadSystemHdmiInfo();
+		});
+	log.append("MAIN::loadBasicSettings() - exit function\n");
 }
 
 void loadOtherSettings()
@@ -356,8 +352,6 @@ void loadOtherSettings()
 		{
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
 				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
-			
-			ApiSystem::getInstance()->loadSystemHdmiInfo();
 		});
 	LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
@@ -366,12 +360,12 @@ bool verifyHomeFolderExists()
 {
 	//make sure the config directory exists
 	std::string configDir = Utils::FileSystem::getEsConfigPath();
-	if(!Utils::FileSystem::exists(configDir))
+	if (!Utils::FileSystem::exists(configDir))
 	{
 		LOG(LogInfo) << "MAIN::verifyHomeFolderExists() - Creating config directory \"" << configDir << '"';
 		Log::flush();
 		Utils::FileSystem::createDirectory(configDir);
-		if(!Utils::FileSystem::exists(configDir))
+		if (!Utils::FileSystem::exists(configDir))
 		{
 			std::cerr << ERROR_CONFIG_DIRECTORY << '\n';
 			LOG(LogError) << "MAIN::verifyHomeFolderExists() - " << ERROR_CONFIG_DIRECTORY;
@@ -529,6 +523,7 @@ void waitForBluetoothDevices()
 		return;
 
 	int bt_timeout = Settings::getInstance()->getInt("bluetooth.boot.game.timeout");
+	LOG(LogInfo) << "MAIN::waitForBluetoothDevices() - waiting for Bluetooth devices " << std::to_string(bt_timeout) << " seconds";
 	if (bt_timeout > 0)
 		Utils::Async::sleep(bt_timeout * 1000);
 }
@@ -590,11 +585,11 @@ void launchStartupGame(const std::string gamePath)
 	LOG(LogInfo) << "MAIN::launchStartupGame() - game: '" << bootGame.name << "', system: '" << bootGame.system << "', command: '" << command << "'";
 
 	bootGame.launched = true;
-	Scripting::fireEvent("game-start", rom, basename, bootGame.name);
+	Scripting::fireEvent("game-start", rom, basename, bootGame.name, bootGame.system);
 	time_t game_tstart = time(NULL);
 	exitCode = runSystemCommand(command, gamePath, nullptr);
 
-	Scripting::fireEvent("game-end");
+	Scripting::fireEvent("game-end", rom, basename, bootGame.name, bootGame.system);
 
 	if (exitCode == 0)
 	{
@@ -635,8 +630,9 @@ int main(int argc, char* argv[])
 	// to store the log prior to starting the logger
 	std::string init_log;
 	
-	init_log.append("MAIN::main(), MAIN : ") .append(std::to_string(Utils::Async::getThreadId())).append("\n");
+	init_log.append("MAIN::main(), MAIN : ").append(std::to_string(Utils::Async::getThreadId())).append("\n");
 
+	loadBasicSettings(init_log);
 	configSystemAudio(init_log);
 	startAutoConnectBluetoothAudioDevice(init_log);
 	checkPreloadVlc();
@@ -680,9 +676,11 @@ int main(int argc, char* argv[])
 	//always close the log on exit
 	atexit(&onExit);
 
+	loadOtherSettings();
 	Scripting::fireEvent("start");
 
-	if (SystemConf::getInstance()->getBool("kodi.enabled") && SystemConf::getInstance()->getBool("kodi.atstartup"))
+	if (SystemConf::getInstance()->getBool("kodi.enabled") && SystemConf::getInstance()->getBool("kodi.atstartup")
+		&& ( !SystemConf::getInstance()->getBool("kodi.only.hdmi.mode") || ( SystemConf::getInstance()->getBool("kodi.only.hdmi.mode") && SystemConf::getInstance()->getBool("hdmi.mode")) ))
 	{
 		// wait for BT devices
 		waitForBluetoothDevices();
@@ -746,7 +744,7 @@ int main(int argc, char* argv[])
 	}
 
 	const char* errorMsg = NULL;
-	if(!loadSystemConfigFile(&window, &errorMsg))
+	if (!loadSystemConfigFile(&window, &errorMsg))
 	{
 		// something went terribly wrong
 		if (errorMsg == NULL)
@@ -771,7 +769,8 @@ int main(int argc, char* argv[])
 			}));
 	}
 
-	if (bootGame.enable_startup_game) {
+	if (bootGame.enable_startup_game)
+	{
 		// update game metadata info
 		updateMetadataStartupGame();
 	}
@@ -802,8 +801,6 @@ int main(int argc, char* argv[])
 	window.endRenderLoadingScreen();
 
 	stopAutoConnectBluetoothAudioDevice();
-
-	loadOtherSettings();
 
 	playMusic();
 

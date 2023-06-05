@@ -2460,14 +2460,15 @@ void GuiMenu::openAdvancedSettings()
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::KODI))
 	{
-		s->addEntry(_("KODI SETTINGS"), true, [this, window, s] 
-		{
-			GuiSettings* kodiGui = new GuiSettings(window, _("KODI SETTINGS").c_str());
-			kodiGui->addSwitch(_("ENABLE KODI"), "kodi.enabled", false, [s] { s->setVariable("reloadGuiMenu", true); });
-			kodiGui->addSwitch(_("LAUNCH KODI AT BOOT"), "kodi.atstartup", false);
-			kodiGui->addSwitch(_("KODI ONLY ON HDMI MODE"), "kodi.only.hdmi.mode", false);
-			mWindow->pushGui(kodiGui);
-		});
+		s->addEntry(_("KODI SETTINGS"), true,
+			[this, window, s] 
+				{
+					GuiSettings* kodiGui = new GuiSettings(window, _("KODI SETTINGS").c_str());
+					kodiGui->addSwitch(_("ENABLE KODI"), "kodi.enabled", false, [s] { s->setVariable("reloadGuiMenu", true); });
+					kodiGui->addSwitch(_("LAUNCH KODI AT BOOT"), "kodi.atstartup", false);
+					kodiGui->addSwitch(_("KODI ONLY ON HDMI MODE"), "kodi.only.hdmi.mode", false, [s] { s->setVariable("reloadGuiMenu", true); });
+					mWindow->pushGui(kodiGui);
+				});
 	}
 
 	s->addGroup(_("GAME LIST"));
