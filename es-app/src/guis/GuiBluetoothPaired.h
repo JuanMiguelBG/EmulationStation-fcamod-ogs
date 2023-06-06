@@ -6,6 +6,8 @@
 #include "components/MenuComponent.h"
 #include "components/BusyComponent.h"
 #include "ApiSystem.h"
+#include "MultiStateInput.h"
+#include <map>
 
 #include <thread>
 
@@ -17,6 +19,8 @@ public:
 	bool input(InputConfig* config, Input input) override;
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 
+	void update(int deltaTime);
+
 protected:
 
 	MenuComponent* getMenu() { return &mMenu; }
@@ -24,15 +28,17 @@ protected:
 private:
 	void	load(std::vector<BluetoothDevice> bt_devices);
 
-	bool	onAction(const BluetoothDevice& btDeviced);
-	bool	onConnectDevice(const BluetoothDevice& btDeviced);
-	bool	onDisconnectDevice(const BluetoothDevice& btDeviced);
+	void	onAction();
+	void	onUnpair();
+	void	onConnectDevice(const BluetoothDevice& btDeviced);
+	void	onDisconnectDevice(const BluetoothDevice& btDeviced);
 	void	onClose();
 	void	onRefresh();
-
-	void	onDeleteAll();
+	void	onUnpairAll();
 
 	void	displayRestartDialog(Window *window, const std::string message, bool deleteWindow, bool restarES);
+
+	bool isHasDevices() { return mMapDevices.size() > 0; };
 
 	std::string getDeviceName(const BluetoothDevice& btDevice) const;
 
@@ -41,7 +47,9 @@ private:
 	std::string mTitle;
 
 	bool	mWaitingLoad;
-	bool	hasDevices;
+
+	MultiStateInput mOKButton;
+	std::map<std::string, BluetoothDevice> mMapDevices;
 };
 
 #endif // ES_APP_GUIS_GUI_BLUETOOTH_PAIRED_H

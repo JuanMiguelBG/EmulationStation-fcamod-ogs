@@ -13,11 +13,10 @@
 
 
 GuiBluetoothPaired::GuiBluetoothPaired(Window* window, const std::string title, const std::string subtitle)
-	: GuiComponent(window), mMenu(window, title.c_str(), true)
+	: GuiComponent(window), mMenu(window, title.c_str(), true), mOKButton("OK")
 {
 	mTitle = title;
 	mWaitingLoad = false;
-	hasDevices = false;
 	mMenu.setSubTitle(subtitle);
 
 	auto theme = ThemeData::getMenuTheme();
@@ -29,17 +28,31 @@ GuiBluetoothPaired::GuiBluetoothPaired(Window* window, const std::string title, 
 
 void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 {
-	hasDevices = false;
+	LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMenu.clear()'";
+	Log::flush();
 	mMenu.clear();
+	LOG(LogDebug) << "GuiBluetoothPaired::load() - after execute 'mMenu.clear()'";
+
+	LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMenu.clearButtons()'";
+	Log::flush();
 	mMenu.clearButtons();
+	LOG(LogDebug) << "GuiBluetoothPaired::load() - after execute 'mMenu.clearButtons()'";
+
+	LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMapDevices.clear()'";
+	Log::flush();
+	mMapDevices.clear();
+	LOG(LogDebug) << "GuiBluetoothPaired::load() - after execute 'mMapDevices.clear()'";
+	Log::flush();
 
 	if (btDevices.size() == 0)
 		mMenu.addEntry(_("NO BLUETOOTH DEVICES FOUND"), false, std::bind(&GuiBluetoothPaired::onRefresh, this));
 	else
 	{
-		hasDevices = true;
 		for (auto btDevice : btDevices)
 		{
+			LOG(LogDebug) << "GuiBluetoothPaired::load() - inside 'for (auto btDevice : btDevices)'";
+			Log::flush();
+			mMapDevices[btDevice.id] = btDevice;
 			std::string device_name = btDevice.name,
 						device_id;
 
@@ -53,35 +66,41 @@ void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 
 			device_id.append(btDevice.id);
 
-			mMenu.addWithDescription(device_name, device_id, [this, btDevice]() { GuiBluetoothPaired::onAction(btDevice); },
-									 btDevice.type, device_name);
+			LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMenu.addWithDescription()'";
+			Log::flush();
+			mMenu.addWithDescription(device_name, device_id, nullptr, btDevice.type, btDevice.id);
 		}
 	}
 
 	mMenu.addButton(_("REFRESH"), _("REFRESH"), [&] { onRefresh(); });
-	if (hasDevices)
-		mMenu.addButton(_("UNPAIR ALL"), _("UNPAIR ALL"), [&] { onDeleteAll(); });
+	if (isHasDevices())
+		mMenu.addButton(_("UNPAIR ALL"), _("UNPAIR ALL"), [&] { onUnpairAll(); });
 
 	mMenu.addButton(_("BACK"), _("BACK"), [&] { onClose(); });
 
 	mMenu.updateSize();
 
-	if (Renderer::isSmallScreen())
-		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
+//	if (Renderer::isSmallScreen())
+//		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
 
 	updateHelpPrompts();
 	mWaitingLoad = false;
 }
 
-bool GuiBluetoothPaired::onAction(const BluetoothDevice& btDevice)
+void GuiBluetoothPaired::onAction()
 {
-	if (mWaitingLoad)
-		return false;
+	if (mWaitingLoad || !isHasDevices())
+		return;
 
+	std::string selected = mMenu.getSelected();
+	if (selected.empty() || (mMapDevices.find(selected) == mMapDevices.end()))
+		return;
+
+	BluetoothDevice	btDevice = mMapDevices[selected];
 	if (btDevice.connected)
-		return onDisconnectDevice(btDevice);
+		onDisconnectDevice(btDevice);
 	else
-		return onConnectDevice(btDevice);
+		onConnectDevice(btDevice);
 }
 
 void GuiBluetoothPaired::displayRestartDialog(Window *window, const std::string message, bool deleteWindow, bool restarES)
@@ -115,11 +134,8 @@ void GuiBluetoothPaired::displayRestartDialog(Window *window, const std::string 
 		}));
 }
 
-bool GuiBluetoothPaired::onConnectDevice(const BluetoothDevice& btDevice)
+void GuiBluetoothPaired::onConnectDevice(const BluetoothDevice& btDevice)
 {
-	if (mWaitingLoad || !hasDevices)
-		return false;
-
 	std::string msg = _("CONNECTING BLUETOOTH DEVICE") + " '" + getDeviceName(btDevice) + "'...";
 
 	Window* window = mWindow;
@@ -161,15 +177,10 @@ bool GuiBluetoothPaired::onConnectDevice(const BluetoothDevice& btDevice)
 			mWaitingLoad = false;
 			GuiBluetoothPaired::displayRestartDialog(window, msg, result, restar_ES);
 		}));
-
-	return true;
 }
 
-bool GuiBluetoothPaired::onDisconnectDevice(const BluetoothDevice& btDevice)
+void GuiBluetoothPaired::onDisconnectDevice(const BluetoothDevice& btDevice)
 {
-	if (mWaitingLoad || !hasDevices)
-		return false;
-
 	Window* window = mWindow;
 
 	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO DISCONNECT THE DEVICE?"),
@@ -215,8 +226,6 @@ bool GuiBluetoothPaired::onDisconnectDevice(const BluetoothDevice& btDevice)
 				}));
 		},
 		_("NO"), nullptr));
-
-	return true;
 }
 
 bool GuiBluetoothPaired::input(InputConfig* config, Input input)
@@ -224,7 +233,14 @@ bool GuiBluetoothPaired::input(InputConfig* config, Input input)
 	if (GuiComponent::input(config, input))
 		return true;
 
-	if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
+	if (mOKButton.isShortPressed(config, input))
+	{
+		if (isHasDevices())
+			onAction();
+
+		return true;
+	}
+	else if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
 		if (!mWaitingLoad)
 			onClose();
@@ -238,8 +254,8 @@ bool GuiBluetoothPaired::input(InputConfig* config, Input input)
 	}
 	else if (input.value != 0 && config->isMappedTo("y", input))
 	{
-		if (hasDevices)
-			onDeleteAll();
+		if (isHasDevices())
+			onUnpairAll();
 
 		return true;
 	}
@@ -251,21 +267,19 @@ std::vector<HelpPrompt> GuiBluetoothPaired::getHelpPrompts()
 {
 	std::vector<HelpPrompt> prompts = mMenu.getHelpPrompts();
 	prompts.push_back(HelpPrompt("x", _("REFRESH")));
-	if (hasDevices)
+	if (isHasDevices())
 	{
 		prompts.push_back(HelpPrompt("y", _("UNPAIR ALL")));
 
 		std::string selected = mMenu.getSelected();
-		if (!selected.empty())
+		if (!selected.empty() && (mMapDevices.find(selected) != mMapDevices.end()))
 		{  // BT device
-			if (Utils::String::endsWith(selected, SystemConf::getInstance()->get("already.connection.exist.flag")))
-				prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT")));
+			if (mMapDevices[selected].connected)
+				prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT / UNPAIR (HOLD)")));
 			else
-				prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT")));
+				prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT / UNPAIR (HOLD)")));
 		}
 	}
-	else
-		prompts.push_back(HelpPrompt(BUTTON_OK, _("REFRESH")));
 
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
 
@@ -279,19 +293,23 @@ void GuiBluetoothPaired::onRefresh()
 	window->pushGui(new GuiLoading<std::vector<BluetoothDevice>>(window, _("SEARCHING BLUETOOTH PAIRED DEVICES..."), 
 		[this]
 		{
+			LOG(LogDebug) << "GuiBluetoothPaired::onRefresh() - before execute 'ApiSystem::getInstance()->getBluetoothPairedDevices()'";
+			Log::flush();
 			mWaitingLoad = true;
 			return ApiSystem::getInstance()->getBluetoothPairedDevices();
 		},
 		[this](std::vector<BluetoothDevice> btDevices)
 		{
+			LOG(LogDebug) << "GuiBluetoothPaired::onRefresh() - after execute 'ApiSystem::getInstance()->getBluetoothPairedDevices()'";
+			Log::flush();
 			mWaitingLoad = false;
 			load(btDevices);
 		}));
 }
 
-void GuiBluetoothPaired::onDeleteAll()
+void GuiBluetoothPaired::onUnpairAll()
 {
-	if (mWaitingLoad || !hasDevices)
+	if (mWaitingLoad || !isHasDevices())
 		return;
 
 	Window* window = mWindow;
@@ -345,4 +363,72 @@ std::string GuiBluetoothPaired::getDeviceName(const BluetoothDevice& btDevice) c
 		name = btDevice.alias;
 
 	return name;
+}
+
+void GuiBluetoothPaired::onUnpair()
+{
+	if (mWaitingLoad || !isHasDevices())
+		return;
+
+	std::string selected = mMenu.getSelected();
+	if (selected.empty() || (mMapDevices.find(selected) == mMapDevices.end()))
+		return;
+
+	BluetoothDevice	btDevice = mMapDevices[selected];
+	Window* window = mWindow;
+
+	window->pushGui(new GuiMsgBox(window, _("ARE YOU SURE YOU WANT TO UNPAIR THE DEVICE?"),
+		_("YES"), [this, window, btDevice]
+		{
+			std::string msg = _("UNPAIRING BLUETOOTH DEVICE") + " '" + getDeviceName(btDevice) + "'...";
+			std::string audio_device = SystemConf::getInstance()->get("bluetooth.audio.device");
+			window->pushGui(new GuiLoading<bool>(window, msg, 
+				[this, btDevice, audio_device]
+				{
+					mWaitingLoad = true;
+
+					bool result = ApiSystem::getInstance()->unpairBluetoothDevice(btDevice.id);				
+					// successfully unpaired
+					if (result)
+					{
+						// BT 4.2, only one audio device allowed
+						// reload BT audio device info
+						std::string new_audio_device = ApiSystem::getInstance()->getBluetoothAudioDevice();
+						SystemConf::getInstance()->setBool("bluetooth.audio.connected", !new_audio_device.empty());
+						SystemConf::getInstance()->set("bluetooth.audio.device", new_audio_device);
+					}
+
+					return result;
+				},
+				[this, window, btDevice, audio_device](bool result)
+				{
+					bool restar_ES = false;
+					std::string msg;
+
+					if (result)
+					{
+						msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE SUCCESSFULLY UNPAIRED"));
+
+						// audio bluetooth connecting changes
+						restar_ES = (audio_device != SystemConf::getInstance()->get("bluetooth.audio.device") );
+					}
+					else
+						msg.append("'").append(getDeviceName(btDevice)).append("' ").append(_("DEVICE FAILED TO UNPAIR"));
+
+					mWaitingLoad = false;
+					GuiBluetoothPaired::displayRestartDialog(window, msg, result, restar_ES);
+				}));
+		},
+		_("NO"), nullptr));
+}
+
+void GuiBluetoothPaired::update(int deltaTime)
+{
+	GuiComponent::update(deltaTime);
+
+	if (mOKButton.isLongPressed(deltaTime))
+	{
+		if (isHasDevices())
+			onUnpair();
+	}
 }

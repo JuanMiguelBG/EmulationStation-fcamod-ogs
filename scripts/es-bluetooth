@@ -17,6 +17,7 @@ do_help() {
     echo "$0 audio_device_connected" >&2
     echo "$0 info_device <DEVICE_ID>" >&2
     echo "$0 pair_device <DEVICE_ID>" >&2
+    echo "$0 unpair_device <DEVICE_ID>" >&2
     echo "$0 set_device_alias <DEVICE_ID> <ALIAS>" >&2
     echo "$0 paired_devices" >&2
     echo "$0 connected_devices" >&2
@@ -790,6 +791,44 @@ do_pair_device()
     return 1
 }
 
+do_unpair_device()
+{
+    local DEVICE=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_unpair_device()' - to device '$DEVICE'"
+
+    if [ -z "$DEVICE" ]; then
+      return 1
+    fi
+
+    local paired=`bluetoothctl paired-devices | grep "$DEVICE"`
+    local success=""
+
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_unpair_device()' - checking paired device '$DEVICE' - result: '$paired'"
+
+    if [ ! -z "$paired" ]; then
+     #print_log $LOG_FILE "DEBUG" "Executing 'do_unpair_device()' - unpairing device '$DEVICE'"
+      do_disconnect_device "$DEVICE"
+
+      local output=`timeout 10s bluetoothctl remove "$DEVICE"`
+      success=`echo "$output" | grep "removed"`
+    else
+      #print_log $LOG_FILE "INFO" "Executing 'do_unpair_device()' - device '$DEVICE' already unpaired"
+      success="removed"
+    fi
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_unpair_device()' - unpairing device '$DEVICE' - success: '$success'"
+
+    if [ ! -z "$success" ]; then
+      # success
+      #print_log $LOG_FILE "INFO" "Executing 'do_unpair_device()' - unpairing to device '$DEVICE' - successfully"
+      return 0
+    fi
+
+    # fail
+    local error=`echo "$output" | grep -iw "failed\|error"`
+    #print_log $LOG_FILE "INFO" "Executing 'do_unpair_device()' - unpairing to device '$DEVICE' - failed, cause: '$error'"
+    return 1
+}
+
 set_device_icon()
 {
     local DEVICE=$1
@@ -1269,6 +1308,9 @@ case "${ACTION}" in
     ;;
     "pair_device")
         do_pair_device "$1" || exit_execution 1 "$1"
+    ;;
+    "unpair_device")
+        do_unpair_device "$1" || exit_execution 1 "$1"
     ;;
     "paired_devices")
         get_paired_devices

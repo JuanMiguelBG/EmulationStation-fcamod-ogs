@@ -116,7 +116,7 @@ void MenuComponent::addWithLabel(const std::string& label, const std::shared_ptr
 	addRow(row, setCursorHere);
 }
 
-void MenuComponent::addWithDescription(const std::string& label, const std::string& description, const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func, const std::string iconName, bool setCursorHere, bool invert_when_selected, bool multiLine, const std::string userData)
+void MenuComponent::addWithDescription(const std::string& label, const std::string& description, const std::shared_ptr<GuiComponent>& comp, const std::function<void()>& func, const std::string iconName, bool setCursorHere, bool invert_when_selected, bool multiLine, const std::string userData, bool onButtonRelease)
 {
 	auto theme = ThemeData::getMenuTheme();
 	std::shared_ptr<Font> font = theme->Text.font;
@@ -156,7 +156,7 @@ void MenuComponent::addWithDescription(const std::string& label, const std::stri
 		row.addElement(comp, false, invert_when_selected);
 
 	if (func != nullptr)
-		row.makeAcceptInputHandler(func);
+		row.makeAcceptInputHandler(func, onButtonRelease);
 
 	addRow(row, setCursorHere, true, userData);
 }

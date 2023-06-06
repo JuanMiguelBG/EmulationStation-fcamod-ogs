@@ -65,8 +65,8 @@ void GuiBluetoothConnected::load(std::vector<BluetoothDevice> btDevices)
 
 	mMenu.updateSize();
 
-	if (Renderer::isSmallScreen())
-		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
+//	if (Renderer::isSmallScreen())
+//		mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, (Renderer::getScreenHeight() - mMenu.getSize().y()) / 2);
 
 	updateHelpPrompts();
 	mWaitingLoad = false;

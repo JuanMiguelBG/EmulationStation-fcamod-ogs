@@ -290,6 +290,7 @@ public:
 	std::vector<BluetoothDevice> getBluetoothPairedDevices();
 	std::vector<BluetoothDevice> getBluetoothConnectedDevices();
 	bool pairBluetoothDevice(const std::string id);
+	bool unpairBluetoothDevice(const std::string id);
 	BluetoothDevice getBluetoothDeviceInfo(const std::string id);
 	bool connectBluetoothDevice(const std::string id);
 	bool disconnectBluetoothDevice(const std::string id);
