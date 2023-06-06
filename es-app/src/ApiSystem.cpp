@@ -1867,8 +1867,6 @@ std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std
 	std::vector<BluetoothDevice> result;
 	for (auto btDevice : btDevices)
 	{
-		LOG(LogDebug) << "ApiSystem::toBluetoothDevicesVector() - device: " << btDevice;
-		Log::flush();
 		BluetoothDevice bt_device;
 
 		if (Utils::String::startsWith(btDevice, "<device "))
@@ -1888,8 +1886,6 @@ std::vector<BluetoothDevice> ApiSystem::toBluetoothDevicesVector(std::vector<std
 
 		result.push_back(bt_device);
 	}
-	LOG(LogDebug) << "ApiSystem::toBluetoothDevicesVector() - exit";
-	Log::flush();
 	return result;
 }
 

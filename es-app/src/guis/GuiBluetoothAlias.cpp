@@ -92,14 +92,12 @@ bool GuiBluetoothAlias::onManageDeviceAlias(const BluetoothDevice& btDevice)
 
 bool GuiBluetoothAlias::input(InputConfig* config, Input input)
 {
-	if (GuiComponent::input(config, input))
+	if (mWaitingLoad || GuiComponent::input(config, input))
 		return true;
 
 	if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
-		if (!mWaitingLoad)
-			onClose();
-
+		onClose();
 		return true;
 	}
 	else if (input.value != 0 && config->isMappedTo("x", input))
@@ -142,8 +140,8 @@ void GuiBluetoothAlias::onScan()
 		},
 		[this](std::vector<BluetoothDevice> btDevices)
 		{
-			mWaitingLoad = false;
 			load(btDevices);
+			mWaitingLoad = false;
 		}));
 }
 

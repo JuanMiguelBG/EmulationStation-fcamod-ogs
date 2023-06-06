@@ -230,7 +230,7 @@ void GuiBluetoothPaired::onDisconnectDevice(const BluetoothDevice& btDevice)
 
 bool GuiBluetoothPaired::input(InputConfig* config, Input input)
 {
-	if (GuiComponent::input(config, input))
+	if (mWaitingLoad || GuiComponent::input(config, input))
 		return true;
 
 	if (mOKButton.isShortPressed(config, input))
@@ -242,9 +242,7 @@ bool GuiBluetoothPaired::input(InputConfig* config, Input input)
 	}
 	else if (input.value != 0 && config->isMappedTo(BUTTON_BACK, input))
 	{
-		if (!mWaitingLoad)
-			onClose();
-
+		onClose();
 		return true;
 	}
 	else if (input.value != 0 && config->isMappedTo("x", input))
@@ -302,8 +300,8 @@ void GuiBluetoothPaired::onRefresh()
 		{
 			LOG(LogDebug) << "GuiBluetoothPaired::onRefresh() - after execute 'ApiSystem::getInstance()->getBluetoothPairedDevices()'";
 			Log::flush();
-			mWaitingLoad = false;
 			load(btDevices);
+			mWaitingLoad = false;
 		}));
 }
 
@@ -424,6 +422,9 @@ void GuiBluetoothPaired::onUnpair()
 
 void GuiBluetoothPaired::update(int deltaTime)
 {
+	if (mWaitingLoad)
+		return;
+
 	GuiComponent::update(deltaTime);
 
 	if (mOKButton.isLongPressed(deltaTime))
