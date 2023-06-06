@@ -28,21 +28,9 @@ GuiBluetoothPaired::GuiBluetoothPaired(Window* window, const std::string title, 
 
 void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 {
-	LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMenu.clear()'";
-	Log::flush();
-	mMenu.clear();
-	LOG(LogDebug) << "GuiBluetoothPaired::load() - after execute 'mMenu.clear()'";
-
-	LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMenu.clearButtons()'";
-	Log::flush();
-	mMenu.clearButtons();
-	LOG(LogDebug) << "GuiBluetoothPaired::load() - after execute 'mMenu.clearButtons()'";
-
-	LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMapDevices.clear()'";
-	Log::flush();
 	mMapDevices.clear();
-	LOG(LogDebug) << "GuiBluetoothPaired::load() - after execute 'mMapDevices.clear()'";
-	Log::flush();
+	mMenu.clear();
+	mMenu.clearButtons();
 
 	if (btDevices.size() == 0)
 		mMenu.addEntry(_("NO BLUETOOTH DEVICES FOUND"), false, std::bind(&GuiBluetoothPaired::onRefresh, this));
@@ -50,8 +38,6 @@ void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 	{
 		for (auto btDevice : btDevices)
 		{
-			LOG(LogDebug) << "GuiBluetoothPaired::load() - inside 'for (auto btDevice : btDevices)'";
-			Log::flush();
 			mMapDevices[btDevice.id] = btDevice;
 			std::string device_name = btDevice.name,
 						device_id;
@@ -66,8 +52,6 @@ void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 
 			device_id.append(btDevice.id);
 
-			LOG(LogDebug) << "GuiBluetoothPaired::load() - before execute 'mMenu.addWithDescription()'";
-			Log::flush();
 			mMenu.addWithDescription(device_name, device_id, nullptr, btDevice.type, btDevice.id);
 		}
 	}
@@ -291,15 +275,11 @@ void GuiBluetoothPaired::onRefresh()
 	window->pushGui(new GuiLoading<std::vector<BluetoothDevice>>(window, _("SEARCHING BLUETOOTH PAIRED DEVICES..."), 
 		[this]
 		{
-			LOG(LogDebug) << "GuiBluetoothPaired::onRefresh() - before execute 'ApiSystem::getInstance()->getBluetoothPairedDevices()'";
-			Log::flush();
 			mWaitingLoad = true;
 			return ApiSystem::getInstance()->getBluetoothPairedDevices();
 		},
 		[this](std::vector<BluetoothDevice> btDevices)
 		{
-			LOG(LogDebug) << "GuiBluetoothPaired::onRefresh() - after execute 'ApiSystem::getInstance()->getBluetoothPairedDevices()'";
-			Log::flush();
 			load(btDevices);
 			mWaitingLoad = false;
 		}));
