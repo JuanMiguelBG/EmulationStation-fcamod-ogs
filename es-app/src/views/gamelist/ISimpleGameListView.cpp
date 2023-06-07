@@ -7,10 +7,12 @@
 #include "Settings.h"
 #include "Sound.h"
 #include "SystemData.h"
-#include "Log.h"
+#include "guis/GuiTextEditPopupKeyboard.h"
+#include "guis/GuiTextEditPopup.h"
+#include "Window.h"
 
 ISimpleGameListView::ISimpleGameListView(Window* window, FolderData* root) : IGameListView(window, root),
-	mHeaderText(window), mHeaderImage(window), mBackground(window)
+	mHeaderText(window), mHeaderImage(window), mBackground(window), mYButton("y")
 {
 	mHeaderText.setText(_("Logo Text"));
 	mHeaderText.setSize(mSize.x(), 0);
@@ -204,19 +206,21 @@ bool ISimpleGameListView::input(InputConfig* config, Input input)
 				return true;
 			}
 		}
-		else if (config->isMappedTo("y", input) && !UIModeController::getInstance()->isUIModeKid())
-		{
-			if (mRoot->getSystem()->isGameSystem() || mRoot->getSystem()->isGroupSystem())
-				if (CollectionSystemManager::getInstance()->toggleGameInCollection(getCursor()))
-					return true;
-		}
 	}
 
-	FileData* cursor = getCursor();
-	SystemData* system = getCursor()->getSystem();
-	if (system != NULL)
-		Scripting::fireEvent("game-select", system->getName(), cursor->getPath(), cursor->getName(), "input");
-
+	if (mYButton.isShortPressed(config, input) && !UIModeController::getInstance()->isUIModeKid())
+	{
+		if (mRoot->getSystem()->isGameSystem() || mRoot->getSystem()->isGroupSystem())
+			if (CollectionSystemManager::getInstance()->toggleGameInCollection(getCursor()))
+				return true;
+	}
+	else
+	{
+		FileData* cursor = getCursor();
+		SystemData* system = getCursor()->getSystem();
+		if (system != NULL)
+			Scripting::fireEvent("game-select", system->getName(), cursor->getPath(), cursor->getName(), "input");
+	}
 	return IGameListView::input(config, input);
 }
 
@@ -281,4 +285,47 @@ std::string ISimpleGameListView::getDefaultQuickSystemSelectLeftButton()
 		return BUTTON_L2;
 
 	return BUTTON_L1;
+}
+
+void ISimpleGameListView::update(const int deltaTime)
+{
+	GuiComponent::update(deltaTime);
+
+	if (mYButton.isLongPressed(deltaTime))
+		showQuickSearch();
+}
+
+void ISimpleGameListView::showQuickSearch()
+{
+	if (mRoot->getSystem()->isCollection())
+		return;
+
+	std::string searchText;
+
+	auto idx = mRoot->getSystem()->getIndex(false);
+	if (idx != nullptr)
+		searchText = idx->getTextFilter();
+
+	auto updateVal = [this](const std::string& newVal)
+	{
+		auto index = mRoot->getSystem()->getIndex(!newVal.empty());
+		if (index != nullptr)
+		{
+			index->setTextFilter(newVal);
+			if (!index->isFiltered())
+				mRoot->getSystem()->deleteIndex();
+		}
+
+//		if (mRoot->getSystem()->isCollection())
+//			CollectionSystemManager::get()->reloadCollection(mRoot->getSystem()->getName());
+//		else
+			ViewController::get()->reloadGameListView(mRoot->getSystem());
+		
+		return true;
+	};
+
+	if (Settings::getInstance()->getBool("UseOSK"))
+		mWindow->pushGui(new GuiTextEditPopupKeyboard(mWindow, _("FILTER GAMES BY TEXT"), searchText, updateVal, false));
+	else
+		mWindow->pushGui(new GuiTextEditPopup(mWindow, _("FILTER GAMES BY TEXT"), searchText, updateVal, false));
 }

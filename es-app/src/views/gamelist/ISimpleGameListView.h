@@ -6,6 +6,8 @@
 #include "components/TextComponent.h"
 #include "views/gamelist/IGameListView.h"
 #include <stack>
+#include "MultiStateInput.h"
+#include <functional>
 
 class ISimpleGameListView : public IGameListView
 {
@@ -35,6 +37,10 @@ public:
 	void setPopupContext(std::shared_ptr<IGameListView> pThis, std::shared_ptr<GuiComponent> parentView, const std::string label, const std::function<void()>& onExitTemporary);
 	void closePopupContext();
 
+	virtual void update(int deltaTime) override;
+
+	void showQuickSearch();
+
 protected:
 	virtual std::string getQuickSystemSelectRightButton() = 0;
 	virtual std::string getQuickSystemSelectLeftButton() = 0;
@@ -54,6 +60,7 @@ protected:
 	std::vector<GuiComponent*> mThemeExtras;
 
 	std::stack<FileData*> mCursorStack;
+	MultiStateInput mYButton;
 };
 
 #endif // ES_APP_VIEWS_GAME_LIST_ISIMPLE_GAME_LIST_VIEW_H

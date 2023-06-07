@@ -191,12 +191,18 @@ void GridGameListView::setCursor(FileData* file)
 
 std::string GridGameListView::getQuickSystemSelectRightButton()
 {
-	return BUTTON_PD; // default r2
+	if (Settings::getInstance()->getBool("InvertButtonsPD"))
+		return BUTTON_R2;
+
+	return BUTTON_R1;
 }
 
 std::string GridGameListView::getQuickSystemSelectLeftButton()
 {
-	return BUTTON_PU; // default l2
+	if (Settings::getInstance()->getBool("InvertButtonsPU"))
+		return BUTTON_L2;
+
+	return BUTTON_L1;
 }
 
 bool GridGameListView::input(InputConfig* config, Input input)
@@ -790,7 +796,10 @@ std::vector<HelpPrompt> GridGameListView::getHelpPrompts()
 	if (mRoot->getSystem()->isGameSystem() && !UIModeController::getInstance()->isUIModeKid())
 	{
 		std::string prompt = CollectionSystemManager::getInstance()->getEditingCollection();
-		prompts.push_back(HelpPrompt("y", _(prompt)));
+		if (prompt == "Favorites")
+			prompt = "FAVORITE";
+
+		prompts.push_back(HelpPrompt("y", _(prompt) + std::string("/") + _("SEARCH") + _U("\uEFFF ")));
 	}
 	return prompts;
 }

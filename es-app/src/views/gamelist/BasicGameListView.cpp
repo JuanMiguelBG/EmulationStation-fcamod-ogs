@@ -7,6 +7,8 @@
 #include "Settings.h"
 #include "SystemData.h"
 #include "Window.h"
+#include "guis/GuiTextEditPopupKeyboard.h"
+#include "guis/GuiTextEditPopup.h"
 
 BasicGameListView::BasicGameListView(Window* window, FolderData* root)
 	: ISimpleGameListView(window, root), mList(window)
@@ -257,7 +259,7 @@ std::vector<HelpPrompt> BasicGameListView::getHelpPrompts()
 		if (prompt == "Favorites")
 			prompt = "FAVORITE";
 
-		prompts.push_back(HelpPrompt("y", _(prompt)));
+		prompts.push_back(HelpPrompt("y", _(prompt) + std::string("/") + _("SEARCH") + _U("\uEFFF ")));
 	}
 	return prompts;
 }

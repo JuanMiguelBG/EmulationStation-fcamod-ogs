@@ -262,9 +262,9 @@ std::vector<HelpPrompt> GuiBluetoothPaired::getHelpPrompts()
 		if (!selected.empty() && (mMapDevices.find(selected) != mMapDevices.end()))
 		{  // BT device
 			if (mMapDevices[selected].connected)
-				prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT / UNPAIR (HOLD)")));
+				prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT") + "/" + _("UNPAIR") + _U("\uEFFF ")));
 			else
-				prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT / UNPAIR (HOLD)")));
+				prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT") + "/" + _("UNPAIR") + _U("\uEFFF ")));
 		}
 	}
 
