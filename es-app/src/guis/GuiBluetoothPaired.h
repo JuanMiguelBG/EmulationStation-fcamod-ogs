@@ -15,6 +15,7 @@ class GuiBluetoothPaired : public GuiComponent
 {
 public:
 	GuiBluetoothPaired(Window* window, const std::string title, const std::string subtitle = "");
+	~GuiBluetoothPaired();
 
 	bool input(InputConfig* config, Input input) override;
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;

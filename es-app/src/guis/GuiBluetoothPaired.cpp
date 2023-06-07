@@ -26,6 +26,11 @@ GuiBluetoothPaired::GuiBluetoothPaired(Window* window, const std::string title, 
 	mWindow->postToUiThread([this]() { onRefresh(); });
 }
 
+GuiBluetoothPaired::~GuiBluetoothPaired()
+{
+	mMapDevices.clear();
+}
+
 void GuiBluetoothPaired::load(std::vector<BluetoothDevice> btDevices)
 {
 	mMapDevices.clear();
