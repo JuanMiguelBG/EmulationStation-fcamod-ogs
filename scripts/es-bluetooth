@@ -806,7 +806,7 @@ do_unpair_device()
     #print_log $LOG_FILE "DEBUG" "Executing 'do_unpair_device()' - checking paired device '$DEVICE' - result: '$paired'"
 
     if [ ! -z "$paired" ]; then
-     #print_log $LOG_FILE "DEBUG" "Executing 'do_unpair_device()' - unpairing device '$DEVICE'"
+      #print_log $LOG_FILE "DEBUG" "Executing 'do_unpair_device()' - unpairing device '$DEVICE'"
       do_disconnect_device "$DEVICE"
 
       local output=`timeout 10s bluetoothctl remove "$DEVICE"`
