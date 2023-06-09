@@ -297,8 +297,8 @@ void ISimpleGameListView::update(const int deltaTime)
 
 void ISimpleGameListView::showQuickSearch()
 {
-	if (mRoot->getSystem()->isCollection())
-		return;
+//	if (mRoot->getSystem()->isCollection())
+//		return;
 
 	std::string searchText;
 
