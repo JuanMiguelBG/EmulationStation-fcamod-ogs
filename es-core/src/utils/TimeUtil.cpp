@@ -241,27 +241,43 @@ namespace Utils
 
 			char buf[256];
 
-			int h = 0, m = 0, s = 0;
-			h = (seconds / 3600);
+			int d =0, h = 0, m = 0, s = 0;
+			d = seconds / 86400;
+			h = (seconds / 3600) % 24;
 			m = (seconds / 60) % 60;
 			s = seconds % 60;
-
+			if (d > 0)
+			{
+				snprintf(buf, 256, _("%d d").c_str(), d);
+				if (h > 0)
+				{
+					std::string days(buf);
+					snprintf(buf, 256, _("%d h").c_str(), h);
+					if(m > 0)
+					{
+						std::string hours(buf);
+						snprintf(buf, 256, _("%d mn").c_str(), m);
+						return days + " " + hours + " " + std::string(buf);
+					}
+					return days + " " + std::string(buf);
+				}
+			}
 			if (h > 0)
 			{
 				snprintf(buf, 256, _("%d h").c_str(), h);
 				if (m > 0)
 				{
 					std::string hours(buf);
-					snprintf(buf, 256, _("%d m").c_str(), m);
+					snprintf(buf, 256, _("%d mn").c_str(), m);
 					return hours + " " + std::string(buf);
 				}
 			}
 			else if (m > 0)
-				snprintf(buf, 256, _("%d m").c_str(), m);
-			else
-				snprintf(buf, 256, _("%d s").c_str(), s);
+				snprintf(buf, 256, _("%d mn").c_str(), m);
+			else 
+				snprintf(buf, 256, _("%d sec").c_str(), s);
 
-			return std::string(buf);
+			return std::string(buf);	
 		}
 
 		int daysInMonth(const int _year, const int _month)
