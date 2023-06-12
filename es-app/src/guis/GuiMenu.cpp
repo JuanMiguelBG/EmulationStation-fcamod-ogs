@@ -1226,7 +1226,9 @@ void GuiMenu::openUISettings()
 			PowerSaver::init();
 		}
 		Settings::getInstance()->setString("TransitionStyle", transition_style->getSelected());
-		GuiComponent::ALLOWANIMATIONS = Settings::getInstance()->getString("TransitionStyle") != "instant";
+		GuiComponent::ALLOWANIMATIONS = (Settings::getInstance()->getString("PowerSaverMode") != "instant" 
+										&& Settings::getInstance()->getString("TransitionStyle") != "instant");
+
 	});
 	
 	auto transitionOfGames_style = std::make_shared< OptionListComponent<std::string> >(window, _("GAME LAUNCH TRANSITION"), false);
@@ -2425,7 +2427,8 @@ void GuiMenu::openAdvancedSettings()
 			Settings::getInstance()->setBool("EnableSounds", false);
 		}
 
-		GuiComponent::ALLOWANIMATIONS = Settings::getInstance()->getString("TransitionStyle") != "instant";
+		GuiComponent::ALLOWANIMATIONS = (Settings::getInstance()->getString("PowerSaverMode") != "instant" 
+										&& Settings::getInstance()->getString("TransitionStyle") != "instant");
 
 		Settings::getInstance()->setString("PowerSaverMode", power_saver->getSelected());
 		PowerSaver::init();

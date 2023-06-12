@@ -725,7 +725,8 @@ int main(int argc, char* argv[])
 	window.pushGui(ViewController::get());
 
 	TextureData::OPTIMIZEVRAM = Settings::getInstance()->getBool("OptimizeVRAM");
-	GuiComponent::ALLOWANIMATIONS = Settings::getInstance()->getString("TransitionStyle") != "instant";
+	GuiComponent::ALLOWANIMATIONS = (Settings::getInstance()->getString("PowerSaverMode") != "instant" 
+									&& Settings::getInstance()->getString("TransitionStyle") != "instant");
 
 	bool splashScreen = Settings::getInstance()->getBool("SplashScreen");
 	bool splashScreenProgress = Settings::getInstance()->getBool("SplashScreenProgress");
