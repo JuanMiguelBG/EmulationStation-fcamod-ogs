@@ -23,7 +23,7 @@ namespace PlatformIds
 		{ "atarist",         ATARI_ST },
 		{ "atarijaguar",     ATARI_JAGUAR },
 		{ "atarijaguarcd",   ATARI_JAGUAR_CD },
-		{ "atarixe",         ATARI_XE },
+		{ "xegs",         ATARI_XE },
 		{ "colecovision",    COLECOVISION },
 		{ "c16",             COMMODORE_16 },
 		{ "c64",             COMMODORE_64 },
