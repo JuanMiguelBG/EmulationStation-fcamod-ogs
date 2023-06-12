@@ -24,6 +24,7 @@ namespace PlatformIds
 		ATARI_JAGUAR,
 		ATARI_JAGUAR_CD,
 		ATARI_XE,
+		BBC_MICRO,
 		COLECOVISION,
 		COMMODORE_16,
 		COMMODORE_64,
@@ -109,6 +110,7 @@ namespace PlatformIds
 		ZX81,
 		TIC80,
 		TI99,
+		GP32,
 
 		// Windows Specific
 		VISUALPINBALL,

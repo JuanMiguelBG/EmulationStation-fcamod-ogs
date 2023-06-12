@@ -23,7 +23,8 @@ namespace PlatformIds
 		{ "atarist",         ATARI_ST },
 		{ "atarijaguar",     ATARI_JAGUAR },
 		{ "atarijaguarcd",   ATARI_JAGUAR_CD },
-		{ "xegs",         ATARI_XE },
+		{ "xegs",            ATARI_XE },
+		{ "bbc",             BBC_MICRO},
 		{ "colecovision",    COLECOVISION },
 		{ "c16",             COMMODORE_16 },
 		{ "c64",             COMMODORE_64 },
@@ -119,6 +120,7 @@ namespace PlatformIds
 		{ "zx81",            ZX81 },
 		{ "tic80",           TIC80 },
 		{ "ti99",            TI99 },
+		{ "gp32",            GP32 },
 
 		// batocera specific names
 		{ "gb2players",      GAME_BOY },
