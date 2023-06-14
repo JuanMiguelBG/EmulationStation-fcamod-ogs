@@ -346,7 +346,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 				if (iConfig->isDefaultInput())
 					return false;
 
-				Scripting::fireEvent("input-controller-added", addedDeviceName, dev_joy->getDeviceGUIDString(), std::to_string(dev_joy->getDeviceId()), std::to_string(dev_joy->getDeviceIndex()), dev_joy->getDevicePath(), Utils::String::boolToString(dev_joy->isDefaultInput()));
+				Scripting::fireEvent("input-controller-added", addedDeviceName, iConfig->getDeviceGUIDString(), std::to_string(iConfig->getDeviceId()), std::to_string(iConfig->getDeviceIndex()), iConfig->getDevicePath(), Utils::String::boolToString(iConfig->isDefaultInput()));
 				if (Settings::getInstance()->getBool("bluetooth.use.alias"))
 				{
 					std::string alias = Settings::getInstance()->getString(addedDeviceName + ".bluetooth.input_gaming.alias");
