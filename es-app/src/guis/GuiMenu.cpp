@@ -544,7 +544,7 @@ void GuiMenu::openControllersSettings()
 					}
 					else if (input->changed())
 					{
-						LOG(LogInfo) << "Found the selected controller : " << input->getSelectedName() << ", " << selected->deviceGUIDString << ", " << selected->devicePath;
+						LOG(LogInfo) << "GuiMenu::openControllersSettings() - Found the selected controller : " << input->getSelectedName() << ", " << selected->deviceGUIDString << ", " << selected->devicePath;
 
 						changed |= Settings::getInstance()->setString(confName, selected->deviceName);
 						changed |= Settings::getInstance()->setString(confGuid, selected->deviceGUIDString);

@@ -201,8 +201,6 @@ void InputManager::rebuildAllJoysticks(bool deinit)
 		// create the InputConfig
 		std::string addedDeviceName = SDL_JoystickName(joy);
 		mInputConfigs[joyId] = new InputConfig(joyId, idx, addedDeviceName, guid, SDL_JoystickNumButtons(joy), SDL_JoystickNumHats(joy), SDL_JoystickNumAxes(joy), devicePath);
-		std::string is_defalut_config = Utils::String::boolToString(mInputConfigs[joyId]->isDefaultInput());
-
 		if (!loadInputConfig(mInputConfigs[joyId]))
 		{
 			std::string mappingString;
@@ -341,9 +339,12 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 			rebuildAllJoysticks();
 
-			if (!addedDeviceName.empty() && !mInputConfigs[id]->isDefaultInput())
+			if (!addedDeviceName.empty()) // && !mInputConfigs[id]->isDefaultInput())
 			{	
 				InputConfig *dev_joy = mInputConfigs[id];
+				if (dev_joy->isDefaultInput())
+					return false;
+
 				Scripting::fireEvent("input-controller-added", addedDeviceName, dev_joy->getDeviceGUIDString(), std::to_string(dev_joy->getDeviceId()), std::to_string(dev_joy->getDeviceIndex()), dev_joy->getDevicePath(), Utils::String::boolToString(dev_joy->isDefaultInput()));
 				if (Settings::getInstance()->getBool("bluetooth.use.alias"))
 				{
@@ -947,28 +948,27 @@ std::string InputManager::configureEmulators() {
 	if (Utils::FileSystem::exists(input_controllers))
 		Utils::FileSystem::removeFile(input_controllers);
 
-    std::ofstream outfile(input_controllers);
-
-	outfile << "[\n";
+	command << "[\n";
 	bool isPlayerWrited = false;
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
 		if (isPlayerWrited)
-			outfile << ",\n";
+			command << ",\n";
 		
 		isPlayerWrited = false;
 		InputConfig * playerInputConfig = playerJoysticks[player];
 		if (playerInputConfig != NULL)
 		{
-			outfile << "{\n";
-			outfile << "    \"index\" : " << playerInputConfig->getDeviceIndex() << ",\n";
-			outfile << "    \"guid\" : \"" << playerInputConfig->getDeviceGUIDString() << "\",\n";
-			outfile << "    \"path\" : \"" << playerInputConfig->getDevicePath() << "\",\n";
-			outfile << "    \"name\" : \"" << playerInputConfig->getDeviceName() << "\",\n";
-			outfile << "    \"nbbuttons\" : " << playerInputConfig->getDeviceNbButtons() << ",\n";
-			outfile << "    \"nbhats\" : " << playerInputConfig->getDeviceNbHats() << ",\n";
-			outfile << "    \"nbaxes\" : " << playerInputConfig->getDeviceNbAxes() << "\n";
-			outfile << "}";
+			command << "{\n";
+			command << "    \"player\" : " << player+1 << ",\n";
+			command << "    \"index\" : " << playerInputConfig->getDeviceIndex() << ",\n";
+			command << "    \"guid\" : \"" << playerInputConfig->getDeviceGUIDString() << "\",\n";
+			command << "    \"path\" : \"" << playerInputConfig->getDevicePath() << "\",\n";
+			command << "    \"name\" : \"" << playerInputConfig->getDeviceName() << "\",\n";
+			command << "    \"nbbuttons\" : " << playerInputConfig->getDeviceNbButtons() << ",\n";
+			command << "    \"nbhats\" : " << playerInputConfig->getDeviceNbHats() << ",\n";
+			command << "    \"nbaxes\" : " << playerInputConfig->getDeviceNbAxes() << "\n";
+			command << "}";
 			isPlayerWrited = true;
 /*
 			command <<  "-p" << player+1 << "index "      << playerInputConfig->getDeviceIndex();
@@ -983,13 +983,15 @@ std::string InputManager::configureEmulators() {
 */
 		}
 	}
-	outfile << "\n]\n";
-    outfile.close();
+	command << "\n]\n";
 	LOG(LogInfo) << "InputManager::configureEmulators() - Configure emulators command : " << command.str().c_str();
 //	return command.str();
+	std::ofstream outfile(input_controllers);
+	outfile << command.str().c_str();
+    outfile.close();
 	return "";
 }
-
+/*
 void InputManager::updateBatteryLevel(int id, const std::string& device, const std::string& devicePath, int level)
 {
 	bool changed = false;
@@ -1025,7 +1027,7 @@ void InputManager::updateBatteryLevel(int id, const std::string& device, const s
 	if (changed)
 		computeLastKnownPlayersDeviceIndexes();
 }
-
+*/
 std::vector<InputConfig*> InputManager::getInputConfigs()
 {
 	std::vector<InputConfig*> ret;
