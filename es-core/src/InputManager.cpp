@@ -225,7 +225,7 @@ void InputManager::rebuildAllJoysticks(bool deinit)
 		mPrevAxisValues.erase(joyId);
 		mPrevAxisValues[joyId] = new int[numAxes];
 		std::fill(mPrevAxisValues[joyId], mPrevAxisValues[joyId] + numAxes, 0); //initialize array to 0
-	}	
+	}
 
 	mJoysticksLock.unlock();
 
@@ -340,9 +340,10 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			rebuildAllJoysticks();
 
 			if (!addedDeviceName.empty()) // && !mInputConfigs[id]->isDefaultInput())
-			{	
-				InputConfig *dev_joy = mInputConfigs[id];
-				if (dev_joy->isDefaultInput())
+			{
+				auto it = mInputConfigs.find(ev.jdevice.which);
+				InputConfig *iConfig = it->second;
+				if (iConfig->isDefaultInput())
 					return false;
 
 				Scripting::fireEvent("input-controller-added", addedDeviceName, dev_joy->getDeviceGUIDString(), std::to_string(dev_joy->getDeviceId()), std::to_string(dev_joy->getDeviceIndex()), dev_joy->getDevicePath(), Utils::String::boolToString(dev_joy->isDefaultInput()));
