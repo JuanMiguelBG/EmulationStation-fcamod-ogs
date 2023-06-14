@@ -4,6 +4,10 @@
 
 #include <string>
 
+#ifdef HAVE_LIBCEC
+#include <libcec/cec.h>
+#endif
+
 namespace CEC { class ICECAdapter; }
 
 class CECInput

@@ -356,6 +356,7 @@ std::string FileData::getlaunchCommand()
 	if (system == nullptr)
 		return "";
 
+	InputManager::getInstance()->configureEmulators();
 	std::string command = getSystemEnvData()->mLaunchCommand;
 
 	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());

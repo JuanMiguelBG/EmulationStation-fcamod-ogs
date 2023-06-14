@@ -13,8 +13,8 @@ namespace pugi { class xml_node; }
 
 #define DEVICE_KEYBOARD -1
 #define DEVICE_CEC      -2
-// batocera
-#define MAX_PLAYERS 4
+
+#define MAX_PLAYERS 5
 
 extern char* BUTTON_OK;
 extern char* BUTTON_BACK;
@@ -109,15 +109,24 @@ public:
 class InputConfig
 {
 public:
-	InputConfig(int deviceId, const std::string& deviceName, const std::string& deviceGUID);
+	InputConfig(int deviceId, int deviceIndex, const std::string& deviceName, const std::string& deviceGUID, int deviceNbButtons, int deviceNbHats, int deviceNbAxes, const std::string& devicePath = ""); 
 
 	void clear();
 	void mapInput(const std::string& name, Input input);
 	void unmapInput(const std::string& name); // unmap all Inputs mapped to this name
 
 	inline int getDeviceId() const { return mDeviceId; };
+        
+	inline int getDeviceIndex() const { return mDeviceIndex; }; 
 	inline const std::string& getDeviceName() { return mDeviceName; }
 	inline const std::string& getDeviceGUIDString() { return mDeviceGUID; }
+	inline int getDeviceNbButtons() const { return mDeviceNbButtons; }; 
+	inline int getDeviceNbHats() const { return mDeviceNbHats; }; 
+	inline int getDeviceNbAxes() const { return mDeviceNbAxes; }; 
+	inline int getBatteryLevel() const { return mBatteryLevel; }; 
+	inline const std::string& getDevicePath() { return mDevicePath; };
+
+	std::string getSortDevicePath();
 
 	//Returns true if Input is mapped to this name, false otherwise.
 	bool isMappedTo(const std::string& name, Input input, bool reversedAxis = false);
@@ -135,15 +144,27 @@ public:
 
 	bool isConfigured();
 
+	static std::string buttonLabel(const std::string& button, bool isXboxController = false, bool isPsController = false);
+	static std::string buttonImage(const std::string& button, bool isXboxController = false, bool isPsController = false);
+
+	void updateBatteryLevel(int level) { mBatteryLevel = level; };
+
 	bool isDefaultInput() const { return mDefaultInput; };
 	void setDefaultInput(bool defaultInput) { mDefaultInput = defaultInput; };
 
 private:
 	std::map<std::string, Input> mNameMap;
 	const int mDeviceId;
+	const int mDeviceIndex; 
 	const std::string mDeviceName;
 	const std::string mDeviceGUID;
 	bool mDefaultInput;
+	const int mDeviceNbButtons; // number of buttons of the device 
+	const int mDeviceNbHats;    // number of hats    of the device 
+	const int mDeviceNbAxes;    // number of axes    of the device 
+	std::string mDevicePath;
+
+	int mBatteryLevel;
 
 public:
 	static void AssignActionButtons();

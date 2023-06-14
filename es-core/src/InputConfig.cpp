@@ -1,9 +1,9 @@
 #include "InputConfig.h"
 
 #include "Log.h"
+#include <pugixml/src/pugixml.hpp>
 #include "Settings.h"
 #include "utils/StringUtil.h"
-#include <pugixml/src/pugixml.hpp>
 
 static char ABUTTON[2] = "a";
 static char BBUTTON[2] = "b";
@@ -13,6 +13,17 @@ static char R1BUTTON[4] = "r1";
 static char R2BUTTON[4] = "r2";
 static char L3BUTTON[4] = "l3";
 static char R3BUTTON[4] = "r3";
+
+char* BUTTON_OK = ABUTTON;
+char* BUTTON_BACK = BBUTTON;
+char* BUTTON_L1 = L1BUTTON;
+char* BUTTON_L2 = L2BUTTON;
+char* BUTTON_R1 = R1BUTTON;
+char* BUTTON_R2 = R2BUTTON;
+char* BUTTON_PU = L2BUTTON;
+char* BUTTON_PD = R2BUTTON;
+char* BUTTON_LTH = L3BUTTON;
+char* BUTTON_RTH = R3BUTTON;
 
 //some util functions
 std::string inputTypeToString(InputType type)
@@ -61,9 +72,10 @@ std::string toLower(std::string str)
 }
 //end util functions
 
-InputConfig::InputConfig(int deviceId, const std::string& deviceName, const std::string& deviceGUID)
-	: mDeviceId(deviceId), mDeviceName(deviceName), mDeviceGUID(deviceGUID)
+InputConfig::InputConfig(int deviceId, int deviceIndex, const std::string& deviceName, const std::string& deviceGUID, int deviceNbButtons, int deviceNbHats, int deviceNbAxes, const std::string& devicePath) 
+	: mDeviceId(deviceId), mDeviceIndex(deviceIndex), mDeviceName(deviceName), mDeviceGUID(deviceGUID), mDeviceNbButtons(deviceNbButtons), mDeviceNbHats(deviceNbHats), mDeviceNbAxes(deviceNbAxes), mDevicePath(devicePath)
 {
+	mBatteryLevel = -1;
 	mDefaultInput = false;
 }
 
@@ -189,6 +201,13 @@ std::vector<std::string> InputConfig::getMappedTo(Input input)
 
 void InputConfig::loadFromXML(pugi::xml_node& node)
 {
+	pugi::xml_attribute defaultDevideAtt = node.attribute("deviceDefault");
+	if (defaultDevideAtt)
+	{
+		LOG(LogInfo) << "InputConfig::loadInputConfig() - devide default input config";
+		mDefaultInput = defaultDevideAtt.as_bool();
+	}
+
 	clear();
 
 	for (pugi::xml_node input = node.child("input"); input; input = input.next_sibling("input"))
@@ -216,6 +235,8 @@ void InputConfig::loadFromXML(pugi::xml_node& node)
 				lower_name = BUTTON_LTH;
 			else if (lower_name == "rightthumb")
 				lower_name = BUTTON_RTH;
+			else if (lower_name == "hotkeyenable")
+				lower_name = "hotkey";
 			
 //			LOG(LogDebug) << "InputConfig::loadFromXML() - button name changed from '" << name << "' to '" << lower_name << "'";
 		}
@@ -277,16 +298,71 @@ void InputConfig::writeToXML(pugi::xml_node& parent)
 	}
 }
 
-char* BUTTON_OK = ABUTTON;
-char* BUTTON_BACK = BBUTTON;
-char* BUTTON_L1 = L1BUTTON;
-char* BUTTON_L2 = L2BUTTON;
-char* BUTTON_R1 = R1BUTTON;
-char* BUTTON_R2 = R2BUTTON;
-char* BUTTON_PU = L2BUTTON;
-char* BUTTON_PD = R2BUTTON;
-char* BUTTON_LTH = L3BUTTON;
-char* BUTTON_RTH = R3BUTTON;
+std::string InputConfig::buttonLabel(const std::string& button, bool isXboxController, bool isPsController)
+{
+	if (isXboxController)
+	{
+		if (button == "a")
+			return "B";
+		else if (button == "b")
+			return "A";
+		else if (button == "y")
+			return "X";
+		else if (button == "x")
+			return "Y";
+	}
+	if (isPsController)
+	{
+		if (button == "a")
+			return "CIRCLE";
+		else if (button == "b")
+			return "CROSS";
+		else if (button == "y")
+			return "SQUARE";
+		else if (button == "x")
+			return "TRIANGLE";
+	}
+
+	return button;
+}
+
+std::string InputConfig::buttonImage(const std::string& button, bool isXboxController, bool isPsController)
+{
+	if (isXboxController)
+	{
+		if (button == "a")
+			return ":/help/buttons_south.svg_gt";		
+		if (button == "b")
+			return ":/help/buttons_east.svg_gt";
+		if (button == "y")
+			return ":/help/buttons_north_gt.svg";
+		if (button == "x")
+			return ":/help/buttons_west_gt.svg_gt";
+	}
+	if (isPsController)
+	{
+		if (button == "a")
+			return ":/help/button_circle_gt.svg";		
+		if (button == "b")
+			return ":/help/button_cross_gt.svg";
+		if (button == "y")
+			return ":/help/button_square_gt.svg";
+		if (button == "x")
+			return ":/help/button_triangle_gt.svg";
+	}
+
+	if (button == "a")
+		return ":/help/buttons_east.svg";
+	if (button == "b")
+		return ":/help/buttons_south.svg";
+	if (button == "y")
+		return ":/help/buttons_west.svg";
+	if (button == "x")
+		return ":/help/buttons_north.svg";
+	
+	return button;
+}
+
 
 void InputConfig::AssignActionButtons()
 {
@@ -317,4 +393,29 @@ void InputConfig::AssignActionButtons()
 		 "\n - BUTTON_PU: '" << BUTTON_PU << "'" <<
 		 "\n - BUTTON_PD: '" << BUTTON_PD << "'";
 */
+}
+
+std::string InputConfig::getSortDevicePath()
+{
+	if (Utils::String::startsWith(Utils::String::toUpper(mDevicePath), "USB\\"))
+	{
+		auto lastSplit = mDevicePath.rfind("\\");
+		if (lastSplit != std::string::npos)
+		{
+			auto lastAnd = mDevicePath.rfind("&");
+			if (lastAnd != std::string::npos && lastAnd > lastSplit)
+			{
+				// Keep only last part which is probably some kind of MAC address
+				// Ex : USB\VID_045E&PID_02FF&IG_00\01&00&0000B7234380ED7E -> USB\VID_045E&PID_02FF&IG_00\0000B7234380ED7E
+				// 01 is some kind of a system device index, but can change upon reboot & we sometimes have 00&00&0000B7234380ED7E, and the order changes !
+				// Sort only with 0000B7234380ED7E ignoring 01&00 part
+
+				std::string ret = mDevicePath;
+				ret = ret.substr(0, lastSplit + 1) + ret.substr(lastAnd + 1);
+				return ret;
+			}
+		}
+	}
+
+	return mDevicePath;
 }

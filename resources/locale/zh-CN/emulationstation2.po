@@ -388,7 +388,7 @@ msgstr "否"
 msgid "DELETE"
 msgstr "删除"
 
-msgid "SAVE CHANGES ?"
+msgid "SAVE CHANGES?"
 msgstr "保存变更？"
 
 msgid "BACK"
@@ -520,7 +520,7 @@ msgstr "密码"
 msgid "ADVANCED"
 msgstr "高级"
 
-msgid "REALLY UPDATE GAMES LISTS ?"
+msgid "REALLY UPDATE GAMES LISTS?"
 msgstr "确定要更新游戏列表吗？"
 
 msgid "UPDATE GAMES LISTS"
@@ -1024,7 +1024,7 @@ msgstr "输入 F4 退出"
 msgid "PRESS ESC OR THE HOTKEY TO CANCEL."
 msgstr "输入 ESC 或热键以取消"
 
-msgid "DO YOU WANT TO START KODI MEDIA CENTER ?"
+msgid "DO YOU WANT TO START KODI MEDIA CENTER?"
 msgstr "你想要启动 KODI 媒体中心吗？"
 
 msgid "LOADING..."

@@ -4,47 +4,6 @@ do_help() {
     echo "$0 <DEVICE_ID> <DEVICE_NAME> <DEVICE_GUID>" >&2
 }
 
-get_ra_turbo_button_property()
-{
-    local es_turbo_btn="$(get_es_settings_property 'TurboHotkeyButton')"
-    #print_log $LOG_FILE "DEBUG" "Exit 'get_ra_turbo_button_property()' - ES turbo button value: '$es_turbo_btn'"
-
-    case "${es_turbo_btn}" in
-        "LeftShoulder")
-            echo "input_l_btn"
-        ;;
-        "RightShoulder")
-            echo "input_r_btn"
-        ;;
-        "LeftTrigger")
-            echo "input_l2_btn"
-        ;;
-        "RightTrigger")
-            echo "input_r2_btn"
-        ;;
-        "LeftThumb")
-            echo "input_l3_btn"
-        ;;
-        "RightThumb")
-            echo "input_r3_btn"
-        ;;
-        "A")
-            echo "input_a_btn"
-        ;;
-        "B")
-            echo "input_b_btn"
-        ;;
-        "X")
-            echo "input_x_btn"
-        ;;
-        "Y")
-            echo "input_y_btn"
-        ;;
-        *)
-            echo ""
-    esac
-}
-
 update_device_name_mapping()
 {
     local device_id=$1
@@ -183,9 +142,6 @@ update_device_name_mapping()
         echo "input_product_id = \"${product}\"" >> ${ra_config_device_file}
     done
 
-    local ra_turbo_button_property="$(get_ra_turbo_button_property)"
-    #print_log $LOG_FILE "DEBUG" "Exit 'update_device_name_mapping()' - turbo button RA porperty: '$ra_turbo_button_property'"
-
     for retroA in "${retropad[@]}"
     do
         local retropad_list=( input_left_btn \
@@ -215,12 +171,7 @@ update_device_name_mapping()
 
         for raconfig in "${ra_config_paths[@]}"
         do
-            if [ ! -z "${retroA}" ]; then
-                echo "${retropad_list[$i]} = \"${retroA}\"" >> "${raconfig}/autoconfig/udev/${device_name}.cfg"
-                if [ ! -z "${ra_turbo_button_property}" ] && [ "${retropad_list[$i]}" = "${ra_turbo_button_property}" ]; then
-                    echo "input_turbo_btn = \"${retroA}\"" >> "${raconfigcreate}/autoconfig/udev/${device_name}".cfg
-                fi
-            fi
+            [ ! -z "${retroA}" ] && echo "${retropad_list[$i]} = \"${retroA}\"" >> "${raconfig}/autoconfig/udev/${device_name}.cfg"
         done
         let i++
     done

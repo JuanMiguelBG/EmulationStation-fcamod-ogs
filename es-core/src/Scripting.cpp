@@ -6,9 +6,9 @@
 
 namespace Scripting
 {
-	int fireEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4)
+	int fireEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4, const std::string& arg5, const std::string& arg6)
 	{
-		LOG(LogInfo) << "Scripting::fireEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
+		LOG(LogInfo) << "Scripting::fireEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "', arg5: '" << arg5 << "', arg6: '" << arg6 << "'";
 		std::list<std::string> scriptDirList;
 		std::string test;
 
@@ -36,7 +36,7 @@ namespace Scripting
 
 				std::string script = *it;
 
-				for (auto arg : { arg1, arg2, arg3, arg4 })
+				for (auto arg : { arg1, arg2, arg3, arg4, arg5, arg6 })
 				{
 					if (arg.empty())
 						break;
@@ -53,12 +53,12 @@ namespace Scripting
 		return ret;
 	}
 
-	void fireAsyncEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4)
+	void fireAsyncEvent(const std::string& eventName, const std::string& arg1, const std::string& arg2, const std::string& arg3, const std::string& arg4, const std::string& arg5, const std::string& arg6)
 	{
-		LOG(LogInfo) << "Scripting::fireAsyncEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "'";
-		Utils::Async::run([eventName, arg1, arg2, arg3, arg4] (void)
+		LOG(LogInfo) << "Scripting::fireAsyncEvent() - name: '" << eventName << "', arg1: '" << arg1 << "', arg2: '" << arg2 << "', arg3: '" << arg3 << "', arg4: '" << arg4 << "', arg5: '" << arg5 << "', arg6: '" << arg6 << "'";
+		Utils::Async::run([eventName, arg1, arg2, arg3, arg4, arg5, arg6] (void)
 		{
-			return fireEvent(eventName, arg1, arg2, arg3, arg4);
+			return fireEvent(eventName, arg1, arg2, arg3, arg4, arg5, arg6);
 		});
 	}
 

@@ -12,11 +12,12 @@
 #include "utils/FileSystemUtil.h"
 
 
-GuiBluetoothPaired::GuiBluetoothPaired(Window* window, const std::string title, const std::string subtitle)
+GuiBluetoothPaired::GuiBluetoothPaired(Window* window, const std::string title, const std::string subtitle, bool onlyUnpair)
 	: GuiComponent(window), mMenu(window, title.c_str(), true), mOKButton("OK")
 {
 	mTitle = title;
 	mWaitingLoad = false;
+	mOnlyUnpair = onlyUnpair;
 	mMenu.setSubTitle(subtitle);
 
 	auto theme = ThemeData::getMenuTheme();
@@ -225,7 +226,10 @@ bool GuiBluetoothPaired::input(InputConfig* config, Input input)
 	if (mOKButton.isShortPressed(config, input))
 	{
 		if (isHasDevices())
-			onAction();
+			if (mOnlyUnpair)
+				onUnpair();
+			else
+				onAction();
 
 		return true;
 	}
@@ -261,10 +265,15 @@ std::vector<HelpPrompt> GuiBluetoothPaired::getHelpPrompts()
 		std::string selected = mMenu.getSelected();
 		if (!selected.empty() && (mMapDevices.find(selected) != mMapDevices.end()))
 		{  // BT device
-			if (mMapDevices[selected].connected)
-				prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT") + "/" + _("UNPAIR") + _U("\uEFFF ")));
+			if (mOnlyUnpair)
+				prompts.push_back(HelpPrompt(BUTTON_OK, _("UNPAIR")));
 			else
-				prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT") + "/" + _("UNPAIR") + _U("\uEFFF ")));
+			{
+				if (mMapDevices[selected].connected)
+					prompts.push_back(HelpPrompt(BUTTON_OK, _("DISCONNECT") + "/" + _("UNPAIR") + _U("\uEFFF ")));
+				else
+					prompts.push_back(HelpPrompt(BUTTON_OK, _("CONNECT") + "/" + _("UNPAIR") + _U("\uEFFF ")));
+			}
 		}
 	}
 

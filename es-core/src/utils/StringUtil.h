@@ -39,7 +39,9 @@ namespace Utils
 		int			compareIgnoreCase(const std::string& name1, const std::string& name2);
 		std::string proper(const std::string& _string);
 		std::string removeHtmlTags(const std::string& html);
+		bool		equals(const std::string & _string, const std::string & _what);
 		bool		equalsIgnoreCase(const std::string & _string, const std::string & _what);
+		bool		contains(const std::string & _string, const std::string & _what);
 		bool		containsIgnoreCase(const std::string & _string, const std::string & _what);
 		bool		startsWithIgnoreCase(const std::string& name1, const std::string& name2);
 
@@ -49,6 +51,8 @@ namespace Utils
 		std::string decodeXmlString(const std::string& string);
 		std::string toHexString(unsigned int color);
 		unsigned int fromHexString(const std::string& string);
+
+		std::string padLeft(const std::string& data, const size_t& totalWidth, const char& padding);
 
 		const std::string hiddenSpecialCharacters(const std::string msg);
 		const std::string showSpecialCharacters(const std::string msg);

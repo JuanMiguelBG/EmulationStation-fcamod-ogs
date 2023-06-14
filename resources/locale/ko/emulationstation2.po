@@ -388,7 +388,7 @@ msgstr "아니오"
 msgid "DELETE"
 msgstr "삭제"
 
-msgid "SAVE CHANGES ?"
+msgid "SAVE CHANGES?"
 msgstr "변경사항을 저장합니까?"
 
 msgid "BACK"
@@ -520,7 +520,7 @@ msgstr "암호"
 msgid "ADVANCED"
 msgstr "고급"
 
-msgid "REALLY UPDATE GAMES LISTS ?"
+msgid "REALLY UPDATE GAMES LISTS?"
 msgstr "게임 목록을 업데이트 합니까?"
 
 msgid "UPDATE GAMES LISTS"
@@ -1025,7 +1025,7 @@ msgstr "F4 키를 누르면 언제든 종료할 수 있습니다."
 msgid "PRESS ESC OR THE HOTKEY TO CANCEL."
 msgstr "취소하려면 ESC키나 핫키를 누르세요."
 
-msgid "DO YOU WANT TO START KODI MEDIA CENTER ?"
+msgid "DO YOU WANT TO START KODI MEDIA CENTER?"
 msgstr "KODI 미디어 센터를 시작 하시겠습니까?"
 
 msgid "LOADING..."

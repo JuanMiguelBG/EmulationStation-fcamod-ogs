@@ -7,8 +7,8 @@
 namespace Scripting
 {
 
-	int fireEvent(const std::string& eventName, const std::string& arg1="", const std::string& arg2="", const std::string& arg3="", const std::string& arg4="");
-	void fireAsyncEvent(const std::string& eventName, const std::string& arg1="", const std::string& arg2="", const std::string& arg3="", const std::string& arg4="");
+	int fireEvent(const std::string& eventName, const std::string& arg1="", const std::string& arg2="", const std::string& arg3="", const std::string& arg4="", const std::string& arg5="", const std::string& arg6="");
+	void fireAsyncEvent(const std::string& eventName, const std::string& arg1="", const std::string& arg2="", const std::string& arg3="", const std::string& arg4="", const std::string& arg5="", const std::string& arg6="");
 
 } // Scripting::
 

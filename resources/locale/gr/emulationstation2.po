@@ -656,7 +656,7 @@ msgid "SCRAPING IN PROGRESS"
 msgstr "ΣΑΡΩΣΗ ΣΕ ΕΞΕΛΙΞΗ"
 
 #:
-msgid "SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"
+msgid "SCRAPING IS RUNNING. DO YOU WANT TO STOP IT?"
 msgstr "ΓΙΝΕΤΑΙ ΣΑΡΩΣΗ. ΘΕΛΕΤΕ ΝΑ ΤΗΝ ΣΤΑΜΑΤΗΣΕΤΕ;"
 
 #:
@@ -716,7 +716,7 @@ msgid "DELETE"
 msgstr "ΔΙΑΓΡΑΦΗ"
 
 #:
-msgid "SAVE CHANGES ?"
+msgid "SAVE CHANGES?"
 msgstr "ΑΠΟΘΗΚΕΥΣΗ ΑΛΛΑΓΩΝ;"
 
 #:
@@ -957,7 +957,7 @@ msgid "ADVANCED"
 msgstr "ΠΡΟΧΩΡΗΜΕΝΟΣ"
 
 #:
-msgid "REALLY UPDATE GAMES LISTS ?"
+msgid "REALLY UPDATE GAMES LISTS?"
 msgstr "ΘΕΛΕΤΕ ΝΑ ΕΝΗΜΕΡΩΣΕΤΕ ΤΙΣ ΛΙΣΤΕΣ ΠΑΙΧΝΙΔΙΟΥ;"
 
 #:

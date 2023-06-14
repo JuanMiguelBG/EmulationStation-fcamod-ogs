@@ -1537,7 +1537,7 @@ bool ApiSystem::unzipFile(const std::string fileName, const std::string destFold
 			return true;
 		}
 
-		LOG(LogDebug) << "ApiSystem::unzipFile() << KO Bad format ?" << fileName;
+		LOG(LogDebug) << "ApiSystem::unzipFile() << KO Bad format?" << fileName;
 		return false;
 	}
 

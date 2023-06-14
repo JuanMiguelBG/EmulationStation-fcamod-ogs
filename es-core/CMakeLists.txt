@@ -85,16 +85,18 @@ set(CORE_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/resources/TextureDataManager.h
 
 	# Utils
-	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Randomizer.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/FileSystemUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ProfilingUtil.h
-	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/md5.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/NetworkUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/StringUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ThreadPool.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/TimeUtil.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/zip_file.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/ZipFile.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/md5.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Delegate.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Randomizer.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/VectorEx.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/AsyncUtil.h
 )
 

@@ -50,6 +50,7 @@
 #include "utils/NetworkUtil.h"
 #include "utils/AsyncUtil.h"
 #include "guis/GuiLoading.h"
+#include "InputManager.h"
 
 
 GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(window), mMenu(window, _("MAIN MENU"), false), mVersion(window)
@@ -152,6 +153,10 @@ GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(
 	}
 	else
 		setPosition(x_end, y_end);
+}
+
+GuiMenu::~GuiMenu() {
+  clearLoadedInput();
 }
 
 void GuiMenu::openDisplaySettings()
@@ -394,6 +399,18 @@ void GuiMenu::openControllersSettings()
 			});
 	}
 
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BLUETOOTH) && SystemConf::getInstance()->getBool("bluetooth.enabled"))
+	{
+		s->addGroup(_("BLUETOOTH"));
+		// PAIR A BLUETOOTH CONTROLLER OR BT AUDIO DEVICE
+		std::string pair_bt_title = _("PAIR A BLUETOOTH DEVICE MANUALLY");
+		s->addEntry(pair_bt_title, false, [window, this, s, pair_bt_title] { openBluetoothScanDevices(window, pair_bt_title); });
+
+		// FORGET BLUETOOTH CONTROLLERS OR BT AUDIO DEVICES
+		std::string unpair_bt_title = _("FORGET A BLUETOOTH DEVICE");
+		s->addEntry(unpair_bt_title, false, [window, this, s, unpair_bt_title] { openBluetoothPairedDevices(window, unpair_bt_title, true); });
+	}
+
 	s->addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); } );
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::TEST_INPUT))
@@ -403,9 +420,145 @@ void GuiMenu::openControllersSettings()
 				Window *window = mWindow;
 				delete this;
 				if (!ApiSystem::getInstance()->launchTestControls(window))
-					LOG(LogWarning) << "GuiMenu::GuiMenu() - Shutdown Test Controller terminated with non-zero result!";
+					LOG(LogWarning) << "GuiMenu::openControllersSettings() - Shutdown Test Controller terminated with non-zero result!";
 
 			});
+	}
+/*
+	s->addGroup(_("DISPLAY OPTIONS"));
+
+	// CONTROLLER ACTIVITY
+	auto activity = std::make_shared<SwitchComponent>(mWindow);
+	activity->setState(Settings::getInstance()->getBool("ShowControllerActivity"));	
+	s->addWithLabel(_("SHOW CONTROLLER ACTIVITY"), activity, autoSel == 1);
+	activity->setOnChangedCallback([this, s, activity]
+	{ 
+		if (Settings::getInstance()->setBool("ShowControllerActivity", activity->getState()))
+		{
+			delete s;
+			openControllersSettings(1);
+		}
+	});
+	
+	if (Settings::getInstance()->getBool("ShowControllerActivity"))
+		s->addSwitch(_("SHOW CONTROLLER BATTERY LEVEL"), "ShowControllerBattery", true);
+*/
+
+	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::CONTROLLERS))
+	{
+		auto configList = InputManager::getInstance()->getInputConfigs();
+
+		if (configList.size() > 1)
+		{
+			s->addGroup(_("PLAYER ASSIGNMENTS"));
+
+			ComponentListRow row;
+
+			// Here we go; for each player
+			std::list<int> alreadyTaken = std::list<int>();
+
+			// clear the current loaded inputs
+			clearLoadedInput();
+
+			std::vector<std::shared_ptr<OptionListComponent<StrInputConfig *>>> options;
+
+			auto configList = InputManager::getInstance()->getInputConfigs();
+
+			for (int player = 0; player < MAX_PLAYERS; player++) 
+			{		
+				std::string confName = Utils::String::format("INPUT P%iNAME", player + 1);
+				std::string confGuid = Utils::String::format("INPUT P%iGUID", player + 1);
+				std::string confPath = Utils::String::format("INPUT P%iPATH", player + 1);
+
+				std::string label = Utils::String::format(_("P%i'S CONTROLLER").c_str(), player + 1);
+
+				auto inputOptionList = std::make_shared<OptionListComponent<StrInputConfig *> >(mWindow, label, false);
+				inputOptionList->add(_("default"), nullptr, false);
+				options.push_back(inputOptionList);
+
+				// Checking if a setting has been saved, else setting to default
+				std::string configuratedName = Settings::getInstance()->getString(confName);
+				std::string configuratedGuid = Settings::getInstance()->getString(confGuid);
+				std::string configuratedPath = Settings::getInstance()->getString(confPath);
+
+				bool found = false;
+
+				// For each available and configured input
+				for (auto config : configList)
+				{
+					std::string displayName = "#" + std::to_string(config->getDeviceIndex()) + " ";
+					std::string deviceAlias = Settings::getInstance()->getString(config->getDeviceName() + ".bluetooth.input_gaming.alias");
+					if (!deviceAlias.empty())
+						displayName.append(deviceAlias);
+					else
+						displayName.append(config->getDeviceName());
+
+					bool foundFromConfig = !configuratedPath.empty() ? config->getSortDevicePath() == configuratedPath : configuratedName == config->getDeviceName() && configuratedGuid == config->getDeviceGUIDString();
+
+					int deviceID = config->getDeviceId();
+
+					// If the controller is configured, it corresponds to the configuration, and it is not already selected, it is added as selected
+					StrInputConfig* newInputConfig = new StrInputConfig(config->getDeviceName(), config->getDeviceGUIDString(), config->getSortDevicePath());
+					mLoadedInput.push_back(newInputConfig);
+
+					if (foundFromConfig && std::find(alreadyTaken.begin(), alreadyTaken.end(), deviceID) == alreadyTaken.end() && !found) 
+					{
+						found = true;
+						alreadyTaken.push_back(deviceID);
+						
+						LOG(LogWarning) << "GuiMenu::openControllersSettings() - adding entry for player" << player << " (selected): " << config->getDeviceName() << "  " << config->getDeviceGUIDString() << "  " << config->getDevicePath();
+						inputOptionList->add(displayName, newInputConfig, true);
+					}
+					else 
+					{
+						LOG(LogInfo) << "GuiMenu::openControllersSettings() - adding entry for player" << player << " (not selected): " << config->getDeviceName() << "  " << config->getDeviceGUIDString() << "  " << config->getDevicePath();
+						inputOptionList->add(displayName, newInputConfig, false);
+					}
+				}
+
+				if (!inputOptionList->hasSelection())
+					inputOptionList->selectFirstItem();
+
+				// Populate controllers list
+				s->addWithLabel(label, inputOptionList);
+			}
+
+			s->addSaveFunc([this, options, window] 
+			{
+				bool changed = false;
+
+				for (int player = 0; player < MAX_PLAYERS; player++) 
+				{
+					std::string confName = Utils::String::format("INPUT P%iNAME", player + 1);
+					std::string confGuid = Utils::String::format("INPUT P%iGUID", player + 1);
+					std::string confPath = Utils::String::format("INPUT P%iPATH", player + 1);
+
+					auto input = options.at(player);
+
+					StrInputConfig* selected = input->getSelected();
+					if (selected == nullptr)
+					{
+						changed |= Settings::getInstance()->setString(confName, "DEFAULT");
+						changed |= Settings::getInstance()->setString(confGuid, "");
+						changed |= Settings::getInstance()->setString(confPath, "");
+					}
+					else if (input->changed())
+					{
+						LOG(LogInfo) << "Found the selected controller : " << input->getSelectedName() << ", " << selected->deviceGUIDString << ", " << selected->devicePath;
+
+						changed |= Settings::getInstance()->setString(confName, selected->deviceName);
+						changed |= Settings::getInstance()->setString(confGuid, selected->deviceGUIDString);
+						changed |= Settings::getInstance()->setString(confPath, selected->devicePath);
+					}			
+				}
+
+				if (changed)
+					Settings::getInstance()->saveFile();
+
+				// this is dependant of this configuration, thus update it
+				InputManager::getInstance()->computeLastKnownPlayersDeviceIndexes();
+			});
+		}
 	}
 
 	s->onFinalize([s, pthis, window]
@@ -418,6 +571,13 @@ void GuiMenu::openControllersSettings()
 	});
 
 	window->pushGui(s);
+}
+
+void GuiMenu::clearLoadedInput() {
+  for(int i = 0; i < mLoadedInput.size(); i++) {
+    delete mLoadedInput[i];
+  }
+  mLoadedInput.clear();
 }
 
 void GuiMenu::openScraperSettings()
@@ -531,7 +691,7 @@ void GuiMenu::openScraperSettings()
 	{ 
 		if (ThreadedScraper::isRunning())
 		{
-			window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"), _("YES"), [this, window]
+			window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT?"), _("YES"), [this, window]
 			{
 				ThreadedScraper::stop();
 			}, _("NO"), nullptr));
@@ -1550,7 +1710,7 @@ void GuiMenu::updateGameLists(Window* window, bool confirm)
 
 	if (ThreadedScraper::isRunning())
 	{
-		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"),
+		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT?"),
 			_("YES"), [] { ThreadedScraper::stop(); },
 			_("NO"), nullptr));
 
@@ -1568,7 +1728,7 @@ void GuiMenu::updateGameLists(Window* window, bool confirm)
 		return;
 	}
 
-	window->pushGui(new GuiMsgBox(window, _("REALLY UPDATE GAMES LISTS ?"), _("YES"),
+	window->pushGui(new GuiMsgBox(window, _("REALLY UPDATE GAMES LISTS?"), _("YES"),
 		[window, reloadAllGamesFunction] { reloadAllGamesFunction(window); },
 		_("NO"), nullptr));
 }
@@ -1579,7 +1739,7 @@ void GuiMenu::clearLastPlayedData(Window* window, const std::string system, bool
 
 	if (ThreadedScraper::isRunning())
 	{
-		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"),
+		window->pushGui(new GuiMsgBox(window, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT?"),
 			_("YES"), [] { ThreadedScraper::stop(); },
 			_("NO"), nullptr));
 
@@ -2186,9 +2346,9 @@ void GuiMenu::openBluetoothScanDevices(Window* window, std::string title)
 	window->pushGui(new GuiBluetoothScan(window, title));
 }
 
-void GuiMenu::openBluetoothPairedDevices(Window* window, std::string title)
+void GuiMenu::openBluetoothPairedDevices(Window* window, std::string title, bool only_unpair)
 {
-	window->pushGui(new GuiBluetoothPaired(window, title, _("\"(**)\" ALREADY CONNECTED")));
+	window->pushGui(new GuiBluetoothPaired(window, title, _("\"(**)\" ALREADY CONNECTED"), only_unpair));
 }
 
 void GuiMenu::openBluetoothConnectedDevices(Window* window, std::string title)

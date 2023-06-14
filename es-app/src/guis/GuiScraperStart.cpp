@@ -111,7 +111,7 @@ void GuiScraperStart::start()
 		{
 			Window* window = mWindow;
 
-			mWindow->pushGui(new GuiMsgBox(mWindow, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT ?"), _("YES"), [this, window]
+			mWindow->pushGui(new GuiMsgBox(mWindow, _("SCRAPING IS RUNNING. DO YOU WANT TO STOP IT?"), _("YES"), [this, window]
 			{
 				ThreadedScraper::stop();
 			}, _("NO"), nullptr));

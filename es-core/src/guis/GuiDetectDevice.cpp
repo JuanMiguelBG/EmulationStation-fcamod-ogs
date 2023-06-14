@@ -52,9 +52,12 @@ GuiDetectDevice::GuiDetectDevice(Window* window, bool firstRun, const std::funct
 	// message
 	mMsg1 = std::make_shared<TextComponent>(mWindow, _("HOLD A BUTTON ON YOUR DEVICE TO CONFIGURE IT."), ThemeData::getMenuTheme()->TextSmall.font, ThemeData::getMenuTheme()->TextSmall.color, ALIGN_CENTER);
 	mGrid.setEntry(mMsg1, Vector2i(0, 2), false, true);
-
-	std::string msg2str = firstRun ? _("PRESS F4 TO QUIT AT ANY TIME.") : _("PRESS ESC TO CANCEL.");
-	mMsg2 = std::make_shared<TextComponent>(mWindow, msg2str, ThemeData::getMenuTheme()->TextSmall.font, ThemeData::getMenuTheme()->TextSmall.color, ALIGN_CENTER);
+	
+	if(firstRun)
+	  mMsg2 = std::make_shared<TextComponent>(mWindow, "", theme->TextSmall.font, theme->Text.color, ALIGN_CENTER); 
+	else
+	  mMsg2 = std::make_shared<TextComponent>(mWindow, "", theme->TextSmall.font, theme->Text.color, ALIGN_CENTER);
+	
 	mGrid.setEntry(mMsg2, Vector2i(0, 3), false, true);
 
 	// currently held device
@@ -67,6 +70,8 @@ GuiDetectDevice::GuiDetectDevice(Window* window, bool firstRun, const std::funct
 
 void GuiDetectDevice::onSizeChanged()
 {
+	GuiComponent::onSizeChanged();
+
 	mBackground.fitTo(mSize, Vector3f::Zero(), Vector2f(-32, -32));
 
 	// grid
@@ -82,7 +87,8 @@ bool GuiDetectDevice::input(InputConfig* config, Input input)
 {
 	PowerSaver::pause();
 
-	if (!mFirstRun && input.device == DEVICE_KEYBOARD && input.type == TYPE_KEY && input.value && input.id == SDLK_ESCAPE)
+	if(!mFirstRun && (input.device == DEVICE_KEYBOARD && input.type == TYPE_KEY && input.value && input.id == SDLK_ESCAPE) ||
+	                 (input.device != DEVICE_KEYBOARD && config->isMappedTo("hotkey", input))) 
 	{
 		// cancel configuring
 		PowerSaver::resume();

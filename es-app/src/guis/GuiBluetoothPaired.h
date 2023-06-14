@@ -14,7 +14,7 @@
 class GuiBluetoothPaired : public GuiComponent
 {
 public:
-	GuiBluetoothPaired(Window* window, const std::string title, const std::string subtitle = "");
+	GuiBluetoothPaired(Window* window, const std::string title, const std::string subtitle = "", bool onlyUnpair = false);
 	~GuiBluetoothPaired();
 
 	bool input(InputConfig* config, Input input) override;
@@ -48,6 +48,7 @@ private:
 	std::string mTitle;
 
 	bool	mWaitingLoad;
+	bool	mOnlyUnpair;
 
 	MultiStateInput mOKButton;
 	std::map<std::string, BluetoothDevice> mMapDevices;

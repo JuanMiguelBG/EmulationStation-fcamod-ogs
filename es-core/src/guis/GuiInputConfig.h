@@ -6,9 +6,18 @@
 #include "components/ComponentGrid.h"
 #include "components/NinePatchComponent.h"
 #include "GuiComponent.h"
+#include "utils/VectorEx.h"
 
 class ComponentList;
 class TextComponent;
+
+struct InputConfigStructure
+{
+	std::string name;
+	bool		skippable;
+	std::string dispName;
+	std::string icon;
+};
 
 class GuiInputConfig : public GuiComponent
 {
@@ -20,7 +29,7 @@ public:
 	void onSizeChanged() override;
 
 private:
-	void error(const std::shared_ptr<TextComponent>& text); // set text to "ALREADY TAKEN" + not greyed out
+	void error(const std::shared_ptr<TextComponent>& text, const std::string& msg); // set text to "msg" + not greyed out
 
 	void setPress(const std::shared_ptr<TextComponent>& text); // set text to "PRESS ANYTHING" + not greyed out
 	void setNotDefined(const std::shared_ptr<TextComponent>& text); // set text to -NOT DEFINED- + greyed out
@@ -48,10 +57,19 @@ private:
 
 	bool mHoldingInput;
 	Input mHeldInput;
+
+	VectorEx<Input> mAllInputs;
+
 	int mHeldTime;
 	int mHeldInputId;
 
 	BusyComponent mBusyAnim;
+
+	void initInputConfigStructure(bool isXboxController = false, bool isPsController = false);
+	std::vector<InputConfigStructure> GUI_INPUT_CONFIG_LIST;
+
+	bool isXboxController(InputConfig* config);
+	bool isPsController(InputConfig* config);
 };
 
 #endif // ES_CORE_GUIS_GUI_INPUT_CONFIG_H

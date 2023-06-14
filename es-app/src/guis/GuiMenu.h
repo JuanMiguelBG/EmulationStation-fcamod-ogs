@@ -9,6 +9,21 @@
 class GuiSettings;
 class SystemData;
 
+class StrInputConfig
+{
+public:
+	StrInputConfig(const std::string& ideviceName, const std::string& ideviceGUIDString, const std::string& idevicePath)
+	{
+		deviceName = ideviceName;
+		deviceGUIDString = ideviceGUIDString;
+		devicePath = idevicePath;
+	}
+
+	std::string deviceName;
+	std::string deviceGUIDString;
+	std::string devicePath;
+};
+
 class GuiMenu : public GuiComponent
 {
 public:
@@ -30,6 +45,7 @@ public:
 	};
 
 	GuiMenu(Window* window, bool animate = true, CursortId cursor = CursortId::FIRST_ELEMENT);
+	~GuiMenu();
 
 	bool input(InputConfig* config, Input input) override;
 	void onSizeChanged() override;
@@ -70,7 +86,7 @@ private:
 	void openBluetoothSettings();
 	void openBluetoothDevicesAlias(Window* window, std::string title);
 	void openBluetoothScanDevices(Window* window, std::string title);
-	void openBluetoothPairedDevices(Window* window, std::string title);
+	void openBluetoothPairedDevices(Window* window, std::string title, bool only_unpair = false);
 	void openBluetoothConnectedDevices(Window* window, std::string title);
 	bool displayBluetoothAudioRestartDialog(Window *window, bool force = false);
 
@@ -97,6 +113,9 @@ private:
 	MenuComponent mMenu;
 	TextComponent mVersion;
 	bool mWaitingLoad;
+
+	std::vector<StrInputConfig*> mLoadedInput; // used to keep information about loaded devices in case there are unpluged between device window load and save
+	void clearLoadedInput();
 };
 
 #endif // ES_APP_GUIS_GUI_MENU_H

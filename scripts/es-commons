@@ -18,6 +18,7 @@ export ES_EVENTS_SCRIPTS_PATH="$ES_EXE_PATH/scripts"
 export ES_USER_EVENTS_SCRIPTS_PATH="$ES_HOME_PATH/scripts"
 export EXIST_CONNECTION_FLAG=" (**)"
 export SYSTEM_VARIABLES_PATH="$SYSTEM_CONFIG_PATH/system.cfg"
+export INPUT_CONTROLLERS_CONFIG_PATH="/tmp/input_controllers.cfg"
 
 if [ -f "/opt/system/Advanced/Switch to main SD for Roms.sh" ]; then
   export ROMS_DIR="/roms2"

@@ -2,10 +2,9 @@
 
 #ifdef HAVE_LIBCEC
 #include "Log.h"
-#include <libcec/cec.h>
+#include <SDL_events.h>
 #include <iostream> // bad bad cecloader
 #include <libcec/cecloader.h>
-#include <SDL_events.h>
 #endif // HAVE_LIBCEC
 
 // hack for cec support
@@ -43,7 +42,6 @@ static void onLogMessage(void* /*cbParam*/, const CEC::cec_log_message* message)
 	LOG(LogDebug) << "CECInput::onLogMessage message: " << message->message;
 
 } // onLogMessage
-
 #endif // HAVE_LIBCEC
 
 void CECInput::init()
@@ -65,11 +63,10 @@ void CECInput::deinit()
 
 CECInput::CECInput() : mlibCEC(nullptr)
 {
-
 #ifdef HAVE_LIBCEC
+	// CEC::ICECCallbacks        callbacks;
+	// CEC::libcec_configuration config;
 
-	CEC::ICECCallbacks        callbacks;
-	CEC::libcec_configuration config;
 	callbacks.Clear();
 	config.Clear();
 
@@ -127,7 +124,6 @@ CECInput::~CECInput()
 		UnloadLibCec(mlibCEC);
 		mlibCEC = nullptr;
 	}
-
 #endif // HAVE_LIBCEC
 
 } // ~CECInput

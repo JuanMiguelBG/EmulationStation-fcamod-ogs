@@ -402,7 +402,7 @@ namespace Utils
 			return text;
 		}
 
-		std::string  startWithUpper(const std::string& _string)
+		std::string startWithUpper(const std::string& _string)
 		{
 			if (_string.empty())
 				return _string;
@@ -771,9 +771,19 @@ namespace Utils
 			}
 		}
 
+		bool equals(const std::string & _string, const std::string & _what)
+		{
+			return strcmp(_string.c_str(), _what.c_str()) == 0;
+		}
+
 		bool equalsIgnoreCase(const std::string & _string, const std::string & _what)
 		{
 			return compareIgnoreCase(_string, _what) == 0;
+		}
+
+		bool contains(const std::string & _string, const std::string & _what)
+		{
+			return (strstr(_string.c_str(), _what.c_str()) != NULL);
 		}
 
 		bool containsIgnoreCase(const std::string & _string, const std::string & _what)
@@ -955,6 +965,16 @@ namespace Utils
 			auto len = snprintf(hex, sizeof(hex) - 1, "%08X", color);
 			hex[len] = 0;
 			return hex;
+		}
+
+		std::string padLeft(const std::string& data, const size_t& totalWidth, const char& padding)
+		{
+			if (data.length() >= totalWidth)
+				return data;
+
+			std::string ret = data;
+			ret.insert(0, totalWidth - ret.length(), padding);
+			return ret;
 		}
 
 		const std::string hiddenSpecialCharacters(const std::string msg)
