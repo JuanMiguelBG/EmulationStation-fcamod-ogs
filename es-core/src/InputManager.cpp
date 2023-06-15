@@ -204,24 +204,26 @@ void InputManager::rebuildAllJoysticks(bool deinit)
 
 		// create the InputConfig
 		std::string addedDeviceName = SDL_JoystickName(joy);
-		mInputConfigs[joyId] = new InputConfig(joyId, idx, addedDeviceName, guid, SDL_JoystickNumButtons(joy), SDL_JoystickNumHats(joy), SDL_JoystickNumAxes(joy), devicePath);
-		if (!loadInputConfig(mInputConfigs[joyId]))
+		InputConfig *config = new InputConfig(joyId, idx, addedDeviceName, guid, SDL_JoystickNumButtons(joy), SDL_JoystickNumHats(joy), SDL_JoystickNumAxes(joy), devicePath);
+		mInputConfigs[joyId] = config;
+		std::string logMessage = "Added known joystick";
+		if (!loadInputConfig(config))
 		{
 			std::string mappingString;
 
 			if (SDL_IsGameController(idx))
 				mappingString = SDL_GameControllerMappingForDeviceIndex(idx);
 
-			if (!mappingString.empty() && loadFromSdlMapping(mInputConfigs[joyId], mappingString))
+			if (!mappingString.empty() && loadFromSdlMapping(config, mappingString))
 			{
-				InputManager::getInstance()->writeDeviceConfig(mInputConfigs[joyId]); // save
-				LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Creating joystick from SDL Game Controller mapping '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
+				InputManager::getInstance()->writeDeviceConfig(config); // save
+				logMessage = "Creating joystick from SDL Game Controller mapping";
 			}
 			else
-				LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Added unconfigured joystick '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
+				logMessage = "Added unconfigured joystick";
 		}
-		else
-			LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Added known joystick '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
+		LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - " << logMessage << " '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << "), default input: " << Utils::String::boolToString(config->isDefaultInput()) << ".";
+		Settings::getInstance()->setInt("last.device.added.id", joyId);
 
 		// set up the prevAxisValues
 		int numAxes = SDL_JoystickNumAxes(joy);
@@ -345,12 +347,13 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 			if (!addedDeviceName.empty()) // && !mInputConfigs[id]->isDefaultInput())
 			{
-				InputConfig *iConfig = getInputConfigByDevice(id);
+				SDL_JoystickID new_id = Settings::getInstance()->getInt("last.device.added.id");
+				InputConfig *iConfig = getInputConfigByDevice(new_id);
 				std::string deviceGUIDString = "";
 				std::string deviceID = "";
 				std::string deviceIndex = "";
 				std::string devicePath = "";
-				if (iConfig)
+				if (iConfig && (iConfig->getDeviceName() == addedDeviceName))
 				{
 					if (iConfig->isDefaultInput())
 						return true;
@@ -369,7 +372,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 					if (!alias.empty())
 						addedDeviceName = alias;
 				}
-				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s connected").c_str(), "'" + Utils::String::trim(addedDeviceName) + "'"));
+				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 			}
 		}
 		return true;
@@ -388,7 +391,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 					if (!alias.empty())
 						removedDeviceName = alias;
 				}
-				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s disconnected").c_str(), "'" + Utils::String::trim(removedDeviceName) + "'"));
+				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s disconnected").c_str(), Utils::String::trim(removedDeviceName).c_str()));
 			}
 
 			rebuildAllJoysticks();
