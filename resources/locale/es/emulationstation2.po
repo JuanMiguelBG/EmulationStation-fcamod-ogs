@@ -2689,6 +2689,10 @@ msgid "WELCOME"
 msgstr "BIENVENIDO"
 
 #:
+msgid "TOOLS"
+msgstr "HERRAMIENTAS"
+
+#:
 msgid "CONFIGURE INPUT"
 msgstr "CONFIGURAR CONTROL"
 

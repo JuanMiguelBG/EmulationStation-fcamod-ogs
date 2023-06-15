@@ -972,13 +972,15 @@ std::string InputManager::configureEmulators() {
 	bool isPlayerWrited = false;
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
-		if (isPlayerWrited)
-			command << ",\n";
-		
-		isPlayerWrited = false;
 		InputConfig * playerInputConfig = playerJoysticks[player];
 		if (playerInputConfig != NULL)
 		{
+			if (isPlayerWrited)
+			{
+				command << ",\n";
+				isPlayerWrited = false;
+			}
+
 			command << "{\n";
 			command << "    \"player\" : " << player+1 << ",\n";
 			command << "    \"index\" : " << playerInputConfig->getDeviceIndex() << ",\n";
@@ -987,7 +989,8 @@ std::string InputManager::configureEmulators() {
 			command << "    \"name\" : \"" << playerInputConfig->getDeviceName() << "\",\n";
 			command << "    \"nbbuttons\" : " << playerInputConfig->getDeviceNbButtons() << ",\n";
 			command << "    \"nbhats\" : " << playerInputConfig->getDeviceNbHats() << ",\n";
-			command << "    \"nbaxes\" : " << playerInputConfig->getDeviceNbAxes() << "\n";
+			command << "    \"nbaxes\" : " << playerInputConfig->getDeviceNbAxes() << ",\n";
+			command << "    \"ndefault\" : " << playerInputConfig->isDefaultInput() << "\n";
 			command << "}";
 			isPlayerWrited = true;
 /*

@@ -411,6 +411,8 @@ void GuiMenu::openControllersSettings()
 		s->addEntry(unpair_bt_title, false, [window, this, s, unpair_bt_title] { openBluetoothPairedDevices(window, unpair_bt_title, true); });
 	}
 
+	s->addGroup(_("TOOLS"));
+
 	s->addEntry(_("CONFIGURE INPUT"), true, [this] { openConfigInput(); } );
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::TEST_INPUT))

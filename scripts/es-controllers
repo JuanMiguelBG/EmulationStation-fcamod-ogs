@@ -377,28 +377,35 @@ do_config_external_controllers_retroarch()
 
     local num_controllers=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.[].index' | wc -l)
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_config_external_controllers_retroarch()' - configuration file: '$config_file'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_config_external_controllers_retroarch()' - configuration file: '$config_file', number of controllers: '$num_controllers'"
 
     if [ "$num_controllers" -le "1" ]; then
         #print_log $LOG_FILE "WARN" "Executing 'do_config_external_controllers_retroarch()' - only one controller configured, skipping..."
         return
     fi
 
-    for i in {1..$num_controllers}
+    for i in `seq 1 $num_controllers`
     do
-       local index=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.['"$((i - 1))"'].index')
+       local position=$((i - 1))
+       local index=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.['"$position"'].index')
        #print_log $LOG_FILE "INFO" "Executing 'do_config_external_controllers_retroarch()' - setting controller '$i', index '$index'"
+       [ "$index" == "null" ] && continue
+
        set_ra_property "$config_file" "input_player${i}_joypad_index" $index
 
        # config turbo button
-       local controller_name=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.['"$((i - 1))"'].name')
+       local controller_name=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.['"$position"'].name')
        controller_name="${controller_name//\"/}"
        #print_log $LOG_FILE "INFO" "Executing 'do_config_external_controllers_retroarch()' - controller '$i', index '$index', name '$controller_name'"
+       [ "$controller_name" == "null" ] && continue
+
        local ra_controller_input_cfg="$RA_AUTOCONFIG_FOLDER/${controller_name}.cfg"
        TURBO_BUTTON_VALUE=$(do_get_ra_turbo_button_value "$ra_controller_input_cfg")
-       #print_log $LOG_FILE "INFO" "Executing 'do_config_external_controllers_retroarch()' - controller '$i', index '$index', name '$controller_name', turbo button value '$TURBO_BUTTON_VALUE'"
+       #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - controller '$i', index '$index', name '$controller_name', turbo button value '$TURBO_BUTTON_VALUE'"
        if [ ! -z "$TURBO_BUTTON_VALUE" ]; then
           do_set_ra_turbo_button_value "$TURBO_BUTTON_VALUE" "$ra_controller_input_cfg"
+       else
+          do_remove_ra_turbo_button "$ra_controller_input_cfg"
        fi
 
        # configure hotkeys to player 1
@@ -407,54 +414,61 @@ do_config_external_controllers_retroarch()
 
            # setting hotkey to SELECT button
            local ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_select_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_enable_hotkey_btn', default button 'SELECT', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_enable_hotkey_btn" "$ra_button_value"
 
            # setting exit emulator to START button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_start_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_exit_emulator_btn', default button 'START', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_exit_emulator_btn" "$ra_button_value"
 
            # setting IA service to A button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_a_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_ai_service_btn', default button 'A', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_ai_service_btn" "$ra_button_value"
 
            # setting save state service to R button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_r_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_save_state_btn', default button 'R1', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_save_state_btn" "$ra_button_value"
 
            # setting load state service to L button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_l_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_load_state_btn', default button 'L1', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_load_state_btn" "$ra_button_value"
 
            # setting menu toggle service to X button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_x_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_menu_toggle_btn', default button 'X', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_menu_toggle_btn" "$ra_button_value"
 
            # setting reset game to R3 button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_r3_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_reset_btn', default button 'R3', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_reset_btn" "$ra_button_value"
 
            # setting rewind to Y button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_y_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_rewind_btn', default button 'Y', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_rewind_btn" "$ra_button_value"
 
            # setting state slot decrease to L2 button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_l2_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_state_slot_decrease_btn', default button 'L2', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_state_slot_decrease_btn" "$ra_button_value"
 
            # setting state slot increase to R2 button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_r2_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_state_slot_increase_btn', default button 'R2', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_state_slot_increase_btn" "$ra_button_value"
 
-           # setting state slot increase to R2 button
-           ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_r2_btn" "")
-           [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_state_slot_increase_btn" "$ra_button_value"
-
-           # setting toggle fast forward increase to R2 button
+           # setting toggle fast forward increase to B button
            ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_b_btn" "")
+           #print_log $LOG_FILE "DEBUG" "Executing 'do_config_external_controllers_retroarch()' - hotkey 'input_toggle_fast_forward_btn', default button 'B', device button value '$ra_button_value'"
            [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_toggle_fast_forward_btn" "$ra_button_value"
        fi
     done
-    for i in {$num_controllers..5}
+    for i in `seq $((num_controllers + 1)) 5`
     do
        #print_log $LOG_FILE "INFO" "Executing 'do_config_external_controllers_retroarch()' - resetting controller '$i' to 'nul'"
        set_ra_property "$config_file" "input_player${i}_joypad_index" "nul"
@@ -478,6 +492,62 @@ do_config_external_controllers()
     case "${emulator}" in
         "RETROARCH")
             do_config_external_controllers_retroarch "$config_file"
+        ;;
+    esac
+}
+
+do_remove_external_controllers_retroarch()
+{
+    local config_file=$1
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_external_controllers_retroarch()' - configuration file: '$config_file'"
+
+    local num_controllers=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.[].index' | wc -l)
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_external_controllers_retroarch()' - configuration file: '$config_file', number of controllers: '$num_controllers'"
+
+    if [ "$num_controllers" -le "1" ]; then
+        #print_log $LOG_FILE "WARN" "Executing 'do_remove_external_controllers_retroarch()' - only one controller configured, skipping..."
+        return
+    fi
+
+
+    for i in `seq 1 $num_controllers`
+    do
+       local position=$((i - 1))
+
+       # remove turbo button
+       local controller_name=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.['"$position"'].name')
+       controller_name="${controller_name//\"/}"
+       #print_log $LOG_FILE "INFO" "Executing 'do_remove_external_controllers_retroarch()' - controller '$i', index '$index', name '$controller_name'"
+       [ "$controller_name" == "null" ] && continue
+
+       local ra_controller_input_cfg="$RA_AUTOCONFIG_FOLDER/${controller_name}.cfg"
+       do_remove_ra_turbo_button "$ra_controller_input_cfg"
+    done
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_external_controllers_retroarch()' - removing config files: '$config_file', '$INPUT_CONTROLLERS_CONFIG_PATH'"
+    sudo rm -f "$INPUT_CONTROLLERS_CONFIG_PATH"
+    sudo rm -f "$config_file"
+}
+
+do_remove_external_controllers()
+{
+    local emulator=$1
+    local config_file=$2
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_external_controllers()' - emulator: '$emulator', configuration file: '$config_file'"
+
+    if [ -z "$emulator" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
+        #print_log $LOG_FILE "WARN" "Executing 'do_config_external_controllers()' - emulator or configuration file are empty or not exist, skipping..."
+        return
+    fi
+
+    emulator="${emulator^^}"
+
+    case "${emulator}" in
+        "RETROARCH")
+            do_remove_external_controllers_retroarch "$config_file"
         ;;
     esac
 }
@@ -528,6 +598,9 @@ case "${ACTION}" in
     ;;
     "config_external_controllers")
         do_config_external_controllers "$1" "$2" || exit_execution 1 "$1" "$2"
+    ;;
+    "remove_external_controllers")
+        do_remove_external_controllers "$1" "$2" || exit_execution 1 "$1" "$2"
     ;;
     *)
         do_help
