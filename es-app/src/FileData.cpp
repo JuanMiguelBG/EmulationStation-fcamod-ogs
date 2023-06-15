@@ -425,6 +425,8 @@ void FileData::launchGame(Window* window)
 	if (system == nullptr)
 		return;
 
+	std::string command = getlaunchCommand();
+
     // Backup Brightness and Volume
 	ApiSystem::getInstance()->backupAfterGameValues();
 
@@ -435,8 +437,6 @@ void FileData::launchGame(Window* window)
 
 	bool hideWindow = Settings::getInstance()->getBool("HideWindow");
 	window->deinit(hideWindow);
-
-	std::string command = getlaunchCommand();
 
 	int exitCode = -1;
 	time_t tstart;

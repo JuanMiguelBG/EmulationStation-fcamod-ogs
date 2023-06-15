@@ -60,6 +60,8 @@ InputManager* InputManager::getInstance()
 
 void InputManager::init()
 {
+	LOG(LogInfo) << "InputManager::init()";
+
 	if(initialized())
 		deinit();
 
@@ -81,6 +83,8 @@ void InputManager::init()
 
 void InputManager::deinit()
 {
+	LOG(LogInfo) << "InputManager::deinit()";
+
 	if(!initialized())
 		return;
 
@@ -211,13 +215,13 @@ void InputManager::rebuildAllJoysticks(bool deinit)
 			if (!mappingString.empty() && loadFromSdlMapping(mInputConfigs[joyId], mappingString))
 			{
 				InputManager::getInstance()->writeDeviceConfig(mInputConfigs[joyId]); // save
-				LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Creating joystick from SDL Game Controller mapping " << addedDeviceName << " (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
+				LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Creating joystick from SDL Game Controller mapping '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
 			}
 			else
-				LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Added unconfigured joystick " << addedDeviceName << " (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
+				LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Added unconfigured joystick '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
 		}
 		else
-			LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Added known joystick " << addedDeviceName << " (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
+			LOG(LogInfo) << "InputManager::rebuildAllJoysticks() - Added known joystick '" << addedDeviceName << "' (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << idx << ", device path : " << devicePath << ").";
 
 		// set up the prevAxisValues
 		int numAxes = SDL_JoystickNumAxes(joy);
@@ -341,15 +345,13 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 			if (!addedDeviceName.empty()) // && !mInputConfigs[id]->isDefaultInput())
 			{
-				auto ic = mInputConfigs.find(ev.jdevice.which);
+				InputConfig *iConfig = getInputConfigByDevice(id);
 				std::string deviceGUIDString = "";
 				std::string deviceID = "";
 				std::string deviceIndex = "";
 				std::string devicePath = "";
-				bool isDefaultInput = false;
-				if (ic != mInputConfigs.cend())
+				if (iConfig)
 				{
-					InputConfig *iConfig = ic->second;
 					if (iConfig->isDefaultInput())
 						return true;
 
@@ -367,7 +369,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 					if (!alias.empty())
 						addedDeviceName = alias;
 				}
-				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
+				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s connected").c_str(), "'" + Utils::String::trim(addedDeviceName).c_str() + "'"));
 			}
 		}
 		return true;
@@ -386,7 +388,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 					if (!alias.empty())
 						removedDeviceName = alias;
 				}
-				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s disconnected").c_str(), Utils::String::trim(removedDeviceName).c_str()));
+				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s disconnected").c_str(), "'" + Utils::String::trim(removedDeviceName).c_str() + "'"));
 			}
 
 			rebuildAllJoysticks();
@@ -728,7 +730,7 @@ void InputManager::writeDeviceConfig(InputConfig* config)
 	lastdoc.save_file(lastpath.c_str());
 
 	Scripting::fireEvent("config-changed");
-	Scripting::fireEvent("controls-changed", std::to_string(config->getDeviceId()), config->getDeviceName(), config->getDeviceGUIDString());
+	Scripting::fireEvent("controls-changed", std::to_string(config->getDeviceId()), config->getDeviceName(), config->getDeviceGUIDString(), Utils::String::boolToString(config->isDefaultInput()));
 	
 	// execute any onFinish commands and re-load the config for changes
 	doOnFinish();
@@ -841,7 +843,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 {
 	std::unique_lock<std::mutex> lock(mJoysticksLock);
 
-	// 1. Recuperer les configurated
+	// 1. Retrieve the configured
 	std::vector<InputConfig *> availableConfigured;
 	for (auto conf : mInputConfigs)
 		if (conf.second != nullptr && conf.second->isConfigured())
@@ -850,9 +852,9 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// sort available configs
 	std::sort(availableConfigured.begin(), availableConfigured.end(), [](InputConfig * a, InputConfig * b) -> bool { return a->getDeviceIndex() < b->getDeviceIndex(); });
 
-	// 2. Pour chaque joueur verifier si il y a un configurated
-	// associer le input au joueur
-	// enlever des disponibles
+	// 2. For each player check if there is a configured
+	// associate the input to the player
+	// remove from available
 	std::map<int, InputConfig*> playerJoysticks;
 
 	// First loop, search for PATH. Ultra High Priority
@@ -918,7 +920,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (playerJoysticks[player] != nullptr)
 			continue;
 
-		// si aucune config a été trouvé pour le joueur, on essaie de lui filer un libre
+		// if no config has been found for the player, we try to give him a free one
 		for (auto it1 = availableConfigured.begin(); it1 != availableConfigured.end(); ++it1)
 		{
 			playerJoysticks[player] = *it1;

@@ -147,7 +147,7 @@ public:
 	static std::string buttonLabel(const std::string& button, bool isXboxController = false, bool isPsController = false);
 	static std::string buttonImage(const std::string& button, bool isXboxController = false, bool isPsController = false);
 
-//	void updateBatteryLevel(int level) { mBatteryLevel = level; };
+	void updateBatteryLevel(int level) { mBatteryLevel = level; };
 
 	bool isDefaultInput() const { return mDefaultInput; };
 	void setDefaultInput(bool defaultInput) { mDefaultInput = defaultInput; };
