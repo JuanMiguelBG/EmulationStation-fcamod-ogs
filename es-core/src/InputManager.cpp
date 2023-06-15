@@ -341,12 +341,26 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 			if (!addedDeviceName.empty()) // && !mInputConfigs[id]->isDefaultInput())
 			{
-				auto it = mInputConfigs.find(ev.jdevice.which);
-				InputConfig *iConfig = it->second;
-				if (iConfig->isDefaultInput())
-					return false;
+				auto ic = mInputConfigs.find(ev.jdevice.which);
+				std::string deviceGUIDString = "";
+				std::string deviceID = "";
+				std::string deviceIndex = "";
+				std::string devicePath = "";
+				bool isDefaultInput = false;
+				if (ic != mInputConfigs.cend())
+				{
+					InputConfig *iConfig = ic->second;
+					if (iConfig->isDefaultInput())
+						return true;
 
-				Scripting::fireEvent("input-controller-added", addedDeviceName, iConfig->getDeviceGUIDString(), std::to_string(iConfig->getDeviceId()), std::to_string(iConfig->getDeviceIndex()), iConfig->getDevicePath(), Utils::String::boolToString(iConfig->isDefaultInput()));
+					deviceGUIDString = iConfig->getDeviceGUIDString();
+					deviceID = std::to_string(iConfig->getDeviceId());
+					deviceIndex = std::to_string(iConfig->getDeviceIndex());
+					devicePath = iConfig->getDevicePath();
+				}
+
+				Scripting::fireEvent("input-controller-added", addedDeviceName, deviceGUIDString, deviceID, deviceIndex, devicePath, "false");
+
 				if (Settings::getInstance()->getBool("bluetooth.use.alias"))
 				{
 					std::string alias = Settings::getInstance()->getString(addedDeviceName + ".bluetooth.input_gaming.alias");
