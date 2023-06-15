@@ -369,7 +369,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 					if (!alias.empty())
 						addedDeviceName = alias;
 				}
-				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s connected").c_str(), "'" + Utils::String::trim(addedDeviceName).c_str() + "'"));
+				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s connected").c_str(), "'" + Utils::String::trim(addedDeviceName) + "'"));
 			}
 		}
 		return true;
@@ -388,7 +388,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 					if (!alias.empty())
 						removedDeviceName = alias;
 				}
-				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s disconnected").c_str(), "'" + Utils::String::trim(removedDeviceName).c_str() + "'"));
+				window->displayNotificationMessage(_U("\uF11B  ") + Utils::String::format(_("%s disconnected").c_str(), "'" + Utils::String::trim(removedDeviceName) + "'"));
 			}
 
 			rebuildAllJoysticks();
