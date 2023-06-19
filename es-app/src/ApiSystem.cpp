@@ -2074,9 +2074,3 @@ bool ApiSystem::clearLastPlayedData(const std::string system)
 		return executeSystemScript("es-gamelist clear_last_played_data \"" + system + '"' );
 
 }
-
-bool ApiSystem::configureTurboHotkeyButton(const std::string button)
-{
-	LOG(LogInfo) << "ApiSystem::configureTurboHotkeyButton() - button: " << button;
-	return executeSystemScript("es-controllers set turbo_button \"" + button + "\" &");
-}

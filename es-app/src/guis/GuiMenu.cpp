@@ -381,7 +381,6 @@ void GuiMenu::openControllersSettings()
 				if (turbo_button != turbo_button_cmp->getSelected())
 				{
 					Settings::getInstance()->setString("TurboHotkeyButton", turbo_button_cmp->getSelected());
-					ApiSystem::getInstance()->configureTurboHotkeyButton(turbo_button_cmp->getSelected());
 				}
 			});
 		

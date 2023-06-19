@@ -309,8 +309,6 @@ public:
 	void restoreAfterGameValues();
 
 	bool clearLastPlayedData(const std::string system = "");
-
-	bool configureTurboHotkeyButton(const std::string button);
 };
 
 #endif
