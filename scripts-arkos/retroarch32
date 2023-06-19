@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+LOG_FILE="/roms/logs/retroarch32.log"
+echo "Loading Emulator: Retroarch32" | tee $LOG_FILE
+echo "Loading Emulator Path: $0" | tee -a $LOG_FILE
+echo "Loading Core Path: $2" | tee -a $LOG_FILE
+echo -e "Loading ROM Path: $3\n" | tee -a $LOG_FILE
+
+
+CORE_FILE=$(basename "$2")
+CORE="${CORE_FILE%_libretro.so}"
+GAME="$3"
+
+RETROARCH_CONFIG_DIR="/home/ark/.config/retroarch32"
+RA_CONTROLLER_CONFIG_FILE="${RETROARCH_CONFIG_DIR}/retroarch.cfg.ext"
+
+echo "CORE_FILE: '$CORE_FILE'" | tee -a $LOG_FILE
+echo "CORE: '$CORE'" | tee -a $LOG_FILE
+echo "RA_CONTROLLER_CONFIG_FILE: '$RA_CONTROLLER_CONFIG_FILE'" | tee -a $LOG_FILE
+echo "RETROARCH_CONFIG_DIR: '$RETROARCH_CONFIG_DIR'" | tee -a $LOG_FILE
+
+
+echo "Configuring controls" | tee -a $LOG_FILE
+[ -f "$RA_CONTROLLER_CONFIG_FILE" ] && rm -f "$RA_CONTROLLER_CONFIG_FILE"
+
+cp -f "${RA_CONTROLLER_CONFIG_FILE}_template" "$RA_CONTROLLER_CONFIG_FILE"
+EXTRA_PARAMETERS="--appendconfig=${RA_CONTROLLER_CONFIG_FILE}"
+
+echo "EXTRA_PARAMETERS: '$EXTRA_PARAMETERS'" | tee -a $LOG_FILE
+
+/usr/local/bin/es-controllers config_controllers RETROARCH32 "$RA_CONTROLLER_CONFIG_FILE"
+
+
+# launching emulator
+echo "COMMAND: /opt/retroarch/bin/retroarch -c $RETROARCH_CONFIG_DIR/retroarch.cfg $EXTRA_PARAMETERS -L $RETROARCH_CONFIG_DIR/cores/${CORE}_libretro.so \"$GAME\"" | tee -a $LOG_FILE
+
+/usr/local/bin/es-splash_screen quit_splash_before_game
+/opt/retroarch/bin/retroarch32 -c "$RETROARCH_CONFIG_DIR"/retroarch.cfg $EXTRA_PARAMETERS -L "$RETROARCH_CONFIG_DIR"/cores/"$CORE"_libretro.so "$GAME"
+/usr/local/bin/es-splash_screen load_splash_after_game
+
+
+echo "removing retroarch configuration file" | tee -a $LOG_FILE
+/usr/local/bin/es-controllers remove_controllers_config RETROARCH32 "$RA_CONTROLLER_CONFIG_FILE" &
+
+echo -e "Exiting...\n" | tee -a $LOG_FILE

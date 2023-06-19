@@ -1,0 +1,196 @@
+#!/bin/bash
+
+LOG_FILE="/roms/logs/retroarch_tate.log"
+echo "Loading Emulator: Retroarch TATE" | tee $LOG_FILE
+echo "Loading Emulator Path: $0" | tee -a $LOG_FILE
+echo "Loading Core Path: $2" | tee -a $LOG_FILE
+echo -e "Loading ROM Path: $3\n" | tee -a $LOG_FILE
+
+echo "Entering TATE Mode" | tee -a $LOG_FILE
+
+tate_config_files()
+{
+   local TATE_CORE_FILE=$1
+   local FILE=$2
+   local TATE_FILE=$3
+   local NORMAL_FILE=$4
+
+   if [ ! -f "$TATE_FILE" ] && [ -f "$TATE_CORE_FILE" ]; then
+      echo "TATE_FILE '$TATE_FILE': NOT exist" | tee -a $LOG_FILE
+      echo "Copying TATE_CORE_FILE '$TATE_CORE_FILE' to TATE_FILE '$TATE_FILE'" | tee -a $LOG_FILE
+      sudo cp "$TATE_CORE_FILE" "$TATE_FILE"
+      sudo chmod 666 "$TATE_FILE"
+      sudo chown ark:ark "$TATE_FILE"
+   fi
+
+   if [ -f "$TATE_FILE" ]; then
+      echo "TATE_FILE '$TATE_FILE': exist" | tee -a $LOG_FILE
+      if [ -f "$FILE" ]; then
+         echo "FILE '$FILE': exist" | tee -a $LOG_FILE
+         if [ -f "$NORMAL_FILE" ]; then
+           echo "NORMAL_FILE '$NORMAL_FILE': exist, removing" | tee -a $LOG_FILE
+           sudo rm -f "$NORMAL_FILE"
+         fi
+         echo "Moving FILE '$FILE' to NORMAL_FILE '$NORMAL_FILE'" | tee -a $LOG_FILE
+         sudo mv "$FILE" "$NORMAL_FILE"
+      fi
+      echo "Moving TATE_FILE '$TATE_FILE' to FILE '$FILE'" | tee -a $LOG_FILE
+      sudo mv "$TATE_FILE" "$FILE"
+
+
+      # fix deafult control index
+      local player=$(/usr/local/bin/es-controllers get default_controller_player)
+      [ -z "$player" ] && player=1
+      sed -i 's/_p. =/_p'"$player"' =/g; s/player./player'"$player"'/g' "$FILE"
+      sudo sed -i "s/#\?$input_remap_port_p${player}[ ]*=.*/$input_remap_port_p${player} = \"$((player-1))\"/g" "$FILE"
+   fi
+}
+
+tate_restore_files()
+{
+   local FILE=$1
+   local TATE_FILE=$2
+   local NORMAL_FILE=$3
+
+   if [ -f "$FILE" ]; then
+      echo "FILE '$FILE' exist" | tee -a $LOG_FILE
+      if [ -f "$TATE_FILE" ]; then
+         echo "TATE_FILE '$TATE_FILE' exist, removing" | tee -a $LOG_FILE
+         sudo rm -f "$TATE_FILE"
+      fi
+      echo "Moving FILE '$FILE' to TATE_FILE '$TATE_FILE'" | tee -a $LOG_FILE
+      sudo mv "$FILE" "$TATE_FILE"
+   fi
+   if [ -f "$NORMAL_FILE" ]; then
+      echo "NORMAL_FILE '$NORMAL_FILE' exist" | tee -a $LOG_FILE
+      if [ -f "$FILE" ]; then
+         echo "FILE '$FILE' exist, removing" | tee -a $LOG_FILE
+         sudo rm -f "$FILE"
+      fi
+      echo "Moving NORMAL_FILE '$NORMAL_FILE' to FILE '$FILE'" | tee -a $LOG_FILE
+      sudo mv "$NORMAL_FILE" "$FILE"
+   fi
+}
+
+
+CORE_FILE=$(basename "$2")
+CORE="${CORE_FILE%_libretro.so}"
+CORE_NAME=""
+GAME="$3"
+EXTRA_PARAMETERS=""
+VERT_MODE="disabled"
+
+RETROARCH_CONFIG_DIR="/home/ark/.config/retroarch"
+RA_CONTROLLER_CONFIG_FILE="${RETROARCH_CONFIG_DIR}/retroarch.cfg.ext"
+echo "RETROARCH_CONFIG_DIR: '$RETROARCH_CONFIG_DIR'" | tee -a $LOG_FILE
+echo "RA_CONTROLLER_CONFIG_FILE: '$RA_CONTROLLER_CONFIG_FILE'" | tee -a $LOG_FILE
+
+RA_CORE_OPTIONS_FILE="$RETROARCH_CONFIG_DIR/retroarch-core-options.cfg"
+OPTIONS_FILE="$RA_CORE_OPTIONS_FILE"
+
+if [[ $CORE == "fbneo" ]]; then
+  CORE_NAME="FinalBurn Neo"
+elif [[ $CORE == "mame2003_plus" ]]; then
+  CORE_NAME="MAME 2003-Plus"
+fi
+
+
+CORE_OPTIONS_FILE="$RETROARCH_CONFIG_DIR/config/$CORE_NAME/$CORE_NAME.opt"
+GAME_NAME=$(basename "$GAME")
+GAME_NAME="${GAME_NAME%.*}"
+GAME_OPTIONS_FILE="$RETROARCH_CONFIG_DIR/config/$CORE_NAME/$GAME_NAME.opt"
+TATE_CORE_REMAP_FILE="$RETROARCH_CONFIG_DIR/remaps-tate/$CORE_NAME/$CORE_NAME.rmp.tate"
+GAME_REMAP_FILE="$RETROARCH_CONFIG_DIR/config/remaps/$CORE_NAME/$GAME_NAME.rmp"
+TATE_GAME_REMAP_FILE="$RETROARCH_CONFIG_DIR/config/remaps/$CORE_NAME/$GAME_NAME.rmp.tate"
+NORMAL_GAME_REMAP_FILE="$RETROARCH_CONFIG_DIR/config/remaps/$CORE_NAME/$GAME_NAME.rmp.normal"
+
+DEFAULT_CONTROLLER="$RETROARCH_CONFIG_DIR/autoconfig/udev/retrogame_joypad.cfg"
+
+echo "RA_CORE_OPTIONS_FILE: '$RA_CORE_OPTIONS_FILE'" | tee -a $LOG_FILE
+echo "CORE_FILE: '$CORE_FILE'" | tee -a $LOG_FILE
+echo "CORE_NAME: '$CORE_NAME'" | tee -a $LOG_FILE
+echo "CORE: '$CORE'" | tee -a $LOG_FILE
+echo "CORE_OPTIONS_FILE: '$CORE_OPTIONS_FILE'" | tee -a $LOG_FILE
+echo "GAME_NAME: '$GAME_NAME'" | tee -a $LOG_FILE
+echo "GAME_OPTIONS_FILE: '$GAME_OPTIONS_FILE'" | tee -a $LOG_FILE
+echo "TATE_CORE_REMAP_FILE: '$TATE_CORE_REMAP_FILE'" | tee -a $LOG_FILE
+echo "GAME_REMAP_FILE: '$GAME_REMAP_FILE'" | tee -a $LOG_FILE
+echo "TATE_GAME_REMAP_FILE: '$TATE_GAME_REMAP_FILE'" | tee -a $LOG_FILE
+echo "NORMAL_GAME_REMAP_FILE: '$NORMAL_GAME_REMAP_FILE'" | tee -a $LOG_FILE
+
+
+if [ -f "$GAME_OPTIONS_FILE" ]; then
+   OPTIONS_FILE="$GAME_OPTIONS_FILE"
+elif [ -f "$CORE_OPTIONS_FILE" ]; then
+   OPTIONS_FILE="$CORE_OPTIONS_FILE"
+fi
+echo "OPTIONS_FILE: $OPTIONS_FILE" | tee -a $LOG_FILE
+
+if [[ $CORE == "fbneo" ]]; then
+   VERT_MODE=$(cat "$OPTIONS_FILE" | grep "fbneo-vertical-mode" | grep -oP '"\K[^"]+')
+   if [ -z "$VERT_MODE" ]; then
+      sudo sed -i -e '$afbneo-vertical-mode \= "alternate"' "$OPTIONS_FILE"
+   else
+      sudo sed -i '/fbneo-vertical-mode \=/c\fbneo-vertical-mode \= "alternate"' "$OPTIONS_FILE"
+   fi
+elif [[ $CORE == "mame2003_plus" ]]; then
+   VERT_MODE=$(cat "$OPTIONS_FILE" | grep "mame2003-plus_tate_mode" | grep -oP '"\K[^"]+')
+   if [ -z "$VERT_MODE" ]; then
+      sudo sed -i -e '$amame2003-plus_tate_mode \= "enabled"' "$OPTIONS_FILE"
+   else
+      sudo sed -i '/mame2003-plus_tate_mode \=/c\mame2003-plus_tate_mode \= "enabled"' "$OPTIONS_FILE"
+   fi
+fi
+
+if [ -z "$VERT_MODE" ]; then
+   VERT_MODE="disabled"
+fi
+echo "Getting actual VERT_MODE: '${VERT_MODE}'" | tee -a $LOG_FILE
+
+# Test previous fail to restore rempas files
+if [[ $VERT_MODE == "alternate" ]] || [[ $VERT_MODE == "enabled" ]]; then
+   # restore core configuration
+   echo "Restoring previous fail configuration" | tee -a $LOG_FILE
+   tate_restore_files "$GAME_REMAP_FILE" "$TATE_GAME_REMAP_FILE" "$NORMAL_GAME_REMAP_FILE"
+   VERT_MODE="disabled"
+   echo "Changed VERT_MODE to '${VERT_MODE}'" | tee -a $LOG_FILE
+fi
+
+tate_config_files "$TATE_CORE_REMAP_FILE" "$GAME_REMAP_FILE" "$TATE_GAME_REMAP_FILE" "$NORMAL_GAME_REMAP_FILE"
+
+# configure controllers
+echo "Configuring controls" | tee -a $LOG_FILE
+[ -f "$RA_CONTROLLER_CONFIG_FILE" ] && rm -f "$RA_CONTROLLER_CONFIG_FILE"
+
+cp -f "${RA_CONTROLLER_CONFIG_FILE}_template" "$RA_CONTROLLER_CONFIG_FILE"
+EXTRA_PARAMETERS="--appendconfig=${RA_CONTROLLER_CONFIG_FILE}"
+
+echo "EXTRA_PARAMETERS: '$EXTRA_PARAMETERS'" | tee -a $LOG_FILE
+
+/usr/local/bin/es-controllers config_controllers RETROARCH "$RA_CONTROLLER_CONFIG_FILE" "true"
+
+# launching emulator
+echo "COMMAND: /opt/retroarch/bin/retroarch -c $RETROARCH_CONFIG_DIR/retroarch.cfg $EXTRA_PARAMETERS -L $RETROARCH_CONFIG_DIR/cores/${CORE}_libretro.so \"$GAME\"" | tee -a $LOG_FILE
+
+/usr/local/bin/es-splash_screen quit_splash_before_game
+/opt/retroarch/bin/retroarch -c "$RETROARCH_CONFIG_DIR"/retroarch.cfg $EXTRA_PARAMETERS -L "$RETROARCH_CONFIG_DIR"/cores/"$CORE"_libretro.so "$GAME"
+/usr/local/bin/es-splash_screen load_splash_after_game
+
+
+echo "Exiting TATE Mode" | tee -a $LOG_FILE
+
+tate_restore_files "$GAME_REMAP_FILE" "$TATE_GAME_REMAP_FILE" "$NORMAL_GAME_REMAP_FILE"
+
+# restore core configuration
+echo "Restoring VERT_MODE: '${VERT_MODE}' on '$OPTIONS_FILE'" | tee -a $LOG_FILE
+if [[ $CORE == "fbneo" ]]; then
+   sudo sed -i "/fbneo-vertical-mode \=/c\fbneo-vertical-mode \= \"${VERT_MODE}\"" "$OPTIONS_FILE"
+elif [[ $CORE == "mame2003_plus" ]]; then
+   sudo sed -i "/mame2003-plus_tate_mode \=/c\mame2003-plus_tate_mode \= \"${VERT_MODE}\"" "$OPTIONS_FILE"
+fi
+
+# reset controllers configuration
+echo "removing retroarch configuration file" | tee -a $LOG_FILE
+/usr/local/bin/es-controllers remove_controllers_config RETROARCH "$RA_CONTROLLER_CONFIG_FILE" "true" &
+
+echo -e "Exiting...\n" | tee -a $LOG_FILE
