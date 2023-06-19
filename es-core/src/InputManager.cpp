@@ -982,11 +982,11 @@ std::string InputManager::configureEmulators() {
 			}
 
 			command << "{\n";
-			command << "    \"player\" : " << player+1 << ",\n";
+			command << "    \"name\" : \"" << playerInputConfig->getDeviceName() << "\",\n";
+			command << "    \"player\" : " << player + 1 << ",\n";
 			command << "    \"index\" : " << playerInputConfig->getDeviceIndex() << ",\n";
 			command << "    \"guid\" : \"" << playerInputConfig->getDeviceGUIDString() << "\",\n";
 			command << "    \"path\" : \"" << playerInputConfig->getDevicePath() << "\",\n";
-			command << "    \"name\" : \"" << playerInputConfig->getDeviceName() << "\",\n";
 			command << "    \"nbbuttons\" : " << playerInputConfig->getDeviceNbButtons() << ",\n";
 			command << "    \"nbhats\" : " << playerInputConfig->getDeviceNbHats() << ",\n";
 			command << "    \"nbaxes\" : " << playerInputConfig->getDeviceNbAxes() << ",\n";

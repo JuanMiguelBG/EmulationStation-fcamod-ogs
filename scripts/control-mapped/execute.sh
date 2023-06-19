@@ -35,8 +35,10 @@ update_device_name_mapping()
                         b \
                         x \
                         y \
+                        l1 \
                         leftshoulder \
                         pageup \
+                        r1 \
                         rightshoulder \
                         pagedown \
                         lefttrigger \
@@ -66,7 +68,7 @@ update_device_name_mapping()
     for button in "${button_list[@]}"
     do
         local controler_info="$(tac ${es_input_file_location} | grep "${device_name}" -m 1 -B 9999 | tac)"
-        local isitahatoranalog="$(echo "${controler_info}" | grep "name=\"${button}\"" | grep -o -P -w "type=.{0,6}" | cut -c5- | cut -d '"' -f2)"
+        local isitahatoranalog="$(echo "${controler_info}" | grep "name=\"${button}\"" | head -n1 | grep -o -P -w "type=.{0,6}" | cut -c5- | cut -d '"' -f2)"
 
         unset value
         unset axis
@@ -75,7 +77,7 @@ update_device_name_mapping()
         if [[ "$isitahatoranalog" == "hat" ]]; then
           value="hat found"
         elif [[ "$isitahatoranalog" == "axis" ]]; then
-          axis="$(echo "${controler_info}" | grep "name=\"${button}\"" | grep -o -P -w "value=.{0,5}" | cut -c5- | cut -d '"' -f2)"
+          axis="$(echo "${controler_info}" | grep "name=\"${button}\"" | head -n1 | grep -o -P -w "value=.{0,5}" | cut -c5- | cut -d '"' -f2)"
           if [[ "${axis}" == *"-"* ]]; then
             axis="-"
             reverse_axis="+"
@@ -85,7 +87,7 @@ update_device_name_mapping()
           fi
         fi
 
-        get_button="$(echo "${controler_info}" | grep "name=\"${button}\"" | grep -o -P -w 'id="\K[^"]+')"
+        get_button="$(echo "${controler_info}" | grep "name=\"${button}\"" | head -n1 | grep -o -P -w 'id="\K[^"]+')"
 
         if test -z "$get_button"; then
           #print_log $LOG_FILE "DEBUG" "Executing 'update_device_name_mapping()' - Skip '${button}', empty value"
