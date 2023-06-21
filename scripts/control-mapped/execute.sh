@@ -62,7 +62,9 @@ update_device_name_mapping()
                         joystick2up \
                         rightanalogleft \
                         joystick2left \
-                        rightanalogright )
+                        rightanalogright ) # \
+#                        hotkeyenable \
+#                        hotkey )
 
 
     for button in "${button_list[@]}"
@@ -169,7 +171,8 @@ update_device_name_mapping()
                               input_r_y_plus_axis \
                               input_r_y_minus_axis \
                               input_r_x_minus_axis \
-                              input_r_x_plus_axis )
+                              input_r_x_plus_axis ) # \
+#                              input_hotkey_btn )
 
         for raconfig in "${ra_config_paths[@]}"
         do
