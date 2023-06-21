@@ -37,12 +37,19 @@ tate_config_files()
       echo "Moving TATE_FILE '$TATE_FILE' to FILE '$FILE'" | tee -a $LOG_FILE
       sudo mv "$TATE_FILE" "$FILE"
 
-
       # fix deafult control index
+      local previous_player=$(head -n1 "$FILE")
+      previous_player="${previous_player//# player: /}"
+      echo "Default controller, previous player: '$previous_player'" | tee -a $LOG_FILE
+      if [ -z "$previous_player" ] || [[ $previous_player == *"input_"* ]]; then
+         previous_player="1"
+         echo "Setting default controller previous player to '$previous_player'" | tee -a $LOG_FILE;
+      fi
+
       local player=$(/usr/local/bin/es-controllers get default_controller_player)
-      [ -z "$player" ] && player=1
-      sed -i 's/_p. =/_p'"$player"' =/g; s/player./player'"$player"'/g' "$FILE"
-      sudo sed -i "s/#\?$input_remap_port_p${player}[ ]*=.*/$input_remap_port_p${player} = \"$((player-1))\"/g" "$FILE"
+      echo "Default controller, new player: '$player'" | tee -a $LOG_FILE
+      [ -z "$player" ] && player=1; echo "Setting default controller player to '$player'" | tee -a $LOG_FILE;
+      sed -i 's/input_libretro_device_p'"$previous_player"' =/input_libretro_device_p'"$player"' =/g; s/_player'"$previous_player"'_/_player'"$player"'_/g' "$FILE"
    fi
 }
 
@@ -60,6 +67,8 @@ tate_restore_files()
       fi
       echo "Moving FILE '$FILE' to TATE_FILE '$TATE_FILE'" | tee -a $LOG_FILE
       sudo mv "$FILE" "$TATE_FILE"
+      local player=$(/usr/local/bin/es-controllers get default_controller_player)
+      sed  -i '1i # player: '"$player"'' "$TATE_FILE"
    fi
    if [ -f "$NORMAL_FILE" ]; then
       echo "NORMAL_FILE '$NORMAL_FILE' exist" | tee -a $LOG_FILE
@@ -151,20 +160,19 @@ fi
 
 # configure controllers
 echo "Configuring controls" | tee -a $LOG_FILE
-[ -f "$RA_CONTROLLER_CONFIG_FILE" ] && rm -f "$RA_CONTROLLER_CONFIG_FILE"
+/usr/local/bin/es-controllers config_controllers RETROARCH32 "true"
 
-cp -f "${RA_CONTROLLER_CONFIG_FILE}_template" "$RA_CONTROLLER_CONFIG_FILE"
-EXTRA_PARAMETERS="--appendconfig=${RA_CONTROLLER_CONFIG_FILE}"
-
-echo "EXTRA_PARAMETERS: '$EXTRA_PARAMETERS'" | tee -a $LOG_FILE
-
-/usr/local/bin/es-controllers config_controllers RETROARCH32 "$RA_CONTROLLER_CONFIG_FILE" "true"
+EXTRA_CONFIGURATIONS=""
+if [ -f "${RETROARCH_CONFIG_DIR}/retroarch.cfg.ext" ]; then
+    EXTRA_CONFIGURATIONS="--appendconfig=${RETROARCH_CONFIG_DIR}/retroarch.cfg.ext"
+fi
+echo "EXTRA_CONFIGURATIONS: $EXTRA_CONFIGURATIONS" | tee -a $LOG_FILE
 
 # launching emulator
-echo "COMMAND: /opt/retroarch/bin/retroarch32 -c $RETROARCH_CONFIG_DIR/retroarch.cfg $EXTRA_PARAMETERS -L $RETROARCH_CONFIG_DIR/cores/${CORE}_libretro.so \"$GAME\"" | tee -a $LOG_FILE
+echo "COMMAND: /opt/retroarch/bin/retroarch32 -c $RETROARCH_CONFIG_DIR/retroarch.cfg $EXTRA_CONFIGURATIONS -L $RETROARCH_CONFIG_DIR/cores/${CORE}_libretro.so \"$GAME\"" | tee -a $LOG_FILE
 
 /usr/local/bin/es-splash_screen quit_splash_before_game
-/opt/retroarch/bin/retroarch32 -c "$RETROARCH_CONFIG_DIR"/retroarch.cfg $EXTRA_PARAMETERS -L "$RETROARCH_CONFIG_DIR"/cores/"$CORE"_libretro.so "$GAME"
+/opt/retroarch/bin/retroarch32 -c "$RETROARCH_CONFIG_DIR"/retroarch.cfg $EXTRA_CONFIGURATIONS -L "$RETROARCH_CONFIG_DIR"/cores/"$CORE"_libretro.so "$GAME"
 /usr/local/bin/es-splash_screen load_splash_after_game
 
 
@@ -180,6 +188,6 @@ fi
 
 # reset controllers configuration
 echo "removing retroarch configuration file" | tee -a $LOG_FILE
-/usr/local/bin/es-controllers remove_controllers_config RETROARCH32 "$RA_CONTROLLER_CONFIG_FILE" "true" &
+/usr/local/bin/es-controllers remove_controllers_config RETROARCH32 &
 
 echo -e "Exiting...\n" | tee -a $LOG_FILE
