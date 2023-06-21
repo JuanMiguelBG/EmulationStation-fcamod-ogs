@@ -444,8 +444,9 @@ bool GuiInputConfig::filterTrigger(Input input, InputConfig* config)
 
 bool GuiInputConfig::isXboxController(InputConfig* config)
 {
+	LOG(LogDebug) << "GuiInputConfig::isXboxController() - Device name: " << config->getDeviceName() << ", devide GUID: " << config->getDeviceGUIDString();
 	if (Utils::String::contains(config->getDeviceName(), "Xbox") || Utils::String::contains(config->getDeviceName(), "X-Box")
-	  || Utils::String::contains(config->getDeviceName(), "Microsoft") || Utils::String::contains(config->getDeviceGUIDString(), "0000005e040000"))
+	  || Utils::String::contains(config->getDeviceName(), "Microsoft") || Utils::String::contains(config->getDeviceGUIDString(), "5e040000"))
 		return true;
 
 	return false;
@@ -453,9 +454,10 @@ bool GuiInputConfig::isXboxController(InputConfig* config)
 
 bool GuiInputConfig::isPsController(InputConfig* config)
 {
+	LOG(LogDebug) << "GuiInputConfig::isPsController() - Device name: " << config->getDeviceName() << ", devide GUID: " << config->getDeviceGUIDString();
 	if (Utils::String::contains(config->getDeviceName(), "PLAYSTATION") || Utils::String::contains(config->getDeviceName(), "PS3 Ga")
 	  || Utils::String::contains(config->getDeviceName(), "PS(R) Ga") || Utils::String::contains(config->getDeviceName(), "Sony")
-	  || Utils::String::contains(config->getDeviceGUIDString(), "0000004c050000") || Utils::String::contains(config->getDeviceGUIDString(), "0000006b140000"))
+	  || Utils::String::contains(config->getDeviceGUIDString(), "4c050000") || Utils::String::contains(config->getDeviceGUIDString(), "6b140000"))
 		return true;
 
 	return false;
