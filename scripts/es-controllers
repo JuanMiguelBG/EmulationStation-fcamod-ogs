@@ -15,7 +15,7 @@ do_help()
 	echo "or" >&2
 	echo "" >&2
 	echo "$0 get [key]" >&2
-	echo "Valid keys: turbo_button, turbo_button_tate, default_controller_index, controllers_number" >&2
+	echo "Valid keys: turbo_button, turbo_button_tate, default_controller_index, controllers_number, max_players" >&2
 	echo "" >&2
 	echo "or" >&2
 	echo "" >&2
@@ -284,7 +284,8 @@ do_get_default_controller_player()
 
 do_get_controllers_number()
 {
-    local num_controllers=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | grep "player" | wc -l)
+    local num_controllers="0"
+    [ -f "$INPUT_CONTROLLERS_CONFIG_PATH" ] && num_controllers=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | grep "player" | wc -l)
     #print_log $LOG_FILE "INFO" "Executing 'do_get_controllers_number()' - number of controllers: '$num_controllers'"
 
     echo "$num_controllers"
@@ -328,6 +329,9 @@ do_config_get_value()
         "controllers_number")
             do_get_controllers_number
         ;;
+        "max_players")
+            echo "$MAX_PLAYERS"
+        ;;
         *)
             do_help
             >&2 echo "error: invalid get command ${key}"
@@ -369,50 +373,46 @@ do_config_remove_value()
     esac
 }
 
-do_get_controller_hotkey_button_data()
+do_get_controller_hotkey_button_value()
 {
     local controller_name="$1"
+    local ra_controller_input_cfg="$2"
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_get_controller_hotkey_button()' - searching hotkey of controller '$controller_name', on ES input controller file '$ES_INPUT_CFG_FILE'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_controller_hotkey_button_value()' - searching hotkey of controller '$controller_name', on RA input controller file '$ra_controller_input_cfg'"
+    local hotkey_value="" # $(get_ra_property "$ra_controller_input_cfg" "input_hotkey_btn" "")
 
-    local controller_def=$(tac ${ES_INPUT_CFG_FILE} | grep "${controller_name}" -m 1 -B 9999 | tac)
-    local hotkey_def=$(echo "${controller_def}" | grep "name=\"hotkey" | head -n1)
-    #print_log $LOG_FILE "INFO" "Executing 'do_get_controller_hotkey_button()' - hotkey definition '$hotkey_def'"
+#    if [ -z "$hotkey_value" ]; then
+       #print_log $LOG_FILE "INFO" "Executing 'do_get_controller_hotkey_button_value()' - searching hotkey of controller '$controller_name', on ES input controller file '$ES_INPUT_CFG_FILE'"
+       local controller_def=$(tac ${ES_INPUT_CFG_FILE} | grep "${controller_name}" -m 1 -B 9999 | tac)
+       local hotkey_def=$(echo "${controller_def}" | grep "name=\"hotkey" | head -n1)
+       #print_log $LOG_FILE "DEBUG" "Executing 'do_get_controller_hotkey_button_value()' - hotkey definition '$hotkey_def'"
 
-    # test if it is button
-    if [[ $hotkey_def != *"button"* ]]; then
-       #print_log $LOG_FILE "INFO" "Executing 'do_get_controller_hotkey_button()' - hotkey is not a button, skipping..."
-       echo ""
-       return
-    fi
-    local hotkey_value=$(echo "$hotkey_def" | grep -o -P -w 'id="\K[^"]+')
-    local hotkey_name=$(echo "${controller_def}" | grep button | grep "id=\"0\"" | head -n1)
+       # test if it is button
+       if [[ $hotkey_def == *"button"* ]]; then
+          hotkey_value=$(echo "$hotkey_def" | grep -o -P -w 'id="\K[^"]+')
+       fi
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_get_controller_hotkey_button()' - hotkey data [name='$hotkey_name', value='$hotkey_value']"
-    echo "$hotkey_name;$hotkey_value"
+       if [ -z "$hotkey_value" ]; then
+          hotkey_value=$(get_ra_property "$ra_controller_input_cfg" "input_select_btn" "")
+          #print_log $LOG_FILE "DEBUG" "Executing 'do_get_controller_hotkey_button_value()' - hotkey 'input_enable_hotkey_btn', default button 'SELECT', device button value '$hotkey_value'"
+       fi
+#    fi
+
+    #print_log $LOG_FILE "INFO" "Executing 'do_get_controller_hotkey_button_value()' - hotkey value='$hotkey_value'"
+    echo "$hotkey_value"
 }
 
 do_config_hotkeys_retroarch()
 {
     local config_file="$1"
     local ra_controller_input_cfg="$2"
+    local controller_name="$3"
 
     #print_log $LOG_FILE "INFO" "Executing 'do_config_hotkeys_retroarch()' - on player one, RA config file '$config_file', RA controller config file '$ra_controller_input_cfg'"
 
     # setting hotkey, default SELECT button
-    local hotkey_data=$(do_get_controller_hotkey_button_data)
-    #print_log $LOG_FILE "DEBUG" "Executing 'do_config_hotkeys_retroarch()' - hotkey data '$hotkey_data'"
-    local ra_button_value=""
-
-    if [ ! -z "$hotkey_data" ]; then
-       local hotkey_name=$(echo "$hotkey_data" | sed 's/;.*//g')
-       ra_button_value=$(echo "$hotkey_data" | sed 's/.*;//g')
-       #print_log $LOG_FILE "DEBUG" "Executing 'do_config_hotkeys_retroarch()' - hotkey 'input_enable_hotkey_btn', default button '${hotkey_name^^}', device button value '$ra_button_value'"
-    else
-       ra_button_value=$(get_ra_property "$ra_controller_input_cfg" "input_select_btn" "")
-       #print_log $LOG_FILE "DEBUG" "Executing 'do_config_hotkeys_retroarch()' - hotkey 'input_enable_hotkey_btn', default button 'SELECT', device button value '$ra_button_value'"
-    fi
-
+    local ra_button_value=$(do_get_controller_hotkey_button_value "$controller_name" "$ra_controller_input_cfg" )
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_config_hotkeys_retroarch()' - hotkey 'input_enable_hotkey_btn', device button value '$ra_button_value'"
     [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_enable_hotkey_btn" "$ra_button_value"
 
     # setting exit emulator to START button
@@ -466,17 +466,42 @@ do_config_hotkeys_retroarch()
     [ ! -z "$ra_button_value" ] && set_ra_property "$config_file" "input_toggle_fast_forward_btn" "$ra_button_value"
 }
 
+do_config_default_controller_retroarch()
+{
+    local ra_controller_input_cfg="$1/$DEFAULT_RA_CONTROLLER_CONFIG_FILE"
+    local tate_mode=$2
+    #print_log $LOG_FILE "INFO" "Executing 'do_config_default_controller_retroarch()' - default controller auto config file '$ra_controller_input_cfg', TATE mode '$tate_mode'"
+
+    local turbo_button_value=$(do_get_ra_turbo_button_value "$ra_controller_input_cfg")
+    [ "$tate_mode" = "true" ] && turbo_button_value=$(do_get_ra_turbo_button_tate_value "$ra_controller_input_cfg")
+    #print_log $LOG_FILE "DEBUG" "Executing 'do_config_default_controller_retroarch()' - name '$DEFAULT_RA_CONTROLLER_CONFIG_FILE', turbo button value '$turbo_button_value', TATE mode '$tate_mode'"
+
+    # always remove previous value
+    do_remove_ra_turbo_button "$ra_controller_input_cfg"
+    if [ ! -z "$turbo_button_value" ]; then
+       do_set_ra_turbo_button_value "$turbo_button_value" "$ra_controller_input_cfg"
+    fi
+}
+
 do_config_controllers_retroarch()
 {
-    local config_file=$1
-    local autoconfig_folder=$2
-    local tate_mode=$3
+    local config_file="$1/$RA_CONTROLLER_CONFIG_FILE"
+    local autoconfig_folder="$1/$RA_AUTOCONFIG_FOLDER"
+    local tate_mode=$2
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - configuration file: '$config_file', TATE mode '$tate_mode'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - configuration file: '$config_file', auto config folder '$autoconfig_folder', TATE mode '$tate_mode'"
 
     local num_controllers=$(do_get_controllers_number)
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - configuration file: '$config_file', number of controllers: '$num_controllers'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - number of controllers: '$num_controllers'"
+    if [ "$num_controllers" -le "1" ]; then
+       #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - only default controlleris available, fast configuration"
+       do_config_default_controller_retroarch "$autoconfig_folder" "$tate_mode"
+       return
+    fi
+
+    [ -f "$config_file" ] && sudo rm -f "$config_file"
+    cp -f "${config_file}_template" "$config_file"
 
     for player in `seq 1 $MAX_PLAYERS`
     do
@@ -485,7 +510,7 @@ do_config_controllers_retroarch()
 
        #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - setting controller of player '$player' to index '$index'"
        if [ "$index" == "null" ]; then
-          #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - resetting controller '$position' to index 'nul'"
+          #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - resetting controller '$player' to index 'nul'"
           set_ra_property "$config_file" "input_player${player}_joypad_index" "nul"
           continue
        fi
@@ -511,7 +536,7 @@ do_config_controllers_retroarch()
        # configure hotkeys to player 1
        if [ "$player" -eq "1" ]; then
            #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers_retroarch()' - controller '$player', index '$index', name '$controller_name', configuring hotkeys"
-           do_config_hotkeys_retroarch "$config_file" "$ra_controller_input_cfg"
+           do_config_hotkeys_retroarch "$config_file" "$ra_controller_input_cfg" "$controller_name"
        fi
     done
 }
@@ -519,37 +544,33 @@ do_config_controllers_retroarch()
 do_config_controllers()
 {
     local emulator=$1
-    local config_file=$2
-    local tate_mode=$3
+    local tate_mode=$2
     if [ -z "$tate_mode" ] || [ "$tate_mode" != "true" ]; then
        tate_mode="false"
     fi
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers()' - emulator: '$emulator', configuration file: '$config_file', TATE mode '$tate_mode'"
-
-    if [ -z "$emulator" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
-        #print_log $LOG_FILE "WARNING" "Executing 'do_config_controllers()' - emulator or configuration file are empty or not exist, skipping..."
-        return
-    fi
+    #print_log $LOG_FILE "INFO" "Executing 'do_config_controllers()' - emulator: '$emulator', TATE mode '$tate_mode'"
 
     emulator="${emulator^^}"
 
     case "${emulator}" in
         "RETROARCH")
-            do_config_controllers_retroarch "$config_file" "$RA_AUTOCONFIG_FOLDER" "$tate_mode"
+            do_config_controllers_retroarch "$RA_CONFIG_FOLDER" "$tate_mode"
         ;;
         "RETROARCH32")
-            do_config_controllers_retroarch "$config_file" "$RA32_AUTOCONFIG_FOLDER" "$tate_mode"
+            do_config_controllers_retroarch "$RA32_CONFIG_FOLDER" "$tate_mode"
         ;;
+        *)
+            #print_log $LOG_FILE "WARNING" "Executing 'do_config_controllers()' - emulator is empty or not exist, skipping..."
     esac
 }
 
 do_remove_controllers_config_retroarch()
 {
-    local config_file=$1
-    local autoconfig_folder=$2
+    local config_file="$1/$RA_CONTROLLER_CONFIG_FILE"
+    local autoconfig_folder="$1/$RA_AUTOCONFIG_FOLDER"
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_remove_controllers_config_retroarch()' - configuration file: '$config_file'"
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_controllers_config_retroarch()' - configuration file: '$config_file', auto config folder '$autoconfig_folder'"
 
     local num_controllers=$(do_get_controllers_number)
 
@@ -562,6 +583,7 @@ do_remove_controllers_config_retroarch()
 
        # remove turbo button
        local controller_name=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | jq '.['"$position"'].name')
+       local controller_name=$(cat "$INPUT_CONTROLLERS_CONFIG_PATH" | sed -n 's|.*"name" : "\([^"]*\)".*|\1|p' | head -$player | tail -1)
        controller_name="${controller_name//\"/}"
        #print_log $LOG_FILE "INFO" "Executing 'do_remove_controllers_config_retroarch()' - controller '$player', index '$index', name '$controller_name'"
        [ "$controller_name" == "null" ] && continue
@@ -578,24 +600,20 @@ do_remove_controllers_config_retroarch()
 do_remove_controllers_config()
 {
     local emulator=$1
-    local config_file=$2
 
-    #print_log $LOG_FILE "INFO" "Executing 'do_remove_controllers_config()' - emulator: '$emulator', configuration file: '$config_file'"
-
-    if [ -z "$emulator" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
-        #print_log $LOG_FILE "WARNING" "Executing 'do_remove_controllers_config()' - emulator or configuration file are empty or not exist, skipping..."
-        return
-    fi
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_controllers_config()' - emulator: '$emulator'"
 
     emulator="${emulator^^}"
 
     case "${emulator}" in
         "RETROARCH")
-            do_remove_controllers_config_retroarch "$config_file" "$RA_AUTOCONFIG_FOLDER"
+            do_remove_controllers_config_retroarch "$RA_CONFIG_FOLDER"
         ;;
         "RETROARCH32")
-            do_remove_controllers_config_retroarch "$config_file" "$RA32_AUTOCONFIG_FOLDER"
+            do_remove_controllers_config_retroarch "$RA32_CONFIG_FOLDER"
         ;;
+        *)
+            #print_log $LOG_FILE "WARNING" "Executing 'do_remove_controllers_config()' - emulatoris empty, skipping..."
     esac
 }
 
@@ -607,7 +625,9 @@ do_remove_controllers_config()
 LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-controllers.log"
 ES_INPUT_CFG_FILE="$ES_ETC_PATH/es_input.cfg"
 DEFAULT_CONTROLLER_NAME="retrogame_joypad"
-DEFAULT_RA_CONTROLLER_CONFIG_FILE="$RA_CONFIG_FOLDER/autoconfig/udev/$DEFAULT_CONTROLLER_NAME.cfg"
+DEFAULT_RA_CONTROLLER_CONFIG_FILE="$DEFAULT_CONTROLLER_NAME.cfg"
+RA_AUTOCONFIG_FOLDER="autoconfig/udev"
+RA_CONTROLLER_CONFIG_FILE="retroarch.cfg.ext"
 DEFAULT_RA_TURBO_BUTTON_PROPERTY="input_turbo_btn"
 MAX_PLAYERS=5
 
@@ -647,10 +667,10 @@ case "${ACTION}" in
         do_config_remove_value "$1" "$2"
     ;;
     "config_controllers")
-        do_config_controllers "$1" "$2" "$3" || exit_execution 1 "$1" "$2" "$3"
+        do_config_controllers "$1" "$2" || exit_execution 1 "$1" "$2"
     ;;
     "remove_controllers_config")
-        do_remove_controllers_config "$1" "$2" || exit_execution 1 "$1" "$2"
+        do_remove_controllers_config "$1" || exit_execution 1 "$1"
     ;;
     *)
         do_help
