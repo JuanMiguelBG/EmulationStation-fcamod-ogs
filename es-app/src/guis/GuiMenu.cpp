@@ -2575,7 +2575,7 @@ void GuiMenu::openAdvancedSettings()
 		}
 	}
 
-
+/*
 	// power saver
 	auto power_saver = std::make_shared< OptionListComponent<std::string> >(window, _("POWER SAVER MODES"));
 	std::vector<std::string> ps_modes;
@@ -2601,7 +2601,7 @@ void GuiMenu::openAdvancedSettings()
 		Settings::getInstance()->setString("PowerSaverMode", power_saver->getSelected());
 		PowerSaver::init();
 	});
-
+*/
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
 	{
 		// sleep / suspend modes
