@@ -73,16 +73,6 @@ bool DateTimeEditComponent::input(InputConfig* config, Input input)
 
 			if(mEditIndex == 0)
 			{
-				new_tm.tm_mon += incDir;
-
-				if(new_tm.tm_mon > 11)
-					new_tm.tm_mon = 0;
-				else if(new_tm.tm_mon < 0)
-					new_tm.tm_mon = 11;
-
-			}
-			else if(mEditIndex == 1)
-			{
 				const int days_in_month = Utils::Time::daysInMonth(new_tm.tm_year + 1900, new_tm.tm_mon + 1);
 				new_tm.tm_mday += incDir;
 
@@ -90,6 +80,16 @@ bool DateTimeEditComponent::input(InputConfig* config, Input input)
 					new_tm.tm_mday = 1;
 				else if(new_tm.tm_mday < 1)
 					new_tm.tm_mday = days_in_month;
+
+			}
+			else if(mEditIndex == 1)
+			{
+				new_tm.tm_mon += incDir;
+
+				if(new_tm.tm_mon > 11)
+					new_tm.tm_mon = 0;
+				else if(new_tm.tm_mon < 0)
+					new_tm.tm_mon = 11;
 
 			}
 			else if(mEditIndex == 2)
@@ -205,12 +205,12 @@ std::string DateTimeEditComponent::getDisplayString(DisplayMode mode) const
 	switch(mode)
 	{
 	case DISP_DATE:
-		fmt = "%m/%d/%Y";
+		fmt = "%d/%m/%Y";
 		break;
 	case DISP_DATE_TIME:
 		if(mTime.getTime() == 0)
 			return _("unknown");
-		fmt = "%m/%d/%Y %H:%M:%S";
+		fmt = "%d/%m/%Y %H:%M:%S";
 		break;
 	case DISP_RELATIVE_TO_NOW:
 		{
@@ -273,13 +273,13 @@ void DateTimeEditComponent::updateTextCache()
 	if(dispString.empty() || mode == DISP_RELATIVE_TO_NOW)
 		return;
 
-	//month
+	//day
 	Vector2f start(0, 0);
 	Vector2f end = font->sizeText(dispString.substr(0, 2));
 	Vector2f diff = end - start;
 	mCursorBoxes.push_back(Vector4f(start[0], start[1], diff[0], diff[1]));
 
-	//day
+	//month
 	start[0] = font->sizeText(dispString.substr(0, 3)).x();
 	end = font->sizeText(dispString.substr(0, 5));
 	diff = end - start;
