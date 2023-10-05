@@ -2718,7 +2718,7 @@ void GuiMenu::openAdvancedSettings()
 				}
 			});
 	}
-
+/*
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OVERCLOCK))
 	{
 		// overclock
@@ -2746,7 +2746,7 @@ void GuiMenu::openAdvancedSettings()
 				}
 			});
 	}
-
+*/
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PRELOAD_VLC))
 	{
 		// preload VLC - workaround for the freeze of the first video play
