@@ -57,6 +57,10 @@ GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(
 {
 	mWaitingLoad = false;
 
+	LOG(LogDebug) << "GuiMenu::GuiMenu() - Before calling 'ApiSystem::loadOtherSettings()'";
+	ApiSystem::getInstance()->loadOtherSettings();
+	LOG(LogDebug) << "GuiMenu::GuiMenu() - After call 'ApiSystem::loadOtherSettings()'";
+
 	auto theme = ThemeData::getMenuTheme();
 
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
@@ -490,7 +494,12 @@ void GuiMenu::openControllersSettings()
 					std::string displayName = "#" + std::to_string(config->getDeviceIndex()) + " ";
 					std::string deviceAlias = Settings::getInstance()->getString(config->getDeviceName() + ".bluetooth.input_gaming.alias");
 					if (!deviceAlias.empty())
-						displayName.append(deviceAlias);
+					{
+						std::string bluetoothId = config->getDeviceBluetoothId(); // DELETE LINE, only for debug 
+						std::string aliasBluetoothId = Settings::getInstance()->getString(config->getDeviceName() + ".bluetooth.input_gaming.id");
+						if (Utils::String::equalsIgnoreCase(config->getDeviceBluetoothId(), aliasBluetoothId))
+							displayName.append(deviceAlias);
+					}
 					else
 						displayName.append(config->getDeviceName());
 
@@ -510,7 +519,7 @@ void GuiMenu::openControllersSettings()
 						LOG(LogWarning) << "GuiMenu::openControllersSettings() - adding entry for player" << player << " (selected): " << config->getDeviceName() << "  " << config->getDeviceGUIDString() << "  " << config->getDevicePath();
 						inputOptionList->add(displayName, newInputConfig, true);
 					}
-					else 
+					else
 					{
 						LOG(LogInfo) << "GuiMenu::openControllersSettings() - adding entry for player" << player << " (not selected): " << config->getDeviceName() << "  " << config->getDeviceGUIDString() << "  " << config->getDevicePath();
 						inputOptionList->add(displayName, newInputConfig, false);
@@ -2561,8 +2570,6 @@ void GuiMenu::openAdvancedSettings()
 				{
 					Settings::getInstance()->setString("Language", language->getSelected());
 					s->setVariable("reloadGuiMenu", true);
-					if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LANGUAGE))
-						ApiSystem::getInstance()->setLanguage(language->getSelected());
 				}
 			});
 		}
@@ -2755,25 +2762,7 @@ void GuiMenu::openAdvancedSettings()
 	s->addGroup(_("USER INTERFACE"));
 
 	// framerate
-	auto framerate = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("DrawFramerate"));
-	s->addWithLabel(_("SHOW FRAMERATE"), framerate);
-	s->addSaveFunc([framerate] { Settings::getInstance()->setBool("DrawFramerate", framerate->getState()); });
-
-	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SHOW_FPS))
-	{
-	// retroarch framerate
-		bool retroarch_fps_value = ApiSystem::getInstance()->isShowRetroarchFps();
-		auto retroarch_fps = std::make_shared<SwitchComponent>(window, retroarch_fps_value);
-		s->addWithLabel(_("SHOW RETROARCH FPS"), retroarch_fps);
-		s->addSaveFunc([retroarch_fps, retroarch_fps_value]
-			{
-				bool retroarch_fps_new_value = retroarch_fps->getState();
-				if (retroarch_fps_value != retroarch_fps_new_value)
-				{
-					ApiSystem::getInstance()->setShowRetroarchFps(retroarch_fps_new_value);
-				}
-			});
-	}
+	auto framerate = s->addSwitch(_("SHOW FRAMERATE"), _("ALSO TURNS ON THE EMULATOR'S NATIVE FPS COUNTER, IF AVAILABLE."), "DrawFramerate", true, nullptr);
 
 	// show detailed system information
 	auto detailedSystemInfo = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("ShowDetailedSystemInfo"));
@@ -2870,9 +2859,10 @@ void GuiMenu::openAdvancedSettings()
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS))
 	{
-		auto scripts_log_activated = std::make_shared<SwitchComponent>(window, ApiSystem::getInstance()->isEsScriptsLoggingActivated());
+		auto scripts_log_activated = std::make_shared<SwitchComponent>(window, Settings::getInstance()->getBool("LogScriptsEnabled"));
 		s->addWithLabel(_("ACTIVATE ES SCRIPTS LOGGING"), scripts_log_activated);
 		s->addSaveFunc([scripts_log_activated] {
+			Settings::getInstance()->setBool("LogScriptsEnabled", scripts_log_activated->getState());
 			ApiSystem::getInstance()->setEsScriptsLoggingActivated(scripts_log_activated->getState(), Settings::getInstance()->getString("LogLevel"),
 																   Settings::getInstance()->getBool("LogWithMilliseconds"));
 		});

@@ -31,8 +31,6 @@ std::vector<const char*> settings_dont_save {
 	{ "MusicDirectory" },
 	{ "UserMusicDirectory" },
 	{ "ThemeRandomSet" },
-	{ "global.retroachievements.username" },
-	{ "global.retroachievements.password" },
 	{ "system.hostname" },
 	{ "wifi.enabled" },
 	{ "wifi.key" },
@@ -242,6 +240,7 @@ void Settings::setDefaults()
 	// Log settings
 	mStringMap["LogLevel"] = "default";
 	mBoolMap["LogWithMilliseconds"] = false;
+	mBoolMap["LogScriptsEnabled"] = false;
 
 	mBoolMap["AnimatedMainMenu"] = true;
 
@@ -271,6 +270,21 @@ void Settings::setDefaults()
 
 	mStringMap["TurboHotkeyButton"] = "LeftThumb";
 	mStringMap["TurboHotkeyButtonTate"] = "RightThumb";
+
+	// Retroachievements
+	mBoolMap["global.retroachievements"] = false;
+	mBoolMap["global.retroachievements.hardcore"] = false;
+	mBoolMap["global.retroachievements.leaderboards"] = false;
+	mBoolMap["global.retroachievements.challenge"] = false;
+	mBoolMap["global.retroachievements.richpresence"] = false;
+	mBoolMap["global.retroachievements.badges"] = false;
+	mBoolMap["global.retroachievements.test"] = false;
+	mBoolMap["global.retroachievements.verbose"] = false;
+	mBoolMap["global.retroachievements.screenshot"] = false;
+	mBoolMap["global.retroachievements.start"] = false;
+	mStringMap["global.retroachievements.sound"] = "none";
+	mStringMap["global.retroachievements.username"] = "";
+	mStringMap["global.retroachievements.password"] = "";
 
 	mDefaultBoolMap = mBoolMap;
 	mDefaultIntMap = mIntMap;

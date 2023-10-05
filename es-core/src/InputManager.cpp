@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <mutex>
 #include "EsLocale.h"
-#include "renderers/Renderer.h"
 
 #define KEYBOARD_GUID_STRING          "-1"
 #define CEC_GUID_STRING               "-2"
@@ -204,7 +203,8 @@ void InputManager::rebuildAllJoysticks(bool deinit)
 
 		// create the InputConfig
 		std::string addedDeviceName = SDL_JoystickName(joy);
-		InputConfig *config = new InputConfig(joyId, idx, addedDeviceName, guid, SDL_JoystickNumButtons(joy), SDL_JoystickNumHats(joy), SDL_JoystickNumAxes(joy), devicePath);
+		std::string deviceBluetoothId = getJoystickBluetoothId(addedDeviceName, guid, devicePath);
+		InputConfig *config = new InputConfig(joyId, idx, addedDeviceName, guid, SDL_JoystickNumButtons(joy), SDL_JoystickNumHats(joy), SDL_JoystickNumAxes(joy), devicePath, deviceBluetoothId);
 		mInputConfigs[joyId] = config;
 		std::string logMessage = "Added known joystick";
 		if (!loadInputConfig(config))
@@ -257,7 +257,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 		Sint16 x;
 
 #if SDL_VERSION_ATLEAST(2, 0, 9)
-		LOG(LogDebug) << "InputManager::rebuildAllJoysticks() - SDL 2.0.9 o superior";
 		// SDL_JoystickGetAxisInitialState doesn't work with 8bitdo start+b
 		// required for several pads like xbox and 8bitdo
 
@@ -353,6 +352,8 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 				std::string deviceID = "";
 				std::string deviceIndex = "";
 				std::string devicePath = "";
+				std::string bluetoothId = "";
+
 				if (iConfig && (iConfig->getDeviceName() == addedDeviceName))
 				{
 					if (iConfig->isDefaultInput())
@@ -362,6 +363,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 					deviceID = std::to_string(iConfig->getDeviceId());
 					deviceIndex = std::to_string(iConfig->getDeviceIndex());
 					devicePath = iConfig->getDevicePath();
+					bluetoothId = iConfig->getDeviceBluetoothId();
 				}
 
 				Scripting::fireEvent("input-controller-added", addedDeviceName, deviceGUIDString, deviceID, deviceIndex, devicePath, "false");
@@ -370,7 +372,11 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 				{
 					std::string alias = Settings::getInstance()->getString(addedDeviceName + ".bluetooth.input_gaming.alias");
 					if (!alias.empty())
-						addedDeviceName = alias;
+					{
+						std::string aliasBluetoothId = Settings::getInstance()->getString(addedDeviceName + ".bluetooth.input_gaming.id");
+						if (Utils::String::equalsIgnoreCase(bluetoothId, aliasBluetoothId))
+							addedDeviceName = alias;
+					}
 				}
 				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 			}
@@ -389,7 +395,12 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 				{
 					std::string alias = Settings::getInstance()->getString(removedDeviceName + ".bluetooth.input_gaming.alias");
 					if (!alias.empty())
-						removedDeviceName = alias;
+					{
+						std::string bluetoothId = iConfig->getDeviceBluetoothId(); // DELETE LINE, only for debug 
+						std::string aliasBluetoothId = Settings::getInstance()->getString(removedDeviceName + ".bluetooth.input_gaming.id");
+						if (Utils::String::equalsIgnoreCase(iConfig->getDeviceBluetoothId(), aliasBluetoothId))
+							removedDeviceName = alias;
+					}
 				}
 				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s disconnected").c_str(), Utils::String::trim(removedDeviceName).c_str()));
 			}
@@ -990,7 +1001,7 @@ std::string InputManager::configureEmulators() {
 			command << "    \"nbbuttons\" : " << playerInputConfig->getDeviceNbButtons() << ",\n";
 			command << "    \"nbhats\" : " << playerInputConfig->getDeviceNbHats() << ",\n";
 			command << "    \"nbaxes\" : " << playerInputConfig->getDeviceNbAxes() << ",\n";
-			command << "    \"ndefault\" : " << playerInputConfig->isDefaultInput() << "\n";
+			command << "    \"default\" : " << Utils::String::boolToString(playerInputConfig->isDefaultInput()) << "\n";
 			command << "}";
 			isPlayerWrited = true;
 /*
@@ -1065,4 +1076,135 @@ std::vector<InputConfig*> InputManager::getInputConfigs()
 	}
 
 	return ret;
+}
+
+std::string InputManager::getJoystickBluetoothId(const std::string& name, const std::string& guid, const std::string& path)
+{
+    LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - name: " << name << ", guid: " << guid << ", path: " << path;
+    FILE *fd;
+	std::string result;
+
+	std::string bus = guid.substr(0, 4);
+	bus.substr(2, 2).append(bus.substr(0,2));
+
+	if (bus != "0005")
+	{
+        LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - guid: " << guid << ", bus: " << bus << ", is not a Bluetooth device, skip";
+        return result;
+    }
+
+    if ((fd = fopen("/proc/bus/input/devices", "r+")) == NULL)
+	{
+        LOG(LogError) << "InputManager::getJoystickBluetoothId() - Can't open the file 'proc/bus/input/devices'";
+        return result;
+    }
+
+	std::string vendor = guid.substr(8, 4);
+	vendor.substr(2, 2).append(vendor.substr(0,2));
+	std::string product = guid.substr(16, 4);
+	product.substr(2, 2).append(product.substr(0,2));
+	std::string version = guid.substr(24, 4);
+	version.substr(2, 2).append(version.substr(0,2));
+    
+	LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - device data, bus: " << bus << ", vendor: " << vendor << ", product: " << product << ", version: " << version;
+
+    int i = 0;
+    char line[256];
+    std::string arg1, arg2, arg3, arg4;
+	bool candidate_found = false;
+
+    while (!feof(fd))
+	{
+        if (fgets(line, 256, fd) <= 0) continue;
+
+		if (!candidate_found)
+		{
+			if (line[0] == 'I')
+			{
+	            i = 1;
+    	        while (line[i])
+				{
+            	    sscanf(&line[i], "Bus=%s", &arg1);
+	                sscanf(&line[i], "Vendor=%s", &arg2);
+    	            sscanf(&line[i], "Product=%s", &arg3);
+        	        sscanf(&line[i], "Version=%s", &arg4);
+            	    i++;
+	            }
+				LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - device readed data, bus: " << arg1 << ", vendor: " << arg2 << ", product: " << arg3 << ", version: " << arg4;
+				if ((arg1 == "0005") && (vendor == arg2) && (product == arg3) && (version == arg4))
+					candidate_found = true;
+        	}
+		}
+        else
+		{
+			if (line[0] == 'N')
+			{
+    	        i = 1;
+        	    while (line[i])
+				{
+	                sscanf(&line[i], "Name=\"%s\"", &arg1);
+    	            i++;
+        	    }
+    			LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - device name: " << name << ", candidate name: " << arg1;
+				if (name != arg1)
+				{
+					candidate_found = false;
+					continue;
+				}
+    	    }
+        	else if (line[0] == 'H')
+			{
+				//H: Handlers=js0 event4 dmcfreq 
+				//H: Handlers=kbd js1 event6 dmcfreq
+            	i = 1;
+	            while (line[i])
+				{
+        	        sscanf(&line[i], "Handlers=%s %s %s", &arg1, &arg2, &arg3);
+            	    i++;
+	            }
+    			LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - Handlers: " << arg1 << ", " << arg2 << ", " << arg3;
+				if (arg1 == "kbd")
+				{
+					arg1 = arg2;
+					arg2 = arg3;
+				}
+    			LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - js: " << arg1;
+				if (!Utils::String::startsWith(arg1, "js"))
+				{
+					candidate_found = false;
+					continue;
+				}
+				// device path --> /dev/input/event3
+				std::vector<std::string> path_parts = Utils::String::split(path, '/');
+    			LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - device event: " << path_parts[path_parts.size() -1 ] << ", readed event: " << arg2;
+				if (path_parts[path_parts.size() -1 ] != arg2)
+				{
+					candidate_found = false;
+					continue;
+				}
+	        }
+    	    else if (line[0] == 'U')
+			{
+				// Bluetooth device, Uniq is MAC address --> U: Uniq=44:16:22:FA:7C:F3
+    	        i = 1;
+        	    while (line[i])
+				{
+	                sscanf(&line[i], "Uniq=%s", &arg1);
+    	            i++;
+        	    }
+    			LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - Uniq: " << arg1;
+				if (arg1.empty())
+				{
+					candidate_found = false;
+					continue;
+				}
+			    LOG(LogDebug) << "InputManager::getJoystickBluetoothId() - MAC: " << arg1;
+				result = arg1;
+				break;
+			}
+		}
+    }
+
+    fclose(fd);
+    return result;
 }

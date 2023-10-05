@@ -65,11 +65,8 @@ private:
 
 	BusyComponent mBusyAnim;
 
-	void initInputConfigStructure(bool isXboxController = false, bool isPsController = false);
+	void initInputConfigStructure(bool isXboxController = false, bool isPsxController = false);
 	std::vector<InputConfigStructure> GUI_INPUT_CONFIG_LIST;
-
-	bool isXboxController(InputConfig* config);
-	bool isPsController(InputConfig* config);
 };
 
 #endif // ES_CORE_GUIS_GUI_INPUT_CONFIG_H

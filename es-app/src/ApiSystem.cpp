@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/statvfs.h>
 #include "HttpReq.h"
+#include "utils/AsyncUtil.h"
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
 #include "utils/md5.h"
@@ -528,7 +529,7 @@ int ApiSystem::getFrequencyGpu()
 
 bool ApiSystem::loadSystemWifiInfoToSystemConf(const std::string& wifiInfo)
 {
-	LOG(LogInfo) << "ApiSystem::loadSystemWifiInfoToSystemConf()";
+	LOG(LogDebug) << "ApiSystem::loadSystemWifiInfoToSystemConf()";
 
 	if (Utils::String::startsWith(wifiInfo, "<wifi_info "))
 	{
@@ -1168,55 +1169,6 @@ bool ApiSystem::forgetAllKnowedWifiNetworks()
 	return executeSystemScript("es-wifi forget_all_wifis");
 }
 
-bool ApiSystem::setLanguage(std::string language)
-{
-	LOG(LogInfo) << "ApiSystem::setLanguage()";
-
-	return executeSystemScript("es-language set " + language + " &");
-}
-
-bool ApiSystem::getRetroachievementsEnabled()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsEnabled()";
-
-	return Utils::String::toBool(getShOutput(R"(es-cheevos get cheevos_enable)"));
-}
-
-bool ApiSystem::getRetroachievementsHardcoreEnabled()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsHardcoreEnabled()";
-
-	return Utils::String::toBool(getShOutput(R"(es-cheevos get cheevos_hardcore_mode_enable)"));
-}
-
-bool ApiSystem::getRetroachievementsLeaderboardsEnabled()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsLeaderboardsEnabled()";
-
-	return Utils::String::toBool(getShOutput(R"(es-cheevos get cheevos_leaderboards_enable)"));
-}
-
-bool ApiSystem::getRetroachievementsVerboseEnabled()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsVerboseEnabled()";
-
-	return Utils::String::toBool(getShOutput(R"(es-cheevos get cheevos_verbose_enable)"));
-}
-
-bool ApiSystem::getRetroachievementsAutomaticScreenshotEnabled()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsAutomaticScreenshotEnabled()";
-
-	return Utils::String::toBool(getShOutput(R"(es-cheevos get cheevos_auto_screenshot)"));
-}
-
-bool ApiSystem::getRetroachievementsUnlockSoundEnabled()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsUnlockSoundEnabled()";
-
-	return Utils::String::toBool(getShOutput(R"(es-cheevos get cheevos_unlock_sound_enable)"));
-}
-
 std::vector<std::string> ApiSystem::getRetroachievementsSoundsList()
 {
 	Utils::FileSystem::FileSystemCacheActivator fsc;
@@ -1249,62 +1201,6 @@ std::vector<std::string> ApiSystem::getRetroachievementsSoundsList()
 
 	std::sort(ret.begin(), ret.end());
 	return ret;
-}
-
-std::string ApiSystem::getRetroachievementsUsername()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsUsername()";
-
-	return getShOutput(R"(es-cheevos get cheevos_username)");
-}
-
-bool ApiSystem::getRetroachievementsChallengeIndicators()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsChallengeIndicators()";
-
-	return Utils::String::toBool( getShOutput(R"(es-cheevos get cheevos_challenge_indicators)") );
-}
-
-bool ApiSystem::getRetroachievementsRichpresenceEnable()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsRichpresenceEnable()";
-
-	return Utils::String::toBool( getShOutput(R"(es-cheevos get cheevos_richpresence_enable)") );
-}
-
-bool ApiSystem::getRetroachievementsBadgesEnable()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsBadgesEnable()";
-
-	return Utils::String::toBool( getShOutput(R"(es-cheevos get cheevos_badges_enable)") );
-}
-
-bool ApiSystem::getRetroachievementsTestUnofficial()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsTestUnofficial()";
-
-	return Utils::String::toBool( getShOutput(R"(es-cheevos get cheevos_test_unofficial)") );
-}
-
-bool ApiSystem::getRetroachievementsStartActive()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsStartActive()";
-
-	return Utils::String::toBool( getShOutput(R"(es-cheevos get cheevos_start_active)") );
-}
-
-std::string ApiSystem::getRetroachievementsPassword()
-{
-	LOG(LogInfo) << "ApiSystem::getRetroachievementsPassword()";
-
-	return getShOutput(R"(es-cheevos get cheevos_password)");
-}
-
-bool  ApiSystem::setRetroachievementsValues(bool retroachievements_state, bool hardcore_state, bool leaderboards_state, bool verbose_state, bool automatic_screenshot_state, bool challenge_indicators_state, bool richpresence_state, bool badges_state, bool test_unofficial_state, bool start_active_state, const std::string sound, const std::string username, const std::string password)
-{
-	LOG(LogInfo) << "ApiSystem::setRetroachievementsValues()";
-
-	return executeSystemScript("es-cheevos set_all_values " + Utils::String::boolToString(retroachievements_state) + " " + Utils::String::boolToString(hardcore_state) + " " + Utils::String::boolToString(leaderboards_state) + " " + Utils::String::boolToString(verbose_state) + " " + Utils::String::boolToString(automatic_screenshot_state) + " " + Utils::String::boolToString(challenge_indicators_state) + " " + Utils::String::boolToString(richpresence_state) + " " + Utils::String::boolToString(badges_state) + " " + Utils::String::boolToString(test_unofficial_state) + " " + Utils::String::boolToString(start_active_state) + " \"" + sound + "\" \"" + username + "\" \"" + password + "\" &");
 }
 
 bool ApiSystem::setOptimizeSystem(bool state)
@@ -1347,20 +1243,6 @@ bool ApiSystem::setEsScriptsLoggingActivated(bool state, const std::string level
 	LOG(LogInfo) << "ApiSystem::setEsScriptsLoggingActivated()";
 
 	return executeSystemScript("es-log_scripts active_es_scripts_log " + Utils::String::boolToString(state) + " " + level + " " + Utils::String::boolToString(logWithNanoSeconds) + " &");
-}
-
-bool ApiSystem::setShowRetroarchFps(bool state)
-{
-	LOG(LogInfo) << "ApiSystem::setShowRetroarchFps()";
-
-	return executeSystemScript("es-show_fps set fps_show " + Utils::String::boolToString(state) + " &");
-}
-
-bool ApiSystem::isShowRetroarchFps()
-{
-	LOG(LogInfo) << "ApiSystem::isShowRetroarchFps()";
-
-	return Utils::String::toBool( getShOutput(R"(es-show_fps get fps_show)") );
 }
 
 bool ApiSystem::setOverclockSystem(bool state)
@@ -1590,7 +1472,7 @@ bool ApiSystem::configSystemAudio()
 
 bool ApiSystem::loadSystemAudioInfoToSystemConf(const std::string& audioInfo)
 {
-	LOG(LogInfo) << "ApiSystem::loadSystemAudioInfoToSystemConf()";
+	LOG(LogDebug) << "ApiSystem::loadSystemAudioInfoToSystemConf()";
 
 	if (Utils::String::startsWith(audioInfo, "<audio_info "))
 	{
@@ -1792,7 +1674,7 @@ bool ApiSystem::launchCalibrateTv(Window *window)
 
 bool ApiSystem::loadSystemBluetoothInfoToSystemConf(const std::string& btInfo)
 {
-	LOG(LogInfo) << "ApiSystem::loadSystemBluetoothInfoToSystemConf()";
+	LOG(LogDebug) << "ApiSystem::loadSystemBluetoothInfoToSystemConf()";
 
 	if (Utils::String::startsWith(btInfo, "<bt_info "))
 	{
@@ -2073,4 +1955,31 @@ bool ApiSystem::clearLastPlayedData(const std::string system)
 	else
 		return executeSystemScript("es-gamelist clear_last_played_data \"" + system + '"' );
 
+}
+
+void ApiSystem::loadOtherSettings()
+{
+	LOG(LogInfo) << "ApiSystem::loadOtherSettings() - executing";
+	Utils::Async::run( [] (void)
+		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS))
+			{
+				ApiSystem::getInstance()->setEsScriptsLoggingActivated(Settings::getInstance()->getBool("LogScriptsEnabled"),
+																		Settings::getInstance()->getString("LogLevel"),
+																		Settings::getInstance()->getBool("LogWithMilliseconds"));
+			}
+
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SOUND))
+				ApiSystem::getInstance()->loadSystemAudioInfo();
+
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
+				ApiSystem::getInstance()->loadSystemWifiInfo();
+
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
+				ApiSystem::getInstance()->loadSystemBluetoothInfo();
+
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
+				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
+		});
+	LOG(LogDebug) << "ApiSystem::loadOtherSettings() - exit";
 }

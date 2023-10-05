@@ -333,26 +333,7 @@ void loadBasicSettings(std::string &log)
 void loadOtherSettings()
 {
 	LOG(LogDebug) << "MAIN::loadOtherSettings() - Enter function";
-	Utils::Async::run( [] (void)
-		{
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SOUND))
-				ApiSystem::getInstance()->loadSystemAudioInfo();
-		});
-	Utils::Async::run( [] (void)
-		{
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
-				ApiSystem::getInstance()->loadSystemWifiInfo();
-		});
-	Utils::Async::run( [] (void)
-		{
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
-				ApiSystem::getInstance()->loadSystemBluetoothInfo();
-		});
-	Utils::Async::run( [] (void)
-		{
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
-				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
-		});
+	ApiSystem::getInstance()->loadOtherSettings();
 	LOG(LogDebug) << "MAIN::loadOtherSettings() - exit function";
 }
 

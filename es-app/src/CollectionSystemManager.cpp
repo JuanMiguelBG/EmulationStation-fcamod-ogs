@@ -1181,10 +1181,10 @@ void CollectionSystemManager::populateCustomCollection(CollectionSystemData* sys
 
 	if(!Utils::FileSystem::exists(path))
 	{
-		LOG(LogInfo) << "Couldn't find custom collection config file at " << path;
+		LOG(LogInfo) << "CollectionSystemManager::populateCustomCollection() - Couldn't find custom collection config file at " << path;
 		return;
 	}
-	LOG(LogInfo) << "Loading custom collection config file at " << path;
+	LOG(LogInfo) << "CollectionSystemManager::populateCustomCollection() - Loading custom collection config file at " << path;
 
 	FolderData* rootFolder = newSys->getRootFolder();
 	

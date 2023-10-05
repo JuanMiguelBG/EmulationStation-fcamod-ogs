@@ -110,7 +110,12 @@ bool GuiDetectDevice::input(InputConfig* config, Input input)
 			{
 				std::string alias = Settings::getInstance()->getString(name + ".bluetooth.input_gaming.alias");
 				if (!alias.empty())
-					name = alias;
+				{
+					std::string bluetoothId = config->getDeviceBluetoothId(); // DELETE LINE, only for debug 
+					std::string aliasBluetoothId = Settings::getInstance()->getString(name + ".bluetooth.input_gaming.id");
+					if (Utils::String::equalsIgnoreCase(config->getDeviceBluetoothId(), aliasBluetoothId))
+						name = alias;
+				}
 			}
 			mDeviceHeld->setText(Utils::String::toUpper(name));
 		}

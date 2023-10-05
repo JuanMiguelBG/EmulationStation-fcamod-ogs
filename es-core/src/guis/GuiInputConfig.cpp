@@ -15,14 +15,14 @@
 
 #define HOLD_TO_SKIP_MS 1000
 
-void GuiInputConfig::initInputConfigStructure(bool isXboxController, bool isPsController)
+void GuiInputConfig::initInputConfigStructure(bool isXboxController, bool isPsxController)
 {
 	GUI_INPUT_CONFIG_LIST =
 	{
-		{ "a",                false, InputConfig::buttonLabel("a", isXboxController, isPsController), InputConfig::buttonImage("a", isXboxController, isPsController) },
-		{ "b",                true,  InputConfig::buttonLabel("b", isXboxController, isPsController), InputConfig::buttonImage("b", isXboxController, isPsController) },
-		{ "x",                true,  InputConfig::buttonLabel("x", isXboxController, isPsController), InputConfig::buttonImage("x", isXboxController, isPsController) },
-		{ "y",                true,  InputConfig::buttonLabel("y", isXboxController, isPsController), InputConfig::buttonImage("y", isXboxController, isPsController) },
+		{ "a",                false, InputConfig::buttonLabel("a", isXboxController, isPsxController), InputConfig::buttonImage("a", isXboxController, isPsxController) },
+		{ "b",                true,  InputConfig::buttonLabel("b", isXboxController, isPsxController), InputConfig::buttonImage("b", isXboxController, isPsxController) },
+		{ "x",                true,  InputConfig::buttonLabel("x", isXboxController, isPsxController), InputConfig::buttonImage("x", isXboxController, isPsxController) },
+		{ "y",                true,  InputConfig::buttonLabel("y", isXboxController, isPsxController), InputConfig::buttonImage("y", isXboxController, isPsxController) },
 
 		{ "start",            true,  "START",                          ":/help/button_start.svg" },
 		{ "select",           true,  "SELECT",                         ":/help/button_select.svg" },
@@ -53,7 +53,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 6)),
 	mTargetConfig(target), mHoldingInput(false), mBusyAnim(window)
 {
-	initInputConfigStructure(isXboxController(target), isPsController(target));
+	initInputConfigStructure(target->isXboxController(), target->isPsxController());
 
 	auto theme = ThemeData::getMenuTheme();
 	mBackground.setImagePath(theme->Background.path); // ":/frame.png"
@@ -95,7 +95,12 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	{
 		std::string alias = Settings::getInstance()->getString(name + ".bluetooth.input_gaming.alias");
 		if (!alias.empty())
-			name = alias;
+		{
+			std::string bluetoothId = target->getDeviceBluetoothId(); // DELETE LINE, only for debug 
+			std::string aliasBluetoothId = Settings::getInstance()->getString(name + ".bluetooth.input_gaming.id");
+			if (Utils::String::equalsIgnoreCase(target->getDeviceBluetoothId(), aliasBluetoothId))
+				name = alias;
+		}
 	}
 
 	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(std::string(strbuf).append(" - ").append(name)), theme->Text.font, theme->Title.color, ALIGN_CENTER);
@@ -439,26 +444,5 @@ bool GuiInputConfig::filterTrigger(Input input, InputConfig* config)
 			return true;
 	}
 */
-	return false;
-}
-
-bool GuiInputConfig::isXboxController(InputConfig* config)
-{
-	LOG(LogDebug) << "GuiInputConfig::isXboxController() - Device name: " << config->getDeviceName() << ", devide GUID: " << config->getDeviceGUIDString();
-	if (Utils::String::contains(config->getDeviceName(), "Xbox") || Utils::String::contains(config->getDeviceName(), "X-Box")
-	  || Utils::String::contains(config->getDeviceName(), "Microsoft") || Utils::String::contains(config->getDeviceGUIDString(), "5e040000"))
-		return true;
-
-	return false;
-}
-
-bool GuiInputConfig::isPsController(InputConfig* config)
-{
-	LOG(LogDebug) << "GuiInputConfig::isPsController() - Device name: " << config->getDeviceName() << ", devide GUID: " << config->getDeviceGUIDString();
-	if (Utils::String::contains(config->getDeviceName(), "PLAYSTATION") || Utils::String::contains(config->getDeviceName(), "PS3 Ga")
-	  || Utils::String::contains(config->getDeviceName(), "PS(R) Ga") || Utils::String::contains(config->getDeviceName(), "Sony")
-	  || Utils::String::contains(config->getDeviceGUIDString(), "4c050000") || Utils::String::contains(config->getDeviceGUIDString(), "6b140000"))
-		return true;
-
 	return false;
 }

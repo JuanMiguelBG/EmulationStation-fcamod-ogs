@@ -1121,10 +1121,6 @@ msgid "SHOW FRAMERATE"
 msgstr "ΕΜΦΑΝΙΣΗ ΡΥΘΜΟΥ ΕΙΚΟΝΑΣ"
 
 #:
-msgid "SHOW RETROARCH FPS"
-msgstr "ΕΜΦΑΝΙΣΗ FPS ΤΟΥ RETROARCH"
-
-#:
 msgid "USE FULL SCREEN PAGING FOR PU/PD"
 msgstr "ΧΡΗΣΗ ΠΛΗΡΟΥΣ ΜΕΓΕΘΟΥΣ ΟΘΟΝΗΣ ΓΙΑ PU/PD"
 

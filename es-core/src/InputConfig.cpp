@@ -72,8 +72,8 @@ std::string toLower(std::string str)
 }
 //end util functions
 
-InputConfig::InputConfig(int deviceId, int deviceIndex, const std::string& deviceName, const std::string& deviceGUID, int deviceNbButtons, int deviceNbHats, int deviceNbAxes, const std::string& devicePath) 
-	: mDeviceId(deviceId), mDeviceIndex(deviceIndex), mDeviceName(deviceName), mDeviceGUID(deviceGUID), mDeviceNbButtons(deviceNbButtons), mDeviceNbHats(deviceNbHats), mDeviceNbAxes(deviceNbAxes), mDevicePath(devicePath)
+InputConfig::InputConfig(int deviceId, int deviceIndex, const std::string& deviceName, const std::string& deviceGUID, int deviceNbButtons, int deviceNbHats, int deviceNbAxes, const std::string& devicePath, const std::string& deviceBluetoothId) 
+	: mDeviceId(deviceId), mDeviceIndex(deviceIndex), mDeviceName(deviceName), mDeviceGUID(deviceGUID), mDeviceNbButtons(deviceNbButtons), mDeviceNbHats(deviceNbHats), mDeviceNbAxes(deviceNbAxes), mDevicePath(devicePath), mDeviceBluetoothId(deviceBluetoothId)
 {
 	mBatteryLevel = -1;
 	mDefaultInput = false;
@@ -240,6 +240,13 @@ void InputConfig::loadFromXML(pugi::xml_node& node)
 			
 //			LOG(LogDebug) << "InputConfig::loadFromXML() - button name changed from '" << name << "' to '" << lower_name << "'";
 		}
+		else if (typeEnum == TYPE_AXIS)
+		{
+			if (lower_name == "lefttrigger")
+				lower_name = L2BUTTON;
+			else if (lower_name == "righttrigger")
+				lower_name = R2BUTTON;
+		}
 
 		if (typeEnum == TYPE_COUNT)
 		{
@@ -298,7 +305,7 @@ void InputConfig::writeToXML(pugi::xml_node& parent)
 	}
 }
 
-std::string InputConfig::buttonLabel(const std::string& button, bool isXboxController, bool isPsController)
+std::string InputConfig::buttonLabel(const std::string& button, bool isXboxController, bool isPsxController)
 {
 	if (isXboxController)
 	{
@@ -311,7 +318,7 @@ std::string InputConfig::buttonLabel(const std::string& button, bool isXboxContr
 		else if (button == "x")
 			return "Y";
 	}
-	if (isPsController)
+	if (isPsxController)
 	{
 		if (button == "a")
 			return "CIRCLE";
@@ -326,7 +333,7 @@ std::string InputConfig::buttonLabel(const std::string& button, bool isXboxContr
 	return button;
 }
 
-std::string InputConfig::buttonImage(const std::string& button, bool isXboxController, bool isPsController)
+std::string InputConfig::buttonImage(const std::string& button, bool isXboxController, bool isPsxController)
 {
 	if (isXboxController)
 	{
@@ -339,7 +346,7 @@ std::string InputConfig::buttonImage(const std::string& button, bool isXboxContr
 		if (button == "x")
 			return ":/help/buttons_west_gt.svg_gt";
 	}
-	if (isPsController)
+	if (isPsxController)
 	{
 		if (button == "a")
 			return ":/help/button_circle_gt.svg";		
@@ -418,4 +425,53 @@ std::string InputConfig::getSortDevicePath()
 	}
 
 	return mDevicePath;
+}
+
+bool InputConfig::isXboxController()
+{
+//	LOG(LogDebug) << "InputConfig::isXboxController() - Device name: " << mDeviceName << ", devide GUID: " << mDeviceGUID;
+	std::string name = Utils::String::toLower(mDeviceName);
+	if (Utils::String::contains(name, "xbox") || Utils::String::contains(name, "x-box")
+	  || Utils::String::contains(name, "microsoft") || Utils::String::contains(name, "5e040000"))
+		return true;
+
+	return false;
+}
+
+bool InputConfig::isPsxController()
+{
+//	LOG(LogDebug) << "InputConfig::isPsController() - Device name: " << mDeviceName << ", devide GUID: " << mDeviceGUID;
+	std::string name = Utils::String::toLower(mDeviceName);
+	if (Utils::String::contains(name, "playstation") || Utils::String::contains(name, "sony")
+	  || Utils::String::contains(name, "ps(r) ga") || Utils::String::contains(name, "ps2")
+      || Utils::String::contains(name, "ps3") || Utils::String::contains(name, "ps4")
+      || Utils::String::contains(name, "ps5") || Utils::String::contains(name, "dualShock")
+	  || Utils::String::contains(mDeviceGUID, "4c050000") || Utils::String::contains(mDeviceGUID, "6b140000"))
+		return true;
+
+	return false;
+}
+
+const std::string& InputConfig::getDeviceBus()
+{
+	std::string bus = mDeviceGUID.substr(0, 4);
+	return bus.substr(2, 2).append(bus.substr(0,2));
+}
+
+const std::string& InputConfig::getDeviceVendor()
+{
+	std::string vendor = mDeviceGUID.substr(8, 4);
+	return vendor.substr(2, 2).append(vendor.substr(0,2));
+}
+
+const std::string& InputConfig::getDeviceProduct()
+{
+	std::string product = mDeviceGUID.substr(16, 4);
+	return product.substr(2, 2).append(product.substr(0,2));
+}
+
+const std::string& InputConfig::getDeviceVersion()
+{
+	std::string version = mDeviceGUID.substr(24, 4);
+	return version.substr(2, 2).append(version.substr(0,2));
 }

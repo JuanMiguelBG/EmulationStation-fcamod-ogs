@@ -74,6 +74,7 @@ bool GuiBluetoothAlias::onManageDeviceAlias(const BluetoothDevice& btDevice)
 			if (Utils::String::startsWith(btDevice.type, "input-"))
 			{
 				Settings::getInstance()->setString(btDevice.name + ".bluetooth.input_gaming.alias", newVal);
+				Settings::getInstance()->setString(btDevice.name + ".bluetooth.input_gaming.id", btDevice.id);
 				Settings::getInstance()->saveFile();
 			}
 			onScan();

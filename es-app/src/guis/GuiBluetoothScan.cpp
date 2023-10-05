@@ -65,19 +65,20 @@ void GuiBluetoothScan::handleAlias(Window *window, bool deleteWindow, bool resta
 	std::string title = _("ADD ALIAS");
 	
 	std::function<bool(const std::string /*&newVal*/)> updateVal = [this, window, deleteWindow, restarES, btDevice](const std::string &newVal)
-	{	
+	{
 		if (ApiSystem::getInstance()->setBluetoothDeviceAlias(btDevice.id, newVal))
 		{
 			if (Utils::String::startsWith(btDevice.type, "input-"))
 			{
 				Settings::getInstance()->setString(btDevice.name + ".bluetooth.input_gaming.alias", newVal);
+				Settings::getInstance()->setString(btDevice.name + ".bluetooth.input_gaming.id", btDevice.id);
 				Settings::getInstance()->saveFile();
 			}
 
 			displayRestartDialog(window, deleteWindow, restarES);
 			return true;
 		}
-		
+
 		return false;
 	}; // ok callback (apply new value to ed)
 

@@ -5,13 +5,13 @@
 #include <unistd.h>
 #include <future>
 #include "Log.h"
+#include "make_unique.hh"
 
 
 namespace Utils
 {
 	namespace Async
 	{
-
 		bool isCanRunAsync()
 		{
 			return (std::thread::hardware_concurrency() > 2) && Settings::getInstance()->getBool("ThreadedLoading");
@@ -34,16 +34,17 @@ namespace Utils
 			if (Utils::Async::isCanRunAsync())
 			{
 				LOG(LogDebug) << "Utils::Async::run() - Asynchronous execution, thread: '" << threadId << "'!";
-				auto dummy = std::async(std::launch::async, [asyncFunction]
+				// trick to run asynchronous and forget
+				std::make_unique<std::future<void>*>(new auto(std::async(std::launch::async, [asyncFunction]
 					{
 						LOG(LogDebug) << "Utils::Async::run() - INSIDE Asynchronous execution, thread: '" << std::to_string(Utils::Async::getThreadId()) << "'!";
 						asyncFunction();
-					});
+					}))).reset();
 				LOG(LogDebug) << "Utils::Async::run() - exit Asynchronous execution, thread: '" << threadId << "'!";
 			}
 			else
 			{
-				LOG(LogDebug) << "Utils::Async::run() - normal execution, thread: '" << threadId << "'!";
+				LOG(LogDebug) << "Utils::Async::run() - synchronous execution, thread: '" << threadId << "'!";
 				asyncFunction();
 			}
 		}

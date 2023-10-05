@@ -22,60 +22,39 @@ void GuiRetroachievementsOptions::initializeMenu()
 {
 	Window *window = mWindow;
 
-	//addGroup(_("SETTINGS"));
-
-	std::string username = ApiSystem::getInstance()->getRetroachievementsUsername();
-	std::string password = ApiSystem::getInstance()->getRetroachievementsPassword();
+	std::string username = SystemConf::getInstance()->get("global.retroachievements.username");
+	std::string password = SystemConf::getInstance()->get("global.retroachievements.password");
 
 	// retroachievements_enable
-	bool retroachievementsEnabled = ApiSystem::getInstance()->getRetroachievementsEnabled();
-	auto retroachievements_enabled = std::make_shared<SwitchComponent>(mWindow, retroachievementsEnabled);
-	addWithLabel(_("RETROACHIEVEMENTS"), retroachievements_enabled);
+	bool retroachievementsEnabled = SystemConf::getInstance()->getBool("global.retroachievements");
+	auto retroachievements_enabled = addSwitch(_("RETROACHIEVEMENTS"), "global.retroachievements", false);
 
 	// retroachievements_hardcore_mode
-	bool retroachievements_hardcore_enabled_value = ApiSystem::getInstance()->getRetroachievementsHardcoreEnabled();
-	auto retroachievements_hardcore_enabled = std::make_shared<SwitchComponent>(mWindow, retroachievements_hardcore_enabled_value);
-	addWithLabel(_("HARDCORE MODE"), retroachievements_hardcore_enabled);
+	addSwitch(_("HARDCORE MODE"), "global.retroachievements.hardcore", false);
 
 	// retroachievements_leaderboards
-	bool retroachievements_leaderboards_enabled_value = ApiSystem::getInstance()->getRetroachievementsLeaderboardsEnabled();
-	auto retroachievements_leaderboards_enabled = std::make_shared<SwitchComponent>(mWindow, retroachievements_leaderboards_enabled_value);
-	addWithLabel(_("LEADERBOARDS"), retroachievements_leaderboards_enabled);
+	addSwitch(_("LEADERBOARDS"), "global.retroachievements.leaderboards", false);
 
 	// retroachievements_challenge_indicators
-	bool retroachievements_challenge_indicators_value = ApiSystem::getInstance()->getRetroachievementsChallengeIndicators();
-	auto retroachievements_challenge_indicators = std::make_shared<SwitchComponent>(mWindow, retroachievements_challenge_indicators_value);
-	addWithLabel(_("CHALLENGE INDICATORS"), retroachievements_challenge_indicators);
+	addSwitch(_("CHALLENGE INDICATORS"), "global.retroachievements.challenge", false);
 
 	// retroachievements_richpresence_enable
-	bool retroachievements_richpresence_enable_value = ApiSystem::getInstance()->getRetroachievementsRichpresenceEnable();
-	auto retroachievements_richpresence_enable = std::make_shared<SwitchComponent>(mWindow, retroachievements_richpresence_enable_value);
-	addWithLabel(_("RICH PRESENCE"), retroachievements_richpresence_enable);
+	addSwitch(_("RICH PRESENCE"), "global.retroachievements.richpresence", false);
 
 	// retroachievements_badges_enable
-	bool retroachievements_badges_enable_value = ApiSystem::getInstance()->getRetroachievementsBadgesEnable();
-	auto retroachievements_badges_enable = std::make_shared<SwitchComponent>(mWindow, retroachievements_badges_enable_value);
-	addWithLabel(_("BADGES"), retroachievements_badges_enable);
+	addSwitch(_("BADGES"), "global.retroachievements.badges", false);
 
 	// retroachievements_test_unofficial
-	bool retroachievements_test_unofficial_value = ApiSystem::getInstance()->getRetroachievementsTestUnofficial();
-	auto retroachievements_test_unofficial = std::make_shared<SwitchComponent>(mWindow, retroachievements_test_unofficial_value);
-	addWithLabel(_("TEST UNOFFICIAL ACHIEVEMENTS"), retroachievements_test_unofficial);
+	addSwitch(_("TEST UNOFFICIAL ACHIEVEMENTS"), "global.retroachievements.test", false);
 
 	// retroachievements_verbose_mode
-	bool retroachievements_verbose_enabled_value = ApiSystem::getInstance()->getRetroachievementsVerboseEnabled();
-	auto retroachievements_verbose_enabled = std::make_shared<SwitchComponent>(mWindow, retroachievements_verbose_enabled_value);
-	addWithLabel(_("VERBOSE MODE"), retroachievements_verbose_enabled);
+	addSwitch(_("VERBOSE MODE"), "global.retroachievements.verbose", false);
 
 	// retroachievements_automatic_screenshot
-	bool retroachievements_screenshot_enabled_value = ApiSystem::getInstance()->getRetroachievementsAutomaticScreenshotEnabled();
-	auto retroachievements_screenshot_enabled = std::make_shared<SwitchComponent>(mWindow, retroachievements_screenshot_enabled_value);
-	addWithLabel(_("AUTOMATIC SCREENSHOT"), retroachievements_screenshot_enabled);
+	addSwitch(_("AUTOMATIC SCREENSHOT"), "global.retroachievements.screenshot", false);
 
 	// retroachievements_start_active
-	bool retroachievements_start_active_value = ApiSystem::getInstance()->getRetroachievementsStartActive();
-	auto retroachievements_start_active = std::make_shared<SwitchComponent>(mWindow, retroachievements_start_active_value);
-	addWithLabel(_("ENCORE MODE (LOCAL RESET OF ACHIEVEMENTS)"), retroachievements_start_active);
+	addSwitch(_("ENCORE MODE (LOCAL RESET OF ACHIEVEMENTS)"), "global.retroachievements.start", false);
 
 	// Unlock sound
 	auto installed_sounds = ApiSystem::getInstance()->getRetroachievementsSoundsList();
@@ -95,22 +74,20 @@ void GuiRetroachievementsOptions::initializeMenu()
 
 		addWithLabel(_("UNLOCK SOUND"), rsounds_choices);
 	}
+	addSaveFunc([currentSound, rsounds_choices]
+		{
+			std::string newSound = "none";
+			if (rsounds_choices)
+				newSound = rsounds_choices->getSelected();
+
+			SystemConf::getInstance()->set("global.retroachievements.sound", newSound);
+		});
 
 	// retroachievements, username, password
 	addInputTextRow(_("USERNAME"), "global.retroachievements.username", false);
 	addInputTextRow(_("PASSWORD"), "global.retroachievements.password", true);
 
-	addSaveFunc([window, retroachievementsEnabled, retroachievements_enabled, username, password,
-				retroachievements_hardcore_enabled, retroachievements_hardcore_enabled_value,
-				retroachievements_leaderboards_enabled, retroachievements_leaderboards_enabled_value,
-				retroachievements_challenge_indicators, retroachievements_challenge_indicators_value,
-				retroachievements_richpresence_enable, retroachievements_richpresence_enable_value,
-				retroachievements_badges_enable, retroachievements_badges_enable_value,
-				retroachievements_test_unofficial, retroachievements_test_unofficial_value,
-				retroachievements_verbose_enabled, retroachievements_verbose_enabled_value,
-				retroachievements_screenshot_enabled, retroachievements_screenshot_enabled_value,
-				retroachievements_start_active, retroachievements_start_active_value,
-				rsounds_choices, currentSound]
+	addSaveFunc([window, retroachievementsEnabled, retroachievements_enabled, username, password]
 	{
 		bool newState = retroachievements_enabled->getState();
 
@@ -126,29 +103,6 @@ void GuiRetroachievementsOptions::initializeMenu()
 					retroachievements_enabled->setState(false);
 					newState = false;
 			}
-		}
-
-		std::string newSound = "none";
-		if (rsounds_choices)
-			newSound = rsounds_choices->getSelected();
-
-		SystemConf::getInstance()->set("global.retroachievements.sound", newSound);
-
-		if ( (retroachievementsEnabled != newState)
-				|| (retroachievements_hardcore_enabled_value != retroachievements_hardcore_enabled->getState())
-				|| (retroachievements_leaderboards_enabled_value != retroachievements_leaderboards_enabled->getState())
-				|| (retroachievements_challenge_indicators_value != retroachievements_challenge_indicators->getState())
-				|| (retroachievements_richpresence_enable_value != retroachievements_richpresence_enable->getState())
-				|| (retroachievements_badges_enable_value != retroachievements_badges_enable->getState())
-				|| (retroachievements_test_unofficial_value != retroachievements_test_unofficial->getState())
-				|| (retroachievements_verbose_enabled_value != retroachievements_verbose_enabled->getState())
-				|| (retroachievements_screenshot_enabled_value != retroachievements_screenshot_enabled->getState())
-				|| (retroachievements_start_active_value != retroachievements_start_active->getState())
-				|| (currentSound != newSound)
-				|| (username != newUsername)
-				|| (password != newPassword) )
-		{
-			ApiSystem::getInstance()->setRetroachievementsValues(newState, retroachievements_hardcore_enabled->getState(), retroachievements_leaderboards_enabled->getState(), retroachievements_verbose_enabled->getState(), retroachievements_screenshot_enabled->getState(), retroachievements_challenge_indicators->getState(), retroachievements_richpresence_enable->getState(), retroachievements_badges_enable->getState(), retroachievements_test_unofficial->getState(), retroachievements_start_active->getState(), newSound, newUsername, newPassword);
 		}
 	});
 

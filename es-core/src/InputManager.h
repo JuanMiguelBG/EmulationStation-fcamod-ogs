@@ -89,6 +89,8 @@ private:
 
 	void propagateInputEvent(InputConfig* config, Input input, Window* window);
 	bool mIgnoreKeys;
+
+	std::string getJoystickBluetoothId(const std::string& name, const std::string& guid, const std::string& path);
 };
 
 #endif // ES_CORE_INPUT_MANAGER_H

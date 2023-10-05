@@ -97,6 +97,7 @@ set(CORE_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Delegate.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/Randomizer.h
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/VectorEx.h
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/make_unique.hh
 	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/AsyncUtil.h
 )
 

@@ -109,7 +109,7 @@ public:
 class InputConfig
 {
 public:
-	InputConfig(int deviceId, int deviceIndex, const std::string& deviceName, const std::string& deviceGUID, int deviceNbButtons, int deviceNbHats, int deviceNbAxes, const std::string& devicePath = ""); 
+	InputConfig(int deviceId, int deviceIndex, const std::string& deviceName, const std::string& deviceGUID, int deviceNbButtons, int deviceNbHats, int deviceNbAxes, const std::string& devicePath = "", const std::string& deviceBluetoothId = ""); 
 
 	void clear();
 	void mapInput(const std::string& name, Input input);
@@ -117,14 +117,15 @@ public:
 
 	inline int getDeviceId() const { return mDeviceId; };
         
-	inline int getDeviceIndex() const { return mDeviceIndex; }; 
-	inline const std::string& getDeviceName() { return mDeviceName; }
-	inline const std::string& getDeviceGUIDString() { return mDeviceGUID; }
-	inline int getDeviceNbButtons() const { return mDeviceNbButtons; }; 
-	inline int getDeviceNbHats() const { return mDeviceNbHats; }; 
-	inline int getDeviceNbAxes() const { return mDeviceNbAxes; }; 
-	inline int getBatteryLevel() const { return mBatteryLevel; }; 
+	inline int getDeviceIndex() const { return mDeviceIndex; };
+	inline const std::string& getDeviceName() { return mDeviceName; };
+	inline const std::string& getDeviceGUIDString() { return mDeviceGUID; };
+	inline int getDeviceNbButtons() const { return mDeviceNbButtons; };
+	inline int getDeviceNbHats() const { return mDeviceNbHats; };
+	inline int getDeviceNbAxes() const { return mDeviceNbAxes; };
+	inline int getBatteryLevel() const { return mBatteryLevel; };
 	inline const std::string& getDevicePath() { return mDevicePath; };
+	inline const std::string& getDeviceBluetoothId() { return mDeviceBluetoothId; };
 
 	std::string getSortDevicePath();
 
@@ -144,20 +145,32 @@ public:
 
 	bool isConfigured();
 
-	static std::string buttonLabel(const std::string& button, bool isXboxController = false, bool isPsController = false);
-	static std::string buttonImage(const std::string& button, bool isXboxController = false, bool isPsController = false);
+	static std::string buttonLabel(const std::string& button, bool isXboxController, bool isPsxController);
+	static std::string buttonImage(const std::string& button, bool isXboxController, bool isPsxController);
 
 	void updateBatteryLevel(int level) { mBatteryLevel = level; };
 
 	bool isDefaultInput() const { return mDefaultInput; };
 	void setDefaultInput(bool defaultInput) { mDefaultInput = defaultInput; };
 
+	bool isXboxController();
+	bool isPsxController();
+
+	const std::string& getDeviceBus();
+	const std::string& getDeviceVendor();
+	const std::string& getDeviceProduct();
+	const std::string& getDeviceVersion();
+	bool isBluetoothDevice() { return !mDeviceBluetoothId.empty(); }
+
 private:
 	std::map<std::string, Input> mNameMap;
 	const int mDeviceId;
-	const int mDeviceIndex; 
+	const int mDeviceIndex;
 	const std::string mDeviceName;
 	const std::string mDeviceGUID;
+	const std::string mDeviceVendor;
+	const std::string mDeviceProduct;
+	const std::string mDeviceBluetoothId;
 	bool mDefaultInput;
 	const int mDeviceNbButtons; // number of buttons of the device 
 	const int mDeviceNbHats;    // number of hats    of the device 

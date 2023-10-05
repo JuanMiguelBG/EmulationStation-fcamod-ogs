@@ -212,23 +212,7 @@ public:
 	bool forgetWifiNetwork(const std::string ssid);
 	bool forgetAllKnowedWifiNetworks();
 
-	bool setLanguage(std::string language);
-
-	bool getRetroachievementsEnabled();
-	bool getRetroachievementsHardcoreEnabled();
-	bool getRetroachievementsLeaderboardsEnabled();
-	bool getRetroachievementsVerboseEnabled();
-	bool getRetroachievementsAutomaticScreenshotEnabled();
-	bool getRetroachievementsUnlockSoundEnabled();
 	virtual std::vector<std::string> getRetroachievementsSoundsList();
-	std::string getRetroachievementsUsername();
-	std::string getRetroachievementsPassword();
-	bool getRetroachievementsChallengeIndicators();
-	bool getRetroachievementsRichpresenceEnable();
-	bool getRetroachievementsBadgesEnable();
-	bool getRetroachievementsTestUnofficial();
-	bool getRetroachievementsStartActive();
-	bool setRetroachievementsValues(bool retroachievements_state, bool hardcore_state, bool leaderboards_state, bool verbose_state, bool automatic_screenshot_state, bool challenge_indicators_state, bool richpresence_state, bool badges_state, bool test_unofficial_state, bool start_active_state, const std::string sound, const std::string username, const std::string password);
 
 	bool setOptimizeSystem(bool state);
 	std::vector<std::string> getSuspendModes();
@@ -237,9 +221,6 @@ public:
 
 	bool isEsScriptsLoggingActivated();
 	bool setEsScriptsLoggingActivated(bool state, const std::string level = "default", bool logWithNanoSeconds = false);
-	
-	bool setShowRetroarchFps(bool state);
-	bool isShowRetroarchFps();
 
 	bool setOverclockSystem(bool state);
 	bool isOverclockSystem();
@@ -309,6 +290,8 @@ public:
 	void restoreAfterGameValues();
 
 	bool clearLastPlayedData(const std::string system = "");
+
+	void loadOtherSettings();
 };
 
 #endif
