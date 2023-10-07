@@ -23,6 +23,7 @@ public:
 	static const std::string nGetText(const std::string msgid, const std::string msgid_plural, int n);
 
 	static const std::string getLanguage() { return mCurrentLanguage; }
+	static const std::string getDateFormat() { return mDateFormat; }
 
 	static const void reset() { mCurrentLanguageLoaded = false; }
 	static const bool isRTL();
@@ -33,6 +34,7 @@ private:
 	static std::map<std::string, std::string> mItems;
 	static std::string mCurrentLanguage;
 	static bool mCurrentLanguageLoaded;
+	static std::string mDateFormat;
 
 	static PluralRule mPluralRule;
 };

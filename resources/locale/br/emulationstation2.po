@@ -7,6 +7,7 @@ msgstr ""
 "Project-Id-Version: recalbox-emulationstation\n"
 "Language: BR Traduzido por JTulho_LTDA\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Date-Format: %m/%d/%Y"
 
 #: 
 msgid "extracting update..."

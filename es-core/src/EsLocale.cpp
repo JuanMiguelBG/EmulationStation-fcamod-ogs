@@ -8,6 +8,7 @@
 
 std::map<std::string, std::string> EsLocale::mItems;
 std::string EsLocale::mCurrentLanguage = "en";
+std::string EsLocale::mDateFormat = "%d/%m/%Y"; // ISO format
 bool EsLocale::mCurrentLanguageLoaded = true; // By default, 'en' is considered loaded
 
 // List of all possible plural forms here
@@ -179,6 +180,16 @@ void EsLocale::checkLocalisationLoaded()
 							break;
 						}
 					}
+				}
+			}
+			if (line.find("\"Date-Format:") == 0)
+			{
+				auto start = line.find_first_of(' ');
+				if (start != std::string::npos && !msgid.empty())
+				{
+					auto end = line.find_last_of('"');
+					if (end != std::string::npos)
+						mDateFormat = line.substr(start + 1, end - start - 1);
 				}
 			}
 			else if (line.find("msgid_plural") == 0)

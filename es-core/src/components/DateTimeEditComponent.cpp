@@ -6,11 +6,11 @@
 
 DateTimeEditComponent::DateTimeEditComponent(Window* window, DisplayMode dispMode) : GuiComponent(window),
 	mEditing(false), mEditIndex(0), mDisplayMode(dispMode), mRelativeUpdateAccumulator(0),
-	mColor(0x777777FF), mFont(Font::get(FONT_SIZE_SMALL, FONT_PATH_LIGHT)), mUppercase(false), mAutoSize(true)
+	mUppercase(false), mAutoSize(true)
 {
 	auto menuTheme = ThemeData::getMenuTheme();
 
-	mFont = menuTheme->TextSmall.font;
+	mFont = menuTheme->Text.font;
 	mColor = menuTheme->Text.color;
 
 	updateTextCache();
@@ -99,6 +99,33 @@ bool DateTimeEditComponent::input(InputConfig* config, Input input)
 				if(new_tm.tm_year < 0)
 					new_tm.tm_year = 0;
 			}
+			else if(mEditIndex == 3)
+			{
+				new_tm.tm_hour += incDir;
+
+				if(new_tm.tm_hour > 23)
+					new_tm.tm_hour = 0;
+				else if(new_tm.tm_hour < 0)
+					new_tm.tm_hour = 23;
+			}
+			else if(mEditIndex == 4)
+			{
+				new_tm.tm_min += incDir;
+
+				if(new_tm.tm_min > 59)
+					new_tm.tm_min = 0;
+				else if(new_tm.tm_min < 0)
+					new_tm.tm_min = 59;
+			}
+			else if(mEditIndex == 5)
+			{
+				new_tm.tm_sec += incDir;
+
+				if(new_tm.tm_sec > 59)
+					new_tm.tm_sec = 0;
+				else if(new_tm.tm_sec < 0)
+					new_tm.tm_sec = 59;
+			}
 
 			//validate day
 			const int days_in_month = Utils::Time::daysInMonth(new_tm.tm_year + 1900, new_tm.tm_mon + 1);
@@ -185,6 +212,11 @@ std::string DateTimeEditComponent::getValue() const
 	return mTime;
 }
 
+std::string DateTimeEditComponent::getValue(const std::string& format) const
+{
+	return Utils::Time::timeToString(mTime, format);
+}
+
 DateTimeEditComponent::DisplayMode DateTimeEditComponent::getCurrentDisplayMode() const
 {
 	/*if(mEditing)
@@ -205,12 +237,12 @@ std::string DateTimeEditComponent::getDisplayString(DisplayMode mode) const
 	switch(mode)
 	{
 	case DISP_DATE:
-		fmt = "%d/%m/%Y";
+		fmt = EsLocale::getDateFormat();
 		break;
 	case DISP_DATE_TIME:
 		if(mTime.getTime() == 0)
 			return _("unknown");
-		fmt = "%d/%m/%Y %H:%M:%S";
+		fmt.append(EsLocale::getDateFormat()).append(" %H:%M:%S");
 		break;
 	case DISP_RELATIVE_TO_NOW:
 		{
@@ -270,16 +302,16 @@ void DateTimeEditComponent::updateTextCache()
 	//set up cursor positions
 	mCursorBoxes.clear();
 
-	if(dispString.empty() || mode == DISP_RELATIVE_TO_NOW)
+	if (dispString.empty() || mode == DISP_RELATIVE_TO_NOW)
 		return;
 
-	//day
+	//day or month
 	Vector2f start(0, 0);
 	Vector2f end = font->sizeText(dispString.substr(0, 2));
 	Vector2f diff = end - start;
 	mCursorBoxes.push_back(Vector4f(start[0], start[1], diff[0], diff[1]));
 
-	//month
+	//month or day
 	start[0] = font->sizeText(dispString.substr(0, 3)).x();
 	end = font->sizeText(dispString.substr(0, 5));
 	diff = end - start;
@@ -292,6 +324,26 @@ void DateTimeEditComponent::updateTextCache()
 	mCursorBoxes.push_back(Vector4f(start[0], start[1], diff[0], diff[1]));
 
 	//if mode == DISP_DATE_TIME do times too but I don't wanna do the logic for editing times because no one will ever use it so screw it
+	if (mode != DISP_DATE_TIME)
+		return;
+
+	//hour
+	start[0] = font->sizeText(dispString.substr(0, 11)).x();
+	end = font->sizeText(dispString.substr(0, 13));
+	diff = end - start;
+	mCursorBoxes.push_back(Vector4f(start[0], start[1], diff[0], diff[1]));
+
+	//minute
+	start[0] = font->sizeText(dispString.substr(0, 14)).x();
+	end = font->sizeText(dispString.substr(0, 16));
+	diff = end - start;
+	mCursorBoxes.push_back(Vector4f(start[0], start[1], diff[0], diff[1]));
+
+	//second
+	start[0] = font->sizeText(dispString.substr(0, 17)).x();
+	end = font->sizeText(dispString);
+	diff = end - start;
+	mCursorBoxes.push_back(Vector4f(start[0], start[1], diff[0], diff[1]));
 }
 
 void DateTimeEditComponent::setColor(unsigned int color)

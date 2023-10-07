@@ -7,6 +7,7 @@ msgstr ""
 "Project-Id-Version: emulationstation\n"
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Date-Format: %d/%m/%Y"
 
 #:
 msgid "EMULATOR SETTINGS"
@@ -766,6 +767,14 @@ msgstr "IDIOMA"
 #:
 msgid "TIMEZONE"
 msgstr "ZONA HORARIA"
+
+#:
+msgid "DATETIME"
+msgstr "FECHA Y HORA"
+
+#:
+msgid "DATETIME FORMAT: "
+msgstr "FORMATO DE FECHA Y HORA: "
 
 #:
 msgid "SELECT YOUR TIMEZONE"

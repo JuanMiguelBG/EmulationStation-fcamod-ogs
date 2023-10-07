@@ -191,7 +191,7 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 			}
 			case MD_TIME:
 			{
-				ed = std::make_shared<DateTimeEditComponent>(window, DateTimeEditComponent::DISP_RELATIVE_TO_NOW);
+				ed = std::make_shared<DateTimeEditComponent>(window, DateTimeEditComponent::DisplayMode::DISP_RELATIVE_TO_NOW);
 				row.addElement(ed, false);
 				break;
 			}

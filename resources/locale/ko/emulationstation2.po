@@ -7,6 +7,7 @@ msgstr ""
 "Project-Id-Version: emulationstation\n"
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"Date-Format: %m/%d/%Y"
 
 msgid "EMULATOR SETTINGS"
 msgstr "에뮬레이터 설정"

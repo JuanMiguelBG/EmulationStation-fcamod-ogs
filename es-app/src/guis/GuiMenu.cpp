@@ -6,6 +6,7 @@
 #include "components/BrightnessInfoComponent.h"
 #include "components/VolumeInfoComponent.h"
 #include "components/HelpComponent.h"
+#include "components/DateTimeEditComponent.h"
 #include "guis/GuiCollectionSystemsOptions.h"
 #include "guis/GuiDetectDevice.h"
 #include "guis/GuiGeneralScreensaverOptions.h"
@@ -2492,6 +2493,27 @@ void GuiMenu::openAdvancedSettings()
 			SystemConf::getInstance()->set("system.timezone", selectedTimezone);
 		}
 	});
+
+	// Manual time management
+	if (!SystemConf::getInstance()->getBool("wifi.enabled"))
+	{
+		auto system_time = std::make_shared<DateTimeEditComponent>(window, DateTimeEditComponent::DisplayMode::DISP_DATE_TIME);
+		std::string datetime_format(EsLocale::getDateFormat());
+		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - datetime_format: " << datetime_format;
+		datetime_format.append(" %H:%M:%S");
+		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - datetime_format: " << datetime_format;
+		std::string datetime = Utils::Time::timeToString(Utils::Time::now(), datetime_format);
+		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - datetime: " << datetime;
+		system_time->setValue( datetime );
+		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - system_time value: " << system_time->getValue();
+		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - system_time value in format '%Y/%m/%d %H:%M:%S': " << system_time->getValue("%Y/%m/%d %H:%M:%S");
+		s->addWithDescription(_("DATETIME"), _("DATETIME FORMAT: ") + datetime_format, system_time);
+		s->addSaveFunc([system_time] {
+			if (system_time->changed()) {
+				ApiSystem::getInstance()->setDateTime(system_time->getValue("%Y/%m/%d %H:%M:%S"));
+			}
+		});
+	}
 
 	// LANGUAGE
 	std::vector<std::string> languages;

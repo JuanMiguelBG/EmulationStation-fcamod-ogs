@@ -7,6 +7,7 @@ msgstr ""
 "Project-Id-Version: emulationstation\n"
 "Language: zh-CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"Date-Format: %m/%d/%Y"
 
 msgid "EMULATOR SETTINGS"
 msgstr "模拟器设置"

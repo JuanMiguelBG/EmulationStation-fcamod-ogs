@@ -22,6 +22,7 @@ public:
 
 	void setValue(const std::string& val) override;
 	std::string getValue() const override;
+	std::string getValue(const std::string& format) const;
 
 	bool input(InputConfig* config, Input input) override;
 	void update(int deltaTime) override;
@@ -42,6 +43,8 @@ public:
 	virtual void applyTheme(const std::shared_ptr<ThemeData>& theme, const std::string& view, const std::string& element, unsigned int properties) override;
 
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
+
+	bool changed() { return mTime.getTime() != mTimeBeforeEdit.getTime(); };
 
 private:
 	std::shared_ptr<Font> getFont() const;

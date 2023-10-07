@@ -7,13 +7,13 @@
 
 DateTimeComponent::DateTimeComponent(Window* window) : TextComponent(window), mDisplayRelative(false)
 {
-	setFormat("%d/%m/%Y");
+	setFormat(EsLocale::getDateFormat());
 }
 
 DateTimeComponent::DateTimeComponent(Window* window, const std::string& text, const std::shared_ptr<Font>& font, unsigned int color, Alignment align,
 	Vector3f pos, Vector2f size, unsigned int bgcolor) : TextComponent(window, text, font, color, align, pos, size, bgcolor), mDisplayRelative(false)
 {
-	setFormat("%d/%m/%Y");
+	setFormat(EsLocale::getDateFormat());
 }
 
 void DateTimeComponent::setValue(const std::string& val)

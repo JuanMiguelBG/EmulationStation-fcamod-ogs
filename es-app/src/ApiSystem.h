@@ -70,7 +70,8 @@ public:
 		KODI = 17,
 		TEST_INPUT = 18,
 		CALIBRATE_TV = 19,
-		CONTROLLERS = 20
+		CONTROLLERS = 20,
+		DATETIME = 21
 /*
 		RETROACHIVEMENTS = 1,
 		BLUETOOTH = 2,
@@ -285,6 +286,8 @@ public:
 	bool stopAutoConnectBluetoothAudioDevice();
 	bool setBluetoothDeviceAlias(const std::string id, const std::string alias);
 	bool setBluetoothXboxOneCompatible(bool compatible);
+
+    bool setDateTime(const std::string datetime);
 
 	void backupAfterGameValues();
 	void restoreAfterGameValues();

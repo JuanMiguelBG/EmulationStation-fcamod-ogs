@@ -201,6 +201,9 @@ bool ApiSystem::isScriptingSupported(ScriptId script)
 		case CONTROLLERS:
 				executables.push_back("es-controllers");
 				break;
+		case DATETIME:
+				executables.push_back("es-datetime");
+				break;
 	}
 
 	for (auto executable : executables)
@@ -1923,6 +1926,15 @@ bool ApiSystem::setBluetoothXboxOneCompatible(bool compatible)
 	return executeSystemScript(command);
 }
 
+bool ApiSystem::setDateTime(const std::string datetime)
+{
+	LOG(LogInfo) << "ApiSystem::setDateTime() - datetime: " << datetime;
+
+	if (datetime.empty())
+		return false;
+
+	return executeSystemScript("es-datetime set datetime \"" + datetime + "\" &");
+}
 
 void ApiSystem::backupAfterGameValues()
 {
