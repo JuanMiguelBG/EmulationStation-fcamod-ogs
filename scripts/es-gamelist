@@ -42,7 +42,7 @@ do_clear_last_played_data() {
           fi
 
           clear_clear_last_played_data_on_file "$GAMELIST"
-        done <<< "$(find $system_dir -name gamelist.xml)"
+        done <<< "$(find "$system_dir" -name gamelist.xml)"
       fi
     done
 
@@ -78,7 +78,7 @@ do_clear_all_last_played_data() {
           fi
 
           clear_clear_last_played_data_on_file "$GAMELIST"
-        done <<< "$(find $roms_dir -name gamelist.xml)"
+        done <<< "$(find "$roms_dir" -name gamelist.xml)"
       fi
     done
 

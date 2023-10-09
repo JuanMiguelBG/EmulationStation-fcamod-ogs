@@ -93,16 +93,16 @@ active_es_scripts_log_feature()
   sudo sed -i '/ES_LOGGING_ENABLED\=0/s//ES_LOGGING_ENABLED\=1/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$log_level"'/; /ES_LOG_WITH_NANO\=[[:digit:]]\+/s//ES_LOG_WITH_NANO\='"$log_with_nano"'/' $ES_SCRIPTS_PATH/es-log_scripts
 
   if [ $ES_LOGGING_ENABLED -eq 0 ]; then
-    grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/#print_log /print_log /g'
+  grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/#print_log /print_log /g'
 
-    local roms_dirs=( "$ES_EVENTS_SCRIPTS_PATH" "$ES_USER_EVENTS_SCRIPTS_PATH" "$ES_CONFIGGEN_PATH" )
+  local roms_dirs=( "$ES_EVENTS_SCRIPTS_PATH" "$ES_USER_EVENTS_SCRIPTS_PATH" "$ES_CONFIGGEN_PATH" )
 
-    for roms_dir in "${roms_dirs[@]}"
-    do
-      if [ -d "$roms_dir" ]; then
-        find "$roms_dir" -type f -exec sudo sed -i 's/#print_log /print_log /g' {} \;
-      fi
-    done
+  for roms_dir in "${roms_dirs[@]}"
+  do
+    if [ -d "$roms_dir" ]; then
+      find "$roms_dir" -type f -exec sudo sed -i 's/#print_log /print_log /g' {} \;
+    fi
+  done
   fi
 }
 
@@ -111,16 +111,16 @@ inactive_es_scripts_log_feature()
   sudo sed -i '/ES_LOGGING_ENABLED\=1/s//ES_LOGGING_ENABLED\=0/; /ES_LOGGING_LEVEL\=[[:digit:]]\+/s//ES_LOGGING_LEVEL\='"$LOG_LEVEL_DISABLED"'/; /ES_LOG_WITH_NANO\=1/s//ES_LOG_WITH_NANO\=0/' $ES_SCRIPTS_PATH/es-log_scripts
 
   if [ $ES_LOGGING_ENABLED -eq 1 ]; then
-    grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/print_log /#print_log /g'
+  grep -l print_log $ES_SCRIPTS_PATH/es-* | grep -v es-log_scripts | xargs sudo sed -i 's/print_log /#print_log /g'
 
-    local roms_dirs=( "$ES_EVENTS_SCRIPTS_PATH" "$ES_USER_EVENTS_SCRIPTS_PATH" "$ES_CONFIGGEN_PATH" )
+  local roms_dirs=( "$ES_EVENTS_SCRIPTS_PATH" "$ES_USER_EVENTS_SCRIPTS_PATH" "$ES_CONFIGGEN_PATH" )
 
-    for roms_dir in "${roms_dirs[@]}"
-    do
-      if [ -d "$roms_dir" ]; then
-        find "$roms_dir" -type f -exec sudo sed -i 's/print_log /#print_log /g' {} \;
-      fi
-    done
+  for roms_dir in "${roms_dirs[@]}"
+  do
+    if [ -d "$roms_dir" ]; then
+      find "$roms_dir" -type f -exec sudo sed -i 's/print_log /#print_log /g' {} \;
+    fi
+  done
   fi
 }
 
@@ -193,9 +193,9 @@ LOG_LEVEL_INFO=2
 LOG_LEVEL_DEBUG=3
 LOG_LEVEL_DISABLED=4
 
-ES_LOGGING_ENABLED=1
+ES_LOGGING_ENABLED=0
 ES_DEFAULT_LOGGING_LEVEL=$LOG_LEVEL_INFO
-ES_LOGGING_LEVEL=3
+ES_LOGGING_LEVEL=4
 ES_LOG_WITH_NANO=0
 
 case "${1}" in

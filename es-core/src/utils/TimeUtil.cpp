@@ -1,6 +1,5 @@
 #include "utils/TimeUtil.h"
 #include <time.h>
-#include <chrono>
 #include "EsLocale.h"
 
 namespace Utils
@@ -104,10 +103,9 @@ namespace Utils
 		time_t now()
 		{
 			time_t time;
-			//::time(&time);
-			std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
-			time = std::chrono::system_clock::to_time_t(tp);
+			::time(&time);
 			return time;
+
 		} // now
 
 		time_t stringToTime(const std::string& _string, const std::string& _format)

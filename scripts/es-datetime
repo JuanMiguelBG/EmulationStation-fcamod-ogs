@@ -1,0 +1,226 @@
+#!/bin/bash
+
+do_help()
+{
+	echo "Usage:" >&2
+	echo "" >&2
+	echo "$0 set [key] [value] " >&2
+	echo "Valid keys: datetime (format: year/month/day hour:minute:second), date (format: year/month/day), time (format: hour:minute:second), timezone" >&2
+	echo "" >&2
+	echo "or" >&2
+	echo "" >&2
+	echo "$0 get [key]" >&2
+	echo "Valid keys: datetime, time, status, timezone" >&2
+}
+
+do_set_datetime()
+{
+	local value=$1
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_datetime()' - datetime: '$value'"
+
+	es-remote_services inactive ntp &
+
+	value="${value//\//-}"
+	date_val=`echo "$value" | cut -d' ' -f 1`
+	time_val=`echo "$value" | cut -d' ' -f 2`
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_datetime()' - date: '$date_val', time: ${time_val}"
+
+	sudo timedatectl set-time "$date_val"
+	sudo timedatectl set-time "$time_val"
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_datetime()' - real date: '$(date)'"
+}
+
+do_set_date()
+{
+	local value=$1
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_date()' - date: '$value'"
+
+	es-remote_services inactive ntp &
+
+	value="${value//\//-}"
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_date()' - date: '$value'"
+
+	sudo timedatectl set-time $value 2>&1 > /dev/null
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_date()' - real date: '$(date)'"
+}
+
+do_set_time()
+{
+	local value=$1
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_time()' - time: '$value'"
+
+	es-remote_services inactive ntp &
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_time()' - time: '$value'"
+
+	sudo timedatectl set-time $value 2>&1 > /dev/null
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_time()' - real date: '$(date)'"
+}
+
+do_set_timezone()
+{
+	local value=$1
+	#print_log $LOG_FILE "INFO" "Executing 'do_set_timezone()' - time: '$value'"
+
+	es-remote_services inactive ntp &
+
+	sudo timedatectl set-timezone '${value}' 2>&1 > /dev/null
+
+	#print_log $LOG_FILE "DEBUG" "Executing 'do_set_date()' - real date: '$(date)'"
+}
+
+config_set_value()
+{
+	local key=$1
+	local value=$2
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_set_value()' - key: '$key', value: '$value'"
+
+	case "${key}" in
+			"datetime")
+				do_set_datetime "$value" || return 1
+			;;
+			"date")
+				do_set_date "$value" || return 1
+			;;
+			"time")
+				do_set_time "$value" || return 1
+			;;
+			"timezone")
+				do_set_timezone "$value" || return 1
+			;;
+			*)
+				do_help
+				>&2 echo "error: invalid get command ${key}"
+				#print_log $LOG_FILE "ERROR" "Executing 'config_set_value()' - ##### Invalid get command ${key} #####"
+				exit 1
+	esac
+}
+
+do_get_datetime()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_datetime()'"
+
+	local result=`date "+%Y/%m/%d %T"`
+	#print_log $LOG_FILE "INFO" "Executing 'get_datetime()' - result: $result"
+	echo "$result"
+}
+
+do_get_date()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_time()'"
+
+	local result=`date "+%Y/%m/%d"`
+	#print_log $LOG_FILE "INFO" "Executing 'get_date()' - result: $result"
+	echo "$result"
+}
+
+do_get_time()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'get_time()'"
+
+	local result=`date "+%T"`
+	#print_log $LOG_FILE "INFO" "Executing 'get_time()' - result: $result"
+	echo "$result"
+}
+
+do_get_status()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_status()'"
+
+	local result=`timedatectl status`
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_status()' - result: $result"
+	echo "$result"
+}
+
+do_get_timezone()
+{
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_timezone()'"
+
+	#local result=`cat /etc/timezone`
+	local result=`echo "$(timedatectl status)" | grep "Time zone:" |  cut -d':' -f2-`
+	result="${result/ /}"
+	#print_log $LOG_FILE "INFO" "Executing 'do_get_timezone()' - result: ${result}"
+	echo "$result"
+}
+
+config_get_value()
+{
+	local key=$1
+	local parameter=$2
+
+	#print_log $LOG_FILE "INFO" "Executing 'config_get_value()' - key: '$key', parameter: '$parameter'"
+
+	case "${key}" in
+			"datetime")
+				do_get_datetime
+			;;
+			"date")
+				do_get_date || return 1
+			;;
+			"time")
+				do_get_time || return 1
+			;;
+			"status")
+				do_get_status || return 1
+			;;
+			"timezone")
+				do_get_timezone || return 1
+			;;
+			*)
+				do_help
+				>&2 echo "error: invalid get command ${key}"
+				#print_log $LOG_FILE "Executing 'config_get_value()' - ERROR" "##### Invalid get command ${key} #####"
+				exit 1
+	esac
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-log_scripts
+
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-datetime.log"
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    local param2=$3
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1 $param2', result: '$return' #####"
+    exit $return
+}
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+shift
+
+#print_log $LOG_FILE "INFO" "##### Executing operation: '${ACTION} $1 $2' #####"
+
+case "${ACTION}" in
+    "set")
+        config_set_value "$1" "$2" || exit_execution 1 "$1" "$2"
+    ;;
+    "get")
+        config_get_value "$1"
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
+
+exit_execution 0 "$1" "$2"

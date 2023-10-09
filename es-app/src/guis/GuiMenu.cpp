@@ -2499,18 +2499,27 @@ void GuiMenu::openAdvancedSettings()
 	{
 		auto system_time = std::make_shared<DateTimeEditComponent>(window, DateTimeEditComponent::DisplayMode::DISP_DATE_TIME);
 		std::string datetime_format(EsLocale::getDateFormat());
-		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - datetime_format: " << datetime_format;
 		datetime_format.append(" %H:%M:%S");
-		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - datetime_format: " << datetime_format;
-		std::string datetime = Utils::Time::timeToString(Utils::Time::now(), datetime_format);
-		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - datetime: " << datetime;
-		system_time->setValue( datetime );
-		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - system_time value: " << system_time->getValue();
-		LOG(LogDebug) << "GuiMenu::openAdvancedSettings() - system_time value in format '%Y/%m/%d %H:%M:%S': " << system_time->getValue("%Y/%m/%d %H:%M:%S");
+		system_time->setValue( Utils::Time::timeToString(Utils::Time::now()) );
 		s->addWithDescription(_("DATETIME"), _("DATETIME FORMAT: ") + datetime_format, system_time);
-		s->addSaveFunc([system_time] {
-			if (system_time->changed()) {
-				ApiSystem::getInstance()->setDateTime(system_time->getValue("%Y/%m/%d %H:%M:%S"));
+		s->addSaveFunc([system_time, window] {
+			if (system_time->changed())
+			{
+				bool isScreenSaverEnabled = window->isScreenSaverEnabled();
+				if (isScreenSaverEnabled)
+				{
+					std::string screenSaverBehavior = Settings::getInstance()->getString("ScreenSaverBehavior");
+					Settings::getInstance()->setString("ScreenSaverBehavior", "none");
+					PowerSaver::updateTimeouts();
+
+					// wait 5 seconds to restart screensaver behaivour
+					Utils::Async::runScheduled(5, [screenSaverBehavior] (void)
+						{
+							Settings::getInstance()->setString("ScreenSaverBehavior", screenSaverBehavior);
+							PowerSaver::updateTimeouts();
+						});
+				}
+				ApiSystem::getInstance()->setDateTime(system_time->getValue("%Y-%m-%d %H:%M:%S"));
 			}
 		});
 	}

@@ -1,0 +1,213 @@
+#!/bin/bash
+
+do_help() {
+    echo "$0 load_splash_before_game" >&2
+    echo "$0 load_splash_after_game" >&2
+    echo "$0 load_splash_before_game_time <SECONDS>" >&2
+    echo "$0 load_splash_after_game_time <SECONDS>" >&2
+    echo "$0 load_splash_ascii_before_game" >&2
+    echo "$0 load_splash_ascii_after_game" >&2
+    echo "$0 quit_splash_before_game" >&2
+    echo "$0 quit_splash_after_game" >&2
+    echo "$0 quit_splash_ascii_before_game" >&2
+    echo "$0 quit_splash_ascii_after_game" >&2
+}
+
+do_load_splash_before_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_before_game()'"
+
+    [ "$(get_es_settings_property splash.game.load true)" = "true" ] && do_load_splash
+}
+
+do_load_splash_after_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_after_game()'"
+
+    [ "$(get_es_settings_property splash.game.exit true)" = "true" ] && do_load_splash
+}
+
+do_load_splash()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash()'"
+
+    if [ -f "$LOADING_IMAGE" ]; then
+        sudo rm -f "$PID_FILE"
+        $IMAGE_VIEWER_APP --fullscreen "$LOADING_IMAGE" &
+        local pid_value=$!
+        echo "$pid_value" > "$PID_FILE"
+        #print_log $LOG_FILE "INFO" "Executing 'do_load_splash()' - PID value '$pid_value'"
+    fi
+}
+
+do_load_splash_ascii_before_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_ascii_before_game()'"
+
+    if [ "$(get_es_settings_property splash.game.load true)" = "true" ]; then
+      do_load_splash_ascii
+    fi
+}
+
+do_load_splash_ascii_after_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_ascii_after_game()'"
+
+    if [ "$(get_es_settings_property splash.game.exit true)" = "true" ]; then
+      do_load_splash_ascii
+    fi
+}
+
+do_load_splash_ascii()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_ascii()'"
+    if [ -f "$LOADING_ASCII" ]; then
+      echo -en "\033[21m" > /dev/tty1 && cat "$LOADING_ASCII" > /dev/tty1
+    fi
+}
+
+do_load_splash_time_before_game()
+{
+    local time=$1
+    [ -z "$time" ] && time=2
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_time_before_game()' - time '$time'"
+
+    [ "$(get_es_settings_property splash.game.load true)" = "true" ] && do_load_splash_time $time
+}
+
+do_load_splash_time_after_game()
+{
+    local time=$1
+    [ -z "$time" ] && time=2
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_time_after_game()' - time '$time'"
+
+    [ "$(get_es_settings_property splash.game.exit true)" = "true" ] && do_load_splash_time $time
+}
+
+do_load_splash_time()
+{
+    local time=$1
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash_time()' - time '$time'"
+
+    if [ -f "$LOADING_IMAGE" ]; then
+      /usr/local/bin/image-viewer --fullscreen "$LOADING_IMAGE" &
+      local pid_value=$!
+      (sleep "${time}s"; sudo kill -9 $pid_value)
+    fi
+}
+
+do_quit_splash_before_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_quit_splash_before_game()'"
+    [ "$(get_es_settings_property splash.game.load true)" = "true" ] && do_quit_splash
+}
+
+do_quit_splash_after_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_quit_splash_after_game()'"
+    if [ "$(get_es_settings_property splash.game.exit true)" = "true" ]; then
+        sleep 1s
+        do_quit_splash
+    fi
+}
+
+do_quit_splash()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_remove_splash()'"
+    [ ! -f "$PID_FILE" ] && return
+    local pid_value=$(cat "$PID_FILE")
+    #print_log $LOG_FILE "INFO" "Executing 'do_load_splash()' - Killing process with PID value '$pid_value'"
+    [ ! -z "$pid_value" ] && sudo kill -9 $pid_value
+    sudo rm -f "$PID_FILE"
+}
+
+do_quit_splash_ascii_before_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_quit_splash_ascii_before_game()'"
+    [ "$(get_es_settings_property splash.game.load true)" = "true" ] && do_quit_splash_ascii
+}
+
+do_quit_splash_ascii_after_game()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_quit_splash_ascii_after_game()'"
+    if [ "$(get_es_settings_property splash.game.exit true)" = "true" ]; then
+        sleep 1s
+        do_quit_splash_ascii
+    fi
+}
+
+do_quit_splash_ascii()
+{
+    #print_log $LOG_FILE "INFO" "Executing 'do_quit_splash_ascii()'"
+    printf "\033c" >> /dev/tty1
+}
+
+# ******************************************************************************************
+
+# Configure ES commons variables
+. es-log_scripts
+
+LOG_FILE="$ES_SCRIPT_LOGS_DIR/es-splash_screen.log"
+PID_FILE="/tmp/splash_pid.txt"
+LOADING_IMAGE="/roms/launchimages/loading.jpg"
+LOADING_ASCII="/roms/launchimages/loading.ascii"
+IMAGE_VIEWER_APP="/usr/local/bin/image-viewer"
+
+#if [ -f "$LOG_FILE" ]; then
+#  mv "$LOG_FILE" "$LOG_FILE.bak"
+#fi
+
+exit_execution()
+{
+    local return=$1
+    local param1=$2
+    #print_log $LOG_FILE "INFO" "##### Exit executing operation: '$ACTION $param1', exit code: '$return' #####"
+    exit $return
+}
+
+if [ $# -eq 0 ]; then
+  do_help
+  exit 1
+fi
+
+ACTION=$1
+shift
+
+#print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION $1' #####"
+
+case "${ACTION}" in
+    "load_splash_before_game")
+        do_load_splash_before_game || exit_execution 1
+    ;;
+    "load_splash_after_game")
+        do_load_splash_after_game || exit_execution 1
+    ;;
+    "load_splash_time_before_game")
+        do_load_splash_time_before_game "$1" || exit_execution 1 "$1"
+    ;;
+    "load_splash_time_after_game")
+        do_load_splash_time_after_game "$1" || exit_execution 1 "$1"
+    ;;
+    "load_splash_ascii_before_game")
+        do_load_splash_ascii_before_game || exit_execution 1
+    ;;
+    "quit_splash_before_game")
+        do_quit_splash_before_game || exit_execution 1
+    ;;
+    "quit_splash_after_game")
+        do_quit_splash_after_game || exit_execution 1
+    ;;
+    "quit_splash_ascii_before_game")
+        do_quit_splash_ascii_before_game || exit_execution 1
+    ;;
+    "quit_splash_ascii_after_game")
+        do_quit_splash_ascii_after_game || exit_execution 1
+    ;;
+    *)
+        do_help
+        >&2 echo "error: invalid command ${ACTION}"
+        #print_log $LOG_FILE "ERROR" "##### Invalid command ${ACTION} #####"
+        exit 1
+esac
+
+exit_execution 0 "$1"

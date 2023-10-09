@@ -30,6 +30,7 @@ export RA32_CONFIG_FOLDER="$SYSTEM_CONFIG_PATH/retroarch32"
 export RA32_CONFIG_FILE="$RA32_CONFIG_FOLDER/retroarch.cfg"
 
 export SDL_GAMECONTROLLERDB_FILE="$SYSTEM_CONFIG_PATH/gamecontrollerdb.txt"
+export ARKOS_SDL_GAMECONTROLLERDB_FILE="$SYSTEM_CONFIG_PATH/SDL-GameControllerDB/gamecontrollerdb.txt"
 export INPUT_CONTROLLERS_CONFIG_PATH="/tmp/input_controllers.cfg"
 export DEFAULT_CONTROLLER_NAME="retrogame_joypad"
 export MAX_PLAYERS=5
@@ -139,11 +140,13 @@ set_es_settings_property()
   local property="$1"
   local value="$2"
   local type="$3"
+  local overwrite=$4
+  [ -z "$overwrite" ] && overwrite=1
 
   [ -z "$property" ] && return
   [ -z "$type" ] && return
 
-  if [[ $(cat "$ES_CONFIG_FILE" | grep -c "name=\"$property\"" | grep "<$type") -gt 0 ]]; then
+  if [[ $(cat "$ES_CONFIG_FILE" | grep -c "name=\"$property\"" | grep "<$type") -gt 0 ]] && [ $overwrite -eq 1 ]; then
     # property exist, replace
     sudo sed -i "s/^<$type\s\+name=\"$property\".*/<${type} name=\"${property}\" value=\"${value}\" \/>/" "$ES_CONFIG_FILE"
     return
@@ -191,12 +194,14 @@ set_ra_property()
   local config_file="$1"
   local property="$2"
   local value="$3"
+  local overwrite=$4
+  [ -z "$overwrite" ] && overwrite=1
 
   if [ -z "$property" ] || [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
     return
   fi
 
-  if [[ $(cat "$config_file" | grep -ce "$property[ ]*=") -gt 0 ]]; then
+  if [[ $(cat "$config_file" | grep -ce "$property[ ]*=") -gt 0 ]] && [ $overwrite -eq 1 ]; then
     # property exist, replace
     sudo sed -i "s/#\?$property[ ]*=.*/$property = \"$value\"/g" "$config_file" > /dev/null
     return

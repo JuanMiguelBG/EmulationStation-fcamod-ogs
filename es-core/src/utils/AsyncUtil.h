@@ -14,6 +14,8 @@ namespace Utils
 
 		void run(const std::function<void()>& asyncFunction);
 
+		void runScheduled(int seconds, const std::function<void()>& asyncFunction);
+
 		unsigned int getThreadId();
 	} // Async::
 

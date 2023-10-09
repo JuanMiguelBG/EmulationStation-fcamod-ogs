@@ -44,7 +44,7 @@ public:
 
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 
-	bool changed() { return mTime.getTime() != mTimeBeforeEdit.getTime(); };
+	bool changed();
 
 private:
 	std::shared_ptr<Font> getFont() const;
@@ -58,6 +58,7 @@ private:
 	Utils::Time::DateTime mTimeBeforeEdit;
 
 	bool mEditing;
+	bool mEdited;
 	int mEditIndex;
 	DisplayMode mDisplayMode;
 

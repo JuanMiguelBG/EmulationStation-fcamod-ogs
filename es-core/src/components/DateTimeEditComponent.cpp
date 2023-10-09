@@ -5,7 +5,7 @@
 #include "EsLocale.h"
 
 DateTimeEditComponent::DateTimeEditComponent(Window* window, DisplayMode dispMode) : GuiComponent(window),
-	mEditing(false), mEditIndex(0), mDisplayMode(dispMode), mRelativeUpdateAccumulator(0),
+	mEditing(false), mEdited(false), mEditIndex(0), mDisplayMode(dispMode), mRelativeUpdateAccumulator(0),
 	mUppercase(false), mAutoSize(true)
 {
 	auto menuTheme = ThemeData::getMenuTheme();
@@ -36,6 +36,7 @@ bool DateTimeEditComponent::input(InputConfig* config, Input input)
 		if(mEditing)
 		{
 			//started editing
+			mEdited = true;
 			mTimeBeforeEdit = mTime;
 
 			//initialize to now if unset
@@ -411,3 +412,8 @@ std::vector<HelpPrompt> DateTimeEditComponent::getHelpPrompts()
 	}
 	return prompts;
 }
+
+bool DateTimeEditComponent::changed()
+{
+	return mEdited && (mTime.getTime() != mTimeBeforeEdit.getTime());
+};

@@ -124,7 +124,7 @@ case "${ACTION}" in
         config_get_value "$1"
     ;;
     "set_all_values")
-        config_set_all_values "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8" || exit_execution 1 "$1" "$2" "$3" "$4" "$5" "$7" "$7" "$8"
+        config_set_all_values "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" || exit_execution 1 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8"
     ;;
     "get_all_values")
         do_get_all_values

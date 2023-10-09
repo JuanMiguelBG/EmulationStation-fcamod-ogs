@@ -224,6 +224,7 @@ do_connect() {
 
     # connected
     #print_log $LOG_FILE "INFO" "Executing 'do_connect()' - Successfully connected to '$SSID'"
+
     return 0
 }
 
@@ -279,6 +280,9 @@ do_enable()
     #print_log $LOG_FILE "INFO" "Executing 'do_enable()'"
 
     enable_network_manager
+
+    # Ensure that System Time Synchronization is active
+    es-remote_services active ntp &
 }
 
 do_start() {

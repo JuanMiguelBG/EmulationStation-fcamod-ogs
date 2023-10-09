@@ -27,26 +27,41 @@ namespace Utils
 
 		void run(const std::function<void()>& asyncFunction)
 		{
+			runScheduled(0, asyncFunction);
+		}
+
+		void runScheduled(int seconds, const std::function<void()>& asyncFunction)
+		{
 			if (asyncFunction == nullptr)
 				return;
 
 			std::string threadId = std::to_string(getThreadId());
 			if (Utils::Async::isCanRunAsync())
 			{
-				LOG(LogDebug) << "Utils::Async::run() - Asynchronous execution, thread: '" << threadId << "'!";
+				LOG(LogDebug) << "Utils::Async::runScheduled() - Asynchronous execution, thread: '" << threadId << "', launch after " << seconds << " seconds!";
 				// trick to run asynchronous and forget
-				std::make_unique<std::future<void>*>(new auto(std::async(std::launch::async, [asyncFunction]
+				std::make_unique<std::future<void>*>(new auto(std::async(std::launch::async, [seconds, asyncFunction]
 					{
-						LOG(LogDebug) << "Utils::Async::run() - INSIDE Asynchronous execution, thread: '" << std::to_string(Utils::Async::getThreadId()) << "'!";
+						LOG(LogDebug) << "Utils::Async::runScheduled() - INSIDE Asynchronous execution, thread: '" << std::to_string(Utils::Async::getThreadId()) << "', launch after " << seconds << " seconds!";
+						if (seconds > 0)
+							sleep(seconds * 1000);
+
 						asyncFunction();
+
+						LOG(LogDebug) << "Utils::Async::runScheduled() - INSIDE Asynchronous execution, thread: '" << std::to_string(Utils::Async::getThreadId()) << "', launched after " << seconds << " seconds!";
 					}))).reset();
-				LOG(LogDebug) << "Utils::Async::run() - exit Asynchronous execution, thread: '" << threadId << "'!";
+				LOG(LogDebug) << "Utils::Async::runScheduled() - exit Asynchronous execution, thread: '" << threadId << "', launch after " << seconds << " seconds!";
 			}
 			else
 			{
-				LOG(LogDebug) << "Utils::Async::run() - synchronous execution, thread: '" << threadId << "'!";
+				LOG(LogDebug) << "Utils::Async::runScheduled() - synchronous execution, thread: '" << threadId << "', launch after " << seconds << " seconds!";
+				if (seconds > 0)
+					sleep(seconds * 1000);
+
 				asyncFunction();
+				LOG(LogDebug) << "Utils::Async::runScheduled() - synchronous execution, thread: '" << threadId << "', launched after " << seconds << " seconds!";
 			}
+
 		}
 
 		unsigned int getThreadId()
