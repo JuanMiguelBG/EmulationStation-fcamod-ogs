@@ -14,7 +14,7 @@ bool GuiComponent::ALLOWANIMATIONS = true;
 GuiComponent::GuiComponent(Window* window) : mWindow(window), mParent(NULL), mOpacity(255),
 	mPosition(Vector3f::Zero()), mOrigin(Vector2f::Zero()), mRotationOrigin(0.5, 0.5),
 	mSize(Vector2f::Zero()), mTransform(Transform4x4f::Identity()), mIsProcessing(false), mVisible(true),
-	mStaticExtra(false), mShowing(false)
+	mStaticExtra(false), mShowing(false), mChildWithInputPriority(NULL)
 {
 	for(unsigned char i = 0; i < MAX_ANIMATIONS; i++)
 		mAnimationMap[i] = NULL;
@@ -26,10 +26,13 @@ GuiComponent::~GuiComponent()
 
 	cancelAllAnimations();
 
-	if(mParent)
+	if (mParent)
 		mParent->removeChild(this);
 
-	for(unsigned int i = 0; i < getChildCount(); i++)
+	if (mChildWithInputPriority)
+		mChildWithInputPriority = NULL;
+
+	for (unsigned int i = 0; i < getChildCount(); i++)
 		getChild(i)->setParent(NULL);
 }
 
@@ -585,3 +588,15 @@ void GuiComponent::animateTo(Vector2f from, Vector2f to, unsigned int  flags, in
 		});
 	}
 }
+
+void GuiComponent::setChildWithInputPriority(GuiComponent* childWithInputPriority)
+{
+	if (childWithInputPriority)
+		mChildWithInputPriority = childWithInputPriority;
+}
+
+GuiComponent* GuiComponent::getChildWithInputPriority() const
+{
+	return mChildWithInputPriority;
+}
+

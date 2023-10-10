@@ -58,7 +58,8 @@ private:
 	Utils::Time::DateTime mTimeBeforeEdit;
 
 	bool mEditing;
-	bool mEdited;
+	bool mAlreadyChanged;
+	bool mChanged;
 	int mEditIndex;
 	DisplayMode mDisplayMode;
 

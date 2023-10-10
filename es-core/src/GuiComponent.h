@@ -102,6 +102,8 @@ public:
 
 	void setParent(GuiComponent* parent);
 	GuiComponent* getParent() const;
+	void setChildWithInputPriority(GuiComponent* childWithInputPriority);
+	GuiComponent* getChildWithInputPriority() const;
 
 	void addChild(GuiComponent* cmp);
 	void removeChild(GuiComponent* cmp);
@@ -180,6 +182,7 @@ protected:
 	Window* mWindow;
 
 	GuiComponent* mParent;
+	GuiComponent* mChildWithInputPriority;
 	std::vector<GuiComponent*> mChildren;
 
 	std::string mTag;

@@ -74,6 +74,9 @@ void GuiSettings::save()
 
 bool GuiSettings::input(InputConfig* config, Input input)
 {
+	if (getChildWithInputPriority() && getChildWithInputPriority()->input(config, input))
+		return true;
+
 	if (input.value != 0)
 	{
 		if (config->isMappedTo(BUTTON_BACK, input))
