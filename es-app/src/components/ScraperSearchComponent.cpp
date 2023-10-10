@@ -352,7 +352,10 @@ void ScraperSearchComponent::updateInfoPane()
 
 bool ScraperSearchComponent::input(InputConfig* config, Input input)
 {
-	if(config->isMappedTo(BUTTON_OK, input) && input.value != 0)
+	if (getChildWithInputPriority() && getChildWithInputPriority()->input(config, input))
+		return true;
+
+	if (config->isMappedTo(BUTTON_OK, input) && input.value != 0)
 	{
 		if(mBlockAccept)
 			return true;

@@ -114,16 +114,17 @@ void SystemScreenSaver::startScreenSaver()
 		}
 		else
 			mOpacity = 0.0f;
-			
-		// Load a random video
-		std::string path = pickRandomVideo();
 
-		int retry = 200;
-		while (retry > 0 && !Utils::FileSystem::exists(path))
+		// Load a random video
+		std::string path;
+		if (Settings::getInstance()->getBool("VideoScreenSaverCustomVideoSource"))
 		{
-			retry--;
-			path = pickRandomVideo();
+			path = pickRandomCustomVideo();
+			// Custom videos are not tied to the game list
+			mCurrentGame = NULL;
 		}
+		else
+			path = pickRandomGameListVideo();
 
 		if (!path.empty() && Utils::FileSystem::exists(path))
 		{
@@ -406,7 +407,7 @@ std::string SystemScreenSaver::pickGameListNode(unsigned long index, const char 
 	return "";
 }
 
-std::string SystemScreenSaver::pickRandomVideo()
+std::string SystemScreenSaver::pickRandomGameListVideo()
 {
 	countVideos();
 	mCurrentGame = NULL;
@@ -415,6 +416,51 @@ std::string SystemScreenSaver::pickRandomVideo()
 	
 	int video = Randomizer::random(mVideoCount);
 	return pickGameListNode(video, "video");
+}
+
+std::string SystemScreenSaver::pickRandomCustomVideo()
+{
+	std::string path;
+
+	std::string videoDir = Settings::getInstance()->getString("VideoScreenSaverVideoDir");
+	if ((videoDir != "") && (Utils::FileSystem::exists(videoDir)))
+	{
+		std::string                   videoFilter = Settings::getInstance()->getString("VideoScreenSaverVideoFilter");
+		std::vector<std::string>      matchingFiles;
+		Utils::FileSystem::stringList dirContent  = Utils::FileSystem::getDirContent(videoDir, Settings::getInstance()->getBool("VideoScreenSaverRecurse"));
+
+		for(Utils::FileSystem::stringList::const_iterator it = dirContent.cbegin(); it != dirContent.cend(); ++it)
+		{
+			if (Utils::FileSystem::isRegularFile(*it))
+			{
+				// If the video filter is empty, or the file extension is in the filter string,
+				//  add it to the matching files list
+				if ((videoFilter.length() <= 0) ||
+					(videoFilter.find(Utils::FileSystem::getExtension(*it)) != std::string::npos))
+				{
+					matchingFiles.push_back(*it);
+				}
+			}
+		}
+
+		int fileCount = (int)matchingFiles.size();
+		if (fileCount > 0)
+		{
+			// get a random index in the range 0 to fileCount (exclusive)
+			int randomIndex = Randomizer::random(fileCount);
+			path = matchingFiles[randomIndex];
+		}
+		else
+		{
+			LOG(LogError) << "SystemScreenSaver::pickRandomCustomVideo() - No video files found\n";
+		}
+	}
+	else
+	{
+		LOG(LogError) << "SystemScreenSaver::pickRandomCustomVideo() - Video directory does not exist: " << videoDir << "\n";
+	}
+
+	return path;
 }
 
 std::string SystemScreenSaver::pickRandomGameListImage()
@@ -437,7 +483,7 @@ std::string SystemScreenSaver::pickRandomCustomImage()
 	{
 		std::string                   imageFilter = Settings::getInstance()->getString("SlideshowScreenSaverImageFilter");
 		std::vector<std::string>      matchingFiles;
-		Utils::FileSystem::stringList dirContent  = Utils::FileSystem::getDirContent(imageDir, Settings::getInstance()->getBool("SlideshowScreenSaverRecurse"));
+		Utils::FileSystem::stringList dirContent  = Utils::FileSystem::getDirContent(imageDir, Settings::getInstance()->getBool("SlideshowScreenSaverImageRecurse"));
 
 		for(Utils::FileSystem::stringList::const_iterator it = dirContent.cbegin(); it != dirContent.cend(); ++it)
 		{
@@ -462,12 +508,12 @@ std::string SystemScreenSaver::pickRandomCustomImage()
 		}
 		else
 		{
-			LOG(LogError) << "Slideshow Screensaver - No image files found\n";
+			LOG(LogError) << "SystemScreenSaver::pickRandomCustomImage() - No image files found\n";
 		}
 	}
 	else
 	{
-		LOG(LogError) << "Slideshow Screensaver - Image directory does not exist: " << imageDir << "\n";
+		LOG(LogError) << "SystemScreenSaver::pickRandomCustomImage() - Image directory does not exist: " << imageDir << "\n";
 	}
 
 	return path;

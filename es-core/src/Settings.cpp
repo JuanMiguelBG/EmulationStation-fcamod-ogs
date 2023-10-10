@@ -159,17 +159,24 @@ void Settings::setDefaults()
 
 	mBoolMap["ScreenSaverControls"] = true;
 	mStringMap["ScreenSaverGameInfo"] = "never";
-	mBoolMap["StretchVideoOnScreenSaver"] = false;
 	mStringMap["PowerSaverMode"] = "disabled";
 	mBoolMap["StopMusicOnScreenSaver"] = true;
 
-	mIntMap["ScreenSaverSwapImageTimeout"] = 10000;
-	mBoolMap["SlideshowScreenSaverStretch"] = false;
+	// Custom images
 	mBoolMap["SlideshowScreenSaverCustomImageSource"] = false;
 	mStringMap["SlideshowScreenSaverImageDir"] = Utils::FileSystem::getHomePath() + "/slideshow/image";
-	mStringMap["SlideshowScreenSaverImageFilter"] = ".png,.jpg";
 	mBoolMap["SlideshowScreenSaverRecurse"] = false;
+	mStringMap["SlideshowScreenSaverImageFilter"] = ".png,.jpg";
+	mIntMap["ScreenSaverSwapImageTimeout"] = 10000;
+	mBoolMap["SlideshowScreenSaverStretch"] = false;
 	mBoolMap["SlideshowScreenSaverGameName"] = true;
+
+	// Custom videos
+	mBoolMap["StretchVideoOnScreenSaver"] = false;
+	mBoolMap["VideoScreenSaverCustomVideoSource"] = false;
+	mStringMap["VideoScreenSaverVideoDir"] = Utils::FileSystem::getHomePath() + "/slideshow/video";
+	mBoolMap["VideoScreenSaverRecurse"] = false;
+	mStringMap["VideoScreenSaverVideoFilter"] = ".mp4,.avi";
 	mIntMap["ScreenSaverSwapVideoTimeout"] = 30000;
 
 	mBoolMap["ShowFilenames"] = false;

@@ -15,6 +15,7 @@ public:
 	inline void addRow(const ComponentListRow& row) { mMenu.addRow(row); };
 	inline void addWithLabel(const std::string& label, const std::shared_ptr<GuiComponent>& comp) { mMenu.addWithLabel(label, comp); };
 	inline void addSaveFunc(const std::function<void()>& func) { mSaveFuncs.push_back(func); };
+	inline void addGroup(const std::string& label) { mMenu.addGroup(label); };
 
 	std::shared_ptr<TextComponent> addEditableTextComponent(const std::string label, std::string value);
 	std::shared_ptr<TextComponent> addBrowsablePath(const std::string label, std::string value);

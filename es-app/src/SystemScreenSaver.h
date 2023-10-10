@@ -91,7 +91,8 @@ private:
 	void countImages();
 
 	std::string pickGameListNode(unsigned long index, const char *nodeName);
-	std::string pickRandomVideo();
+	std::string pickRandomGameListVideo();
+	std::string pickRandomCustomVideo();
 	std::string pickRandomGameListImage();
 	std::string pickRandomCustomImage();
 
