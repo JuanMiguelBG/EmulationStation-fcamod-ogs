@@ -107,7 +107,7 @@ void loadGamelistFile (const std::string xmlpath, SystemData* system, std::unord
 
 	bool trustGamelist = Settings::getInstance()->getBool("ParseGamelistOnly");
 
-	if (!Utils::String::toLower(Utils::FileSystem::getExtension(xmlpath)) == ".xml")
+	if (!Utils::String::equalsIgnoreCase(Utils::FileSystem::getExtension(xmlpath), ".xml"))
 	{
 		LOG(LogWarning) << "Gamelist::loadGamelistFile() - file \"" << xmlpath << "\" isn't a XML file, skipped!";
 		return;

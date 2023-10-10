@@ -4,9 +4,12 @@
 #include "utils/StringUtil.h"
 #include "EsLocale.h"
 
-DateTimeEditComponent::DateTimeEditComponent(Window* window, DisplayMode dispMode) : GuiComponent(window),
+
+DateTimeEditComponent::DateTimeEditComponent(Window* window, GuiComponent *parentContainer) : DateTimeEditComponent(window, DISP_DATE, parentContainer)
+
+DateTimeEditComponent::DateTimeEditComponent(Window* window, DisplayMode dispMode, GuiComponent *parentContainer) : GuiComponent(window),
 	mEditing(false), mAlreadyChanged(false), mChanged(false), mEditIndex(0), mDisplayMode(dispMode),
-	mRelativeUpdateAccumulator(0), mUppercase(false), mAutoSize(true)
+	mRelativeUpdateAccumulator(0), mUppercase(false), mAutoSize(true), mParentContainer(parentContainer)
 {
 	auto menuTheme = ThemeData::getMenuTheme();
 
@@ -38,8 +41,8 @@ bool DateTimeEditComponent::input(InputConfig* config, Input input)
 			//started editing
 			mChanged = false;
 			mTimeBeforeEdit = mTime;
-			if (getParent())
-				getParent()->setChildWithInputPriority(this);
+			if (mParentContainer)
+				mParentContainer->setChildWithInputPriority(this);
 
 			//initialize to now if unset
 			if (mTime.getTime() == Utils::Time::NOT_A_DATE_TIME)
@@ -50,8 +53,8 @@ bool DateTimeEditComponent::input(InputConfig* config, Input input)
 		}
 		else
 		{
-			if (getParent())
-				getParent()->setChildWithInputPriority(NULL);
+			if (mParentContainer)
+				mParentContainer->setChildWithInputPriority(NULL);
 
 			if (mChanged)
 			{
@@ -71,8 +74,8 @@ bool DateTimeEditComponent::input(InputConfig* config, Input input)
 			mEditing = false;
 			mChanged = false;
 			mTime = mTimeBeforeEdit;
-			if (getParent())
-				getParent()->setChildWithInputPriority(NULL);
+			if (mParentContainer)
+				mParentContainer->setChildWithInputPriority(NULL);
 
 			updateTextCache();
 			updateHelpPrompts();

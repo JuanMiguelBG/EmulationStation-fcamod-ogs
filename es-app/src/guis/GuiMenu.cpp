@@ -2497,7 +2497,7 @@ void GuiMenu::openAdvancedSettings()
 	// Manual time management
 	if (!SystemConf::getInstance()->getBool("wifi.enabled"))
 	{
-		auto system_time = std::make_shared<DateTimeEditComponent>(window, DateTimeEditComponent::DisplayMode::DISP_DATE_TIME);
+		auto system_time = std::make_shared<DateTimeEditComponent>(window, DateTimeEditComponent::DisplayMode::DISP_DATE_TIME, s);
 		std::string datetime_format(EsLocale::getDateFormat());
 		datetime_format.append(" %H:%M:%S");
 		system_time->setValue( Utils::Time::timeToString(Utils::Time::now()) );

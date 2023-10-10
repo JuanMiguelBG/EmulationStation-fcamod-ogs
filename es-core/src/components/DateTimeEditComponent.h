@@ -18,7 +18,8 @@ public:
 		DISP_RELATIVE_TO_NOW
 	};
 
-	DateTimeEditComponent(Window* window, DisplayMode dispMode = DISP_DATE);
+	DateTimeEditComponent(Window* window, DisplayMode dispMode = DISP_DATE, GuiComponent *parentContainer = nullptr);
+	DateTimeEditComponent(Window* window, GuiComponent *parentContainer);
 
 	void setValue(const std::string& val) override;
 	std::string getValue() const override;
@@ -73,6 +74,8 @@ private:
 	bool mUppercase;
 
 	bool mAutoSize;
+
+	GuiComponent* mParentContainer;
 };
 
 #endif // ES_CORE_COMPONENTS_DATE_TIME_COMPONENT_H

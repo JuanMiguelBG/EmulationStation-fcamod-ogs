@@ -50,7 +50,7 @@ ScraperSearchComponent::ScraperSearchComponent(Window* window, SearchType type) 
 
 
 	mMD_Rating = std::make_shared<RatingComponent>(mWindow);
-	mMD_ReleaseDate = std::make_shared<DateTimeEditComponent>(mWindow);
+	mMD_ReleaseDate = std::make_shared<DateTimeEditComponent>(mWindow, this);
 	mMD_ReleaseDate->setColor(mdColor);
 	mMD_Developer = std::make_shared<TextComponent>(mWindow, "", font, mdColor);
 	mMD_Publisher = std::make_shared<TextComponent>(mWindow, "", font, mdColor);
