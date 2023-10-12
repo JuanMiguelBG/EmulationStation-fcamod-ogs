@@ -7,24 +7,23 @@ do_help() {
     echo "$0 get_base_os_info" >&2
     echo "$0 get_kernel_info" >&2
     echo "$0 get_device_name" >&2
+    echo "$0 get_hostname" >&2
+    echo "$0 get_software_info" >&2
+    echo "$0 get_all_storage_info" >&2
+    echo "$0 get_user_storage_info" >&2
+    echo "$0 get_roms_storage_info" >&2
+    echo "$0 get_usb_storage_info" >&2
+    echo "$0 get_device_info" >&2
+    echo "$0 get_soc_info" >&2
+    echo "$0 get_gpu_info" >&2
+    echo "$0 get_memory_info" >&2
+    echo "$0 get_summary_info" >&2
 }
 
-is_enabled() {
-    local output=$(nmcli radio wifi)
-    local enabled=$(echo "$output" | grep enabled)
+do_get_system_name()
+{
 
-    if [ -z "$enabled" ]; then
-      # disaled
-      return 1
-    fi
-
-    # enabled
-    return 0
-}
-
-get_system_name() {
   local file=""
-
   if [ -f "/usr/share/plymouth/themes/text.plymouth" ]; then
     file="/usr/share/plymouth/themes/text.plymouth"
   elif [ -f "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" ]; then
@@ -32,10 +31,12 @@ get_system_name() {
   fi
 
   local name=$(cat "$file" | grep -iw "title" | awk '{ gsub(/=/," "); print $2}')
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_system_name()' - name: '$name'"
   echo "$name"
 }
 
-get_system_version() {
+do_get_system_version()
+{
   local version=""
   local file=""
 
@@ -50,14 +51,17 @@ get_system_version() {
     local version_extra=$(cat /opt/system/.arkosnoid/version)
     version="$version $version_extra"
   fi
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_system_version()' - version: '$version'"
   echo "$version"
 }
 
-get_system_info() {
+do_get_system_info()
+{
   echo "$(get_system_name) $(get_system_version)"
 }
 
-get_base_os_info() {
+do_get_base_os_info()
+{
   local base_os=""
 
   if [ -f "/usr/bin/hostnamectl" ]; then
@@ -67,10 +71,12 @@ get_base_os_info() {
   else
     base_os=$(/bin/uname)
   fi
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_base_os_info()' - base OS: '$base_os'"
   echo "$base_os"
 }
 
-get_kernel_info() {
+do_get_kernel_info()
+{
   local kernel=""
 
   if [ -f "/usr/bin/hostnamectl" ]; then
@@ -78,22 +84,365 @@ get_kernel_info() {
   else
     kernel="$(/bin/uname) $(/bin/uname -r)"
   fi
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_kernel_info()' - kernel: '$kernel'"
   echo "$kernel"
 }
 
-get_device_name() {
+do_get_device_name()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_device_name()' - device: 'RG503'"
   echo "RG503"
 }
 
-get_soc_name() {
+do_get_soc_name()
+{
   local soc=$(cat /proc/cpuinfo | grep -iw hardware | awk '{print $3 " " $4}')
   if [ -z "$var" ]
   then
       soc="Rockchip RK3566"
   fi
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_soc_name()' - SOC: '$soc'"
   echo "$soc"
 }
 
+do_get_hostname()
+{
+  local hostname="$(hostname)"
+
+  [ -z "$hostname" ] && [ -f "/usr/bin/hostnamectl" ] && hostname="$(hostnamectl | grep -iw hostname | awk '{print $3}')"
+
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_hostname()' - hostname: '$hostname'"
+  echo "$hostname"
+}
+
+do_get_software_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_software_info()'"
+
+  local system_name="$(do_get_system_name)"
+  local system_version="$(do_get_system_version)"
+  local base_os_info="$(do_get_base_os_info)"
+  local kernel_info="$(do_get_kernel_info)"
+  local hostname="$(do_get_hostname)"
+
+  local result="<software_info name=\"${system_name}\" version=\"${system_version}\" base_os=\"${base_os_info}\" kernel=\"${kernel_info}\" hostname=\"${hostname}\"/>"
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_software_info()' - result: $result"
+  echo "$result"
+}
+
+calculate_storage_units()
+{
+  local storage_data="$1"
+  [ -z "$storage_data" ] && return
+
+  local ivalue=${storage_data::-1}
+  local unit=${storage_data:0-1}
+
+  if [ $ivalue -gt 1024 ]; then
+     local integer=$((ivalue / 1024))
+     local decimal=$((ivalue % 1024))
+     if [ $decimal -gt 99 ]; then
+        decimal="${decimal:0:2}"
+     elif [ $decimal -lt 10 ]; then
+        decimal+="0"
+     fi
+     if [ "$unit" = "K" ]; then
+        unit="M"
+     elif [ "$unit" = "M" ]; then
+        unit="G"
+     fi
+     echo "${integer}.${decimal}${unit}B"
+     return
+  fi
+
+  echo "${storage_data}B"
+}
+
+do_process_device_storage()
+{
+  local device_data="$1"
+  [ -z "$device_data" ] && return
+
+  local used="$(echo ${device_data} | cut -d' ' -f 1)"
+  used="$(calculate_storage_units $used)"
+  local avail="$(echo ${device_data} | cut -d' ' -f 2)"
+  avail="$(calculate_storage_units $avail)"
+  local used_percent="$(echo ${device_data} | cut -d' ' -f 3)"
+  local mount_ponit="$(echo ${device_data} | cut -d' ' -f 4)"
+  local name=""
+
+  case "${mount_ponit}" in
+      "/")
+          name="system"
+      ;;
+      /boot|/roms*)
+          name="${mount_ponit#?}"
+      ;;
+      "/mnt/usbdrive")
+          name="usb"
+      ;;
+  esac
+
+  echo "<device name=\"${name}\" mount_ponit=\"${mount_ponit}\" used=\"${used}\" used_percent=\"${used_percent}\" avail=\"${avail}\"/>"
+}
+
+do_get_roms_storage_info()
+{
+  local added=$1
+  [ -z "$added" ] && added=0
+  local roms_data="$(df -h -l -BM --output=used,avail,pcent,target | grep '/roms$')"
+  local roms2_data="$(df -h -l -BM --output=used,avail,pcent,target | grep '/roms2$')"
+
+  local result=""
+  if [ ! -z "$roms_data" ]; then
+     [ $added -eq 1 ] && result+="\n"
+     result+="$(do_process_device_storage "${roms_data}")"
+     added=1
+  fi
+
+  if [ ! -z "$roms2_data" ]; then
+     [ $added -eq 1 ] && result+="\n"
+     result+="$(do_process_device_storage "${roms2_data}")"
+     added=1
+  fi
+
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_roms_storage_info()' - result: $result"
+  echo -e "$result"
+}
+
+do_get_usb_storage_info()
+{
+  local added=$1
+  [ -z "$added" ] && added=0
+
+  local result=""
+  local usb_devices=`cat /proc/partitions | egrep sd[a-z]. | awk '{print $4}'`
+
+  # Set space as the delimiter
+  while read -r usb_device; do
+     local ITEM=${usb_device#* }
+     [ -z "$ITEM" ] && continue
+
+     #print_log $LOG_FILE "DEBUG" "Executing 'do_get_usb_storage_info()' - device: '$ITEM'"
+
+     local storage_data="$(df -h -l -BM --output=used,avail,pcent,target,source | grep "/dev/${ITEM}$")"
+     if [ -z "$storage_data" ]; then
+        #print_log $LOG_FILE "DEBUG" "Executing 'do_get_usb_storage_info()' - device '$ITEM' not mounted, skip"
+        continue
+     fi
+
+     [ $added -eq 1 ] && result+="\n"
+     result+="$(do_process_device_storage "${storage_data}")"
+     added=1
+
+  done <<< "$usb_devices"
+
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_usb_storage_info()' - result: $result"
+  echo -e "$result"
+}
+
+do_get_user_storage_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_user_storage_info()'"
+  local result=""
+  result+="$(do_get_roms_storage_info $added)"
+  result+="$(do_get_usb_storage_info 1)"
+
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_user_storage_info()' - result: $result"
+  echo -e "$result"
+}
+
+do_get_all_storage_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_storage_info()'"
+  local root_data="$(df -h -l -BM --output=used,avail,pcent,target | grep '/$')"
+  local boot_data="$(df -h -l -BM --output=used,avail,pcent,target | grep '/boot$')"
+
+  local result=""
+  local added=0
+  if [ ! -z "$root_data" ]; then
+     result+="$(do_process_device_storage "${root_data}")"
+     added=1
+  fi
+
+  if [ ! -z "$boot_data" ]; then
+     [ $added -eq 1 ] && result+="\n"
+     result+="$(do_process_device_storage "${boot_data}")"
+     added=1
+  fi
+
+  result+="$(do_get_roms_storage_info $added)"
+  result+="$(do_get_usb_storage_info $added)"
+
+  #print_log $LOG_FILE "INFO" "Executing 'get_all_storage_info()' - result: $result"
+  echo -e "$result"
+}
+
+do_get_device_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_device_info()'"
+
+  local name="$(do_get_device_name)"
+  local hardware="$(cat /proc/cpuinfo | grep -iw hardware | awk '{print $3 " " $4}')"
+  local revision="$(cat /proc/cpuinfo | grep Revision | awk '{print $3 " " $4}')"
+  [ -z "$revision" ] && revision="CSM-101 T-800 Version 2.4 - (Cyberdyne Systems)"
+  local serial="$(cat /proc/cpuinfo | grep -iw serial | awk '{print $3 " " $4}')"
+  serial="${serial^^}"
+  local machine_id="$(hostnamectl | grep -iw machine | awk '{print $3}')"
+  machine_id="${machine_id^^}"
+  local boot_id="$(hostnamectl | grep -iw boot | awk '{print $3}')"
+  boot_id="${boot_id^^}"
+
+  local result="<device_info name=\"${name}\" hardware=\"${hardware}\" revision=\"${revision}\" serial=\"${serial}\" machine_id=\"${machine_id}\" boot_id=\"${boot_id}\" />"
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_device_info()' - result: $result"
+  echo "$result"
+}
+
+do_get_cpu_load()
+{
+  local cpu_load="$(top -b -n 1 | egrep '%Cpu' | awk '{print $8}' | cut -d'.' -f 1)"
+  echo $((100 - cpu_load))
+}
+
+do_get_temperature()
+{
+  local temperature=$1
+  local ivalue=$((temperature / 1000))
+  local dvalue=$((temperature % 1000))
+  if [ $dvalue -gt 99 ]; then
+     dvalue="${dvalue:0:2}"
+  elif [ $dvalue -lt 10 ]; then
+     dvalue+="0"
+  fi
+  echo "${ivalue}.${dvalue}"
+}
+
+do_get_soc_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_soc_info()'"
+
+  local cpu_load="$(do_get_cpu_load)"
+  local temperature="$(cat /sys/devices/virtual/thermal/thermal_zone0/temp)"
+  temperature="$(do_get_temperature $temperature)"
+
+  local name="$(do_get_soc_name)"
+  local vendor="$(lscpu | egrep 'Vendor ID' | awk '{print $3}')"
+  local model="$(lscpu | egrep 'Model name' | awk '{print $3}')"
+  local ncpus="$(lscpu | egrep 'CPU\(s\)' | awk '{print $2}' | grep -v CPU)"
+  local architecture="$(lscpu | egrep 'Architecture' | awk '{print $2}')"
+  local nthreads_core="$(lscpu | egrep 'Thread' | awk '{print $4}')"
+  local governor="$(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor)"
+  governor="${governor//_/ }"
+
+  local frequency="$(sudo cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq)"
+  frequency="${frequency::-3}"
+  local frequency_max="$(sudo cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq)"
+  frequency_max="${frequency_max::-3}"
+  local frequency_min="$(sudo cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_min_freq)"
+  frequency_min="${frequency_min::-3}"
+
+  local result="<soc_info name=\"${name}\" vendor=\"${vendor}\" model=\"${model}\" ncpus=\"${ncpus}\" architecture=\"${architecture}\" nthreads_core=\"${nthreads_core}\" cpu_load=\"${cpu_load}\" temperature=\"${temperature}\" governor=\"${governor}\" frequency=\"${frequency}\" frequency_max=\"${frequency_max}\" frequency_min=\"${frequency_min}\" />"
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_soc_info()' - result: $result"
+  echo "$result"
+}
+
+do_get_display_property()
+{
+  if [ -z "$1" ]; then
+     echo "0"
+     return
+  fi
+
+  echo "$(sudo /usr/local/bin/panel_drm_tool list | grep -A 9 133 | grep $1 | awk -F ' = ' '{print $2}')"
+}
+
+do_get_gpu_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_gpu_info()'"
+
+  local model="$(cat /sys/devices/platform/fde60000.gpu/gpuinfo | awk '{print $1}')"
+  local resolution="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)')"
+  [ -z "$resolution" ] && resolution="$(cat /sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes)"
+  local bpp="$(cat /sys/devices/platform/display-subsystem/graphics/fb0/bits_per_pixel)"
+
+  local temperature="$(cat /sys/devices/virtual/thermal/thermal_zone1/temp)"
+  temperature="$(do_get_temperature $cpu_temperature)"
+
+  local governor="$(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/governor)"
+  governor="${governor//_/ }"
+
+  local frequency="$(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/cur_freq)"
+  frequency="${frequency::-6}"
+  local frequency_max="$(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/max_freq)"
+  frequency_max="${frequency_max::-6}"
+  local frequency_min="$(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/min_freq)"
+  frequency_min="${frequency_min::-6}"
+
+  local brightness="$(brightnessctl -m | awk -F',|%' '{print $4}')"
+
+  local gamma=0
+  local contrast=0
+  local saturation=0
+  local hue=0
+  es-display is_hdmi_mode
+  if [ $? -eq 1 ]; then
+     gamma="$(do_get_display_property brightness)"
+     contrast="$(do_get_display_property contrast)"
+     saturation="$(do_get_display_property saturation)"
+     hue="$(do_get_display_property hue)"
+  fi
+
+  local result="<gpu_info model=\"${model}\" resolution=\"${resolution}\" bpp=\"${bpp}\" temperature=\"${temperature}\" governor=\"${governor}\" frequency=\"${frequency}\" frequency_max=\"${frequency_max}\" frequency_min=\"${frequency_min}\" brightness=\"${brightness}\" gamma=\"${gamma}\" contrast=\"${contrast}\" saturation=\"${saturation}\" hue=\"${hue}\" />"
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_gpu_info()' - result: $result"
+  echo "$result"
+}
+
+do_get_memory_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_memory_info()'"
+
+  local total="$(top -b -n 1 | egrep 'MiB Mem' | awk '{print $4}')"
+  local free="$(top -b -n 1 | egrep 'MiB Mem' | awk '{print $6}')"
+  local used="$(top -b -n 1 | egrep 'MiB Mem' | awk '{print $8}')"
+  local cached="$(top -b -n 1 | egrep 'MiB Mem' | awk '{print $10}')"
+
+  local result="<memory_info total=\"${total}\" free=\"${free}\" used=\"${used}\" cached=\"${cached}\" />"
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_memory_info()' - result: $result"
+  echo "$result"
+}
+
+do_get_summary_info()
+{
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_summary_info()'"
+
+  local device="$(do_get_device_name)"
+  local cpu_load="$(do_get_cpu_load)"
+  local cpu_temperature="$(cat /sys/devices/virtual/thermal/thermal_zone0/temp)"
+  cpu_temperature="$(do_get_temperature $cpu_temperature)"
+
+  local gpu_temperature="$(cat /sys/devices/virtual/thermal/thermal_zone1/temp)"
+  gpu_temperature="$(do_get_temperature $gpu_temperature)"
+
+  local batt_temperature="$(cat /sys/devices/virtual/thermal/thermal_zone2/temp)"
+  batt_temperature="$(do_get_temperature $batt_temperature)"
+
+  local wifi_connected="false"
+  es-wifi is_connected
+  [ $? -eq 0 ] && wifi_connected="true"
+
+  local internet_status="false"
+  es-wifi internet_status
+  [ $? -eq 0 ] && internet_status="true"
+
+  local ssid="$(es-wifi get_ssid)"
+
+	# TODO get with wired connection
+  local ip_address="$(nmcli -f IP4 device show wlan0 | grep IP4.ADDRESS | awk '{print $2}')"
+
+  local result="<summary_info device=\"${device}\" cpu_load=\"${cpu_load}\" cpu_temperature=\"${cpu_temperature}\" gpu_temperature=\"${gpu_temperature}\" batt_temperature=\"${batt_temperature}\" wifi_connected=\"${wifi_connected}\" internet_status=\"${internet_status}\" ssid=\"${ssid}\" ip_address=\"${ip_address}\" />"
+  #print_log $LOG_FILE "INFO" "Executing 'do_get_summary_info()' - result: $result"
+  echo "$result"
+}
 
 # ******************************************************************************************
 
@@ -125,26 +474,59 @@ shift
 #print_log $LOG_FILE "INFO" "##### Executing operation: '$ACTION' #####"
 
 case "${ACTION}" in
+    "get_software_info")
+        do_get_software_info
+    ;;
+    "get_device_info")
+        do_get_device_info
+    ;;
+    "get_soc_info")
+        do_get_soc_info
+    ;;
+    "get_gpu_info")
+        do_get_gpu_info
+    ;;
+    "get_memory_info")
+        do_get_memory_info
+    ;;
+    "get_summary_info")
+        do_get_summary_info
+    ;;
+    "get_all_storage_info")
+        do_get_all_storage_info
+    ;;
+    "get_user_storage_info")
+        do_get_user_storage_info
+    ;;
+    "get_roms_storage_info")
+        do_get_roms_storage_info
+    ;;
+    "get_usb_storage_info")
+        do_get_usb_storage_info
+    ;;
+    "get_hostname")
+        do_get_hostname
+    ;;
     "get_system_name")
-        get_system_name
+        do_get_system_name
     ;;
     "get_system_version")
-        get_system_version
+        do_get_system_version
     ;;
     "get_system_info")
-        get_system_info
+        do_get_system_info
     ;;
     "get_base_os_info")
-        get_base_os_info
+        do_get_base_os_info
     ;;
     "get_kernel_info")
-        get_kernel_info
+        do_get_kernel_info
     ;;
     "get_device_name")
-        get_device_name
+        do_get_device_name
     ;;
     "get_soc_name")
-        get_soc_name
+        do_get_soc_name
     ;;
     *)
         do_help

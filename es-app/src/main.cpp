@@ -324,6 +324,11 @@ void loadBasicSettings(std::string &log)
 	log.append("MAIN::loadBasicSettings() - Enter function\n");
 	Utils::Async::run( [] (void)
 		{
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS))
+				ApiSystem::getInstance()->setEsScriptsLoggingActivated(Settings::getInstance()->getBool("LogScriptsEnabled"),
+																		Settings::getInstance()->getString("LogLevel"),
+																		Settings::getInstance()->getBool("LogWithMilliseconds"));
+
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::DISPLAY))
 				ApiSystem::getInstance()->loadSystemHdmiInfo();
 		});

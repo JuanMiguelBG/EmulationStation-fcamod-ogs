@@ -466,8 +466,8 @@ NetworkInformation queryNetworkInformation(bool summary)
 
 			char result_buffer[256];
 			std::string field(""),
-									awk_flag(""),
-									nmcli_command("nmcli -f %s device show %s | awk '%s {print $2}'");
+						awk_flag(""),
+						nmcli_command("nmcli -f %s device show %s | awk '%s {print $2}'");
 
 			if (network.isWifi)
 			{
@@ -515,10 +515,10 @@ NetworkInformation queryNetworkInformation(bool summary)
 					nmcli_command.append("nmcli dev wifi | grep '%s' | sed -e 's/^.*%s//' | awk '{print %s}'");
 					field.clear();
 					field.append( "$5" ) // wifi signal
-							 .append( " \" \" $2" ) // wifi channel
-							 .append( " \" \"  $3" ) // rate
-							 .append( " \" \"  $4" ) // rate unit
-							 .append( " \" \"  $7 \" \"  $8 " ); // wifi security
+						 .append( " \" \" $2" ) // wifi channel
+						 .append( " \" \"  $3" ) // rate
+						 .append( " \" \"  $4" ) // rate unit
+						 .append( " \" \"  $7 \" \"  $8 " ); // wifi security
 					snprintf(result_buffer, 256, nmcli_command.c_str(), network.ssid.c_str(), network.ssid.c_str(), field.c_str());
 					std::vector<std::string> results = Utils::String::split(getShOutput( result_buffer ), ' ');
 					network.signal = std::atoi( results.at(0).c_str() ); // wifi signal
@@ -534,7 +534,7 @@ NetworkInformation queryNetworkInformation(bool summary)
 					nmcli_command.append("nmcli -f CAPABILITIES.SPEED dev show %s | awk '{print %s}'");
 					field.clear();
 					field.append( "$2" ) // rate
-							 .append( " \" \" $3" ); // rate unit
+						 .append( " \" \" $3" ); // rate unit
 					snprintf(result_buffer, 128, nmcli_command.c_str(), network.iface.c_str(), field.c_str());
 					std::vector<std::string> results = Utils::String::split(getShOutput( result_buffer ), ' ');
 					network.rate = std::atoi( results.at(0).c_str() ); // rate
@@ -633,52 +633,6 @@ std::string querySocName() {
 	return getShOutput("es-system_inf get_soc_name");
 }
 
-CpuAndSocketInformation queryCpuAndChipsetInformation(bool summary)
-{
-	CpuAndSocketInformation chipset;
-
-	try
-	{
-		chipset.cpu_load = queryLoadCpu();
-		chipset.temperature = queryTemperatureCpu();
-
-		if (!summary)
-		{
-			if (Utils::FileSystem::exists("/usr/local/bin/es-system_inf"))
-			{
-				chipset.soc_name = querySocName();
-			}
-			if (Utils::FileSystem::exists("/usr/bin/lscpu"))
-			{
-				chipset.vendor_id = getShOutput(R"(lscpu | egrep 'Vendor ID' | awk '{print $3}')");
-				chipset.model_name = getShOutput(R"(lscpu | egrep 'Model name' | awk '{print $3}')");
-				chipset.ncpus = std::atoi( getShOutput(R"(lscpu | egrep 'CPU\(s\)' | awk '{print $2}' | grep -v CPU)").c_str() );
-				chipset.architecture = getShOutput(R"(lscpu | egrep 'Architecture' | awk '{print $2}')");
-				chipset.nthreads_core = std::atoi( getShOutput(R"(lscpu | egrep 'Thread' | awk '{print $4}')").c_str() );
-			}
-			if (Utils::FileSystem::exists("/sys/devices/system/cpu/cpufreq/policy0/scaling_governor"))
-			{
-				chipset.governor = Utils::String::replace ( getShOutput(R"(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor)"), "_" , " ");
-			}
-			chipset.frequency = queryFrequencyCpu(); // MHZ
-			if (Utils::FileSystem::exists("/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq"))
-			{
-				chipset.frequency_max = std::atoi( getShOutput(R"(sudo cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq)").c_str() );
-				chipset.frequency_max = chipset.frequency_max / 1000; // MHZ
-			}
-			if (Utils::FileSystem::exists("/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_min_freq"))
-			{
-				chipset.frequency_min = std::atoi( getShOutput(R"(sudo cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_min_freq)").c_str() );
-				chipset.frequency_min = chipset.frequency_min / 1000; // MHZ
-			}
-		}
-	} catch (...) {
-		LOG(LogError) << "Platform::queryCpuAndChipsetInformation() - Error reading chipset data!!!";
-	}
-
-	return chipset;
-}
-
 float queryLoadCpu()
 {
 	try
@@ -745,49 +699,6 @@ RamMemoryInformation queryRamMemoryInformation(bool summary)
 	return memory;
 }
 
-DisplayAndGpuInformation queryDisplayAndGpuInformation(bool summary)
-{
-	DisplayAndGpuInformation data;
-	try
-	{
-		data.temperature = queryTemperatureGpu();
-
-		if (!summary)
-		{
-			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/gpuinfo"))
-				data.gpu_model = getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/gpuinfo | awk '{print $1}')");
-
-			if (Utils::FileSystem::exists("/sys/class/graphics/fb0/modes"))
-				data.resolution = getShOutput(R"(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)')");
-			else if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes"))
-				data.resolution = getShOutput(R"(cat /sys/devices/platform/display-subsystem/drm/card0/card0-DSI-1/modes)");
-
-			if (Utils::FileSystem::exists("/sys/devices/platform/display-subsystem/graphics/fb0/bits_per_pixel"))
-				data.bits_per_pixel = std::atoi( getShOutput(R"(cat /sys/devices/platform/display-subsystem/graphics/fb0/bits_per_pixel)").c_str() );
-
-			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/governor"))
-				data.governor = Utils::String::replace ( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/governor)"), "_" , " ");
-
-			data.frequency = queryFrequencyGpu();
-
-			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/max_freq"))
-			{
-				data.frequency_max = std::atoi( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/max_freq)").c_str() );
-				data.frequency_max = data.frequency_max / 1000000; // MHZ
-			}
-
-			if (Utils::FileSystem::exists("/sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/min_freq"))
-			{
-				data.frequency_min = std::atoi( getShOutput(R"(cat /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/min_freq)").c_str() );
-				data.frequency_min = data.frequency_min / 1000000; // MHZ
-			}
-		}
-	} catch (...) {
-		LOG(LogError) << "Platform::queryDisplayAndGpuInformation() - Error reading display and GPU data!!!";
-	}
-	return data;
-}
-
 float queryTemperatureGpu()
 {
 	try
@@ -834,65 +745,9 @@ bool queryHdmiMode()
 	return Utils::FileSystem::exists("/var/run/drmConn");
 }
 
-std::string queryHostname()
-{
-	std::string hostname = "";
-
-	hostname.append( getShOutput(R"(hostname)") );
-	if ( hostname.empty() && Utils::FileSystem::exists("/usr/bin/hostnamectl") )
-		hostname.append( getShOutput(R"(hostnamectl | grep -iw hostname | awk '{print $3}')") );
-
-	return hostname;
-}
-
 bool setCurrentHostname(std::string hostname)
 {
 	return executeSystemScript("sudo hostnamectl set-hostname \"" + hostname + "\" &");
-}
-
-SoftwareInformation querySoftwareInformation(bool summary)
-{
-	SoftwareInformation si;
-
-	si.application_name = getShOutput("es-system_inf get_system_name");
-	si.version = getShOutput("es-system_inf get_system_version");
-	si.hostname = queryHostname();
-
-	if (!summary)
-	{
-		si.so_base = getShOutput("es-system_inf get_base_os_info");
-		si.vlinux = getShOutput("es-system_inf get_kernel_info");
-	}
-	return si;
-}
-
-std::string queryDeviceName() {
-	return getShOutput("es-system_inf get_device_name");
-}
-
-DeviceInformation queryDeviceInformation(bool summary)
-{
-	DeviceInformation di;
-	try
-	{
-		di.name = queryDeviceName();
-		if ( Utils::FileSystem::exists("/proc/cpuinfo") )
-		{
-			di.hardware = getShOutput(R"(cat /proc/cpuinfo | grep -iw hardware | awk '{print $3 " " $4}')");
-			di.revision = getShOutput(R"(cat /proc/cpuinfo | grep Revision | awk '{print $3 " " $4}')");
-			if (di.revision.empty())
-				di.revision = "CSM-101 T-800 Version 2.4 - (Cyberdyne Systems)";
-			di.serial = Utils::String::toUpper( getShOutput(R"(cat /proc/cpuinfo | grep -iw serial | awk '{print $3 " " $4}')") );
-		}
-		if ( Utils::FileSystem::exists("/usr/bin/hostnamectl") )
-		{
-			di.machine_id = Utils::String::toUpper( getShOutput(R"(hostnamectl | grep -iw machine | awk '{print $3}')") );
-			di.boot_id = Utils::String::toUpper( getShOutput(R"(hostnamectl | grep -iw boot | awk '{print $3}')") );
-		}
-	} catch (...) {
-		LOG(LogError) << "Platform::queryDeviceInformation() - Error reading device data!!!";
-	}
-	return di;
 }
 
 // Adapted from emuelec
@@ -929,7 +784,7 @@ std::string queryDriveMountPoint(std::string device)
 
 std::vector<std::string> queryUsbDriveMountPoints()
 {
-	std::vector<std::string> partitions = executeSystemEnumerationScript(R"(cat /proc/partitions | egrep sda. | awk '{print $4}')"),
+	std::vector<std::string> partitions = executeSystemEnumerationScript(R"(cat /proc/partitions | egrep sd[a-z]. | awk '{print $4}')"),
 													 mount_points;
 	for (auto partition = begin (partitions); partition != end (partitions); ++partition)
 	{

@@ -5,7 +5,7 @@
 #include "EsLocale.h"
 
 
-DateTimeEditComponent::DateTimeEditComponent(Window* window, GuiComponent *parentContainer) : DateTimeEditComponent(window, DISP_DATE, parentContainer)
+DateTimeEditComponent::DateTimeEditComponent(Window* window, GuiComponent *parentContainer) : DateTimeEditComponent(window, DISP_DATE, parentContainer) {}
 
 DateTimeEditComponent::DateTimeEditComponent(Window* window, DisplayMode dispMode, GuiComponent *parentContainer) : GuiComponent(window),
 	mEditing(false), mAlreadyChanged(false), mChanged(false), mEditIndex(0), mDisplayMode(dispMode),

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-do_help() {
+do_help()
+{
     echo "$0 scanlist" >&2
     echo "$0 list" >&2
     echo "$0 start" >&2
@@ -34,7 +35,8 @@ do_help() {
     echo "$0 get_wifi_info" >&2
 }
 
-is_network_manager_active() {
+is_network_manager_active()
+{
     #print_log $LOG_FILE "INFO" "Executing 'is_network_manager_active()'"
 
     local status=`sudo systemctl is-active NetworkManager`
@@ -48,7 +50,8 @@ is_network_manager_active() {
     return 1
 }
 
-is_network_manager_enabled() {
+is_network_manager_enabled()
+{
     #print_log $LOG_FILE "INFO" "Executing 'is_network_manager_enabled()'"
 
     local status=`sudo systemctl is-enabled NetworkManager`
@@ -62,7 +65,8 @@ is_network_manager_enabled() {
     return 1
 }
 
-enable_network_manager() {
+enable_network_manager()
+{
     #print_log $LOG_FILE "INFO" "Executing 'enable_network_manager()'"
 
     is_network_manager_active
@@ -81,7 +85,8 @@ enable_network_manager() {
     fi
 }
 
-disable_network_manager() {
+disable_network_manager()
+{
     #print_log $LOG_FILE "INFO" "Executing 'enable_network_manager()'"
 
     is_network_manager_active
@@ -98,7 +103,8 @@ disable_network_manager() {
     fi
 }
 
-test_network_manager() {
+test_network_manager()
+{
     #print_log $LOG_FILE "INFO" "Executing 'test_network_manager()'"
 
     is_network_manager_active
@@ -109,7 +115,8 @@ test_network_manager() {
     fi
 }
 
-do_list() {
+do_list()
+{
     #print_log $LOG_FILE "INFO" "Executing 'do_list()'"
 
     local networks=$(sudo nmcli -f ALL --mode tabular --terse --fields SSID dev wifi | sort -u)
@@ -141,14 +148,16 @@ do_list() {
     #print_log $LOG_FILE "DEBUG" "Executing 'do_list()' - result: '$result'"
 }
 
-do_scanlist() {
+do_scanlist()
+{
     #print_log $LOG_FILE "INFO" "Executing 'do_scanlist()'"
 
     do_start
     do_list
 }
 
-do_connect() {
+do_connect()
+{
     local SSID=$1
     local PSK=$2
 
@@ -228,7 +237,8 @@ do_connect() {
     return 0
 }
 
-do_remove() {
+do_remove()
+{
     local SSID=$1
 
     #print_log $LOG_FILE "INFO" "Executing 'do_remove()': '$SSID'"
@@ -236,13 +246,15 @@ do_remove() {
     sudo nmcli con delete "$SSID" || return 1
 }
 
-do_disable() {
+do_disable()
+{
     #print_log $LOG_FILE "INFO" "Executing 'do_disable()'"
 #    sudo nmcli radio wifi off || return 1
     disable_network_manager
 }
 
-do_reset() {
+do_reset()
+{
     local SSID=$1
 
     #print_log $LOG_FILE "INFO" "Executing 'do_reset()': '$SSID'"
@@ -285,7 +297,8 @@ do_enable()
     es-remote_services active ntp &
 }
 
-do_start() {
+do_start()
+{
     #print_log $LOG_FILE "INFO" "Executing 'do_start()'"
 
     enable_network_manager
@@ -294,7 +307,8 @@ do_start() {
     do_rescan || return 1
 }
 
-do_test_internet() {
+do_test_internet()
+{
     #print_log $LOG_FILE "INFO" "Executing 'do_test_internet()'"
     echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 > /dev/null 2>&1
 
@@ -307,14 +321,16 @@ do_test_internet() {
     return 1
 }
 
-do_disconnect() {
+do_disconnect()
+{
     local SSID=$1
 
     #print_log $LOG_FILE "INFO" "Executing 'do_disconnect()': '$SSID'"
     sudo nmcli con down id "$SSID" || return 1
 }
 
-is_connected() {
+is_connected()
+{
     #print_log $LOG_FILE "INFO" "Executing 'is_connected()'"
 
     local output=`sudo nmcli dev status`
@@ -332,7 +348,8 @@ is_connected() {
     return 0
 }
 
-is_enabled() {
+is_enabled()
+{
     #print_log $LOG_FILE "INFO" "Executing 'is_enabled()'"
 
     local output=`sudo nmcli radio wifi`
@@ -350,30 +367,35 @@ is_enabled() {
     return 0
 }
 
-get_ssid() {
+get_ssid()
+{
     #print_log $LOG_FILE "INFO" "Executing 'get_ssid()'"
     #sudo nmcli -f GENERAL.CONNECTION device show wlan0 | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}'
     iw dev wlan0 info | grep ssid | cut -c 7-30
 }
 
-get_ssid_psk() {
+get_ssid_psk()
+{
     local SSID=$1
 
     #print_log $LOG_FILE "INFO" "Executing 'get_ssid_psk()': '$SSID'"
     sudo nmcli -s -g 802-11-wireless-security.psk connection show "$SSID"
 }
 
-get_dns1() {
+get_dns1()
+{
     #print_log $LOG_FILE "INFO" "Executing 'get_dns1()'"
     sudo nmcli -f IP4.DNS device show wlan0 | awk '$1 ~ /^IP4.DNS\[1\]/ {print $2}'
 }
 
-get_dns2() {
+get_dns2()
+{
     #print_log $LOG_FILE "INFO" "Executing 'get_dns2()'"
     sudo nmcli -f IP4.DNS device show wlan0 | awk '$1 ~ /^IP4.DNS\[2\]/ {print $2}'
 }
 
-enable_manual_dns() {
+enable_manual_dns()
+{
     local SSID=$1
     local DNS1=$2
     local DNS2=$3
@@ -387,7 +409,8 @@ enable_manual_dns() {
     return 0
 }
 
-disable_manual_dns() {
+disable_manual_dns()
+{
     local SSID=$1
 
     #print_log $LOG_FILE "INFO" "Executing 'disable_manual_dns()': SSID='$SSID'"
@@ -421,7 +444,8 @@ get_network_exist_flag()
     echo "$EXIST_CONNECTION_FLAG"
 }
 
-is_wifi_power_safe_enabled() {
+is_wifi_power_safe_enabled()
+{
     #print_log $LOG_FILE "INFO" "Executing 'is_wifi_power_safe_enabled()'"
 
     local status=`sudo iw dev wlan0 get power_save | awk '{print $3}'`

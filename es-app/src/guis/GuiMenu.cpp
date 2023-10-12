@@ -59,7 +59,7 @@ GuiMenu::GuiMenu(Window* window, bool animate, CursortId cursor) : GuiComponent(
 	mWaitingLoad = false;
 
 	LOG(LogDebug) << "GuiMenu::GuiMenu() - Before calling 'ApiSystem::loadOtherSettings()'";
-	ApiSystem::getInstance()->loadOtherSettings();
+	ApiSystem::getInstance()->loadOtherSettings(false);
 	LOG(LogDebug) << "GuiMenu::GuiMenu() - After call 'ApiSystem::loadOtherSettings()'";
 
 	auto theme = ThemeData::getMenuTheme();
@@ -3263,8 +3263,8 @@ std::string getBuildTime()
 
 void GuiMenu::addVersionInfo()
 {
-	SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
-	addEntry(_U("\uF02B  Distro Version: ") + software.application_name + " " + software.version, false, [this] {  });
+	addEntry(_U("\uF02B  Distro Version: ") + SystemConf::getInstance()->get("software.application_name") + " " 
+				+ SystemConf::getInstance()->get("software.version"), false, [this] {  });
 
 	std::string  buildDate = getBuildTime();
 	auto theme = ThemeData::getMenuTheme();
@@ -3273,7 +3273,7 @@ void GuiMenu::addVersionInfo()
 	mVersion.setColor(theme->Footer.color);
 	mVersion.setLineSpacing(0);
 	
-	mVersion.setText("EMULATIONSTATION V" + Utils::String::toUpper(software.es_version) + " BUILD " + buildDate);
+	mVersion.setText("EMULATIONSTATION V" + SystemConf::getInstance()->get("software.es_version") + " BUILD " + buildDate);
 
 	mVersion.setHorizontalAlignment(ALIGN_CENTER);	
 	mVersion.setVerticalAlignment(ALIGN_CENTER);

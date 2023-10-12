@@ -27,8 +27,6 @@ private:
 	void openSoftware();
 	void openDevice();
 
-	void configUsbDriveDevices(UpdatableGuiSettings *parent, const std::shared_ptr<Font>& font, unsigned int color);
-
 	static std::string formatTemperature  (float temp_raw, bool warning = false);
 	static std::string formatFrequency    (int freq_raw);
 	static std::string formatPercent      (int bat_level);
@@ -38,7 +36,13 @@ private:
 	static std::string formatVoltage      (float voltage_raw);
 	static std::string formatNetworkStatus(bool isConnected);
 	static std::string formatNetworkRate  (int rate, std::string units);
+	static std::string formatStorage      (std::string used, std::string avail, std::string used_percent);
 
+	static bool isTemperatureLimit (float temperature);
+	static bool isStorageLimit     (std::string used_percent);
+	static bool isCpuLoadLimit     (float cpu_load);
+	static bool isBatteryLimit     (int battery_level);
+	static bool isMemoryLimit      (float total_memory, float free_memory);
 };
 
 #endif // ES_APP_GUIS_GUI_SYSTEM_INFORMATION_H

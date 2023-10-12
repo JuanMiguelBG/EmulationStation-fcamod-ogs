@@ -177,7 +177,6 @@ struct CpuAndSocketInformation
 	int frequency_min;
 };
 
-CpuAndSocketInformation queryCpuAndChipsetInformation(bool summary);
 float queryLoadCpu();
 float queryTemperatureCpu();
 int queryFrequencyCpu();
@@ -262,9 +261,7 @@ struct SoftwareInformation
 	std::string es_built;
 };
 
-std::string queryHostname();
 bool setCurrentHostname(std::string hostname);
-SoftwareInformation querySoftwareInformation(bool summary);
 
 struct DeviceInformation
 {
@@ -285,9 +282,6 @@ struct DeviceInformation
 	std::string machine_id;
 	std::string boot_id;
 };
-
-std::string queryDeviceName();
-DeviceInformation queryDeviceInformation(bool summary);
 
 bool isDriveMounted(std::string device);
 std::string queryDriveMountPoint(std::string device);
@@ -352,6 +346,24 @@ struct BluetoothDevice
 
 std::string queryBluetoothEnabled();
 
+struct StorageDevice
+{
+	StorageDevice()
+	{
+		name = "N/A";
+		mount_point = "N/A";
+		used = "N/A";
+		avail = "N/A";
+		used_percent = "N/A";
+	}
+
+	std::string name;
+	std::string mount_point;
+	std::string used;
+	std::string avail;
+	std::string used_percent;
+};
+
 struct SystemHotkeyValues
 {
 	SystemHotkeyValues()
@@ -374,6 +386,32 @@ struct SystemHotkeyValues
 	bool bluetooth;
 	bool speaker;
 	bool suspend;
+};
+
+struct SystemSummaryInfo
+{
+	SystemSummaryInfo()
+	{
+		device = "N/A";
+		cpu_load = .0f;
+		cpu_temperature = .0f;
+		gpu_temperature = .0f;
+		batt_temperature = .0f;
+		wifi_connected = false;
+		internet_status = false;
+		wifi_ssid = "N/A";
+		ip_address = "N/A";
+	}
+
+	std::string device;
+	float cpu_load;
+	float cpu_temperature;
+	float gpu_temperature;
+	float batt_temperature;
+	bool wifi_connected;
+	bool internet_status;
+	std::string wifi_ssid;
+	std::string ip_address;
 };
 
 #endif // ES_CORE_PLATFORM_H

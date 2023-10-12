@@ -353,31 +353,9 @@ unsigned long ApiSystem::getFreeSpaceGB(std::string mountpoint)
 	return free;
 }
 
-std::string ApiSystem::getFreeSpaceSystemInfo() {
-	return getFreeSpaceInfo("/");
-}
-
-std::string ApiSystem::getFreeSpaceBootInfo() {
-	return getFreeSpaceInfo("/boot");
-}
-
-std::string ApiSystem::getFreeSpaceUserInfo() {
-	return getFreeSpaceInfo("/roms");
-}
-
-std::string ApiSystem::getFreeSpaceUser2Info()
+std::string ApiSystem::getFreeSpaceDriveInfo(const std::string mountpoint)
 {
-	return getFreeSpaceInfo("/roms2");
-}
-
-bool ApiSystem::isUser2Mounted()
-{
-	return isDriveMounted("/roms2");
-}
-
-std::string ApiSystem::getFreeSpaceUsbDriveInfo(const std::string mountpoint)
-{
-	LOG(LogInfo) << "ApiSystem::getFreeSpaceUsbDriveInfo() - mount point: " << mountpoint;
+	LOG(LogInfo) << "ApiSystem::getFreeSpaceDriveInfo() - mount point: " << mountpoint;
 	if ( isDriveMounted(mountpoint) )
 		return getFreeSpaceInfo(mountpoint);
 
@@ -410,82 +388,17 @@ std::string ApiSystem::getFreeSpaceInfo(const std::string mountpoint)
 	return oss.str();
 }
 
-
-std::vector<std::string> ApiSystem::getUsbDriveMountPoints()
-{
-	return queryUsbDriveMountPoints();
-}
-
-bool ApiSystem::isFreeSpaceSystemLimit() {
-	return isFreeSpaceLimit("/");
-}
-
-bool ApiSystem::isFreeSpaceBootLimit() {
-	return isFreeSpaceLimit("/boot");
-}
-
-bool ApiSystem::isFreeSpaceUserLimit() {
-	return isFreeSpaceLimit("/roms", 2);
-}
-
-bool ApiSystem::isFreeSpaceUser2Limit() {
-	return isFreeSpaceLimit("/roms2", 2);
-}
-
-bool ApiSystem::isFreeSpaceUsbDriveLimit(const std::string mountpoint) {
-	if ( isDriveMounted(mountpoint) )
-		return isFreeSpaceLimit(mountpoint, 2);
-
-	return false;
-}
-
-bool ApiSystem::isFreeSpaceLimit(const std::string mountpoint, int limit)
-{
-	return ((int) getFreeSpaceGB(mountpoint)) < limit;
-}
-
-bool ApiSystem::isTemperatureLimit(float temperature, float limit)
-{
-	return temperature > limit;
-}
-
-bool ApiSystem::isLoadCpuLimit(float load_cpu, float limit) // %
-{
-	return load_cpu > limit;
-}
-
-bool ApiSystem::isMemoryLimit(float total_memory, float free_memory, int limit) // %
-{
-	int percent = ( (int) ( (free_memory * 100) / total_memory ) );
-	return percent < limit;
-}
-
-bool ApiSystem::isBatteryLimit(float battery_level, int limit) // %
-{
-	return battery_level < limit;
-}
-
-std::string ApiSystem::getVersion()
-{
-	LOG(LogInfo) << "ApiSystem::getVersion()";
-	return querySoftwareInformation(true).version;
-}
-
-std::string ApiSystem::getApplicationName()
-{
-	LOG(LogInfo) << "ApiSystem::getApplicationName()";
-	return querySoftwareInformation(true).application_name;
-}
-
 std::string ApiSystem::getHostname()
 {
 	LOG(LogInfo) << "ApiSystem::getHostname()";
-	return queryHostname();
+
+	return getShOutput("es-system_inf get_hostname");
 }
 
 bool ApiSystem::setHostname(std::string hostname)
 {
 	LOG(LogInfo) << "ApiSystem::setHostname()";
+
 	return setCurrentHostname(hostname);
 }
 
@@ -581,51 +494,145 @@ BatteryInformation ApiSystem::getBatteryInformation(bool summary)
 	return queryBatteryInformation(summary); // platform.h
 }
 
-CpuAndSocketInformation ApiSystem::getCpuAndChipsetInformation(bool summary)
+CpuAndSocketInformation ApiSystem::loadCpuAndChipsetInformation(const std::string& socInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadCpuAndChipsetInformation()";
+
+	CpuAndSocketInformation chipset;
+
+	if (Utils::String::startsWith(socInfo, "<soc_info "))
+	{
+		chipset.soc_name = Utils::String::extractString(socInfo, "name=\"", "\"", false);
+		chipset.vendor_id = Utils::String::extractString(socInfo, "vendor=\"", "\"", false);
+		chipset.model_name = Utils::String::extractString(socInfo, "model=\"", "\"", false);
+		chipset.ncpus = std::atoi( Utils::String::extractString(socInfo, "ncpus=\"", "\"", false).c_str() );
+		chipset.architecture = Utils::String::extractString(socInfo, "architecture=\"", "\"", false);
+		chipset.nthreads_core = std::atoi( Utils::String::extractString(socInfo, "nthreads_core=\"", "\"", false).c_str() );
+		chipset.cpu_load =  std::atof( Utils::String::extractString(socInfo, "cpu_load=\"", "\"", false).c_str() );
+		chipset.temperature =  std::atof( Utils::String::extractString(socInfo, "temperature=\"", "\"", false).c_str() );
+		chipset.governor = Utils::String::extractString(socInfo, "governor=\"", "\"", false);
+		chipset.frequency = std::atoi( Utils::String::extractString(socInfo, "frequency=\"", "\"", false).c_str() );
+		chipset.frequency_max = std::atoi( Utils::String::extractString(socInfo, "frequency_max=\"", "\"", false).c_str() );
+		chipset.frequency_min = std::atoi( Utils::String::extractString(socInfo, "frequency_min=\"", "\"", false).c_str() );
+	}
+
+	return chipset;
+}
+
+CpuAndSocketInformation ApiSystem::getCpuAndChipsetInformation()
 {
 	LOG(LogInfo) << "ApiSystem::getCpuAndChipsetInformation()";
 
-	return queryCpuAndChipsetInformation(summary); // platform.h
+	return loadCpuAndChipsetInformation(getShOutput(R"(es-system_inf get_soc_info)"));
 }
 
-RamMemoryInformation ApiSystem::getRamMemoryInformation(bool summary)
+RamMemoryInformation ApiSystem::loadRamMemoryInformation(const std::string& memoryInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadRamMemoryInformation()";
+
+	RamMemoryInformation memory;
+
+	if (Utils::String::startsWith(memoryInfo, "<memory_info "))
+	{
+		memory.total = std::atof( Utils::String::extractString(memoryInfo, "total=\"", "\"", false).c_str() );
+		memory.free = std::atof( Utils::String::extractString(memoryInfo, "free=\"", "\"", false).c_str() );
+		memory.used = std::atof( Utils::String::extractString(memoryInfo, "used=\"", "\"", false).c_str() );
+		memory.cached = std::atof( Utils::String::extractString(memoryInfo, "cached=\"", "\"", false).c_str() );
+	}
+
+	return memory;
+}
+
+RamMemoryInformation ApiSystem::getRamMemoryInformation()
 {
 	LOG(LogInfo) << "ApiSystem::getRamMemoryInformation()";
 
-	return queryRamMemoryInformation(summary); // platform.h
+	return loadRamMemoryInformation(getShOutput(R"(es-system_inf get_memory_info)"));
 }
 
-DisplayAndGpuInformation ApiSystem::getDisplayAndGpuInformation(bool summary)
+DisplayAndGpuInformation ApiSystem::loadDisplayAndGpuInformation(const std::string& gpuInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadDisplayAndGpuInformation()";
+
+	DisplayAndGpuInformation gpu;
+
+	if (Utils::String::startsWith(gpuInfo, "<gpu_info "))
+	{
+		gpu.gpu_model = Utils::String::extractString(gpuInfo, "model=\"", "\"", false);
+		gpu.resolution = Utils::String::extractString(gpuInfo, "resolution=\"", "\"", false);
+		gpu.bits_per_pixel = std::atoi( Utils::String::extractString(gpuInfo, "bpp=\"", "\"", false).c_str() );
+		gpu.temperature = std::atof( Utils::String::extractString(gpuInfo, "temperature=\"", "\"", false).c_str() );
+		gpu.governor = Utils::String::extractString(gpuInfo, "governor=\"", "\"", false);
+		gpu.frequency = std::atoi( Utils::String::extractString(gpuInfo, "frequency=\"", "\"", false).c_str() );
+		gpu.frequency_max = std::atoi( Utils::String::extractString(gpuInfo, "frequency_max=\"", "\"", false).c_str());
+		gpu.frequency_min = std::atoi( Utils::String::extractString(gpuInfo, "frequency_min=\"", "\"", false).c_str() );
+		gpu.brightness_level = std::atoi( Utils::String::extractString(gpuInfo, "brightness=\"", "\"", false).c_str() );
+		gpu.gamma_level = std::atoi( Utils::String::extractString(gpuInfo, "gamma=\"", "\"", false).c_str() );
+		gpu.contrast_level = std::atoi( Utils::String::extractString(gpuInfo, "contrast=\"", "\"", false).c_str() );
+		gpu.saturation_level = std::atoi( Utils::String::extractString(gpuInfo, "saturation=\"", "\"", false).c_str() );
+		gpu.hue_level = std::atoi( Utils::String::extractString(gpuInfo, "hue=\"", "\"", false).c_str() );
+	}
+
+	return gpu;
+}
+
+DisplayAndGpuInformation ApiSystem::getDisplayAndGpuInformation()
 {
 	LOG(LogInfo) << "ApiSystem::getDisplayAndGpuInformation()";
 
-	DisplayAndGpuInformation dagi = queryDisplayAndGpuInformation(summary); // platform.h
-	dagi.brightness_level = getBrightnessLevel();
-	if (!summary && !SystemConf::getInstance()->getBool("hdmi.mode"))
-	{
-		dagi.gamma_level = getGammaLevel();
-		dagi.contrast_level = getContrastLevel();
-		dagi.saturation_level = getSaturationLevel();
-		dagi.hue_level = getHueLevel();
-	}
-	return dagi;
+	return loadDisplayAndGpuInformation(getShOutput(R"(es-system_inf get_gpu_info)"));
 }
 
-SoftwareInformation ApiSystem::getSoftwareInformation(bool summary)
+SoftwareInformation ApiSystem::loadSoftwareInformation(const std::string& softwareInfo)
 {
-	LOG(LogInfo) << "ApiSystem::getSoftwareInformation()";
+	LOG(LogDebug) << "ApiSystem::loadSoftwareInformation()";
 
-	SoftwareInformation si = querySoftwareInformation(summary); // platform.h
-	si.es_version = Utils::String::toUpper(PROGRAM_VERSION_STRING);
-	si.es_built = PROGRAM_BUILT_STRING;
+	SoftwareInformation si;
+
+	if (Utils::String::startsWith(softwareInfo, "<software_info "))
+	{
+		si.application_name = Utils::String::extractString(softwareInfo, "name=\"", "\"", false);
+		si.version = Utils::String::extractString(softwareInfo, "version=\"", "\"", false);
+		si.es_version = Utils::String::toUpper(PROGRAM_VERSION_STRING);
+		si.so_base = Utils::String::extractString(softwareInfo, "base_os=\"", "\"", false);
+		si.vlinux = Utils::String::extractString(softwareInfo, "kernel=\"", "\"", false);
+		si.hostname = Utils::String::extractString(softwareInfo, "hostname=\"", "\"", false);
+		si.es_built = PROGRAM_BUILT_STRING;
+	}
+
 	return si;
 }
 
-DeviceInformation ApiSystem::getDeviceInformation(bool summary)
+SoftwareInformation ApiSystem::getSoftwareInformation()
+{
+	LOG(LogInfo) << "ApiSystem::getSoftwareInformation()";
+
+	return loadSoftwareInformation(getShOutput(R"(es-system_inf get_software_info)"));
+}
+
+DeviceInformation ApiSystem::loadDeviceInformation(const std::string& deviceInfo)
+{
+	LOG(LogDebug) << "ApiSystem::loadDeviceInformation()";
+
+	DeviceInformation di;
+
+	if (Utils::String::startsWith(deviceInfo, "<device_info "))
+	{
+		di.name = Utils::String::extractString(deviceInfo, "name=\"", "\"", false);
+		di.hardware = Utils::String::extractString(deviceInfo, "hardware=\"", "\"", false);
+		di.revision = Utils::String::extractString(deviceInfo, "revision=\"", "\"", false);
+		di.serial = Utils::String::extractString(deviceInfo, "serial=\"", "\"", false);
+		di.machine_id = Utils::String::extractString(deviceInfo, "machine_id=\"", "\"", false);
+		di.boot_id = Utils::String::extractString(deviceInfo, "boot_id=\"", "\"", false);
+	}
+
+	return di;
+}
+DeviceInformation ApiSystem::getDeviceInformation()
 {
 	LOG(LogInfo) << "ApiSystem::getDeviceInformation()";
 
-	return queryDeviceInformation(summary); // platform.h
+	return loadDeviceInformation(getShOutput(R"(es-system_inf get_device_info)"));
 }
 
 int ApiSystem::getBrightnessLevel()
@@ -780,6 +787,7 @@ float ApiSystem::getBatteryVoltage()
 float ApiSystem::getTemperatureBattery()
 {
 	LOG(LogInfo) << "ApiSystem::getTemperatureBattery()";
+
 	return queryBatteryTemperature();
 }
 
@@ -787,7 +795,7 @@ std::string ApiSystem::getDeviceName()
 {
 	LOG(LogInfo) << "ApiSystem::getDeviceName()";
 
-	return queryDeviceName();
+	return getShOutput("es-system_inf get_device_name");
 }
 
 std::string ApiSystem::getTimezones()
@@ -1969,29 +1977,96 @@ bool ApiSystem::clearLastPlayedData(const std::string system)
 
 }
 
-void ApiSystem::loadOtherSettings()
+std::vector<StorageDevice> ApiSystem::toStorageDevicesVector(std::vector<std::string> stDevices)
+{
+	LOG(LogInfo) << "ApiSystem::toStorageDevicesVector()";
+
+	std::vector<StorageDevice> result;
+	for (auto stDevice : stDevices)
+	{
+		StorageDevice st_device;
+
+		if (Utils::String::startsWith(stDevice, "<device "))
+		{
+			st_device.name = Utils::String::extractString(stDevice, "name=\"", "\"", false);
+			st_device.mount_point = Utils::String::extractString(stDevice, "mount_point=\"", "\"", false);
+			st_device.used = Utils::String::extractString(stDevice, "used=\"", "\"", false);
+			st_device.used_percent = Utils::String::extractString(stDevice, "used_percent=\"", "\"", false);
+			st_device.avail = Utils::String::extractString(stDevice, "avail=\"", "\"", false);
+		}
+
+		result.push_back(st_device);
+	}
+	return result;
+}
+
+std::vector<StorageDevice> ApiSystem::getStorageDevices(bool all)
+{
+	LOG(LogInfo) << "ApiSystem::getAllStorageDevices()";
+	std::string command("es-system_inf ");
+	if (all)
+		command.append("get_all_storage_info");
+	else
+		command.append("get_user_storage_info");
+	
+	return toStorageDevicesVector( executeEnumerationScript(command) );
+}
+
+SystemSummaryInfo ApiSystem::loadSummaryInformation(const std::string& summaryInfo)
+{
+	LOG(LogInfo) << "ApiSystem::loadSummaryInformation()";
+
+	SystemSummaryInfo info;
+
+	if (Utils::String::startsWith(summaryInfo, "<summary_info "))
+	{
+		info.device = Utils::String::extractString(summaryInfo, "device=\"", "\"", false);
+		info.cpu_load = std::atof( Utils::String::extractString(summaryInfo, "cpu_load=\"", "\"", false).c_str() );
+		info.cpu_temperature = std::atof( Utils::String::extractString(summaryInfo, "cpu_temperature=\"", "\"", false).c_str() );
+		info.gpu_temperature = std::atof( Utils::String::extractString(summaryInfo, "gpu_temperature=\"", "\"", false).c_str() );
+		info.batt_temperature = std::atof( Utils::String::extractString(summaryInfo, "batt_temperature=\"", "\"", false).c_str() );
+		info.wifi_connected = Utils::String::toBool( Utils::String::extractString(summaryInfo, "wifi_connected=\"", "\"", false) );
+		info.internet_status = Utils::String::toBool( Utils::String::extractString(summaryInfo, "internet_status=\"", "\"", false) );
+		info.wifi_ssid = Utils::String::extractString(summaryInfo, "ssid=\"", "\"", false);
+		info.ip_address = Utils::String::extractString(summaryInfo, "ip_address=\"", "\"", false);
+	}
+
+	return info;
+}
+
+SystemSummaryInfo ApiSystem::getSummaryInformation()
+{
+	LOG(LogInfo) << "ApiSystem::getSummaryInformation()";
+	return loadSummaryInformation(getShOutput(R"(es-system_inf get_summary_info)"));
+}
+
+void ApiSystem::loadOtherSettings(bool loadAllData)
 {
 	LOG(LogInfo) << "ApiSystem::loadOtherSettings() - executing";
-	Utils::Async::run( [] (void)
+	Utils::Async::run( [loadAllData] (void)
 		{
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::LOG_SCRIPTS))
-			{
-				ApiSystem::getInstance()->setEsScriptsLoggingActivated(Settings::getInstance()->getBool("LogScriptsEnabled"),
-																		Settings::getInstance()->getString("LogLevel"),
-																		Settings::getInstance()->getBool("LogWithMilliseconds"));
-			}
-
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SOUND))
-				ApiSystem::getInstance()->loadSystemAudioInfo();
-
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::WIFI))
 				ApiSystem::getInstance()->loadSystemWifiInfo();
 
 			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::BLUETOOTH))
 				ApiSystem::getInstance()->loadSystemBluetoothInfo();
 
-			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
+			if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SOUND))
+				ApiSystem::getInstance()->loadSystemAudioInfo();
+
+			if (loadAllData)
+			{
+				if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::OPTMIZE_SYSTEM))
 				SystemConf::getInstance()->set("suspend.device.mode", ApiSystem::getInstance()->getSuspendMode());
+
+				if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::SYSTEM_INFORMATION))
+				{
+					SoftwareInformation software = ApiSystem::getInstance()->getSoftwareInformation();
+					SystemConf::getInstance()->set("software.application_name", software.application_name);
+					SystemConf::getInstance()->set("software.version", software.version);
+					SystemConf::getInstance()->set("software.es_version", software.es_version);
+				}
+			}
 		});
 	LOG(LogDebug) << "ApiSystem::loadOtherSettings() - exit";
 }

@@ -51,7 +51,10 @@ std::vector<const char*> settings_dont_save {
 	{ "sound.cards" },
 	{ "sound.audio.device" },
 	{ "sound.output.device" },
-	{ "sound.output.devices" }
+	{ "sound.output.devices" },
+	{ "software.application_name" },
+	{ "software.es_version" },
+	{ "software.version" }
 };
 
 Settings::Settings()

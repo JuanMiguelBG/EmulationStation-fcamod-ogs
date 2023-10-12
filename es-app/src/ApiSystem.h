@@ -33,6 +33,13 @@ private:
 	bool loadSystemAudioInfoToSystemConf(const std::string& audioInfo);
 	bool loadSystemWifiInfoToSystemConf(const std::string& wifiInfo);
 	bool loadSystemBluetoothInfoToSystemConf(const std::string& btInfo);
+	SoftwareInformation loadSoftwareInformation(const std::string& softwareInfo);
+	DeviceInformation loadDeviceInformation(const std::string& deviceInfo);
+	DisplayAndGpuInformation loadDisplayAndGpuInformation(const std::string& gpuInfo);
+	RamMemoryInformation loadRamMemoryInformation(const std::string& memoryInfo);
+	std::vector<StorageDevice> toStorageDevicesVector(std::vector<std::string> stDevices);
+	CpuAndSocketInformation loadCpuAndChipsetInformation(const std::string& socInfo);
+	SystemSummaryInfo loadSummaryInformation(const std::string& summaryInfo);
 
 protected:
 	ApiSystem();
@@ -100,30 +107,9 @@ public:
 
 	unsigned long getFreeSpaceGB(std::string mountpoint);
 
-	std::string getFreeSpaceBootInfo();
-	std::string getFreeSpaceSystemInfo();
-	std::string getFreeSpaceUserInfo();
-	std::string getFreeSpaceUser2Info();
-	bool isUser2Mounted();
-	std::string getFreeSpaceUsbDriveInfo(const std::string mountpoint);
+	std::string getFreeSpaceDriveInfo(const std::string mountpoint);
 	std::string getFreeSpaceInfo(const std::string mountpoint);
 
-	std::vector<std::string> getUsbDriveMountPoints();
-
-	bool isFreeSpaceBootLimit();
-	bool isFreeSpaceSystemLimit();
-	bool isFreeSpaceUserLimit();
-	bool isFreeSpaceUser2Limit();
-	bool isFreeSpaceUsbDriveLimit(const std::string mountpoint);
-
-	bool isFreeSpaceLimit(const std::string mountpoint, int limit = 1); // GB
-	bool isTemperatureLimit(float temperature, float limit = 70.0f); // ° C
-	bool isLoadCpuLimit(float load_cpu, float limit = 90.0f); // %
-	bool isMemoryLimit(float total_memory, float free_memory, int limit = 10); // %
-	bool isBatteryLimit(float battery_level, int limit = 15); // %
-
-	std::string getVersion();
-	std::string getApplicationName();
 	std::string getHostname();
 	bool setHostname(std::string hostname);
 	std::string getIpAddress();
@@ -141,11 +127,13 @@ public:
 
 	NetworkInformation getNetworkInformation(bool summary = true);
 	BatteryInformation getBatteryInformation(bool summary = true);
-	CpuAndSocketInformation getCpuAndChipsetInformation(bool summary = true);
-	RamMemoryInformation getRamMemoryInformation(bool summary = true);
-	DisplayAndGpuInformation getDisplayAndGpuInformation(bool summary = true);
-	SoftwareInformation getSoftwareInformation(bool summary = true);
-	DeviceInformation getDeviceInformation(bool summary = true);
+	CpuAndSocketInformation getCpuAndChipsetInformation();
+	RamMemoryInformation getRamMemoryInformation();
+	DisplayAndGpuInformation getDisplayAndGpuInformation();
+	SoftwareInformation getSoftwareInformation();
+	DeviceInformation getDeviceInformation();
+	std::vector<StorageDevice> getStorageDevices(bool all = true);
+	SystemSummaryInfo getSummaryInformation();
 
 	int getBrightness();
 	int getBrightnessLevel();
@@ -294,7 +282,7 @@ public:
 
 	bool clearLastPlayedData(const std::string system = "");
 
-	void loadOtherSettings();
+	void loadOtherSettings(bool loadAllData = true);
 };
 
 #endif
