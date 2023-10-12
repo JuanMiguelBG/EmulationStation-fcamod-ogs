@@ -110,6 +110,7 @@ namespace PlatformIds
 		ZX81,
 		TIC80,
 		TI99,
+		WASM4,
 		GP32,
 
 		// Windows Specific

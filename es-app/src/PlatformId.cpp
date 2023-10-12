@@ -120,6 +120,7 @@ namespace PlatformIds
 		{ "zx81",            ZX81 },
 		{ "tic80",           TIC80 },
 		{ "ti99",            TI99 },
+		{ "wasm4", 			 WASM4 },
 		{ "gp32",            GP32 },
 
 		// batocera specific names
