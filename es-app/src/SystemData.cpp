@@ -210,7 +210,7 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 				}
 
 				// List files in folder, just to get OS build filesystem cache
-				if (fn == "manuals" || fn == "images" || fn == "videos" || Utils::String::startsWith(fn, "downloaded_"))
+				if (fn == "images" || fn == "videos" || fn == "manuals" || Utils::String::startsWith(fn, "downloaded_"))
 				{
 					Utils::FileSystem::getDirectoryFiles(filePath);
 					continue;
@@ -218,7 +218,7 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 			}
 
 			// Don't loose time looking in downloaded_images, downloaded_videos & media folders
-			if (fn == "media" || fn == "medias" || fn == "images" || fn == "manuals" || fn == "videos" || fn == "assets" || Utils::String::startsWith(fn, "downloaded_") || Utils::String::startsWith(fn, "."))
+			if (fn == "media" || fn == "medias" || fn == "images" || fn == "videos" || fn == "assets" || fn == "ports" || fn == "manuals" || Utils::String::startsWith(fn, "downloaded_") || Utils::String::startsWith(fn, "."))
 				continue;
 
 			// Hardcoded optimisation : WiiU has so many files in content & meta directories
